@@ -1,0 +1,26 @@
+# Dependencies (none are required)
+node_modules/
+package-lock.json
+
+# Python / test artefacts
+__pycache__/
+*.pyc
+tests/.tmp/
+
+# Logs & temp
+*.log
+*.tmp
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Personal exports from the app
+ml-atlas-progress-*.json
+ml-atlas-code-*.py
+
+# Local dev tooling
+.claude/

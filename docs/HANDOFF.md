@@ -1,0 +1,191 @@
+# ML Atlas — build handoff
+
+## STATUS UPDATE (session 3, 2026-11-20): BUILD COMPLETE
+- All 64 planned concepts are written: 143 problems, 327 quiz questions, 259 glossary terms (every concept has
+  at least one). Content files: concepts-start-math, -python-data, -ml-core, -ml-more, -ml-unsup, -nn-core,
+  -nn-more, -llm-core, -llm-more, -apps, -spec (all in index.html before glossary.js).
+- Formula legends are done: util.js renders `:::where` (formula + legend share one `.formula-group` card;
+  `:::where Label` after a table renders on its own); tests/content.test.js fails any `$$` group without a
+  legend (lesson text and problem prompts); tests/views.test.js checks the renderer. Every existing formula
+  was retrofitted.
+- README.md and docs/CONTENT_GUIDE.md are written (the guide documents the legend rule and every format).
+- `npm test` passes with 0 failures (graph, content, views, problems: 143 solutions pass and starters fail in
+  CPython, 105 samples compile and the runnable ones run). The in-browser self-test (Progress & Sync → Run
+  self-test) passes all 143 problems in Pyodide; its sample run caught one 32-bit-only failure (np.bincount on
+  int64 in the probability lesson), fixed with np.unique. Pyodide is wasm32: always run the browser self-test.
+- LLM API examples (prompting, RAG, agents, evaluation) use the Anthropic Python SDK with `claude-opus-5-5`,
+  `client.beta.messages.create(..., betas=["server-side-fallback-2026-07-01"], fallbacks="default")` and a
+  `stop_reason == "refusal"` check; they are `run: false` samples (compile-checked only).
+- Still nothing committed. Possible next steps if the user wants: commit + push to GitHub and enable Pages
+  (Settings → Pages → Source: GitHub Actions), more demos, more problems per concept.
+
+## STATUS UPDATE (session 2)
+- DONE and verified in a real browser (`node serve.js` → built-in browser): every view, app root, CSS (dark/midnight/light),
+  index.html, sw.js, manifest, icons (tools/make-icons.js), serve.js, package.json, .nojekyll, .gitignore, .gitattributes,
+  .github/workflows/deploy.yml, tracks.js, achievements.js, glossary.js (36 terms so far — extend at the end for every concept),
+  tests (graph / content / views / problems + run_problems.py, shared loader tests/_load.js), and the first content file
+  `js/data/concepts-start-math.js` (what-is-ml + 5 math concepts, 12 problems — all solutions pass in CPython).
+- Map, drawer, lesson page, runnable samples and the problem page (Run → Wrong Answer, Submit → Accepted + XP) all work.
+- Python loader: worker prefetches runtime files with progress + stall detection, races 4 jsDelivr hosts
+  (cdn / testingcf / fastly / gcore) on first load, remembers the winner in localStorage `mla.pyMirror`.
+  The service worker must NOT intercept cross-origin requests (doing so deadlocked the 10 MB wasm download).
+- CONTENT DONE (all tests pass): concepts-start-math, -python-data, -ml-core, -ml-more, -ml-unsup, -nn-core, -nn-more,
+  -llm-core, -llm-more (54 concepts, 120 problems, all in index.html). Expected content-test failures until the
+  rest exists: alignment's prereq reinforcement-learning, and track llm-apps goals rag/agents/llm-evaluation.
+- NEW USER REQUIREMENT (2026-11-19): every math formula must define all of its symbols ("full understanding is the
+  most important part"). Do this NEXT, before more content:
+  1. util.js markdown: support a `:::where` block right after a `$$` group, with one `symbol — meaning` per line
+     (fall back to splitting on the first ": "). Render it as a compact <dl class="formula-where"> attached under
+     the formula, with inline markdown in the meanings. Add CSS in app.css for all three themes.
+  2. tests/content.test.js: fail any text section whose `$$` group is not followed by a `:::where` block.
+  3. Retrofit every existing `$$` formula in all 9 content files. Also add definitions to formulas inside
+     problem prompts. Give shapes and units where helpful.
+  Then write concepts-apps.js and concepts-spec.js with legends from the start.
+- Gotcha: `python -I` can't see the user's numpy (user site-packages). To eyeball sample outputs run plain
+  `python` (tests/problems.test.js already runs every sample successfully).
+  After each: `node tests/content.test.js && node tests/views.test.js && node tests/problems.test.js`.
+  Then extend glossary.js, README.md, docs/CONTENT_GUIDE.md, run /selftest in the browser.
+
+Read this first when resuming. It records the requirements, every design decision, what is
+already written, and exactly what is left. Nothing has been committed yet (the repo has no
+commits; remote `origin` = https://github.com/markotofu/LLM-learning). Do not commit unless asked.
+
+## What the user asked for
+
+1. Use `C:\Users\Mark\Downloads\learning-app-development.zip` as the basis (it is "NetSec Academy":
+   an offline Vue 3 learning app with lessons, quizzes, flashcards, XP, labs).
+2. A learning app built as a **tree / mind map of concept nodes**: start from core concepts, branch
+   out to the sub-concepts needed for the big topics — machine learning → neural networks → LLMs
+   and how to build them — plus other branching concepts (not limited to ML/NN/LLM).
+3. **Full understanding of every concept is the top priority**: as detailed as possible, yet
+   understandable for complete beginners.
+4. Code samples everywhere: how to do things in code, and *why, when and how*.
+5. **Runnable on GitHub Pages** (static site, no build step).
+6. **LeetCode-style practice problems in every concept**: the student types code in an in-browser
+   editor, it runs in the browser, and tests check the output.
+7. Progress remembered in **localStorage**.
+8. **Export / import** of user code + progress so it can move between devices.
+
+## Key decisions
+
+- App name **ML Atlas**; global namespace `MLA` (base used `NSA`). Same no-build architecture as the
+  base: vendored `vendor/vue.global.prod.js` (Vue 3.5.13, includes the template compiler), IIFE
+  modules, string templates, hash router (works on any GitHub Pages sub-path and from file://).
+- **Python in the browser = Pyodide v0.27.2** from `https://cdn.jsdelivr.net/pyodide/v0.27.2/full/`
+  (verified reachable, CORS `*`). Runs in a Blob-URL Web Worker (works on https and file://).
+  NumPy is loaded at init; other packages (pandas, scikit-learn, matplotlib) load on demand via
+  `loadPackagesFromImports`. A run that exceeds the time limit terminates the worker.
+  PyTorch is NOT available in Pyodide → PyTorch samples use `lang: 'pytorch'` (display only);
+  all practice problems use plain Python + NumPy.
+- **One test harness for browser and CI**: the Python source lives in `HARNESS` inside
+  `js/engines/python.js`; `tests/run_problems.py` (to write) must exec that same string under
+  CPython to verify every problem.
+- Map has three views: **Mind map** (centre = root concept, one hub per branch, each concept hangs
+  under its deepest same-branch prerequisite; cross-branch prerequisite links shown on focus or via
+  "all links"), **Prerequisite tree** (layered DAG, one horizontal lane per branch), **Outline**.
+- Completion rule: quiz passed (≥70%) + at least one problem solved. Mastery: all problems solved +
+  quiz best ≥90%. Reading sections only feeds the progress bar. Locked concepts are still openable
+  (soft gating: shows "recommended first").
+- XP: read 2, check 5, quiz pass 40 (+20 perfect), solve easy 25 / medium 50 / hard 90 (halved if the
+  solution was viewed first), concept complete 60, mastered 40, problem of the day 30.
+
+## Files already written (all in this repo)
+
+| File | Status / notes |
+| --- | --- |
+| `vendor/vue.global.prod.js` | copied from the zip |
+| `js/core/util.js` | md renderer (code fences w/ highlight + copy button, `$$` formula blocks, callouts `:::tip/warn/danger/real/note/key/analogy/math`, nested lists, tables), dedent, copyText, download, packText/unpackText (gzip+base64 sync codes `MLA1Z.`/`MLA1B.`) |
+| `js/core/highlight.js` | Python + generic highlighter → `tk-*` span classes |
+| `js/core/store.js` | key `mla.state.v1`; state shape; `exportJSON`, `importJSON(text, 'merge'|'replace')`, `mergeStates` (never loses work), `exportSyncCode`/`importSyncCode`, `storageInfo` |
+| `js/core/router.js` | routes: home, map (full), concept/:id, problems, problem/:id (full), playground (full), tracks, track/:id, review, glossary, achievements, profile, selftest |
+| `js/core/ui.js` | toasts, modal (`openModal/confirm/alert`), icons (incl. map, route, code, brain, sync, radial, tree, fit, sparkles…), `applyTheme('dark'|'darker'|'light')` |
+| `js/core/gamification.js` | levels/titles, addXP, streaks, `context()` counters, achievements check |
+| `js/core/progress.js` | calls `MLA.content.init()`; concept/problem state, `conceptProgress`, `status` (mastered/completed/started/ready/locked), events (visit, markRead, markAllRead, recordCheck, recordQuiz, saveDraft, recordRun, viewSolution, showHint, recordSubmit), problemOfTheDay, tracks/trackConcepts/trackProgress, recommendNext, readyList, branchStats, overall |
+| `js/engines/graph.js` | build, findCycle, depths, topoOrder, ancestors, descendants, pathTo, edgesWithin, layoutLanes, layoutMindmap |
+| `js/engines/python.js` | HARNESS (`_mla_run_tests`, `_mla_exec`, smart equality, hints like "returned None"), worker, API `MLA.python.{status, warmup, exec, runTests(code, problem, 'run'|'submit'), stop, explain}` |
+| `js/engines/quiz.js`, `srs.js` | quiz types mcq/multi/tf/fill/order/match (+`validQuestion`); SM-2 flashcards |
+| `js/data/branches.js` | branches (start, math, code, ml, dl, llm, apps, spec + colours) and `MLA.content.add([...])` / `init()` registry with normalisation (dedent of md/code/tests) |
+| `js/views/components.js` | mla-icon, mla-md, mla-progress, stat-card, section-head, empty-state, branch-chip, level-badge, diff-chip, status-dot, mla-toasts, mla-modal, score-ring, branch-radar, list-tile, kbd-hint |
+| `js/views/editor.js` | `code-editor` (textarea + highlighted overlay, gutter, Tab/Shift+Tab, auto-indent, Ctrl/Cmd+Enter run, Ctrl+Shift+Enter submit, Ctrl+/ comment, Esc then Tab leaves, mobile key bar), `run-output`, `code-sample` (Run/Edit/Copy/Playground), `MLA.playground.newFile/openWith` |
+| `js/views/demos.js` | `<mla-demo name>`: gradient-descent, activations, linear-fit, overfit-poly, knn, kmeans, threshold, softmax, attention, bpe, convolution, neuron, positional, quantization, embeddings |
+| `js/views/quiz-view.js` | `quiz-runner`, `check-q` |
+| `js/views/map-view.js` | `view-map` (3 layouts, pan/zoom/pinch, search, chain highlight, drawer, goal banner). `setGoalFor` sets `profile.customGoal` + `profile.goal='custom'` |
+
+## Content format (concept files call `MLA.content.add([...])`)
+
+Concept: `{ id, branch, title, short?, level 1-3, minutes, prereqs:[ids], parent?, tags?, summary,
+why (md), objectives:[], sections:[...], when (md), pitfalls (md), takeaways:[], quiz:[questions],
+problems:[...], refs:[{title,url}] }`.
+
+Sections: `{type:'text', title, md}` · `{type:'code', title, md?, code, lang?('python'|'pytorch'|'bash'|'output'), run?(default true for python), after?}` ·
+`{type:'demo', title, md?, demo:'<name>'}` · `{type:'check', question:{...quiz question...}}`.
+
+Problem: `{ id (globally unique), title, difficulty 'easy'|'medium'|'hard', prompt (md), starter,
+solution, prelude?, hints:[], explain (md), tests:[...] }`.
+Test: `{ name?, setup? (py code), call (py expression), expect? (py expression; omitted ⇒ computed by
+running the reference solution on the same setup), tol?, hidden? }` or `{ name?, setup?, code: 'assert ...' }`.
+
+Authoring gotchas: content lives in JS template literals → escape markdown backticks as \`, never
+write `${`, and avoid backslashes in Python (or double them). Every problem's solution must pass all
+tests and the starter must fail at least one (enforced by the problems test).
+
+## Planned concept tree (64 concepts; prereqs in brackets; planned problems after →)
+
+- **start**: what-is-ml "What Is Machine Learning?" [] → learn-threshold
+- **math**: vectors-matrices [what-is-ml] → dot-product, matmul-loops, cosine-similarity · derivatives "Derivatives, Gradients & the Chain Rule" [what-is-ml] → numerical-derivative, numerical-gradient · probability [what-is-ml] → bayes-rule, gaussian-pdf · statistics [probability] → mean-var-std, pearson-correlation · information-theory "Entropy, Cross-Entropy & KL" [probability] → entropy-bits, cross-entropy-kl
+- **code**: python-essentials [what-is-ml] → word-frequencies, moving-average · numpy [python-essentials, vectors-matrices] → normalize-rows, pairwise-distances · data-preparation [numpy, statistics] → train-test-split, impute-mean · feature-engineering [data-preparation] → standard-scaler, one-hot-encode
+- **ml**: supervised-learning [what-is-ml, vectors-matrices] → nearest-centroid · loss-functions [supervised-learning, statistics] → mse-mae, binary-cross-entropy · gradient-descent [loss-functions, derivatives] (demo gradient-descent) → gd-minimize, minibatch-indices · linear-regression [gradient-descent, numpy] (demo linear-fit) → linreg-gd, normal-equation, r2-score · logistic-regression [linear-regression] → sigmoid-stable, logreg-train · overfitting [linear-regression] (demo overfit-poly) → polynomial-features, choose-degree · regularization [overfitting] → ridge-closed-form, l2-gradient-step · evaluation-metrics [logistic-regression] (demo threshold) → confusion-counts, precision-recall-f1, roc-auc · cross-validation [overfitting, data-preparation] → k-fold-splits, grid-search · knn [supervised-learning, numpy] (demo knn) → knn-classify · decision-trees [supervised-learning, information-theory] → gini-impurity, best-split · ensembles [decision-trees, overfitting] → bootstrap-majority, boosting-stumps · svm [logistic-regression, regularization] → hinge-loss-svm · naive-bayes [probability, supervised-learning] → naive-bayes-train-predict · kmeans [numpy, supervised-learning] (demo kmeans) → kmeans-assign-update, kmeans-full · pca [statistics, numpy] → pca-svd, explained-variance · sklearn-workflow [evaluation-metrics, cross-validation, feature-engineering] → sklearn-pipeline (scikit-learn)
+- **dl**: perceptron [logistic-regression] (demo neuron) → perceptron-train · activation-functions [perceptron, derivatives] (demo activations) → relu-leaky, softmax-stable, activation-derivatives · mlp [activation-functions, numpy] → dense-forward, mlp-forward · backpropagation [mlp, derivatives, loss-functions] → backprop-2layer, gradient-check · autograd [backpropagation] → value-autograd · training-loop [backpropagation, gradient-descent] → train-xor, early-stopping-epoch · optimizers [training-loop] → momentum-step, adam-step, warmup-cosine · normalization "Initialization, Normalization & Dropout" [training-loop, statistics] → layer-norm, inverted-dropout, he-init · pytorch [training-loop, optimizers] → linear-layer-class, sequential-model · cnn [mlp] (demo convolution) → conv-output-size, conv2d, max-pool · rnn [mlp, backpropagation] → rnn-forward, lstm-cell · embeddings [mlp, vectors-matrices] (demo embeddings) → embedding-lookup, most-similar, word-analogy
+- **llm**: text-representation [feature-engineering, python-essentials] → bag-of-words, tf-idf · language-models [text-representation, probability, information-theory] → bigram-model, perplexity · tokenization [text-representation] (demo bpe) → bpe-pair-counts, bpe-merge, bpe-train · attention [embeddings, activation-functions] (demo attention) → scaled-dot-product-attention, causal-mask · multi-head-attention [attention] → split-merge-heads, mha-forward · positional-encoding [attention] (demo positional) → sinusoidal-pe · transformer-block [multi-head-attention, positional-encoding, normalization] → ffn-gelu, transformer-block-forward · gpt [transformer-block, language-models, tokenization] → gpt-param-count, next-token-loss · decoding [gpt] (demo softmax) → temperature-softmax, top-k-top-p, greedy-generate · pretraining "Pretraining & Scaling Laws" [gpt] → training-compute, chinchilla · fine-tuning [pretraining] → chat-template, loss-mask · lora [fine-tuning] → lora-forward, lora-params · alignment "RLHF, DPO & Alignment" [fine-tuning, reinforcement-learning] → bradley-terry, dpo-loss · quantization [gpt] (demo quantization) → absmax-int8, kv-cache-memory · mini-gpt "Capstone: A Tiny GPT in NumPy" [decoding, gpt] → char-tokenizer, tiny-gpt-forward
+- **apps**: prompting [decoding] → few-shot-prompt, parse-json-output · rag [prompting, embeddings] → chunk-text, retrieve-top-k, build-rag-prompt · agents [prompting] → tool-dispatch, agent-loop (scripted fake LLM) · llm-evaluation [prompting, evaluation-metrics] → exact-match-f1, win-rate
+- **spec**: reinforcement-learning [probability, supervised-learning] → epsilon-greedy-bandit, q-learning-update, discounted-return · generative-models "Autoencoders, GANs & Diffusion" [mlp, probability] → forward-diffusion, reparameterization · vision-transformers [cnn, transformer-block] → image-to-patches · recommender-systems [embeddings, regularization] → mf-predict-sgd · mlops [evaluation-metrics, sklearn-workflow] → psi-drift · responsible-ai [evaluation-metrics] → fairness-metrics
+
+Each lesson: big idea/analogy → how it works (Unicode formulas in `$$` blocks) → code (runnable
+NumPy) → demo where listed → inline checks → when to use it → pitfalls → takeaways; quiz of ~5
+questions; problems with visible examples + hidden randomised tests.
+
+## Still to do (in order)
+
+1. `js/views/concept-view.js` — tabs Learn / Practice / Quiz / Notes (`?tab=` query); prereq card
+   with "recommended first" warning; why / objectives / sections / when / pitfalls / takeaways / refs;
+   auto-mark sections read via an IntersectionObserver sentinel at each section end; side TOC;
+   `P.visit(id)` on mount; quiz prepared with a seeded shuffle.
+2. `js/views/problem-view.js` — LeetCode layout: left tabs Description / Hints / Solution
+   (confirm before reveal → assisted) / Explanation (after solve); right `code-editor` (fill) +
+   console tabs Test cases / Result / Output; Run (visible tests) + Submit (all tests); draft
+   autosave per problem; reset to starter; download `.py`; prev/next problem; XP toast on accept.
+3. `practice-view.js` (problem list: search, branch/difficulty/status filters, solved counts by
+   difficulty, random unsolved, problem of the day), `playground.js` (files in
+   `state.playground.files`, new/rename/delete/import .py/download, Run/Stop, streamed output,
+   starter templates), `dashboard.js`, `tracks-view.js`, `review-view.js` (flashcards from the
+   glossary, SRS), `glossary-view.js`, `achievements-view.js`, `profile.js` (name, goal, theme
+   dark/darker/light, editor font size, run timeout, preload Python; export/import file with
+   Merge/Replace, copy/paste sync code, export all code as one `.py`, reset), `selftest` view (runs
+   every reference solution + starter in Pyodide), `js/app.js` (sidebar nav, topbar with Python
+   status chip, bottom nav, onboarding: name + goal track, theme apply, preload option).
+4. `js/data/tracks.js` (ML Foundations, Classical ML Practitioner, Deep Learning from Scratch,
+   Build an LLM from Scratch → mini-gpt, LLM Application Engineer, Fine-tuning & Alignment, Complete
+   Atlas `all:true`, plus hidden `custom` track whose `title`/`goals` are **getters** reading
+   `profile.customGoal`), `achievements.js`, `glossary.js` (~150 terms with `concept` links; doubles
+   as flashcards).
+5. `css/app.css` — port the base stylesheet (in the zip) and add styles for every class used in the
+   views (map-*, mnode*, hub*, edge*, lane*, editor*, ro-*, code-sample/code-block/code-btn,
+   demo-*, mini-table, att-*, bpe-*, conv-*, formula, diff, status-dot, branch-chip, light theme,
+   `--pink`, `--accent-soft`).
+6. `index.html` (script order: util, highlight, store, router, ui, graph, python, quiz, srs, data
+   files, gamification, progress, views, app), `manifest.webmanifest`, `sw.js` (cache app shell +
+   runtime-cache the Pyodide CDN so Python works offline after first load), `serve.js`,
+   `package.json`, `.nojekyll`, `.gitignore`, `.gitattributes`, `.github/workflows/deploy.yml`
+   (run tests, then deploy to GitHub Pages), `tools/make-icons.js` + icons, `README.md`,
+   `docs/CONTENT_GUIDE.md`.
+7. Content: write the 64 concepts in ~9 files (`js/data/concepts-*.js`), one branch at a time.
+8. Tests: `tests/graph.test.js`, `tests/content.test.js` (ids unique, prereqs exist, no cycles,
+   demos exist, quiz questions valid, tests well-formed), `tests/views.test.js` (load app in Node
+   with DOM stubs, compile every template — adapt the base's version), `tests/problems.test.js` +
+   `tests/run_problems.py` (CPython: solution passes all, starter fails ≥1, every Python code sample
+   compiles; runnable samples execute).
+9. Run in the browser via `node serve.js` + the built-in browser: map, lesson, a problem Run/Submit
+   with Pyodide, playground, export/import; then `/selftest`.
+
+Local environment: Node 24, Python 3.14.5 with numpy 2.5.3 and scikit-learn 1.9.0 (sklearn imports
+slowly — run with a long timeout or in the background).

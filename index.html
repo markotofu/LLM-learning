@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="ML Atlas: an interactive mind map of machine learning, neural networks and large language models, with lessons, runnable Python, quizzes and coding problems that run in your browser.">
+  <title>ML Atlas</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/app.css">
+  <script>
+    // apply the saved theme before first paint (avoids a flash of the wrong theme)
+    try { var t = JSON.parse(localStorage.getItem('mla.state.v1') || '{}').profile; if (t && (t.theme === 'light' || t.theme === 'darker')) document.documentElement.setAttribute('data-theme', t.theme); } catch (e) {}
+  </script>
+</head>
+<body>
+  <div id="app"><div style="padding:40px;font-family:system-ui;color:#8e99b8">Loading ML Atlas…</div></div>
+  <noscript>ML Atlas needs JavaScript enabled.</noscript>
+
+  <!-- Framework (vendored: no build step, works on GitHub Pages and from file://) -->
+  <script src="vendor/vue.global.prod.js"></script>
+
+  <!-- Core -->
+  <script src="js/core/util.js"></script>
+  <script src="js/core/highlight.js"></script>
+  <script src="js/core/store.js"></script>
+  <script src="js/core/router.js"></script>
+  <script src="js/core/ui.js"></script>
+
+  <!-- Engines (framework independent, unit tested in Node) -->
+  <script src="js/engines/graph.js"></script>
+  <script src="js/engines/python.js"></script>
+  <script src="js/engines/quiz.js"></script>
+  <script src="js/engines/srs.js"></script>
+
+  <!-- Content -->
+  <script src="js/data/branches.js"></script>
+  <script src="js/data/concepts-start-math.js"></script>
+  <script src="js/data/concepts-python-data.js"></script>
+  <script src="js/data/concepts-ml-core.js"></script>
+  <script src="js/data/concepts-ml-more.js"></script>
+  <script src="js/data/concepts-ml-unsup.js"></script>
+  <script src="js/data/concepts-nn-core.js"></script>
+  <script src="js/data/concepts-nn-more.js"></script>
+  <script src="js/data/concepts-llm-core.js"></script>
+  <script src="js/data/concepts-llm-more.js"></script>
+  <script src="js/data/concepts-apps.js"></script>
+  <script src="js/data/concepts-spec.js"></script>
+  <script src="js/data/glossary.js"></script>
+  <script src="js/data/tracks.js"></script>
+  <script src="js/data/achievements.js"></script>
+
+  <!-- Progress & gamification (after content) -->
+  <script src="js/core/gamification.js"></script>
+  <script src="js/core/progress.js"></script>
+
+  <!-- Views -->
+  <script src="js/views/components.js"></script>
+  <script src="js/views/editor.js"></script>
+  <script src="js/views/demos.js"></script>
+  <script src="js/views/quiz-view.js"></script>
+  <script src="js/views/map-view.js"></script>
+  <script src="js/views/concept-view.js"></script>
+  <script src="js/views/problem-view.js"></script>
+  <script src="js/views/practice-view.js"></script>
+  <script src="js/views/playground.js"></script>
+  <script src="js/views/dashboard.js"></script>
+  <script src="js/views/pages.js"></script>
+  <script src="js/views/profile.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // Offline support + installable app (only over http/https, e.g. GitHub Pages or `node serve.js`)
+    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+      window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+    }
+  </script>
+</body>
+</html>
