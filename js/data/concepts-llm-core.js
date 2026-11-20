@@ -390,7 +390,8 @@ def tfidf(docs):
     ],
     refs: [
       { title: 'scikit-learn — Text feature extraction', url: 'https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction' },
-      { title: 'Jurafsky & Martin — Speech and Language Processing (free draft)', url: 'https://web.stanford.edu/~jurafsky/slp3/' }
+      { title: 'Jurafsky & Martin — Speech and Language Processing (free draft)', url: 'https://web.stanford.edu/~jurafsky/slp3/' },
+      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 

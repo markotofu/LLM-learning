@@ -356,7 +356,8 @@ def roc_auc(y_true, scores):
     ],
     refs: [
       { title: 'Google ML Crash Course — Classification: accuracy, precision, recall, ROC/AUC', url: 'https://developers.google.com/machine-learning/crash-course/classification' },
-      { title: "scikit-learn — Metrics and scoring", url: "https://scikit-learn.org/stable/modules/model_evaluation.html" }
+      { title: "scikit-learn — Metrics and scoring", url: "https://scikit-learn.org/stable/modules/model_evaluation.html" },
+      { title: "Aurélien Géron — Hands-On Machine Learning with Scikit-Learn, Keras and TensorFlow (book; code and notebooks)", url: "https://github.com/ageron/handson-ml3" }
     ]
   },
 
@@ -647,7 +648,8 @@ def best_lambda(X, y, lambdas, k=5, seed=0):
     ],
     refs: [
       { title: 'scikit-learn — Cross-validation: evaluating estimator performance', url: 'https://scikit-learn.org/stable/modules/cross_validation.html' },
-      { title: 'Bergstra & Bengio — Random Search for Hyper-Parameter Optimization (2012)', url: 'https://www.jmlr.org/papers/v13/bergstra12a.html' }
+      { title: 'Bergstra & Bengio — Random Search for Hyper-Parameter Optimization (2012)', url: 'https://www.jmlr.org/papers/v13/bergstra12a.html' },
+      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 
@@ -867,7 +869,8 @@ def knn_regress(X_train, y_train, X_test, k):
     ],
     refs: [
       { title: 'scikit-learn — Nearest Neighbors', url: 'https://scikit-learn.org/stable/modules/neighbors.html' },
-      { title: "Stanford CS231n — Image classification and nearest neighbours", url: "https://cs231n.github.io/classification/" }
+      { title: "Stanford CS231n — Image classification and nearest neighbours", url: "https://cs231n.github.io/classification/" },
+      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 
@@ -1192,7 +1195,8 @@ def best_split(x, y):
     ],
     refs: [
       { title: 'scikit-learn — Decision Trees', url: 'https://scikit-learn.org/stable/modules/tree.html' },
-      { title: 'R2D3 — A visual introduction to machine learning', url: 'http://www.r2d3.us/visual-intro-to-machine-learning-part-1/' }
+      { title: 'R2D3 — A visual introduction to machine learning', url: 'http://www.r2d3.us/visual-intro-to-machine-learning-part-1/' },
+      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 
@@ -1466,7 +1470,8 @@ def predict_boosting(f0, stumps, x_new, lr=0.1):
     ],
     refs: [
       { title: 'scikit-learn — Ensemble methods', url: 'https://scikit-learn.org/stable/modules/ensemble.html' },
-      { title: 'XGBoost — Introduction to boosted trees', url: 'https://xgboost.readthedocs.io/en/stable/tutorials/model.html' }
+      { title: 'XGBoost — Introduction to boosted trees', url: 'https://xgboost.readthedocs.io/en/stable/tutorials/model.html' },
+      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   }
   ]);

@@ -372,7 +372,8 @@ def train_and_test(xs, ys, test_fraction=0.25):
     ],
     refs: [
       { title: 'Google — Machine Learning Crash Course', url: 'https://developers.google.com/machine-learning/crash-course', note: 'free, practical introduction' },
-      { title: 'Dive into Deep Learning (d2l.ai)', url: 'https://d2l.ai/', note: 'free interactive textbook' }
+      { title: 'Dive into Deep Learning (d2l.ai)', url: 'https://d2l.ai/', note: 'free interactive textbook' },
+      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 

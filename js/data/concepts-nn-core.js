@@ -797,7 +797,8 @@ def mlp_forward(X, layers):
     ],
     refs: [
       { title: '3Blue1Brown — Neural networks (series)', url: 'https://www.3blue1brown.com/topics/neural-networks' },
-      { title: 'Dive into Deep Learning — Multilayer Perceptrons', url: 'https://d2l.ai/chapter_multilayer-perceptrons/index.html' }
+      { title: 'Dive into Deep Learning — Multilayer Perceptrons', url: 'https://d2l.ai/chapter_multilayer-perceptrons/index.html' },
+      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 

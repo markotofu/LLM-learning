@@ -333,7 +333,9 @@ def train_linear_svm(X, y, lam=0.01, lr=0.1, epochs=200):
     ],
     refs: [
       { title: 'scikit-learn — Support Vector Machines', url: 'https://scikit-learn.org/stable/modules/svm.html' },
-      { title: "Stanford CS229 — Machine Learning lecture notes (SVMs and kernels)", url: "https://cs229.stanford.edu/main_notes.pdf" }
+      { title: "Stanford CS229 — Machine Learning lecture notes (SVMs and kernels)", url: "https://cs229.stanford.edu/main_notes.pdf" },
+      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" },
+      { title: "Aurélien Géron — Hands-On Machine Learning with Scikit-Learn, Keras and TensorFlow (book; code and notebooks)", url: "https://github.com/ageron/handson-ml3" }
     ]
   },
 
@@ -662,7 +664,8 @@ def doc_log_odds(log_prior, log_likelihood, vocab, doc):
     ],
     refs: [
       { title: 'scikit-learn — Naive Bayes', url: 'https://scikit-learn.org/stable/modules/naive_bayes.html' },
-      { title: 'Paul Graham — A Plan for Spam (2002)', url: 'http://www.paulgraham.com/spam.html' }
+      { title: 'Paul Graham — A Plan for Spam (2002)', url: 'http://www.paulgraham.com/spam.html' },
+      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 
@@ -1485,7 +1488,8 @@ def final_test_accuracy(X_train, y_train, X_test, y_test, Cs):
     ],
     refs: [
       { title: 'scikit-learn — Getting started', url: 'https://scikit-learn.org/stable/getting_started.html' },
-      { title: 'scikit-learn — Pipelines and composite estimators', url: 'https://scikit-learn.org/stable/modules/compose.html' }
+      { title: 'scikit-learn — Pipelines and composite estimators', url: 'https://scikit-learn.org/stable/modules/compose.html' },
+      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   }
   ]);

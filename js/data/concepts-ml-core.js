@@ -288,7 +288,8 @@ def majority_baseline_accuracy(y_train, y_test):
     ],
     refs: [
       { title: 'Google ML Crash Course — Framing', url: 'https://developers.google.com/machine-learning/crash-course' },
-      { title: "Stanford CS229 — Machine Learning lecture notes", url: "https://cs229.stanford.edu/main_notes.pdf" }
+      { title: "Stanford CS229 — Machine Learning lecture notes", url: "https://cs229.stanford.edu/main_notes.pdf" },
+      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 
@@ -1261,7 +1262,8 @@ def r2_score(y, y_hat):
     ],
     refs: [
       { title: 'Google ML Crash Course — Linear regression', url: 'https://developers.google.com/machine-learning/crash-course/linear-regression' },
-      { title: "scikit-learn — Linear models", url: "https://scikit-learn.org/stable/modules/linear_model.html" }
+      { title: "scikit-learn — Linear models", url: "https://scikit-learn.org/stable/modules/linear_model.html" },
+      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 
@@ -1564,7 +1566,8 @@ def predict(X, w, b, threshold=0.5):
     ],
     refs: [
       { title: 'scikit-learn — Logistic regression', url: 'https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression' },
-      { title: "Stanford CS229 — Machine Learning lecture notes", url: "https://cs229.stanford.edu/main_notes.pdf" }
+      { title: "Stanford CS229 — Machine Learning lecture notes", url: "https://cs229.stanford.edu/main_notes.pdf" },
+      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 
@@ -2021,7 +2024,8 @@ def ridge_step(X, y, w, b, lr, lam):
     ],
     refs: [
       { title: 'scikit-learn — Ridge, Lasso and Elastic-Net', url: 'https://scikit-learn.org/stable/modules/linear_model.html' },
-      { title: "Hastie, Tibshirani & Friedman — The Elements of Statistical Learning (free book)", url: "https://hastie.su.domains/ElemStatLearn/" }
+      { title: "Hastie, Tibshirani & Friedman — The Elements of Statistical Learning (free book)", url: "https://hastie.su.domains/ElemStatLearn/" },
+      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   }
   ]);
