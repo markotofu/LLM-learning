@@ -39,6 +39,7 @@ h2 { font-size: 1.4rem; } h3 { font-size: 1.12rem; } h4 { font-size: 1rem; } h5 
 p { margin: 0 0 0.9em; }
 code, pre, kbd, textarea.editor-input { font-family: var(--mono); font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
 code { background: var(--panel3); padding: 0.1em 0.38em; border-radius: 5px; font-size: 0.88em; color: var(--code-text); }
+:not(pre) > code { overflow-wrap: anywhere; } /* long inline code may break instead of widening the page */
 pre { background: var(--editor-bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; overflow: auto; font-size: 0.85rem; line-height: 1.5; margin: 0 0 1em; }
 pre code { background: none; padding: 0; }
 button, input, select, textarea { font-family: inherit; font-size: 0.95rem; }
@@ -93,6 +94,8 @@ li { margin-bottom: 0.3em; }
 /* ---------- Generic UI ---------- */
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--border); font-size: 0.8rem; color: var(--muted); white-space: nowrap; text-decoration: none; }
 .chip.tiny { font-size: 0.7rem; padding: 2px 8px; }
+.chip { max-width: 100%; }
+@media (max-width: 600px) { .chip { white-space: normal; } } /* long chip labels wrap on phones */
 .chip.clickable { cursor: pointer; } .chip.clickable:hover { border-color: var(--accent); color: var(--text); }
 .chip.accent { background: var(--accent-soft); color: var(--accent2); border-color: transparent; }
 .chip.green { background: var(--green-soft); color: var(--green); border-color: transparent; }
@@ -293,13 +296,34 @@ pre.hl { margin: 0; border: 0; border-radius: 0; background: transparent; paddin
 /* ---------- Demos ---------- */
 .demo { margin: 4px 0 1em; }
 .demo-card { background: var(--panel2); display: flex; flex-direction: column; gap: 10px; }
-.demo-canvas { width: 100%; max-width: 640px; height: auto; display: block; margin: 0 auto; background: var(--editor-bg); border: 1px solid var(--border); border-radius: 8px; aspect-ratio: 560 / 300; }
-.demo-canvas.short { aspect-ratio: 560 / 150; }
-.demo-canvas.square { aspect-ratio: 1 / 1; max-width: 300px; }
+.demo-canvas { width: 100%; max-width: 640px; height: auto; display: block; margin: 0 auto; background: var(--editor-bg); border: 1px solid var(--border); border-radius: 8px; aspect-ratio: auto 560 / 300; }
+.demo-canvas.short { aspect-ratio: auto 560 / 150; }
+.demo-canvas.square { aspect-ratio: auto 1 / 1; max-width: 300px; }
 .demo-canvas.clickable { cursor: crosshair; }
 .demo-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px 16px; font-size: 0.84rem; color: var(--muted); }
 .demo-controls label, label.demo-controls { display: flex; flex-direction: column; gap: 2px; }
 .demo-controls b { color: var(--text); }
+/* Static SVG diagrams (js/views/diagrams.js); colours follow the theme variables */
+.diagram-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.diagram { width: 100%; min-width: 560px; max-width: 860px; height: auto; display: block; margin: 0 auto; background: var(--editor-bg); border: 1px solid var(--border); border-radius: 8px; }
+.diagram text { fill: var(--text); font-family: inherit; }
+.diagram .dg-t { font-size: 14px; font-weight: 600; }
+.diagram .dg-s { font-size: 12px; fill: var(--muted); }
+.diagram .dg-b { font-weight: 700; letter-spacing: 0.06em; }
+.diagram rect, .diagram circle { stroke-width: 1.5; }
+.diagram .dg-box { fill: var(--panel); stroke: var(--border2); }
+.diagram .dg-acc { fill: var(--accent-soft); stroke: var(--accent); }
+.diagram .dg-grn { fill: var(--green-soft); stroke: var(--green); }
+.diagram .dg-amb { fill: var(--amber-soft); stroke: var(--amber); }
+.diagram .dg-pur { fill: var(--purple-soft); stroke: var(--purple); }
+.diagram .dg-red { fill: var(--red-soft); stroke: var(--red); }
+.diagram .dg-cyn { fill: var(--cyan-soft); stroke: var(--cyan); }
+.diagram .dg-line { fill: none; stroke: var(--muted); stroke-width: 1.6; }
+.diagram .dg-line.acc { stroke: var(--accent); stroke-width: 2.2; }
+.diagram .dg-line.dash { stroke-dasharray: 5 4; }
+.diagram .dg-head { fill: var(--muted); fill: context-stroke; }
+.diagram-hint { display: none; }
+@media (max-width: 600px) { .diagram-hint { display: block; } }
 .mini-table { font-size: 0.82rem; margin: 0; }
 .mini-table th, .mini-table td { padding: 4px 8px; }
 .mini-table.confusion td.good { background: var(--green-soft); } .mini-table.confusion td.bad { background: var(--red-soft); }

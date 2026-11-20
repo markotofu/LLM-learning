@@ -349,6 +349,7 @@ k — the number of gradient-descent steps, taken with the best fixed step size 
 :::
 
 With κ = 1 (a perfectly round bowl) a single step is enough; with κ = 100 each step removes only about 2% of the remaining error. In a long, narrow valley gradient descent zigzags across the steep direction while crawling along the flat one. Remedies: **standardize the features** (which reduces κ for linear models enormously), normalization layers, momentum, adaptive methods such as Adam (which rescale each parameter — a cheap, diagonal approximation of curvature) and second-order methods.` },
+      { type: 'demo', title: 'Interactive: gradient descent in a narrow valley', demo: 'conditioning' },
       { type: 'code', title: 'Iterations needed on round and narrow bowls', code: `
 import numpy as np
 for lam_min, lam_max in [(1, 1), (1, 10), (1, 100), (1, 1000)]:
@@ -842,6 +843,7 @@ Beta(1, 1) is the uniform prior, saying that every rate between 0 and 1 is equal
 :::
 
 Updating is just adding counts. A **95% credible interval** is the range that contains the parameter with 95% posterior probability — the statement people usually (wrongly) read into a confidence interval. Other conjugate pairs: Normal–Normal for means, Gamma–Poisson for rates, Dirichlet–Multinomial for category probabilities (the basis of Laplace smoothing in Naive Bayes).` },
+      { type: 'demo', title: 'Interactive: prior + data = posterior', demo: 'beta' },
       { type: 'code', title: 'Updating beliefs about a click-through rate', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -1150,6 +1152,7 @@ n — the number of training points
 :::
 
 Maximizing it with gradient-based optimizers (what scikit-learn does by default) gives an automatic Occam's razor: a kernel that is too flexible is penalized even though it fits the training data better.` },
+      { type: 'demo', title: 'Interactive: fit a Gaussian process by clicking', demo: 'gp' },
       { type: 'check', question: { type: 'mcq', q: 'Far away from all training points, what does a GP with an RBF kernel and zero prior mean predict?', options: ['The value of the nearest training point', 'The prior mean (0), with the prior\'s full uncertainty', 'A straight-line extrapolation', 'An error'], answer: 1, explain: 'The kernel correlation vanishes, so the data no longer informs the prediction.' } },
       { type: 'text', title: 'Bayesian optimization', md: `Suppose f(x) is a validation score as a function of hyperparameters, and each evaluation costs a full training run. **Bayesian optimization** loops:
 

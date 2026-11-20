@@ -725,6 +725,7 @@ def kmeans(X, k, seed=0, max_iter=100):
 3. and so on — each component orthogonal to the previous ones.
 
 Keeping only the first k components gives the best k-dimensional linear approximation of the data (smallest squared reconstruction error). If two features are 95% redundant, one component captures almost everything both carried.` },
+      { type: 'demo', title: 'Interactive: find the direction of greatest variance', demo: 'pca' },
       { type: 'text', title: 'How it is computed', md: `1. **Centre** the data: subtract each feature's mean (and usually **standardize**, so units don't dominate).
 2. The principal components are the eigenvectors of the covariance matrix Σ = XᵀX / (n − 1), sorted by eigenvalue; each eigenvalue is the variance along its component.
 3. In practice we use the **singular value decomposition** of the centred data instead (more stable, no need to form Σ):

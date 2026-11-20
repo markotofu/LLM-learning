@@ -277,13 +277,6 @@ You can't learn hyperparameters from the training loss (it would always prefer t
 2. For each fold i: train on the other k − 1 folds, evaluate on fold i.
 3. Report the **mean** of the k scores (and their standard deviation as a sense of uncertainty).
 
-\`\`\`text
-fold 1: [VAL] [train] [train] [train] [train]
-fold 2: [train] [VAL] [train] [train] [train]
-...
-fold 5: [train] [train] [train] [train] [VAL]
-\`\`\`
-
 Cost: k training runs. Cheap for classical models; often too expensive for big neural networks, which use a single validation set instead.
 
 Variants:
@@ -291,6 +284,7 @@ Variants:
 - **Group k-fold** — all examples from one patient/user/document stay in the same fold.
 - **Time-series split** — train on the past, validate on the next period, roll forward. Never shuffle time.
 - **Leave-one-out** — k = n; nearly unbiased but expensive and high-variance.` },
+      { type: 'demo', title: 'Diagram: five folds and a locked test set', demo: 'dg-cv' },
       { type: 'code', title: 'k-fold cross-validation from scratch', code: `
 import numpy as np
 rng = np.random.default_rng(0)

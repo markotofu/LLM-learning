@@ -1133,13 +1133,7 @@ def mean_at_k(metric, all_recommended, all_relevant, k):
       'Plan safe rollouts (shadow, canary, A/B) and retraining'
     ],
     sections: [
-      { type: 'text', title: 'The ML lifecycle', md: `\`\`\`text
-problem -> data -> features -> train -> evaluate -> deploy -> monitor --+
-   ^                                                                     |
-   +------------------------- retrain / redesign <----------------------+
-\`\`\`
-
-To **reproduce** any model — to debug it, audit it or roll back to it — you must be able to recreate it exactly. Version all of:
+      { type: 'demo', title: 'The ML lifecycle', demo: 'dg-lifecycle', after: `To **reproduce** any model — to debug it, audit it or roll back to it — you must be able to recreate it exactly. Version all of:
 - **code** (git), including feature-engineering code;
 - **data** (snapshots or content hashes; tools such as DVC);
 - **configuration and hyperparameters**, plus random seeds;

@@ -115,6 +115,7 @@ lr_min — the final, smallest learning rate
 progress — the fraction of the post-warmup training completed, from 0 to 1
 cos(π · progress) — goes from 1 down to −1, so the learning rate glides smoothly from lr_max down to lr_min
 :::` },
+      { type: 'demo', title: 'Interactive: shape a learning-rate schedule', demo: 'lr-schedule' },
       { type: 'text', title: 'Gradient clipping', md: `A single bad batch can produce a huge gradient that throws the parameters far away (the loss spikes or becomes NaN). **Gradient clipping** rescales the whole gradient vector whenever its norm exceeds a threshold c:
 
 $$ if ‖g‖ > c:  g ← g · c / ‖g‖ $$

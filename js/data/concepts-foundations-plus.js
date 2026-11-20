@@ -40,6 +40,7 @@ Example: for A = [[2, 1], [1, 2]], the vector [1, 1] becomes [3, 3] = 3·[1, 1],
 Why it matters:
 - **Symmetric matrices** (such as covariance matrices) have real eigenvalues and mutually perpendicular eigenvectors. For a covariance matrix those eigenvectors are exactly the **principal axes** of the data — PCA.
 - **Repeated multiplication**: A^k v = λ^k v. The direction with the largest |λ| eventually dominates. That is the idea behind **power iteration** (and PageRank), and why recurrent networks explode when |λ| > 1 and vanish when |λ| < 1.` },
+      { type: 'demo', title: 'Interactive: what a 2×2 matrix does to directions', demo: 'eigen' },
       { type: 'code', title: 'Eigenvectors with NumPy and power iteration', code: `
 import numpy as np
 A = np.array([[2.0, 1.0], [1.0, 2.0]])

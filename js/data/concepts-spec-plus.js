@@ -825,6 +825,7 @@ Dice ranges from 0 (no overlap) to 1 (perfect) and is always at least as large a
 :::
 
 **Instance segmentation** (Mask R-CNN) adds a mask head to a detector. Promptable models such as SAM segment whatever you click on or describe.` },
+      { type: 'demo', title: 'Diagram: the U-Net', demo: 'dg-unet' },
       { type: 'code', title: 'Dice and IoU for masks', code: `
 import numpy as np
 gt = np.zeros((8, 8), dtype=bool)

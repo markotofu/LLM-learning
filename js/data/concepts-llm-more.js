@@ -1065,6 +1065,7 @@ h — the layer's output, of length d_out
 **Parameter count**: a full d × d matrix has d² weights; LoRA trains r·(d_in + d_out). For d = 4096 and r = 8 that's 65,536 instead of 16.8M — 0.4%.
 
 In code with row-vector inputs (x of shape (n, d_in), W stored as (d_in, d_out)), the same thing reads h = x W + (α/r)·(x A) B with A: (d_in, r) and B: (r, d_out).` },
+      { type: 'demo', title: 'Diagram: a LoRA adapter', demo: 'dg-lora' },
       { type: 'code', title: 'LoRA in NumPy: only A and B are trained', code: `
 import numpy as np
 rng = np.random.default_rng(0)

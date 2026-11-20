@@ -1,5 +1,60 @@
 # ML Atlas — build handoff
 
+## STATUS UPDATE (session 5, 2026-11-20): diagrams, 6 new demos, regression fixes, roadmap
+
+Session 4's work is committed as `6badf8c` and pushed to `origin/main`. Everything below is NOT committed yet.
+
+**Diagrams.** `js/views/diagrams.js` registers static SVG components named `demo-dg-<name>`, used in lessons as `{ type: 'demo', demo: 'dg-<name>' }`.
+- They are styled by the `.diagram .dg-*` classes in `app.css`, so they follow the theme.
+- Each uses a fixed 820-wide viewBox. Below about 560 px the diagram scrolls sideways, with a hint.
+- The 8 diagrams:
+  - transformer-block;
+  - rag: replaces the old ASCII sketch; "The pipeline" is now a demo section with `after` text;
+  - agents;
+  - diffusion-models;
+  - detection-segmentation (U-Net);
+  - mlops: replaces the ASCII sketch;
+  - cross-validation: replaces the ASCII fold sketch;
+  - lora.
+- Diagram sections get a "layers" icon in the lesson's table of contents.
+- Layout was verified with an in-page checker: `getBBox()` finds text overflowing its box or overlapping other text, and `getPointAtLength()` finds lines crossing text.
+
+**Demos.** `js/views/demos-more.js` uses `MLA.demoKit`, which `demos.js` now exports. It holds 6 demos, each placed in one lesson:
+- `eigen` in eigen-svd: verified against hand calculations, including shear and rotation.
+- `conditioning` in optimization-theory: at κ = 50, the best fixed step takes 155 steps and tuned momentum takes 28.
+- `beta` in bayesian-methods: credible intervals match SciPy.
+- `gp` in gaussian-processes: the log marginal likelihood matches NumPy; the "fit" button grid-searches ℓ, σ_f and σ_n.
+- `pca` in pca.
+- `lr-schedule` in optimizers.
+
+That makes 25 demos in total.
+
+**Bugs found and fixed:**
+1. `setup()` only compared canvas widths. A 300-px square canvas kept the default 150-px height on screens with a device-pixel ratio of 1, which squashed the diffusion demo.
+2. `.demo-canvas` forced a 560:300 aspect ratio, distorting 8 older demos drawn at other heights. It now uses `aspect-ratio: auto 560 / 300`.
+3. Two things widened the page on phones: a long "Builds on" chip (on gaussian-processes) and long inline code (on optimizers). Chips now wrap below 600 px, and inline code may break anywhere.
+4. Demo captions used `tiny dim`, which measured 3.1:1 contrast on the dark theme and 2.8:1 on the light theme. They now use `small muted` (5.6:1). App-wide `--dim` is still low contrast: ROADMAP item 4.
+
+**Regression results:**
+- `npm test`: 0 failures. Content 9917, views 249, problems 846. That covers 230 problems and 202 samples, with 1 skipped because matplotlib is not installed locally.
+- Browser self-test: 230/230 problems and 185/185 samples.
+- Smoke tests:
+  - problem Run, and Submit (rejected for the starter, accepted for the solution);
+  - the playground;
+  - sync-code export and Merge import (merging a state with itself changes only `stats`);
+  - switching between the three themes;
+  - every route renders;
+  - all 34 demo sections render.
+
+  The preview browser's saved progress was backed up first and restored afterwards.
+- At 375 px wide, none of the 105 lessons or 15 other routes scrolls sideways.
+
+**Roadmap.** `docs/ROADMAP.md` lists improvements by priority, with pros, cons and effort.
+
+**Known limitation.** "Sections read" and answered checks are stored by section position. Inserting sections, as this session did in 12 lessons, shifts them. ROADMAP item 2 proposes stable section ids.
+
+**Totals.** 105 concepts, 230 problems, 532 quiz questions, 594 glossary terms, 25 demos, 8 diagrams.
+
 ## STATUS UPDATE (session 4, end of 2026-11-20): frontier lessons, capstones, legal pages, review pass (105 concepts)
 - New lessons in `concepts-frontier-plus.js`: multimodal-models, advanced-agents, ssm-architectures.
 - Capstones in `concepts-capstones.js` (each code cell is self-contained, since samples run in isolation):

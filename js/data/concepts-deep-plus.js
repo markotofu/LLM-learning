@@ -545,6 +545,7 @@ z — new standard Gaussian noise
 :::
 
 A thousand network calls per image is slow. **DDIM** makes the process deterministic and skips steps (20–50 suffice); higher-order ODE solvers do better still; **distillation** and **consistency models** produce good samples in 1–4 steps.` },
+      { type: 'demo', title: 'Diagram: training and sampling side by side', demo: 'dg-diffusion' },
       { type: 'code', title: 'Sampling with a perfect denoiser', code: `
 import numpy as np
 rng = np.random.default_rng(0)

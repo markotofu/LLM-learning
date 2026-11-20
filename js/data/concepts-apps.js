@@ -298,16 +298,7 @@ def parse_reply(reply, schema):
       'Build a grounded prompt with citations, and evaluate retrieval with recall@k and MRR'
     ],
     sections: [
-      { type: 'text', title: 'The pipeline', md: `\`\`\`text
-INDEXING   (offline, whenever documents change)
-  documents -> clean -> split into chunks -> embed each chunk -> store vectors + text + metadata
-
-QUERYING   (online, for every question)
-  question -> embed -> find the k most similar chunks -> prompt = instructions + chunks + question
-           -> LLM writes an answer that cites the chunks
-\`\`\`
-
-Why not paste all the documents into the prompt? With thousands of documents it would cost too much, take too long and exceed the context window, and models use very long contexts imperfectly: facts buried in the middle of a huge prompt are more easily missed. Retrieval selects the few passages that matter. (For a small, stable set of documents that does fit, pasting everything — with prompt caching — is a perfectly good baseline to try first.)` },
+      { type: 'demo', title: 'The pipeline', demo: 'dg-rag', after: `Why not paste all the documents into the prompt? With thousands of documents it would cost too much, take too long and exceed the context window, and models use very long contexts imperfectly: facts buried in the middle of a huge prompt are more easily missed. Retrieval selects the few passages that matter. (For a small, stable set of documents that does fit, pasting everything — with prompt caching — is a perfectly good baseline to try first.)` },
       { type: 'text', title: 'Chunking', md: `Documents are split into **chunks** of a few hundred tokens before embedding, because one vector for a whole manual would blur dozens of topics together, and you only want to pass the relevant part to the model.
 
 Chunk size is a trade-off: small chunks match precisely but lose surrounding context; large chunks keep context but have fuzzier embeddings, and fewer of them fit in the prompt. Consecutive chunks usually **overlap** so a key sentence isn't cut in half:
@@ -694,6 +685,7 @@ give up with an error after N steps
 \`\`\`
 
 This pattern was popularized as **ReAct** (reason + act): the model interleaves reasoning ("I need both populations first"), actions (tool calls) and observations (results). Modern models do this natively through tool calling and their built-in reasoning.` },
+      { type: 'demo', title: 'Diagram: the agent loop', demo: 'dg-agent' },
       { type: 'code', title: 'An agent loop with a scripted model', md: `The "model" here is a scripted stand-in so the example runs in your browser, but the loop, the tools and the error handling are exactly what a real agent uses. Note the calculator: it parses the expression safely instead of calling \`eval()\` on model output.`, code: `
 import ast, operator
 

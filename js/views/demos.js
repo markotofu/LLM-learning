@@ -11,7 +11,7 @@
   }
   function setup(cv, w, h) {
     const dpr = Math.min(2, global.devicePixelRatio || 1);
-    if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+    if (cv.width !== w * dpr || cv.height !== h * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
     const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
     return ctx;
   }
@@ -40,6 +40,8 @@
   function canvasPoint(cv, e, W, H) { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; }
   function softmax(xs) { const m = Math.max(...xs); const e = xs.map(x => Math.exp(x - m)); const s = e.reduce((a, b) => a + b, 0); return e.map(x => x / s); }
   const redrawOnChange = { mounted() { this.$nextTick(() => this.draw()); this.$watch(() => JSON.stringify(this.$data), () => this.$nextTick(() => this.draw())); } };
+  // Shared with js/views/demos-more.js
+  MLA.demoKit = { palette, setup, frame, curve, dot, gauss, canvasPoint, softmax, redrawOnChange, niceStep, fmt };
 
   C['mla-demo'] = { props: { name: String }, computed: { comp() { return C['demo-' + this.name] ? 'demo-' + this.name : null; } }, template: `<div class="demo"><component v-if="comp" :is="comp" /><div v-else class="callout warn">Unknown demo: {{ name }}</div></div>` };
 
@@ -82,7 +84,7 @@
       </div>
       <div class="btn-row"><button class="btn sm" @click="step">Take one step</button><button class="btn sm primary" @click="run">Run 25 steps</button><button class="btn sm ghost" @click="reset">Reset</button></div>
       <p v-if="diverged" class="feedback bad">Diverged! The learning rate is so large that every step overshoots the minimum by more than it gains.</p>
-      <p class="tiny dim mt">The dashed pink line is the tangent: its slope is the gradient. Each step moves w by −(learning rate × gradient). Try 0.05 (slow), 0.3 (fast), 0.95 (oscillates) and 1.05 (diverges) on the bowl, then try the bumpy curve from different starting points.</p>
+      <p class="small muted mt">The dashed pink line is the tangent: its slope is the gradient. Each step moves w by −(learning rate × gradient). Try 0.05 (slow), 0.3 (fast), 0.95 (oscillates) and 1.05 (diverges) on the bowl, then try the bumpy curve from different starting points.</p>
     </div>`
   };
 
@@ -112,7 +114,7 @@
       <canvas ref="cv" class="demo-canvas"></canvas>
       <label class="demo-controls">Input x = <b>{{ x }}</b><input type="range" min="-5" max="5" step="0.1" v-model.number="x"></label>
       <table class="mini-table"><thead><tr><th>function</th><th>f(x)</th><th>f′(x) (gradient)</th></tr></thead><tbody><tr v-for="r in rows" :key="r.n"><td>{{ r.n }}</td><td class="mono">{{ r.f.toFixed(4) }}</td><td class="mono">{{ r.d.toFixed(4) }}</td></tr></tbody></table>
-      <p class="tiny dim">Notice how the sigmoid and tanh derivatives shrink towards 0 for large |x| (vanishing gradients), while ReLU keeps a gradient of exactly 1 for every positive input.</p>
+      <p class="small muted">Notice how the sigmoid and tanh derivatives shrink towards 0 for large |x| (vanishing gradients), while ReLU keeps a gradient of exactly 1 for every positive input.</p>
     </div>`
   };
 
@@ -155,7 +157,7 @@
         <label>Intercept b <b>{{ b.toFixed(2) }}</b><input type="range" min="-4" max="6" step="0.01" v-model.number="b"></label>
       </div>
       <div class="btn-row"><button class="btn sm primary" @click="fit">Fit with gradient descent</button><button class="btn sm ghost" @click="residuals=!residuals">{{ residuals?'Hide':'Show' }} errors</button><button class="btn sm ghost" @click="resetData">Reset data</button></div>
-      <p class="tiny dim mt">Red lines are the errors (residuals). MSE is the average of their squares. Click the chart to add points — try adding an outlier far from the line and watch how much it drags the fit.</p>
+      <p class="small muted mt">Red lines are the errors (residuals). MSE is the average of their squares. Click the chart to add points — try adding an outlier far from the line and watch how much it drags the fit.</p>
     </div>`
   };
 
@@ -206,9 +208,9 @@
       <canvas ref="cv" class="demo-canvas"></canvas>
       <label class="demo-controls">Model complexity (polynomial degree) <b>{{ deg }}</b><input type="range" min="0" max="11" step="1" v-model.number="deg"></label>
       <p class="small">{{ verdict[1] }}</p>
-      <div class="tiny dim">Error vs. complexity — <span style="color:var(--amber)">training error</span> keeps falling, <span style="color:var(--purple)">test error</span> is U-shaped:</div>
+      <div class="tiny muted">Error vs. complexity — <span style="color:var(--amber)">training error</span> keeps falling, <span style="color:var(--purple)">test error</span> is U-shaped:</div>
       <canvas ref="cv2" class="demo-canvas short"></canvas>
-      <p class="tiny dim">Orange dots: 12 training points. Hollow dots: unseen test points. Dashed grey: the true function the data came from.</p>
+      <p class="small muted">Orange dots: 12 training points. Hollow dots: unseen test points. Dashed grey: the true function the data came from.</p>
     </div>`
   };
 
@@ -234,7 +236,7 @@
       <canvas ref="cv" class="demo-canvas clickable" @click="add"></canvas>
       <label class="demo-controls">Neighbours k = <b>{{ k }}</b><input type="range" min="1" max="25" step="2" v-model.number="k"></label>
       <div class="row"><span class="small muted">Click to add a point of class:</span><div class="pills"><button :class="{active:cls===0}" @click="cls=0">cyan</button><button :class="{active:cls===1}" @click="cls=1">purple</button></div><button class="btn xs ghost" @click="resetPts">Reset</button></div>
-      <p class="tiny dim mt">Background colour = the class a new point would get. With k = 1 the boundary is jagged and every noisy point carves out its own island (overfitting). Larger k smooths the boundary (more bias, less variance).</p>
+      <p class="small muted mt">Background colour = the class a new point would get. With k = 1 the boundary is jagged and every noisy point carves out its own island (overfitting). Larger k smooths the boundary (more bias, less variance).</p>
     </div>`
   };
   C['demo-knn'].methods.resetPts = function () { this.pts = knnData(); };
@@ -267,7 +269,7 @@
       <canvas ref="cv" class="demo-canvas"></canvas>
       <label class="demo-controls">Number of clusters k = <b>{{ k }}</b><input type="range" min="2" max="6" step="1" v-model.number="k"></label>
       <div class="btn-row"><button class="btn sm primary" :disabled="phase==='done'" @click="next">Next step</button><button class="btn sm" :disabled="phase==='done'" @click="runAll">Run to convergence</button><button class="btn sm ghost" @click="init">New random start</button></div>
-      <p class="tiny dim mt">The data has 4 real groups. Try k = 4 with several random starts: sometimes k-means gets stuck in a worse solution (higher inertia) — which is why libraries run it several times (n_init) and use smarter k-means++ starts.</p>
+      <p class="small muted mt">The data has 4 real groups. Try k = 4 with several random starts: sometimes k-means gets stuck in a worse solution (higher inertia) — which is why libraries run it several times (n_init) and use smarter k-means++ starts.</p>
     </div>`
   };
 
@@ -301,15 +303,15 @@
     template: `
     <div class="card demo-card">
       <div class="grid cols-2" style="align-items:start;gap:12px">
-        <div><div class="tiny dim">Model scores for <span style="color:var(--pink)">actual positives</span> and <span style="color:var(--cyan)">actual negatives</span></div><canvas ref="cv" class="demo-canvas"></canvas></div>
-        <div><div class="tiny dim">ROC curve (AUC = {{ roc.auc.toFixed(3) }}) — dot = current threshold</div><canvas ref="cv2" class="demo-canvas square"></canvas></div>
+        <div><div class="tiny muted">Model scores for <span style="color:var(--pink)">actual positives</span> and <span style="color:var(--cyan)">actual negatives</span></div><canvas ref="cv" class="demo-canvas"></canvas></div>
+        <div><div class="tiny muted">ROC curve (AUC = {{ roc.auc.toFixed(3) }}) — dot = current threshold</div><canvas ref="cv2" class="demo-canvas square"></canvas></div>
       </div>
       <label class="demo-controls">Decision threshold <b>{{ t.toFixed(2) }}</b> — predict “positive” when score ≥ threshold<input type="range" min="0.01" max="0.99" step="0.01" v-model.number="t"></label>
       <div class="grid cols-2" style="gap:12px;align-items:start">
         <table class="mini-table confusion"><thead><tr><th></th><th>predicted +</th><th>predicted −</th></tr></thead><tbody><tr><th>actual +</th><td class="good">TP {{ m.tp }}</td><td class="bad">FN {{ m.fn }}</td></tr><tr><th>actual −</th><td class="bad">FP {{ m.fp }}</td><td class="good">TN {{ m.tn }}</td></tr></tbody></table>
         <table class="mini-table"><tbody><tr><td>Accuracy</td><td class="mono">{{ m.acc.toFixed(3) }}</td></tr><tr><td>Precision = TP/(TP+FP)</td><td class="mono">{{ m.prec.toFixed(3) }}</td></tr><tr><td>Recall = TP/(TP+FN)</td><td class="mono">{{ m.rec.toFixed(3) }}</td></tr><tr><td>F1</td><td class="mono">{{ m.f1.toFixed(3) }}</td></tr><tr><td>False positive rate</td><td class="mono">{{ m.fpr.toFixed(3) }}</td></tr></tbody></table>
       </div>
-      <p class="tiny dim">Raise the threshold: fewer false alarms (precision ↑) but more misses (recall ↓). There is no free lunch — you choose the trade-off your application needs.</p>
+      <p class="small muted">Raise the threshold: fewer false alarms (precision ↑) but more misses (recall ↓). There is no free lunch — you choose the trade-off your application needs.</p>
     </div>`
   };
 
@@ -336,7 +338,7 @@
       <div class="small muted">Prompt: “The child wanted to adopt a ___” — the model's raw scores (logits) for 7 candidate tokens:</div>
       <div class="bars mt">
         <div v-for="(t,i) in tokens" :key="t" class="bar-row" :class="{off: !kept.has(i)}">
-          <span class="mono bar-label">{{ t }}</span><span class="tiny dim mono" style="width:44px">{{ logits[i].toFixed(1) }}</span>
+          <span class="mono bar-label">{{ t }}</span><span class="tiny muted mono" style="width:44px">{{ logits[i].toFixed(1) }}</span>
           <div class="bar"><span :style="{width: (final[i]*100)+'%'}"></span></div><span class="mono tiny" style="width:52px;text-align:right">{{ (final[i]*100).toFixed(1) }}%</span>
         </div>
       </div>
@@ -347,7 +349,7 @@
       </div>
       <div class="row between"><div class="btn-row"><button class="btn sm primary" @click="sample(1)">Sample 1 token</button><button class="btn sm" @click="sample(100)">Sample 100</button><button class="btn sm ghost" @click="clear">Clear</button></div><span class="small muted">entropy {{ entropy.toFixed(2) }} bits</span></div>
       <div v-if="draws" class="small mt">Sampled ({{ draws }}): <span v-for="(c,t) in tally" :key="t" class="chip" style="margin:2px">{{ t }} × {{ c }}</span></div>
-      <p class="tiny dim mt">Low temperature sharpens the distribution (T → 0 is greedy decoding); high temperature flattens it. top-k keeps the k most likely tokens; top-p keeps the smallest set whose probability adds up to p. Greyed tokens can no longer be sampled.</p>
+      <p class="small muted mt">Low temperature sharpens the distribution (T → 0 is greedy decoding); high temperature flattens it. top-k keeps the k most likely tokens; top-p keeps the smallest set whose probability adds up to p. Greyed tokens can no longer be sampled.</p>
     </div>`
   };
 
@@ -379,9 +381,9 @@
       <div class="att-tokens mt"><button v-for="(t,i) in toks" :key="i" class="att-tok" :class="{q: i===q, masked: causal && i>q}" @click="q=i">{{ t }}<span class="att-w" :style="{height: Math.round(row[i]*48)+'px'}"></span><span class="tiny mono">{{ (row[i]*100).toFixed(0) }}%</span></button></div>
       <div class="row mt"><label class="checkbox"><input type="checkbox" v-model="causal"> causal mask (a token may only look at itself and earlier tokens — what GPT uses)</label></div>
       <label class="demo-controls">Score scale (like 1/√d or inverse temperature) <b>{{ scale.toFixed(1) }}</b><input type="range" min="0.2" max="3" step="0.1" v-model.number="scale"></label>
-      <div class="scroll-x"><table class="att-matrix"><thead><tr><th class="tiny dim">query ↓ / key →</th><th v-for="(t,j) in toks" :key="j" class="tiny">{{ t }}</th></tr></thead>
+      <div class="scroll-x"><table class="att-matrix"><thead><tr><th class="tiny muted">query ↓ / key →</th><th v-for="(t,j) in toks" :key="j" class="tiny">{{ t }}</th></tr></thead>
       <tbody><tr v-for="(t,i) in toks" :key="i" :class="{sel:i===q}" @click="q=i"><th class="tiny">{{ t }}</th><td v-for="(v,j) in W[i]" :key="j" :style="cell(v)" class="tiny mono">{{ v>0.005 ? (v*100).toFixed(0) : '' }}</td></tr></tbody></table></div>
-      <p class="tiny dim">These scores are hand-made to illustrate the mechanism (a trained model learns them from data via the query and key matrices). Note how “it” attends mostly to “cat” — attention is how a transformer resolves which earlier words matter.</p>
+      <p class="small muted">These scores are hand-made to illustrate the mechanism (a trained model learns them from data via the query and key matrices). Note how “it” attends mostly to “cat” — attention is how a transformer resolves which earlier words matter.</p>
     </div>`
   };
 
@@ -403,10 +405,10 @@
       <div class="inline-form"><input type="text" v-model="text" @change="reset" aria-label="Training text"><button class="btn sm" @click="reset">Restart</button><button class="btn sm primary" @click="merge">Merge most frequent pair</button></div>
       <div class="bpe-words mt"><span v-for="(w,i) in words" :key="i" class="bpe-word"><span v-for="(t,j) in w" :key="j" class="bpe-tok" :class="{end: t.endsWith('_')}">{{ t }}</span></span></div>
       <div class="grid cols-2 mt" style="gap:12px;align-items:start">
-        <div><div class="tiny dim">Most frequent adjacent pairs</div><table class="mini-table"><tbody><tr v-for="p in pairs.slice(0,6)" :key="p.a+p.b"><td class="mono">{{ p.a }} + {{ p.b }}</td><td class="mono">{{ p.n }}×</td></tr></tbody></table></div>
-        <div><div class="tiny dim">Merges learned ({{ merges.length }}) · vocab {{ vocab.length }} · tokens {{ tokenCount }}</div><ol class="small mono" style="margin:4px 0 0"><li v-for="(m,i) in merges" :key="i">{{ m }}</li></ol></div>
+        <div><div class="tiny muted">Most frequent adjacent pairs</div><table class="mini-table"><tbody><tr v-for="p in pairs.slice(0,6)" :key="p.a+p.b"><td class="mono">{{ p.a }} + {{ p.b }}</td><td class="mono">{{ p.n }}×</td></tr></tbody></table></div>
+        <div><div class="tiny muted">Merges learned ({{ merges.length }}) · vocab {{ vocab.length }} · tokens {{ tokenCount }}</div><ol class="small mono" style="margin:4px 0 0"><li v-for="(m,i) in merges" :key="i">{{ m }}</li></ol></div>
       </div>
-      <p class="tiny dim mt">“_” marks the end of a word. Each merge adds one token to the vocabulary and makes the text shorter. Real tokenizers learn ~50,000–200,000 merges from terabytes of text, on bytes rather than characters.</p>
+      <p class="small muted mt">“_” marks the end of a word. Each merge adds one token to the vocabulary and makes the text shorter. Real tokenizers learn ~50,000–200,000 merges from terabytes of text, on bytes rather than characters.</p>
     </div>`
   };
 
@@ -428,12 +430,12 @@
     <div class="card demo-card">
       <div class="pills"><button v-for="n in names" :key="n" :class="{active:kname===n}" @click="kname=n">{{ n }}</button></div>
       <div class="conv-layout mt">
-        <div><div class="tiny dim">Input 8×8 (click to toggle pixels)</div><div class="conv-grid g8"><span v-for="(v,k) in img.flat()" :key="k" :class="{on: v, field: inField(Math.floor(k/8), k%8)}" @click="img[Math.floor(k/8)][k%8] = v ? 0 : 1"></span></div></div>
-        <div><div class="tiny dim">Kernel 3×3</div><div class="conv-grid g3"><span v-for="(v,k) in K.flat()" :key="k" class="mono">{{ +v.toFixed(2) }}</span></div></div>
-        <div><div class="tiny dim">Output 6×6 (hover a cell)</div><div class="conv-grid g6"><span v-for="(v,k) in out.flat()" :key="k" class="mono" :style="outStyle(v)" @mouseenter="hover=[Math.floor(k/6), k%6]" @mouseleave="hover=null">{{ Math.round(v*10)/10 }}</span></div></div>
+        <div><div class="tiny muted">Input 8×8 (click to toggle pixels)</div><div class="conv-grid g8"><span v-for="(v,k) in img.flat()" :key="k" :class="{on: v, field: inField(Math.floor(k/8), k%8)}" @click="img[Math.floor(k/8)][k%8] = v ? 0 : 1"></span></div></div>
+        <div><div class="tiny muted">Kernel 3×3</div><div class="conv-grid g3"><span v-for="(v,k) in K.flat()" :key="k" class="mono">{{ +v.toFixed(2) }}</span></div></div>
+        <div><div class="tiny muted">Output 6×6 (hover a cell)</div><div class="conv-grid g6"><span v-for="(v,k) in out.flat()" :key="k" class="mono" :style="outStyle(v)" @mouseenter="hover=[Math.floor(k/6), k%6]" @mouseleave="hover=null">{{ Math.round(v*10)/10 }}</span></div></div>
       </div>
       <p class="small mono mt" style="min-height:1.4em">{{ calc || 'Hover an output cell to see the multiply-and-add that produced it.' }}</p>
-      <p class="tiny dim">The same 9 weights slide over every position. An edge kernel lights up (green/red) only where brightness changes — that is a learned “feature detector” in a CNN.</p>
+      <p class="small muted">The same 9 weights slide over every position. An edge kernel lights up (green/red) only where brightness changes — that is a learned “feature detector” in a CNN.</p>
     </div>`
   };
 
@@ -494,7 +496,7 @@
       <canvas ref="cv" class="demo-canvas"></canvas>
       <label class="demo-controls">Inspect dimension <b>{{ dim }}</b> (and {{ dim+1 }}, dashed)<input type="range" :min="0" :max="d-2" step="2" v-model.number="dim"></label>
       <canvas ref="cv2" class="demo-canvas short"></canvas>
-      <p class="tiny dim">Low dimensions oscillate fast, high dimensions slowly — like the hands of a clock. Every position gets a unique pattern, and the pattern for position p+k is a fixed rotation of the pattern for p, which makes relative positions easy to learn.</p>
+      <p class="small muted">Low dimensions oscillate fast, high dimensions slowly — like the hands of a clock. Every position gets a unique pattern, and the pattern for position p+k is a fixed rotation of the pattern for p, which makes relative positions easy to learn.</p>
     </div>`
   };
 
@@ -522,7 +524,7 @@
       <div class="demo-controls"><label>Bits per weight <b>{{ bits }}</b> ({{ 2*q.qmax+1 }} levels)<input type="range" min="2" max="8" step="1" v-model.number="bits"></label></div>
       <label class="checkbox"><input type="checkbox" v-model="outlier"> add one outlier weight (6.0)</label>
       <div class="small mt">scale = max|w| / {{ q.qmax }} = <b>{{ q.scale.toFixed(4) }}</b> · mean absolute error <b>{{ err.toFixed(4) }}</b> · distinct values used <b>{{ levels }}</b> · memory vs FP32: <b>{{ (bits/32*100).toFixed(1) }}%</b></div>
-      <p class="tiny dim mt"><span style="color:var(--accent)">●</span> original weight, <span style="color:var(--amber)">○</span> after quantize → dequantize. Turn on the outlier: the scale is set by the largest value, so all the small weights collapse onto just a few levels. That is why real schemes quantize in small blocks with their own scale (e.g. 32–128 weights per block).</p>
+      <p class="small muted mt"><span style="color:var(--accent)">●</span> original weight, <span style="color:var(--amber)">○</span> after quantize → dequantize. Turn on the outlier: the scale is set by the largest value, so all the small weights collapse onto just a few levels. That is why real schemes quantize in small blocks with their own scale (e.g. 32–128 weights per block).</p>
     </div>`
   };
 
@@ -554,7 +556,7 @@
       <canvas ref="cv" class="demo-canvas clickable" @click="pick"></canvas>
       <div v-if="mode==='near'" class="small">Click a word. Nearest to <b>{{ sel }}</b>: <span v-for="n in near" :key="n.w" class="chip" style="margin:2px">{{ n.w }} · cos {{ n.cos.toFixed(2) }}</span></div>
       <div v-else class="inline-form small"><select v-model="a"><option v-for="w in words" :key="w">{{ w }}</option></select> − <select v-model="b"><option v-for="w in words" :key="w">{{ w }}</option></select> + <select v-model="c"><option v-for="w in words" :key="w">{{ w }}</option></select> ≈ <b>{{ analogy.best.w }}</b></div>
-      <p class="tiny dim mt">A toy 2-D space (real embeddings have hundreds of dimensions and are learned, not hand-placed). Similar meanings sit close together, and directions can encode relationships: the arrow man → woman is roughly the same as king → queen.</p>
+      <p class="small muted mt">A toy 2-D space (real embeddings have hundreds of dimensions and are learned, not hand-placed). Similar meanings sit close together, and directions can encode relationships: the arrow man → woman is roughly the same as king → queen.</p>
     </div>`
   };
 
@@ -600,7 +602,7 @@
       <div class="small muted">accuracy <b>{{ (stats.accuracy * 100).toFixed(1) }}%</b> · expected calibration error <b>{{ stats.ece.toFixed(3) }}</b> · temperature T = <b>{{ T.toFixed(2) }}</b></div>
       <canvas ref="cv" class="demo-canvas"></canvas>
       <div class="demo-controls"><label>Temperature T (logits are divided by T) <b>{{ T.toFixed(2) }}</b><input type="range" min="0.5" max="5" step="0.05" v-model.number="T"></label></div>
-      <p class="tiny dim mt">Blue bars: accuracy of the predictions in each confidence bin (0–10%, …, 90–100%). Red ticks: their average confidence. Dashed line: perfect calibration. This model is overconfident (red above blue). Raise T until the ticks meet the bars — the error is smallest near T ≈ 2.5 — and notice that accuracy never changes, because dividing all logits by T keeps their order.</p>
+      <p class="small muted mt">Blue bars: accuracy of the predictions in each confidence bin (0–10%, …, 90–100%). Red ticks: their average confidence. Dashed line: perfect calibration. This model is overconfident (red above blue). Raise T until the ticks meet the bars — the error is smallest near T ≈ 2.5 — and notice that accuracy never changes, because dividing all logits by T keeps their order.</p>
     </div>`
   };
 
@@ -629,7 +631,7 @@
       <div class="small muted">step t = <b>{{ t }}</b> · signal weight √ᾱ = <b>{{ Math.sqrt(abar).toFixed(3) }}</b> · noise weight √(1 − ᾱ) = <b>{{ Math.sqrt(1 - abar).toFixed(3) }}</b></div>
       <canvas ref="cv" class="demo-canvas square"></canvas>
       <div class="demo-controls"><label>Diffusion step t <b>{{ t }}</b><input type="range" min="0" max="999" step="1" v-model.number="t"></label></div>
-      <p class="tiny dim mt">Three clusters of 2-D data, noised with the linear schedule of the original DDPM paper (β from 0.0001 to 0.02 over 1,000 steps). Each point keeps its own noise sample, so you can watch the clusters dissolve into one Gaussian cloud. A diffusion model learns to run this film backwards.</p>
+      <p class="small muted mt">Three clusters of 2-D data, noised with the linear schedule of the original DDPM paper (β from 0.0001 to 0.02 over 1,000 steps). Each point keeps its own noise sample, so you can watch the clusters dissolve into one Gaussian cloud. A diffusion model learns to run this film backwards.</p>
     </div>`
   };
 
@@ -664,7 +666,7 @@
         <label>Context already in each sequence <b>{{ ctxK }}k tokens</b><input type="range" min="1" max="32" step="1" v-model.number="ctxK"></label>
         <label>Model size <b>{{ paramsB }}B parameters</b><input type="range" min="1" max="70" step="1" v-model.number="paramsB"></label>
       </div>
-      <p class="tiny dim mt">Total throughput (tokens per second, vertical axis) against log₂ of the batch size (horizontal: 0 = 1 request, 9 = 512) for decoding on a GPU like an H100 (≈ 990 TFLOP/s, 3.35 TB/s), with bf16 weights and a grouped-query-attention KV cache of 128 KiB per token. Blue points are memory-bound, red ones compute-bound. Batching shares each read of the weights across many users — until the growing KV cache or the compute limit catches up. A simplified model: real servers add scheduling, prefill and kernel overheads.</p>
+      <p class="small muted mt">Total throughput (tokens per second, vertical axis) against log₂ of the batch size (horizontal: 0 = 1 request, 9 = 512) for decoding on a GPU like an H100 (≈ 990 TFLOP/s, 3.35 TB/s), with bf16 weights and a grouped-query-attention KV cache of 128 KiB per token. Blue points are memory-bound, red ones compute-bound. Batching shares each read of the weights across many users — until the growing KV cache or the compute limit catches up. A simplified model: real servers add scheduling, prefill and kernel overheads.</p>
     </div>`
   };
 
@@ -688,7 +690,7 @@
       <div class="small muted">clip range: ratio between <b>{{ (1 - eps).toFixed(2) }}</b> and <b>{{ (1 + eps).toFixed(2) }}</b></div></div>
       <canvas ref="cv" class="demo-canvas"></canvas>
       <div class="demo-controls"><label>Clip parameter ε <b>{{ eps.toFixed(2) }}</b><input type="range" min="0.05" max="0.5" step="0.01" v-model.number="eps"></label></div>
-      <p class="tiny dim mt">Horizontal axis: the ratio r = π_new(a|s) / π_old(a|s) for the action taken. Dashed grey: the unclipped objective r·A. Blue: PPO's min(r·A, clip(r, 1 − ε, 1 + ε)·A). Where the blue line is flat, the gradient is zero — the update has no reason to move the policy further. For a bad action the objective still falls as r grows: PPO never ignores a change that makes a bad action more likely.</p>
+      <p class="small muted mt">Horizontal axis: the ratio r = π_new(a|s) / π_old(a|s) for the action taken. Dashed grey: the unclipped objective r·A. Blue: PPO's min(r·A, clip(r, 1 − ε, 1 + ε)·A). Where the blue line is flat, the gradient is zero — the update has no reason to move the policy further. For a bad action the objective still falls as r grows: PPO never ignores a change that makes a bad action more likely.</p>
     </div>`
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -1381,6 +1381,7 @@ x = x + FeedForward( LayerNorm(x) )            # each token is processed indepen
 - The **feed-forward network** (FFN, an MLP) is applied to every position separately with the same weights: typically Linear(d → 4d) → GELU (or SwiGLU) → Linear(4d → d). It holds most of the block's parameters and is thought to store much of the model's factual knowledge.
 - **LayerNorm/RMSNorm** before each sub-layer keeps activations well-scaled (*pre-norm* trains more stably than the original post-norm).
 - **Residual connections** (the "x +") let each sub-layer add a small update and give gradients a highway through dozens of layers.` },
+      { type: 'demo', title: 'Diagram: the block at a glance', demo: 'dg-transformer' },
       { type: 'text', title: 'The residual stream', md: `A helpful mental model: each token has a vector of width d_model — the **residual stream** — that flows straight through the network from the embedding to the output. Every attention and FFN sub-layer **reads** from the stream (after normalization) and **writes** an update back by addition. Nothing overwrites the stream; layers only add to it.
 
 That's why shapes never change inside the stack: input (T, d_model) → after block 1 (T, d_model) → … → after block N (T, d_model). At the end, a final norm and the output layer turn each position's vector into logits over the vocabulary.

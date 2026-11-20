@@ -53,7 +53,30 @@ A **new content file** must be added to `index.html` with the other `concepts-*.
 
 Runnable code samples execute in the in-browser Python (Pyodide 0.27, Python 3.12, NumPy; pandas, scikit-learn and matplotlib load automatically when imported). Keep them fast (a few seconds at most in the browser) and print something meaningful.
 
-Available demos: `gradient-descent`, `activations`, `linear-fit`, `overfit-poly`, `knn`, `kmeans`, `threshold`, `softmax`, `attention`, `bpe`, `convolution`, `neuron`, `positional`, `quantization`, `embeddings` (defined in `js/views/demos.js`).
+Available demos (25):
+
+- In `js/views/demos.js`: `gradient-descent`, `activations`, `linear-fit`, `overfit-poly`, `knn`, `kmeans`, `threshold`, `softmax`, `attention`, `bpe`, `convolution`, `neuron`, `positional`, `quantization`, `embeddings`, `calibration`, `diffusion`, `roofline` and `ppo-clip`.
+- In `js/views/demos-more.js`: `eigen`, `conditioning`, `beta`, `gp`, `pca` and `lr-schedule`. This file uses the canvas helpers that `demos.js` exports as `MLA.demoKit`.
+
+Available diagrams (8), defined in `js/views/diagrams.js`: `dg-transformer`, `dg-rag`, `dg-agent`, `dg-diffusion`, `dg-unet`, `dg-lifecycle`, `dg-cv` and `dg-lora`. Use them like demos, for example `{ type: 'demo', title: 'Diagram: the agent loop', demo: 'dg-agent' }`. A section can also show only a diagram followed by text, using `after` (see the `rag` and `mlops` lessons).
+
+### Adding a demo
+
+Add a component named `C['demo-<name>']` to `demos-more.js`:
+
+1. Include the `redrawOnChange` mixin and a `draw()` method that calls `setup(canvas, W, H)` and `palette()`, so the colours follow the theme.
+2. Put a short caption in `<p class="small muted mt">`. The lighter `dim` colour fails WCAG contrast on demo cards.
+3. Check it in the browser: in all three themes, and at a 375 px phone width with no sideways page scrolling.
+
+### Adding a diagram
+
+Call `diagram(name, viewBox, ariaLabel, body, caption)` in `diagrams.js`:
+
+- Build `body` from the `box()`, `arrow()`, `label()` and `plus()` helpers, inside the fixed 820-wide coordinate system.
+- Use the theme classes (`dg-box`, `dg-acc`, `dg-grn`, `dg-amb`, `dg-pur`, `dg-red`, `dg-cyn`), never fixed colours.
+- Keep every label inside its box. Diagram text is 14 px bold for box titles and 12 px for small lines, so allow about 8 px per character for titles.
+
+Adding a section in the middle of a lesson shifts the stored "read" and "check" positions of the sections after it; see `docs/ROADMAP.md`, item 2.
 
 ## 3. Markdown features
 

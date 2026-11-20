@@ -11,7 +11,8 @@ It is a static site: it runs on GitHub Pages, from any web server, or straight f
 | **Concept map** | 105 concepts in 8 branches, including three capstone projects, connected by their prerequisites. Three views: mind map, prerequisite lanes, and outline. Search, highlight the chain of prerequisites for any concept, and set a learning goal. |
 | **Lessons** | Each concept explains *why* it matters, how it works, when to use it, common pitfalls and key takeaways. Every formula comes with a "where" legend that defines each symbol. |
 | **Runnable code** | Code samples run in the browser with real Python 3.12 + NumPy (via [Pyodide](https://pyodide.org)). PyTorch and API examples are marked "run locally". |
-| **Interactive demos** | 19 visual demos: gradient descent, activation functions, line fitting, overfitting, k-NN, k-means, classification thresholds, softmax/temperature/top-p, attention, BPE tokenization, convolution, a single neuron, positional encodings, quantization, embeddings, calibration and temperature scaling, the diffusion forward process, LLM batching on the roofline, and PPO's clipped objective. |
+| **Interactive demos** | 25 visual demos: gradient descent, activation functions, line fitting, overfitting, k-NN, k-means, classification thresholds, softmax/temperature/top-p, attention, BPE tokenization, convolution, a single neuron, positional encodings, quantization, embeddings, calibration and temperature scaling, the diffusion forward process, LLM batching on the roofline, PPO's clipped objective, eigenvectors and the SVD of a 2×2 matrix, gradient descent and momentum against the condition number, Bayesian updating (Beta–Binomial), Gaussian-process regression, PCA, and learning-rate schedules. |
+| **Diagrams** | 8 theme-aware diagrams: the transformer block, the RAG pipeline, the agent loop, diffusion training and sampling, the U-Net, the ML lifecycle, cross-validation folds, and a LoRA adapter. |
 | **Practice problems** | 230 problems (easy / medium / hard) with a LeetCode-style editor: **Run** checks the visible examples, **Submit** runs hidden tests too. Hints, worked solutions and explanations. Drafts are saved automatically. |
 | **Quizzes** | 532 questions (multiple choice, multi-select, true/false, fill-in, ordering, matching) with explanations. Passing a quiz and solving a problem completes a concept. |
 | **Learning tracks** | Guided paths: ML Foundations, Classical ML Practitioner, Data Science & Experiments, ML Theory & Probabilistic Methods, Deep Learning from Scratch, Build an LLM from Scratch, LLM Application Engineer, Fine-tuning, Alignment & Serving, Frontier Deep Learning, the Complete Atlas — or set any concept as a custom goal. |
@@ -106,7 +107,9 @@ Inside the app, **Progress & Sync → Run self-test** runs every reference solut
 
 ## Adding or editing content
 
-See [docs/CONTENT_GUIDE.md](docs/CONTENT_GUIDE.md) for the concept format, markdown features (formulas with legends, callouts, tables), quiz types, the problem/test format, and the authoring checklist.
+See [docs/CONTENT_GUIDE.md](docs/CONTENT_GUIDE.md) for the concept format, markdown features (formulas with legends, callouts, tables), quiz types, the problem/test format, how to add demos and diagrams, and the authoring checklist.
+
+Planned and possible improvements, ranked by impact and effort, are in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Copyright, license, terms and privacy
 
