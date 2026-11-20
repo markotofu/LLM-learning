@@ -14,17 +14,31 @@ const TYPES = {
   '.json': 'application/json; charset=utf-8', '.webmanifest': 'application/manifest+json; charset=utf-8',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.md': 'text/markdown; charset=utf-8', '.py': 'text/x-python; charset=utf-8'
 };
-const norm = s => s.replace(/\\/g, '/').toLowerCase();
+// Only files inside the app folder are served. A plain prefix check would also accept a sibling folder whose name
+// starts the same way ("LLM-learning-old"), so containment is tested with path.relative. Hidden files and folders
+// (.git, .claude, .env …) and installed packages are never served: the server can be reached from the local network.
+function resolveInside(urlPath) {
+  const fp = path.resolve(root, '.' + path.posix.normalize('/' + urlPath));
+  const rel = path.relative(root, fp);
+  if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) return null;
+  const parts = rel.split(path.sep);
+  if (parts.some(s => s.startsWith('.')) || parts[0] === 'node_modules') return null;
+  return fp;
+}
+const HEADERS = { 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'SAMEORIGIN' };
 
 const server = http.createServer((req, res) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405, { Allow: 'GET, HEAD' }); res.end(); return; }
   let p;
   try { p = decodeURIComponent(req.url.split('?')[0]); } catch (e) { res.writeHead(400); res.end('Bad request'); return; }
+  if (p.includes('\0')) { res.writeHead(400); res.end('Bad request'); return; }
   if (p === '/' || p === '') p = '/index.html';
-  const fp = path.resolve(path.join(root, p));
-  if (!norm(fp).startsWith(norm(root)) || !fs.existsSync(fp) || fs.statSync(fp).isDirectory()) {
-    res.writeHead(404, { 'Content-Type': 'text/plain' }); res.end('Not found: ' + p); return;
-  }
-  res.writeHead(200, { 'Content-Type': TYPES[path.extname(fp).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
+  const fp = resolveInside(p);
+  let ok = false;
+  try { ok = !!fp && fs.statSync(fp).isFile(); } catch (e) { ok = false; }
+  if (!ok) { res.writeHead(404, Object.assign({ 'Content-Type': 'text/plain; charset=utf-8' }, HEADERS)); res.end('Not found'); return; }
+  res.writeHead(200, Object.assign({ 'Content-Type': TYPES[path.extname(fp).toLowerCase()] || 'application/octet-stream' }, HEADERS));
+  if (req.method === 'HEAD') { res.end(); return; }
   fs.createReadStream(fp).pipe(res);
 });
 

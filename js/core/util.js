@@ -64,7 +64,9 @@
     return lines.map(l => l.slice(Math.min(min, l.match(/^ */)[0].length))).join('\n');
   }
 
-  // ---------------- Markdown (trusted, authored content only) ----------------
+  // ---------------- Markdown ----------------
+  // Every piece of text is HTML-escaped and only a fixed set of tags is generated (no raw-HTML passthrough, links only
+  // to #/routes or http(s) URLs), so the renderer is safe for user-written notes and imported files as well as lessons.
   function inline(s) {
     let out = escapeHtml(s);
     const codes = [];
@@ -197,13 +199,7 @@
         continue;
       }
       if (/^([-*]|\d+\.)\s+/.test(t)) { flushPara(); const r = parseList(lines, i); html.push(r.html); i = r.next; continue; }
-      if (/^<(div|svg|table|section|figure|details)/.test(t)) {
-        flushPara(); const buf = [line]; i++;
-        while (i < lines.length && lines[i].trim() !== '') { buf.push(lines[i]); i++; }
-        html.push(buf.join('\n'));
-        continue;
-      }
-      para.push(t); i++;
+      para.push(t); i++;                 // everything else, including text that looks like HTML, is an escaped paragraph
     }
     flushPara();
     return html.join('\n');

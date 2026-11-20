@@ -43,6 +43,7 @@ for T in (1, 2, 5):
     p = softmax(logits, T)
     print(f"T = {T}: " + "   ".join(f"{c} {q:.3f}" for c, q in zip(classes, p)))
 ` , after: `At T = 1 almost everything goes to "cat". Raising the temperature reveals the teacher's view that a tiger is the next most likely class and a car is out of the question — information a hard label throws away.` },
+      { type: 'chart', title: "The teacher's probabilities at three temperatures", after: `At T = 1 the teacher's answer is almost a hard label: 90% cat, and the other classes are hard to see. Raising the temperature flattens the distribution without changing the order, so the student can see that tiger and dog are plausible confusions while car is not. That relative structure is the extra signal distillation passes on.`, chart: {"kind":"bar","x":["cat","tiger","dog","car"],"series":[{"name":"T = 1","y":[0.9013,0.074,0.0246,0.0001]},{"name":"T = 2","y":[0.6836,0.1958,0.113,0.0076]},{"name":"T = 5","y":[0.4428,0.2685,0.2155,0.0732]}],"xLabel":"class","yLabel":"probability","yMin":0,"yMax":1} },
       { type: 'code', title: 'Distillation beats hard labels when data is scarce', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -107,7 +108,17 @@ for sparsity in (0.5, 0.8, 0.9, 0.95):
     mlp.coefs_ = [np.where(np.abs(w) >= threshold, w, 0.0) for w in original]
     print(f"{sparsity:.0%} of weights removed: test accuracy {mlp.score(X[test], y[test]):.3f}   (no retraining)")
 mlp.coefs_ = original
-`, after: `Half the weights can be removed without any loss at all. Beyond that, accuracy drops quickly when nothing is retrained — which is why practical pruning removes weights gradually and fine-tunes in between.` }
+`, after: `Half the weights can be removed without any loss at all. Beyond that, accuracy drops quickly when nothing is retrained — which is why practical pruning removes weights gradually and fine-tunes in between.` },
+      { type: 'chart', title: "Accuracy as weights are removed (no retraining)", md: `The digit classifier above, pruned to increasing sparsity in two ways:`, after: `Removing the smallest weights first costs almost nothing up to about 70% sparsity, then accuracy falls steeply. Removing the same number of weights at random hurts much sooner, because it also hits the large weights that carry most of the computation. Magnitude really is a decent proxy for importance, and fine-tuning after each round of pruning would recover much of the remaining loss.`, chart: {"kind":"line","x":[0,30,50,60,70,80,85,90,93,95,97,98,99],"series":[{"name":"remove the smallest weights first","y":[0.984,0.986,0.984,0.976,0.97,0.883,0.686,0.471,0.392,0.336,0.237,0.229,0.131]},{"name":"remove weights at random (average of 10 tries)","y":[0.984,0.91,0.714,0.555,0.395,0.246,0.206,0.152,0.157,0.134,0.113,0.106,0.112]}],"xLabel":"share of weights set to zero (%)","yLabel":"test accuracy","yMin":0,"yMax":1,"hlines":[{"y":0.1,"label":"chance (10 classes)"}]} },
+      { type: 'text', title: "Choosing a compression method", md: `| Method | What it changes | Typical gain | What it costs |
+| --- | --- | --- | --- |
+| Knowledge distillation | trains a smaller architecture to imitate a big one | 2 to 10 times fewer parameters, often keeping most of the accuracy | a full training run of the student, and access to the teacher |
+| Unstructured pruning | zeroes individual small weights | smaller compressed files; speed-ups only with sparse kernels | fine-tuning rounds to recover accuracy |
+| Structured pruning | removes neurons, channels, heads or layers | real speed-ups on ordinary hardware | a larger accuracy loss per removed parameter |
+| Quantization | stores weights (and activations) in 8 or 4 bits | 2 to 4 times less memory, faster inference | a small accuracy loss, larger at low bit widths; see [Quantization & Efficient Inference](#/concept/quantization) |
+| Low-rank factorisation | replaces a weight matrix by the product of two thin ones | fewer parameters and multiplications | only works where the weights are close to low rank |
+
+The methods combine: a common recipe distils a smaller student, prunes it structurally and quantizes the result for deployment. Always measure on the **target hardware**: a "50% sparse" model may run no faster than the dense one if the hardware cannot skip zeros, while 4-bit weights often speed up memory-bound LLM inference far more than the arithmetic suggests.` }
     ],
     when: `- Deploying to phones, browsers, edge devices or high-traffic services where latency and cost matter.
 - Creating small task-specific models from a large general one (distillation with generated data).
@@ -130,7 +141,9 @@ mlp.coefs_ = original
       { type: 'tf', q: 'In the distillation loss, the soft term is multiplied by T² because its gradients shrink as the temperature grows.', answer: true, explain: 'Gradients scale like 1/T²; the factor restores their weight.' },
       { type: 'mcq', q: 'Which pruning method gives speed-ups on ordinary dense hardware without special kernels?', options: ['Unstructured magnitude pruning', 'Structured pruning of whole neurons, channels or heads', 'Random pruning', 'None of them'], answer: 1, explain: 'The result is a smaller dense model.' },
       { type: 'fill', q: 'In 2:4 sparsity, what fraction of the weights in each group are zero? (decimal or fraction)', answer: ['0.5', '1/2', '50%'], explain: 'Two of every four weights are kept.' },
-      { type: 'mcq', q: 'What does the lottery ticket hypothesis claim?', options: ['Random weights are as good as trained ones', 'Dense networks contain sparse subnetworks that can be trained from their original initialization to full accuracy', 'Pruning always improves accuracy', 'Only the largest weights matter during training'], answer: 1, explain: 'Frankle & Carbin, 2019.' }
+      { type: 'mcq', q: 'What does the lottery ticket hypothesis claim?', options: ['Random weights are as good as trained ones', 'Dense networks contain sparse subnetworks that can be trained from their original initialization to full accuracy', 'Pruning always improves accuracy', 'Only the largest weights matter during training'], answer: 1, explain: 'Frankle & Carbin, 2019.' },
+      {"type":"mcq","q":"Removing the smallest-magnitude weights hurts accuracy far less than removing the same number of random weights. Why?","options":["Small weights are always exactly zero","Large weights carry most of the computation, and random removal hits them while magnitude pruning spares them","Random pruning also removes the biases","Magnitude pruning retrains the network automatically"],"answer":1,"explain":"A weight's magnitude is a reasonable proxy for its importance, so pruning by magnitude removes the least useful weights first."},
+      {"type":"tf","q":"Raising the softmax temperature changes which class the teacher ranks first.","answer":false,"explain":"Dividing all logits by T > 1 keeps their order and only flattens the distribution, revealing the relative sizes of the small probabilities."}
     ],
     problems: [
       {
@@ -330,6 +343,20 @@ for name, Z in [("healthy", healthy), ("dimensional collapse", dimensional), ("c
     std, er = health(Z)
     print(f"{name:22s} mean per-dimension std {std:.3f}   effective rank {er:5.1f} of {d}")
 `, after: `A healthy batch spreads over almost all 64 directions. Dimensional collapse keeps a reasonable spread but an effective rank of about 3; complete collapse shows near-zero spread. The effective rank of the remaining noise is high in that case, so always look at both numbers.` },
+      { type: 'text', title: "Diagnosing collapse: the eigenvalue spectrum", md: `Complete collapse is easy to spot: every embedding is the same, so the variance across a batch is zero. A subtler failure is **dimensional collapse**: the embeddings still differ, but they all lie in a small subspace, so most of the available dimensions carry nothing. The loss can look fine while the representation quietly wastes most of its capacity.
+
+The diagnosis comes straight from [PCA](#/concept/pca): normalise a batch of embeddings, compute their covariance matrix and sort its eigenvalues. Each eigenvalue is the variance along one direction:
+
+$$ Σ = (1/B) Σᵢ (zᵢ − z̄)(zᵢ − z̄)ᵀ          spectrum = λ₁ ≥ λ₂ ≥ … ≥ λ_d $$
+:::where
+zᵢ — the normalised embedding of example i, in a batch of B examples
+z̄ — the mean embedding of the batch
+Σ — the d × d covariance matrix of the embeddings
+λ₁ … λ_d — its eigenvalues, sorted: the variance along each principal direction
+:::
+
+Methods such as VICReg and Barlow Twins build this check into the loss itself: they explicitly push every dimension to keep some variance and to be decorrelated from the others.` },
+      { type: 'chart', title: "Eigenvalue spectra of three sets of embeddings", after: `A healthy representation spreads its variance over many directions, so the spectrum declines gently. Dimensional collapse shows up as a cliff: here everything after the sixth eigenvalue is noise, so the embeddings live in a 6-dimensional subspace of the 64 available, however good the training loss looks. Complete collapse leaves no variance at all. Plotting this spectrum during training is a cheap, label-free health check.`, chart: {"kind":"line","x":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64],"yLog":true,"points":false,"series":[{"name":"healthy: variance spread over all 64 dimensions","y":[0.02952,0.02744,0.02667,0.02631,0.02581,0.02544,0.02491,0.02482,0.02433,0.02337,0.02296,0.02273,0.02219,0.02191,0.02146,0.02107,0.02083,0.02034,0.02009,0.01948,0.01931,0.01812,0.01801,0.01769,0.01731,0.01698,0.01671,0.01641,0.01614,0.01582,0.01504,0.01474,0.01441,0.01423,0.01364,0.01352,0.01341,0.01325,0.01303,0.01264,0.01245,0.01218,0.01194,0.01138,0.01094,0.01079,0.01026,0.01004,0.009849,0.00953,0.009353,0.009223,0.008698,0.008194,0.008155,0.008027,0.007761,0.00762,0.007377,0.007023,0.006885,0.006864,0.006538,0.006411]},{"name":"dimensional collapse: only 6 directions used","y":[0.2133,0.1988,0.1744,0.1627,0.1284,0.1214,0.000003063,0.00000278,0.000002578,0.000002443,0.000002398,0.000002349,0.00000233,0.000002261,0.000002217,0.000002174,0.000002136,0.000002099,0.000002055,0.00000205,0.000001992,0.000001958,0.00000191,0.000001901,0.000001877,0.000001869,0.000001859,0.000001817,0.000001797,0.000001777,0.000001761,0.000001734,0.000001718,0.000001676,0.000001664,0.000001638,0.000001613,0.000001599,0.000001569,0.000001551,0.000001534,0.000001521,0.000001513,0.000001505,0.0000015,0.000001455,0.000001439,0.000001414,0.000001403,0.000001389,0.000001379,0.000001352,0.000001348,0.00000133,0.000001317,0.000001287,0.000001261,0.000001244,0.000001239,0.000001214,0.00000117,0.000001157,0.000001135,0.00000112]},{"name":"complete collapse: every input gives the same vector","y":[2.148e-8,2.097e-8,2.072e-8,2.031e-8,2.007e-8,1.972e-8,1.953e-8,1.915e-8,1.907e-8,1.89e-8,1.87e-8,1.839e-8,1.835e-8,1.817e-8,1.794e-8,1.784e-8,1.762e-8,1.745e-8,1.727e-8,1.701e-8,1.698e-8,1.673e-8,1.665e-8,1.658e-8,1.65e-8,1.63e-8,1.619e-8,1.612e-8,1.591e-8,1.562e-8,1.55e-8,1.539e-8,1.527e-8,1.512e-8,1.5e-8,1.487e-8,1.466e-8,1.455e-8,1.454e-8,1.438e-8,1.424e-8,1.416e-8,1.394e-8,1.393e-8,1.387e-8,1.349e-8,1.343e-8,1.315e-8,1.296e-8,1.289e-8,1.273e-8,1.265e-8,1.244e-8,1.241e-8,1.235e-8,1.222e-8,1.201e-8,1.195e-8,1.163e-8,1.153e-8,1.127e-8,1.118e-8,1.083e-8,1e-12]}],"xLabel":"eigenvalue rank (largest first)","yLabel":"variance along the direction (log scale)","yMin":1e-9} },
       { type: 'check', question: { type: 'tf', q: 'Without negatives or some other safeguard, a model trained only to make two views of an image agree can map every input to the same vector.', answer: true, explain: 'That is representation collapse.' } },
       { type: 'text', title: 'Masked image modelling: MAE', md: `**Masked autoencoders** (He et al., 2021) bring BERT's idea to images. Cut the image into patches, hide a random **75%** of them, feed only the visible 25% to a Vision Transformer encoder, and let a small decoder reconstruct the pixels of the hidden patches. A high masking ratio makes the task hard enough to require understanding (neighbouring patches are too redundant for a low ratio to teach much), and because the encoder sees only a quarter of the patches, pretraining is several times cheaper. MAE features fine-tune very well.
 
@@ -359,7 +386,16 @@ print("first 20 patches (1 = hidden):", mask[:20].astype(int))
 - **Dense features** from methods such as DINO also support segmentation and correspondence without labels.
 - **Beyond images**: wav2vec 2.0 and HuBERT learn speech representations by predicting masked audio; the same ideas apply to video, time series, graphs and medical data.
 
-Self-supervised pretraining followed by light supervision is now the default recipe whenever unlabelled data is abundant and labels are not.` }
+Self-supervised pretraining followed by light supervision is now the default recipe whenever unlabelled data is abundant and labels are not.` },
+      { type: 'text', title: "Which self-supervised method for which data?", md: `| Data | Common pretext tasks | Well-known models |
+| --- | --- | --- |
+| text | predict the next token; fill in masked tokens | GPT-style decoders, BERT-style encoders |
+| images | match augmented views; reconstruct masked patches; match images with captions | DINOv2, MAE, CLIP, SigLIP |
+| speech and audio | predict masked stretches of audio from a learned codebook | wav2vec 2.0, HuBERT |
+| video | predict masked regions in representation space | V-JEPA |
+| tabular data | mask and reconstruct columns | helps less: gradient-boosted trees on labelled data remain hard to beat |
+
+A recent line of work, **joint-embedding predictive architectures** (JEPA), predicts the *representation* of a masked region instead of its raw pixels, so the model need not spend capacity on unpredictable detail such as the exact texture of leaves. Whatever the method, the evaluation is the same: freeze the encoder and measure how well a linear probe or a k-nearest-neighbour classifier does on downstream tasks with few labels.` }
     ],
     when: `- Plenty of unlabelled data and few labels: pretrain (or start from a self-supervised checkpoint), then probe or fine-tune.
 - Domains poorly covered by public pretrained models — medical, satellite, industrial images, sensor data.
@@ -382,7 +418,9 @@ Self-supervised pretraining followed by light supervision is now the default rec
       { type: 'mcq', q: 'What is representation collapse?', options: ['The loss becoming negative', 'The encoder mapping every input to (nearly) the same vector', 'The batch size shrinking', 'Overfitting to labels'], answer: 1, explain: 'It satisfies "views agree" trivially and carries no information.' },
       { type: 'fill', q: 'A ViT image has 196 patches and an MAE masks 75% of them. How many patches does the encoder process?', answer: ['49'], explain: '196 × 0.25 = 49.' },
       { type: 'tf', q: 'In BYOL and DINO, the teacher network is trained by gradient descent like the student.', answer: false, explain: 'The teacher is an exponential moving average of the student; gradients are stopped.' },
-      { type: 'mcq', q: 'What is a linear probe?', options: ['Fine-tuning every layer', 'Training only a linear classifier on frozen features to measure their quality', 'A pruning method', 'A data augmentation'], answer: 1, explain: 'It measures how linearly separable the learned features are.' }
+      { type: 'mcq', q: 'What is a linear probe?', options: ['Fine-tuning every layer', 'Training only a linear classifier on frozen features to measure their quality', 'A pruning method', 'A data augmentation'], answer: 1, explain: 'It measures how linearly separable the learned features are.' },
+      {"type":"mcq","q":"The covariance spectrum of a model's 64-dimensional embeddings drops to almost zero after the 6th eigenvalue. What does that indicate?","options":["Healthy, well-spread features","Dimensional collapse: the embeddings use only about 6 directions","The batch is too large","The learning rate is too small"],"answer":1,"explain":"Eigenvalues are the variance along each direction; near-zero values mean those directions carry no information."},
+      {"type":"mcq","q":"What does a JEPA-style model predict for a masked region?","options":["Its raw pixels","Its representation (embedding)","Its class label","Only its position"],"answer":1,"explain":"Predicting in representation space lets the model ignore unpredictable low-level detail and focus on content."}
     ],
     problems: [
       {
@@ -509,6 +547,7 @@ x_t — the noisy version after t steps
 :::
 
 Early steps barely change the data; by the last step x_T is indistinguishable from pure noise. Schedules (linear, cosine) control how quickly the signal fades.` },
+      { type: 'chart', title: "How much signal survives at step t", md: `x_t = √ᾱ_t · x₀ + √(1 − ᾱ_t) · ε: the curves show how much of the original data each noisy version still contains:`, after: `With the original linear schedule the signal is already mostly gone halfway through (√ᾱ ≈ 0.28 at t = 500), so many of the late steps are spent on almost pure noise. The cosine schedule destroys information more evenly (0.70 at t = 500), which improved sample quality, especially for small images. Choosing how fast to add noise is one of the main design decisions of a diffusion model.`, chart: {"kind":"line","x":[1,21,41,61,81,101,121,141,161,181,201,221,241,261,281,301,321,341,361,381,401,421,441,461,481,501,521,541,561,581,601,621,641,661,681,701,721,741,761,781,801,821,841,861,881,901,921,941,961,981,1000],"points":false,"series":[{"name":"linear β schedule (DDPM)","y":[0.9999,0.9969,0.9898,0.9789,0.9643,0.9461,0.9246,0.8999,0.8724,0.8424,0.8102,0.776,0.7404,0.7036,0.6659,0.6277,0.5893,0.5511,0.5133,0.4762,0.44,0.4049,0.3711,0.3388,0.308,0.2789,0.2516,0.226,0.2022,0.1802,0.1599,0.1413,0.1244,0.1091,0.0953,0.0829,0.0718,0.0619,0.0532,0.0456,0.0388,0.033,0.0279,0.0235,0.0197,0.0164,0.0137,0.0113,0.0093,0.0077,0.0064]},{"name":"cosine schedule","y":[1,0.9991,0.9972,0.9943,0.9905,0.9857,0.9799,0.9732,0.9656,0.957,0.9475,0.9371,0.9257,0.9135,0.9004,0.8864,0.8715,0.8558,0.8392,0.8219,0.8037,0.7848,0.7651,0.7447,0.7235,0.7016,0.6791,0.6559,0.632,0.6076,0.5825,0.5569,0.5308,0.5041,0.4769,0.4493,0.4212,0.3928,0.3639,0.3347,0.3052,0.2754,0.2453,0.2149,0.1844,0.1537,0.1228,0.0918,0.0607,0.0296,0]}],"xLabel":"diffusion step t (of 1,000)","yLabel":"signal scale √ᾱ_t","yMin":0,"yMax":1} },
       { type: 'code', title: 'Noising data in closed form', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -593,7 +632,14 @@ v_θ(x_t, t) — the network's predicted velocity at the point x_t
 ε − x₀ — the constant velocity of the straight path from data to noise, the regression target
 :::
 
-Straighter paths need fewer sampling steps; Stable Diffusion 3, for example, is a rectified-flow transformer. **Evaluation**: FID (the Fréchet distance between feature statistics of real and generated images), CLIP score for prompt alignment, and — still essential — human preference studies.` }
+Straighter paths need fewer sampling steps; Stable Diffusion 3, for example, is a rectified-flow transformer. **Evaluation**: FID (the Fréchet distance between feature statistics of real and generated images), CLIP score for prompt alignment, and — still essential — human preference studies.` },
+      { type: 'text', title: "Fewer sampling steps", md: `A thousand denoising steps per image is slow, because every step is a full pass of the network. Several ideas cut the number of steps:
+- **DDIM** samplers take large deterministic jumps along the same trajectory and need 20 to 50 steps instead of 1,000, without retraining.
+- **Higher-order solvers** (DPM-Solver and others) treat sampling as solving a differential equation and produce good images in 10 to 20 steps.
+- **Distillation** trains a student to reproduce several of the teacher's steps in one; repeated halving (progressive distillation) or consistency models bring generation down to 1 to 4 steps.
+- **Flow matching** with nearly straight paths (rectified flow) makes each step more accurate, so fewer are needed.
+
+Each step costs one network evaluation, so the number of steps directly sets the latency and the cost of generating an image.` }
     ],
     when: `- Generating images, video, audio, 3-D shapes and molecules; inpainting, super-resolution and editing.
 - Conditional generation (text-to-image, image-to-image) with guidance.
@@ -616,7 +662,9 @@ Straighter paths need fewer sampling steps; Stable Diffusion 3, for example, is 
       { type: 'fill', q: 'With ᾱ_t = 0.36, what is the weight √ᾱ_t of the clean signal in x_t?', answer: ['0.6', '0.60'], explain: '√0.36 = 0.6; the noise weight is √0.64 = 0.8.' },
       { type: 'mcq', q: 'What does classifier-free guidance with a scale w > 1 do?', options: ['Removes the text condition', 'Pushes predictions further in the direction the condition suggests, trading diversity for prompt adherence', 'Trains a separate classifier', 'Speeds up sampling by w times'], answer: 1, explain: 'It extrapolates from the unconditional to the conditional prediction.' },
       { type: 'tf', q: 'Latent diffusion models run the diffusion process in the compressed latent space of an autoencoder.', answer: true, explain: 'That is what makes them affordable at high resolution.' },
-      { type: 'mcq', q: 'What does flow matching learn?', options: ['A discriminator', 'A velocity field that transports noise to data, integrated as an ODE at sampling time', 'A tokenizer', 'A ranking function'], answer: 1, explain: 'With straight-line paths the target velocity is ε − x₀.' }
+      { type: 'mcq', q: 'What does flow matching learn?', options: ['A discriminator', 'A velocity field that transports noise to data, integrated as an ODE at sampling time', 'A tokenizer', 'A ranking function'], answer: 1, explain: 'With straight-line paths the target velocity is ε − x₀.' },
+      {"type":"mcq","q":"Compared with the linear schedule, what does the cosine noise schedule do?","options":["Adds all the noise in the first step","Destroys information more evenly across the steps, keeping more signal in the middle","Removes noise instead of adding it","Uses fewer steps by definition"],"answer":1,"explain":"With the linear schedule most of the signal is gone halfway through; the cosine schedule spreads the destruction more evenly, which improved sample quality."},
+      {"type":"tf","q":"Each sampling step of a diffusion model requires a full evaluation of the denoising network.","answer":true,"explain":"That is why reducing the number of steps (better samplers, distillation, consistency models) is the main route to faster generation."}
     ],
     problems: [
       {
@@ -767,6 +815,7 @@ print("true value of the best action:          0.000")
 print(f"DQN target (max of noisy estimates):   {dqn.mean():+.3f}")
 print(f"Double DQN target (decoupled):         {double.mean():+.3f}")
 `, after: `Although every action is worth 0, the maximum of ten noisy estimates averages about +1.5, and bootstrapping feeds that optimism back into the next targets. Choosing with one estimate and evaluating with an independent one removes the bias.`, predict: {"type":"mcq","q":"Every action is truly worth 0, and you have unbiased but noisy estimates of each. On average, what is the largest of 10 such estimates?","options":["0, because the noise averages out","Clearly positive","Clearly negative","It depends only on the true values"],"answer":1,"explain":"+1.545: taking the maximum of noisy estimates selects the luckiest noise, so it is biased upwards. That is DQN’s overestimation; Double DQN decouples choosing from evaluating and gets −0.006.","expect":["DQN target (max of noisy estimates):   +1.545"]} },
+      { type: 'chart', title: "The bias of taking the maximum of noisy estimates", md: `Every action is truly worth 0, but each value is estimated with noise of standard deviation 1:`, after: `Taking the maximum of noisy estimates systematically picks whichever estimate happened to be too high: with 10 actions the target is about 1.5 too high, and the error grows with the number of actions. In Q-learning these inflated targets feed back into later updates. Double Q-learning chooses the action with one estimate and evaluates it with an independent one, which removes the bias (the second line stays at 0); Double DQN applies this with the online and target networks.`, chart: {"kind":"line","x":[1,2,3,5,10,20,50],"xLog":true,"series":[{"name":"max of the estimates (Q-learning / DQN target)","y":[-0.011,0.568,0.845,1.158,1.541,1.869,2.249]},{"name":"pick with one estimate, evaluate with another (double Q-learning)","y":[-0.007,0.002,0,-0.02,0.005,-0.006,0.006]}],"xLabel":"number of actions (log scale)","yLabel":"estimated value of the best action (true value 0)","hlines":[{"y":0,"label":""}]} },
       { type: 'text', title: 'Policy gradients: REINFORCE with a baseline', md: `Instead of learning values and acting greedily, **policy-gradient** methods parameterize the policy π_θ(a | s) directly (useful for continuous or stochastic actions) and climb the gradient of the expected return:
 
 $$ ∇_θ J = E[ ∇_θ log π_θ(a_t | s_t) · ( G_t − b(s_t) ) ] $$
@@ -869,7 +918,8 @@ for adv in (+1.0, -1.0):
       { type: 'tf', q: 'Subtracting a baseline from the return makes the policy-gradient estimate biased.', answer: false, explain: 'Its expected contribution is zero; it only lowers variance.' },
       { type: 'fill', q: 'With γ = 0.9, reward 1, V(s) = 2 and V(s′) = 3, what is the TD error δ = r + γV(s′) − V(s)?', answer: ['1.7'], explain: '1 + 0.9 × 3 − 2 = 1.7.' },
       { type: 'mcq', q: 'With ε = 0.2 and a positive advantage, what is the PPO objective for a ratio of 1.5 (with A = 1)?', options: ['1.5', '1.2', '0.8', '1.0'], answer: 1, explain: 'min(1.5, clip(1.5, 0.8, 1.2) = 1.2) = 1.2.' },
-      { type: 'mcq', q: 'How is PPO used in RLHF?', options: ['To train the tokenizer', 'To fine-tune the language model on reward-model scores, with a KL penalty to the reference model', 'To compress the model', 'To collect human labels'], answer: 1, explain: 'The response is the action and the reward model scores it.' }
+      { type: 'mcq', q: 'How is PPO used in RLHF?', options: ['To train the tokenizer', 'To fine-tune the language model on reward-model scores, with a KL penalty to the reference model', 'To compress the model', 'To collect human labels'], answer: 1, explain: 'The response is the action and the reward model scores it.' },
+      {"type":"mcq","q":"Why does Q-learning tend to overestimate action values?","options":["Rewards are always positive","Its target takes the maximum over noisy estimates, which is biased upwards","The discount factor is too small","Neural networks always overestimate"],"answer":1,"explain":"The maximum of several noisy estimates is on average larger than the largest true value; double Q-learning removes this by choosing and evaluating with independent estimates."}
     ],
     problems: [
       {
@@ -1043,6 +1093,7 @@ for eps in (0.0, 0.05, 0.1, 0.2):
     Xa = fgsm(X[test], y[test], eps)
     print(f"eps = {eps:.2f}: accuracy {clf.score(Xa, y[test]):.3f}   average pixel change {np.abs(Xa - X[test]).mean():.3f}")
 `, after: `The classifier is perfect on clean test digits, yet changing each pixel by at most 0.1 (on a 0–1 scale) pulls accuracy down to about 74%, and 0.2 to below 20% — worse than guessing.` },
+      { type: 'chart', title: "Accuracy under adversarial and random perturbations of the same size", md: `A logistic-regression classifier telling handwritten 3s from 8s, with every pixel changed by at most ε:`, after: `Random changes of size ε barely matter: they mostly cancel out in the weighted sum. The same budget spent in the direction of the gradient's sign moves every pixel against the classifier at once, and accuracy falls from 100% to 67% at ε = 0.1 and to 9% at ε = 0.2, where random changes of the same size still leave it at 98%. Adversarial examples are not about large noise but about many small changes that all point the same way, which is why high-dimensional inputs are so vulnerable.`, chart: {"kind":"line","x":[0,0.02,0.05,0.1,0.15,0.2,0.3],"series":[{"name":"random ±ε noise on every pixel","y":[1,1,1,1,0.991,0.981,0.907]},{"name":"FGSM: ε in the worst direction","y":[1,1,0.935,0.673,0.355,0.093,0]}],"xLabel":"ε: maximum change per pixel (pixels range from 0 to 1)","yLabel":"accuracy (3 versus 8)","yMin":0,"yMax":1} },
       { type: 'text', title: 'Defences against evasion', md: `- **Adversarial training** — train on adversarial examples generated on the fly (usually with PGD) — is the most reliable empirical defence, at the cost of extra compute and some clean accuracy.
 - **Certified defences** such as randomized smoothing give provable guarantees within a radius.
 - **Input preprocessing** and "gradient masking" tricks have repeatedly been broken by adaptive attacks.
@@ -1127,7 +1178,8 @@ Defences in depth: treat all model inputs from outside as untrusted data, never 
       { type: 'fill', q: 'For a linear score wᵀx, by how much does the change ε·sign(w) shift the score? Give the expression in terms of ε and w.', answer: ['ε‖w‖₁', 'eps * ||w||_1', 'ε·‖w‖₁', 'ε||w||1'], explain: 'Σ ε·|w_i| = ε‖w‖₁, a sum over all dimensions.' },
       { type: 'mcq', q: 'Which two operations does DP-SGD add to ordinary SGD?', options: ['Dropout and batch normalization', 'Clipping each example\'s gradient and adding Gaussian noise', 'Larger batches and more epochs', 'Pruning and quantization'], answer: 1, explain: 'Clipping bounds each person\'s influence; noise hides it.' },
       { type: 'mcq', q: 'What is indirect prompt injection?', options: ['A user typing a rude prompt', 'Malicious instructions hidden in content the LLM reads, such as a web page or email', 'A bug in the tokenizer', 'Overfitting to prompts'], answer: 1, explain: 'The attacker never talks to the model directly.' },
-      { type: 'tf', q: 'A model that overfits its training data is more vulnerable to membership inference.', answer: true, explain: 'Its loss on training members is distinctly lower than on outsiders.' }
+      { type: 'tf', q: 'A model that overfits its training data is more vulnerable to membership inference.', answer: true, explain: 'Its loss on training members is distinctly lower than on outsiders.' },
+      {"type":"mcq","q":"Why do adversarial perturbations hurt far more than random noise of the same size?","options":["They use larger changes","Every small change is aligned with the model's gradient, so their effects add up instead of cancelling out","The model filters out random noise","Adversarial examples change the labels"],"answer":1,"explain":"In high dimensions, many tiny aligned changes add up to a large change in the score, while random changes mostly cancel."}
     ],
     problems: [
       {
@@ -1324,7 +1376,37 @@ for alpha in (0.6, 0.8, 0.9):
     print(f"alpha = {alpha}: k = 4 gives {expected_tokens(alpha, 4):.2f} tokens per pass (simulated {simulate(alpha, 4):.2f}); "
           f"best k = {best_k}, speed-up {expected_tokens(alpha, best_k) / (1 + best_k * c):.2f}x")
 `, after: `The simulation matches the formula. The better the draft agrees with the target, the more tokens each expensive pass yields and the longer the drafts worth proposing; with a weak draft, long proposals waste effort.` },
+      { type: 'chart', title: "Tokens produced per pass of the big model", md: `If each drafted token is accepted independently with probability α, one verification pass yields (1 − α^(k+1)) / (1 − α) tokens on average:`, after: `At α = 0.5 longer drafts barely help: about 2 tokens per pass whatever k is, because the chain of acceptances usually breaks early. Only a draft model that agrees with the target most of the time (α ≥ 0.8) makes long drafts pay, reaching 4 to 5 tokens per pass at k = 8. The real speed-up is smaller than these numbers, since drafting itself costs time, which is why drafts come from much smaller models or from extra prediction heads on the target model.`, chart: {"kind":"line","x":[0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95],"series":[{"name":"draft proposes k = 2 tokens","y":[1.39,1.472,1.56,1.652,1.75,1.853,1.96,2.073,2.19,2.312,2.44,2.573,2.71,2.852]},{"name":"draft proposes k = 4 tokens","y":[1.425,1.53,1.65,1.785,1.938,2.11,2.306,2.526,2.773,3.051,3.362,3.709,4.095,4.524]},{"name":"draft proposes k = 8 tokens","y":[1.429,1.538,1.666,1.817,1.996,2.212,2.475,2.798,3.199,3.7,4.329,5.123,6.126,7.395]}],"xLabel":"acceptance rate α (chance the target model accepts each drafted token)","yLabel":"expected tokens per target forward pass","yMin":0} },
       { type: 'check', question: { type: 'mcq', q: 'Why is decoding a single sequence memory-bound?', options: ['Because tokens are large', 'Each step reads every weight from memory but performs only about 2 FLOPs per weight', 'Because attention is quadratic', 'Because GPUs have little memory'], answer: 1, explain: 'Arithmetic intensity ≈ 1 FLOP per byte, far below the ridge point.' } },
+      { type: 'text', title: "Measuring and pricing a deployment", md: `Serving quality is measured with a few standard numbers:
+
+| Metric | Meaning | What drives it |
+| --- | --- | --- |
+| time to first token (TTFT) | the delay before the answer starts | prefill: prompt length, queueing |
+| time per output token (TPOT), or inter-token latency | the pace of the streamed answer | decode: memory bandwidth, batch size |
+| throughput | tokens per second across all users | batch size, hardware utilisation |
+| goodput | requests per second that meet the latency targets | the balance of all of the above |
+
+Report percentiles (p50 and p99), not averages: users notice the slow tail. Batching raises throughput but slows each user's stream, so every deployment chooses a point on that trade-off.
+
+Cost follows from throughput:
+
+$$ cost per million tokens = GPU price per hour / ( tokens per second × 3,600 ) × 1,000,000 $$
+:::where
+GPU price per hour — what the hardware costs to rent or own, per hour
+tokens per second — the throughput achieved across all requests on that hardware
+3,600 — seconds per hour; 1,000,000 — tokens per million
+:::` },
+      { type: 'code', title: "Cost per million tokens", code: `gpu_per_hour = 3.00                         # dollars per GPU-hour (an illustrative rental price)
+
+def cost_per_million(tokens_per_second, price=gpu_per_hour):
+    return price / (tokens_per_second * 3600) * 1_000_000
+
+for batch, per_user in [(1, 60), (8, 55), (32, 45), (128, 25)]:   # illustrative per-user speeds
+    total = batch * per_user                 # throughput across all users
+    print(f"batch {batch:4d}: {per_user:3d} tokens/s per user, {total:5d} tokens/s total, "
+          f"\${cost_per_million(total):6.2f} per million output tokens")
+print("batching cuts the cost per token:", cost_per_million(128 * 25) < cost_per_million(60) / 20)`, after: `A single user streaming 60 tokens per second leaves the GPU mostly idle and costs about $14 per million tokens. Batching 128 users slows each one to 25 tokens per second but cuts the cost to about 26 cents, more than 50 times cheaper. The per-user speeds here are illustrative, but the shape of the trade-off is real, and it is why API prices sit so far below single-user hardware costs.`, predict: {"type":"mcq","q":"A GPU costs $3 per hour and produces 3,200 output tokens per second in total. Roughly what does a million output tokens cost?","options":["About $0.26","About $2.60","About $26","About $0.03"],"answer":0,"explain":"3,200 × 3,600 ≈ 11.5 million tokens per hour, so $3 buys 11.5 million tokens: about 26 cents per million.","expect":["batching cuts the cost per token: True"]} },
       { type: 'text', title: 'Other levers on cost and latency', md: `- **Quantization** (see *Quantization & Efficient Inference*): int8/int4 weights mean fewer bytes per decode step — a direct speed-up for memory-bound decoding — and KV-cache quantization fits more sequences.
 - **Prefix (prompt) caching**: reuse the KV cache of a shared prefix — a long system prompt, tool definitions, a document — across requests. API providers expose this as prompt caching with discounted cached input tokens.
 - **Batch APIs** for offline work trade latency for price (often around half the cost).
@@ -1361,7 +1443,9 @@ tokens per second — the sustained total throughput across all requests
       { type: 'fill', q: 'A GPU has a peak of 1,000 TFLOP/s and a bandwidth of 4 TB/s. What is its ridge point in FLOPs per byte?', answer: ['250'], explain: '1,000e12 / 4e12 = 250.' },
       { type: 'mcq', q: 'What does continuous batching do?', options: ['Waits until all requests in a batch finish', 'Adds and removes sequences at every decode step to keep the GPU full', 'Uses one GPU per request', 'Batches only the prefill'], answer: 1, explain: 'Scheduling happens per step, not per batch.' },
       { type: 'fill', q: 'Speculative decoding with acceptance rate α = 0.5 and k = 1 draft token: expected tokens per target pass? (decimal)', answer: ['1.5'], explain: '(1 − 0.5²) / (1 − 0.5) = 0.75 / 0.5 = 1.5.' },
-      { type: 'tf', q: 'Speculative decoding changes the distribution of the text the target model produces.', answer: false, explain: 'The rejection-sampling rule preserves the target model\'s distribution exactly.' }
+      { type: 'tf', q: 'Speculative decoding changes the distribution of the text the target model produces.', answer: false, explain: 'The rejection-sampling rule preserves the target model\'s distribution exactly.' },
+      {"type":"mcq","q":"Why report p99 latency rather than only the average?","options":["It is easier to compute","Users experience the slow tail; a good average can hide many very slow requests","p99 is always smaller","Averages cannot be computed for latency"],"answer":1,"explain":"One request in a hundred being very slow is noticed by many users at scale, and averages hide it."},
+      {"type":"fill","q":"With acceptance rate α = 0.8 and k = 4 drafted tokens, how many tokens does one target pass yield on average, (1 − α^(k+1)) / (1 − α)? (2 decimals)","answer":["3.36"],"explain":"(1 − 0.8⁵) / 0.2 = (1 − 0.32768) / 0.2 ≈ 3.36."}
     ],
     problems: [
       {

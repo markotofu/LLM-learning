@@ -20,6 +20,14 @@ def main(path):
     exec(compile(payload["harness"], "<harness>", "exec"), ns)
     run_tests = ns["_mla_run_tests"]
     run_exec = ns["_mla_exec"]
+    # Like the browser runtime: a non-interactive backend, and plt.show() does nothing (figures are collected).
+    try:
+        import matplotlib
+        matplotlib.use("agg")
+        import matplotlib.pyplot as plt
+        plt.show = lambda *a, **k: None
+    except ImportError:
+        pass
     t0 = time.time()
     report = {"python": sys.version.split()[0], "problems": [], "samples": []}
 

@@ -147,10 +147,13 @@
     Object.assign(state, next);
     saveNow();
   }
+  const MAX_IMPORT_CHARS = 40 * 1024 * 1024;   // far above any real progress file (localStorage itself holds about 5 MB)
   // mode: 'merge' (default, safe) or 'replace'
   function importJSON(text, mode) {
     let data;
-    try { data = JSON.parse(text); } catch (e) { throw new Error('Could not read the file: it is not valid JSON.'); }
+    if (String(text).length > MAX_IMPORT_CHARS) throw new Error('That file is too large to be an ML Atlas progress file.');
+    // keys that could tamper with object prototypes are dropped while parsing (imports can come from anywhere)
+    try { data = JSON.parse(text, (k, v) => (k === '__proto__' || k === 'constructor' || k === 'prototype') ? undefined : v); } catch (e) { throw new Error('Could not read the file: it is not valid JSON.'); }
     validate(data);
     delete data.exportedAt;
     if (MLA.progress && MLA.progress.migrateSections) MLA.progress.migrateSections(data);

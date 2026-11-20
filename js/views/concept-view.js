@@ -33,7 +33,7 @@
       go(p) { MLA.router.navigate(p); },
       isRead(sid) { return (this.cs.read || []).includes(sid); },
       isRunnable(s) { return s.run !== false && (!s.lang || s.lang === 'python'); },
-      secIcon(s) { if (s.type === 'demo' && String(s.demo).startsWith('dg-')) return 'layers'; return { text: 'book', code: 'code', demo: 'play', check: 'hint' }[s.type] || 'book'; },
+      secIcon(s) { if (s.type === 'demo' && String(s.demo).startsWith('dg-')) return 'layers'; return { text: 'book', code: 'code', demo: 'play', check: 'hint', chart: 'graph' }[s.type] || 'book'; },
       // Sections count as read once you reach their end (a sentinel scrolls into view).
       observe() {
         if (!this.c || typeof IntersectionObserver === 'undefined' || !this.$el || !this.$el.querySelectorAll) return;
@@ -136,6 +136,11 @@
               <template v-else-if="s.type==='demo'">
                 <mla-md v-if="s.md" :src="s.md" />
                 <mla-demo :name="s.demo" />
+                <mla-md v-if="s.after" :src="s.after" />
+              </template>
+              <template v-else-if="s.type==='chart'">
+                <mla-md v-if="s.md" :src="s.md" />
+                <mla-chart :spec="s.chart" :title="s.title" />
                 <mla-md v-if="s.after" :src="s.after" />
               </template>
               <template v-else-if="s.type==='check'">

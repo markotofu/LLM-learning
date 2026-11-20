@@ -77,6 +77,30 @@ for h in [1.5, 3.5, 5.5]:
 | **Self-supervised** | raw data where the label hides inside the data | predict a missing or next piece | **LLM pretraining**: predict the next word of internet text |
 
 Self-supervised learning is the secret behind LLMs: nobody labels trillions of words by hand. The "label" for every position in a sentence is simply the word that comes next — free supervision at enormous scale.` },
+      { type: 'text', title: "Problems machine learning can solve", md: `The most successful applications automate a decision that people already make, by **learning from examples of past decisions**. In supervised learning you supply pairs of inputs and the desired outputs; the algorithm finds a way to produce the output for new inputs, without anyone writing the rules.
+
+How hard a supervised problem is in practice often depends on **where the labels come from**:
+
+| Task | Input | Output (label) | Where labels come from |
+| --- | --- | --- | --- |
+| Reading postal codes on envelopes | a scan of handwriting | the digits | people type in what they read: cheap and fast |
+| Spotting a tumour in a scan | a medical image | benign or malignant | a biopsy and a pathologist: expensive, slow, sometimes risky |
+| Flagging card fraud | a transaction | fraud or not | customers report fraud weeks later: free but delayed and incomplete |
+| Pricing a used car | make, age, mileage… | the sale price | past sales records: free, but they only cover cars that sold |
+
+Unsupervised learning needs no labels at all, which is why it is used for exploration:
+
+- **Finding topics** in thousands of blog posts, when nobody knows in advance what the topics are.
+- **Grouping customers** with similar buying habits ("parents", "bargain hunters"), so marketing can treat them differently.
+- **Detecting unusual behaviour**, such as odd access patterns to a website, when you have no examples of the attacks you are looking for.
+
+:::note Data as a table
+Almost every method on this map sees its data as a table. Each **row is a sample** (one email, one patient, one transaction) and each **column is a feature** (a measured property). Choosing and building good features, called *feature extraction* or *feature engineering*, is often worth more than choosing a fancier algorithm.
+:::
+
+:::warn When machine learning is the wrong tool
+If the rules are known, stable and easy to write down (calculating sales tax, validating a date), write them down: code is cheaper, exact and explainable. And if your data simply does not contain the information needed (predicting a coin toss from yesterday's weather), no algorithm can find it.
+:::` },
       { type: 'check', question: { type: 'mcq', q: 'An online shop wants to group its customers by purchasing behaviour, but has no predefined groups. Which kind of learning fits?', options: ['Supervised classification', 'Unsupervised learning (clustering)', 'Reinforcement learning', 'Supervised regression'], answer: 1, explain: 'There are no labels — nobody has told us which group each customer belongs to — so we look for structure in the data itself: clustering, a form of unsupervised learning.' } },
       { type: 'text', title: 'The universal recipe', md: `Every model on this map — linear regression, decision trees, neural networks, GPT — is an instance of the same five steps:
 
@@ -102,6 +126,74 @@ Read that formula as: *average the mistakes over all n training examples, and se
 :::key Everything else is detail
 When you meet a new technique, ask: which of the five boxes does it change? A *transformer* is a new **model**. *Cross-entropy* is a **loss**. *Adam* is an **optimizer**. *Cross-validation* is about **evaluation**. *Tokenization* is about **data**.
 :::` },
+      { type: 'text', title: "Know your task, and know your data", md: `The algorithm is usually the smallest part of a working machine-learning system. Before touching a model, answer these questions, ideally in writing:
+
+1. **What question am I trying to answer?** "Reduce customer churn" is a goal; "predict which subscribers will cancel in the next 30 days" is a question a model can answer.
+2. **Can the data I have answer it?** If cancellations are driven by service outages but you only have billing data, no model will find the cause.
+3. **How do I phrase it as a learning problem?** Classification or regression? What exactly is the label? *When* is the prediction made, and which information is available at that moment (and not later)?
+4. **Do I have enough data?** Especially enough examples of the rare outcome you care about.
+5. **Which features did I extract, and could they plausibly predict the label?** A doctor, salesperson or engineer who knows the domain is your best source of ideas.
+6. **How will I measure success?** The machine-learning metric (accuracy, error) must connect to the real goal (money saved, patients helped). A 1% better model may be worth millions, or nothing.
+7. **How will the model interact with the rest of the system?** Who acts on its predictions? What happens when it is wrong? How will it be monitored and updated?
+
+:::key Think before you fit
+A model that answers the wrong question very accurately is useless. Time spent understanding the task and the data almost always pays back more than time spent tuning the algorithm.
+:::` },
+      { type: 'code', title: "A first real application: classifying iris flowers", md: `A botanist has measured 150 iris flowers: the length and width of the **petals** and **sepals** (the green leaves under the petals), in centimetres. An expert identified each flower as one of three species: *setosa*, *versicolor* or *virginica*. Our goal is a model that names the species of a **new** flower from its four measurements.
+
+This is **supervised classification**: the possible outputs are three **classes**, and each flower's species is its **label**. The steps below are the steps of almost every project:
+
+1. load the data and check its shape;
+2. hold out a **test set** that the model never sees during training;
+3. **look at the data** before modelling;
+4. train a model, make predictions, and measure accuracy on the test set.`, code: `import numpy as np
+import pandas as pd
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+
+iris = load_iris()
+print("features:", iris.feature_names)
+print("classes: ", list(iris.target_names))
+print("data shape:", iris.data.shape)        # 150 flowers (rows) x 4 measurements (columns)
+
+# 1. Hold out 25% of the flowers for testing. random_state makes the shuffle repeatable.
+X_train, X_test, y_train, y_test = train_test_split(iris.data, iris.target, random_state=0)
+print("training set:", X_train.shape, " test set:", X_test.shape)
+
+# 2. Look at the data: the average measurements of each species in the training set.
+df = pd.DataFrame(X_train, columns=["sepal length", "sepal width", "petal length", "petal width"])
+df["species"] = iris.target_names[y_train]
+print(df.groupby("species").mean().round(2))
+
+# 3. Train a classifier that predicts the species of the single most similar training flower.
+knn = KNeighborsClassifier(n_neighbors=1)
+knn.fit(X_train, y_train)
+
+# 4. Predict a new flower. The input must be 2-D: one row per flower, one column per feature.
+X_new = np.array([[5.0, 2.9, 1.0, 0.2]])
+print("prediction:", iris.target_names[knn.predict(X_new)][0])
+
+# 5. Evaluate on flowers the model has never seen.
+y_pred = knn.predict(X_test)
+print("test accuracy:", round(float(np.mean(y_pred == y_test)), 2))
+print("same thing:   ", round(knn.score(X_test, y_test), 2))`, after: `Things to notice:
+
+- **Capital X, small y.** The inputs form a two-dimensional table (a matrix), so they get a capital letter; the labels are a one-dimensional list (a vector). Even a single new flower must be passed as a table with one row, which is why \`X_new\` has double brackets.
+- **Why look first?** The class averages already show that setosa has far smaller petals than the other two species, so the task is clearly solvable; plots (see *Data Visualization*) would also reveal measurement errors or odd values early.
+- **Why a test set?** A 1-nearest-neighbour model scores 100% on its own training flowers, because each one is its own nearest neighbour. Only flowers it has never seen tell us how it will do in the field: here, about 97% correct.`, predict: {"type":"mcq","q":"A new flower has sepals 5.0 cm long and 2.9 cm wide, and tiny petals: 1.0 cm long and 0.2 cm wide. Setosa irises are the ones with very small petals. Which species will the model predict?","options":["setosa","versicolor","virginica","It cannot decide with only one neighbour"],"answer":0,"explain":"Setosa. Its nearest training flower is a setosa, and the species averages printed by the code show why: setosa petals average about 1.5 cm long, against roughly 4 to 6 cm for the other two species.","expect":["prediction: setosa"]} },
+      { type: 'text', title: "Your toolkit: the essential Python libraries", md: `Every code sample in this app runs real Python in your browser, and the same few libraries appear again and again:
+
+| Library | What it gives you | Where you meet it |
+| --- | --- | --- |
+| **NumPy** | fast arrays and maths on whole arrays at once; the common data format of every library below | [NumPy](#/concept/numpy) |
+| **SciPy** | scientific functions (statistics, optimization, linear algebra) and **sparse matrices**, which store only the non-zero entries of mostly-empty data such as word counts | statistics, text data |
+| **pandas** | tables with named columns of different types; reading CSV, Excel and SQL; grouping, joining and reshaping | [pandas & EDA](#/concept/pandas-eda) |
+| **matplotlib** | plots and charts | [Data Visualization](#/concept/data-visualization) |
+| **scikit-learn** | almost every classical algorithm behind one consistent interface: \`fit\`, \`predict\`, \`transform\`, \`score\` | [the scikit-learn workflow](#/concept/sklearn-workflow) |
+| **Jupyter** | notebooks that mix code, output and notes; the runnable cells here work the same way | — |
+
+Learning these well is the fastest way to be productive: the algorithms in scikit-learn are written by experts, tested by thousands of users and share one API, so once you can use one model you can use them all.` },
       { type: 'text', title: 'AI, machine learning, deep learning and LLMs', md: `These terms nest inside each other:
 
 - **Artificial intelligence (AI)** — any technique that makes computers do things we consider intelligent. Includes old-school rule systems and search.
@@ -150,7 +242,9 @@ Each concept lists its **prerequisites**. You can open anything at any time, but
       { type: 'order', q: 'Put the universal ML recipe in order.', items: ['Collect data and turn it into features', 'Choose a model with adjustable parameters', 'Define a loss that measures mistakes', 'Optimise the parameters to reduce the loss', 'Evaluate on data the model has never seen'], explain: 'Data → model → loss → optimization → evaluation. Evaluation must use unseen data.' },
       { type: 'mcq', q: 'How are large language models mainly pretrained?', options: ['On millions of hand-labelled question/answer pairs', 'By self-supervised next-token prediction on huge amounts of text', 'With hand-written grammar rules', 'Purely by reinforcement learning from scratch'], answer: 1, explain: 'Pretraining predicts the next token of real text; the labels come from the text itself, so it scales to trillions of tokens. Later stages (fine-tuning, RLHF) add smaller amounts of curated data.' },
       { type: 'multi', q: 'Which situations are good candidates for machine learning? (select all)', options: ['Recognising handwritten digits', 'Converting Celsius to Fahrenheit', 'Flagging unusual credit-card transactions', 'Recommending songs a user might like'], answer: [0, 2, 3], explain: 'Temperature conversion is an exact formula — just code it. The others involve fuzzy, data-driven patterns.' },
-      { type: 'tf', q: 'Parameters are the numbers inside a model that are adjusted during training.', answer: true, explain: 'Yes — weights and biases are parameters. Settings you choose before training, like the learning rate, are called hyperparameters.' }
+      { type: 'tf', q: 'Parameters are the numbers inside a model that are adjusted during training.', answer: true, explain: 'Yes — weights and biases are parameters. Settings you choose before training, like the learning rate, are called hyperparameters.' },
+      {"type":"mcq","q":"Which of these tasks is **unsupervised**?","options":["Predicting a house's sale price from its features, using past sales","Grouping thousands of blog posts by topic when no list of topics exists","Flagging spam using emails that users marked as spam or not spam","Reading handwritten digits using scans labelled with the correct digit"],"answer":1,"explain":"Only the topic grouping has no labels to learn from; the other three learn from known correct answers."},
+      {"type":"tf","q":"In scikit-learn, `predict` expects a two-dimensional input, even when you predict for a single example.","answer":true,"explain":"The input is always a table: one row per example and one column per feature. A single example is a table with one row, e.g. `np.array([[5.0, 2.9, 1.0, 0.2]])`."}
     ],
     problems: [
       {
@@ -384,6 +478,39 @@ print("cat ~ kitten:", round(cosine(cat, kitten), 3))
 print("cat ~ truck: ", round(cosine(cat, truck), 3))
 ` },
       { type: 'check', question: { type: 'mcq', q: 'What is the cosine similarity between [2, 0] and [−5, 0]?', options: ['1', '0', '−1', '−10'], answer: 2, explain: 'They point in exactly opposite directions (180°), and cos 180° = −1. The lengths do not matter for cosine similarity.' } },
+      { type: 'text', title: "Norms: three ways to measure size", md: `The Euclidean length is one member of a family of **norms**, each measuring the size of a vector differently:
+
+$$ ‖x‖₁ = Σ |xᵢ|          ‖x‖₂ = √( Σ xᵢ² )          ‖x‖_∞ = max |xᵢ| $$
+:::where
+‖x‖₁ — the L1 norm ("Manhattan" or taxicab length): the sum of the absolute values
+‖x‖₂ — the L2 norm (Euclidean length): the usual straight-line length
+‖x‖_∞ — the L∞ norm (maximum norm): the largest absolute component
+|xᵢ| — the absolute value of component i
+:::
+
+For x = [3, −4]: ‖x‖₁ = 7, ‖x‖₂ = 5 and ‖x‖_∞ = 4.
+
+The **distance** between two vectors is the norm of their difference, ‖a − b‖, and the choice matters:
+- **L2 (Euclidean)** distance is the default in k-nearest neighbours, k-means and most of geometry. Because it squares the differences, one large difference dominates.
+- **L1 (Manhattan)** distance adds up the differences coordinate by coordinate; it is more robust to one extreme coordinate and natural for grid-like or count data.
+- **Cosine distance**, 1 − cosine similarity, ignores length entirely and compares only direction. It is the standard for text and embeddings, where a long document should still match a short one on the same topic.
+
+Norms also appear as **penalties**: L2 regularisation adds ‖w‖₂² to the loss and shrinks all weights a little; L1 regularisation adds ‖w‖₁ and drives many weights to exactly zero. The picture below shows why.` },
+      { type: 'chart', title: "All vectors of length 1, under three norms", after: `The L1 "circle" is a diamond with its corners on the axes, where one coordinate is exactly 0. That shape is why [L1 regularization](#/concept/regularization) (lasso) tends to set weights exactly to zero: the loss contours usually first touch the diamond at a corner. L2 is the familiar round circle, and L∞ only cares about the largest coordinate.`, chart: {"kind":"line","points":false,"series":[{"name":"L1: |x₁| + |x₂| = 1","x":[1,0,-1,0,1],"y":[0,1,0,-1,0]},{"name":"L2: √(x₁² + x₂²) = 1","x":[1,0.9986,0.9945,0.9877,0.9781,0.9659,0.9511,0.9336,0.9135,0.891,0.866,0.8387,0.809,0.7771,0.7431,0.7071,0.6691,0.6293,0.5878,0.5446,0.5,0.454,0.4067,0.3584,0.309,0.2588,0.2079,0.1564,0.1045,0.0523,0,-0.0523,-0.1045,-0.1564,-0.2079,-0.2588,-0.309,-0.3584,-0.4067,-0.454,-0.5,-0.5446,-0.5878,-0.6293,-0.6691,-0.7071,-0.7431,-0.7771,-0.809,-0.8387,-0.866,-0.891,-0.9135,-0.9336,-0.9511,-0.9659,-0.9781,-0.9877,-0.9945,-0.9986,-1,-0.9986,-0.9945,-0.9877,-0.9781,-0.9659,-0.9511,-0.9336,-0.9135,-0.891,-0.866,-0.8387,-0.809,-0.7771,-0.7431,-0.7071,-0.6691,-0.6293,-0.5878,-0.5446,-0.5,-0.454,-0.4067,-0.3584,-0.309,-0.2588,-0.2079,-0.1564,-0.1045,-0.0523,0,0.0523,0.1045,0.1564,0.2079,0.2588,0.309,0.3584,0.4067,0.454,0.5,0.5446,0.5878,0.6293,0.6691,0.7071,0.7431,0.7771,0.809,0.8387,0.866,0.891,0.9135,0.9336,0.9511,0.9659,0.9781,0.9877,0.9945,0.9986,1],"y":[0,0.0523,0.1045,0.1564,0.2079,0.2588,0.309,0.3584,0.4067,0.454,0.5,0.5446,0.5878,0.6293,0.6691,0.7071,0.7431,0.7771,0.809,0.8387,0.866,0.891,0.9135,0.9336,0.9511,0.9659,0.9781,0.9877,0.9945,0.9986,1,0.9986,0.9945,0.9877,0.9781,0.9659,0.9511,0.9336,0.9135,0.891,0.866,0.8387,0.809,0.7771,0.7431,0.7071,0.6691,0.6293,0.5878,0.5446,0.5,0.454,0.4067,0.3584,0.309,0.2588,0.2079,0.1564,0.1045,0.0523,0,-0.0523,-0.1045,-0.1564,-0.2079,-0.2588,-0.309,-0.3584,-0.4067,-0.454,-0.5,-0.5446,-0.5878,-0.6293,-0.6691,-0.7071,-0.7431,-0.7771,-0.809,-0.8387,-0.866,-0.891,-0.9135,-0.9336,-0.9511,-0.9659,-0.9781,-0.9877,-0.9945,-0.9986,-1,-0.9986,-0.9945,-0.9877,-0.9781,-0.9659,-0.9511,-0.9336,-0.9135,-0.891,-0.866,-0.8387,-0.809,-0.7771,-0.7431,-0.7071,-0.6691,-0.6293,-0.5878,-0.5446,-0.5,-0.454,-0.4067,-0.3584,-0.309,-0.2588,-0.2079,-0.1564,-0.1045,-0.0523,0]},{"name":"L∞: max(|x₁|, |x₂|) = 1","x":[1,-1,-1,1,1],"y":[1,1,-1,-1,1]}],"xLabel":"x₁","yLabel":"x₂","xMin":-2.82,"xMax":2.82,"yMin":-1.2,"yMax":1.2} },
+      { type: 'code', title: "Three distances, three different nearest neighbours", code: `import numpy as np
+q = np.array([1.0, 1.0])
+candidates = {"A": np.array([3.0, 3.0]), "B": np.array([1.0, 2.3]), "C": np.array([2.0, 0.4])}
+
+def cosine_distance(a, b):
+    return 1 - a @ b / (np.linalg.norm(a) * np.linalg.norm(b))
+
+measures = {"L2": lambda a, b: np.linalg.norm(a - b),
+            "L1": lambda a, b: np.abs(a - b).sum(),
+            "cosine": cosine_distance}
+for name, dist in measures.items():
+    d = {k: float(dist(q, v)) for k, v in candidates.items()}
+    nearest = min(d, key=d.get)
+    print(f"{name:<6}", "  ".join(f"{k}: {v:.3f}" for k, v in d.items()), f"  -> nearest by {name}: {nearest}")`, after: `A points in exactly the same direction as q, so its cosine distance is 0, yet it is the farthest point under both L1 and L2. C wins under L2 because its difference from q, [1, −0.6], is spread over two coordinates; B wins under L1 because its whole difference (1.3) sits in one coordinate, and L1 does not reward spreading. Choosing a distance is choosing what "similar" means.`, predict: {"type":"mcq","q":"q = [1, 1]. Candidates: A = [3, 3], B = [1, 2.3], C = [2, 0.4]. Which one is nearest to q by cosine distance?","options":["A","B","C","They tie"],"answer":0,"explain":"A points in exactly the same direction as q, so the angle between them is 0 and the cosine distance is 0, even though A is the farthest away in straight-line distance.","expect":["nearest by cosine: A"]} },
       { type: 'text', title: 'Matrices: a whole dataset at once', md: `A **matrix** is a 2-D grid of numbers with a **shape** written (rows, columns). The convention in ML: **one row per example, one column per feature**. Four houses with three features each form a 4×3 matrix **X**.
 
 Multiplying the matrix by a weight vector computes the dot product of *every row* with the weights — a prediction for every house in one operation:
@@ -480,7 +607,9 @@ except ValueError as err:
       { type: 'tf', q: 'For matrices, A @ B always equals B @ A.', answer: false, explain: 'Matrix multiplication is not commutative. The products are usually different, and often only one of them has compatible shapes.' },
       { type: 'mcq', q: 'Two embedding vectors have cosine similarity 0.98. What does that tell you?', options: ['They are almost identical in length', 'They point in almost the same direction — likely similar meanings', 'They are perpendicular', 'One is the negative of the other'], answer: 1, explain: 'Cosine similarity measures the angle. 0.98 means a tiny angle, which for embeddings indicates very similar meaning.' },
       { type: 'fill', q: 'What is the length (L2 norm) of the vector [6, 8]?', answer: ['10', '10.0'], explain: '√(6² + 8²) = √100 = 10.' },
-      { type: 'mcq', q: 'In NumPy, what does `a * b` compute for two vectors of the same length?', options: ['Their dot product', 'Their element-wise product (a new vector)', 'Their cosine similarity', 'An error'], answer: 1, explain: '`*` multiplies element by element. Use `a @ b` or `np.dot(a, b)` for the dot product.' }
+      { type: 'mcq', q: 'In NumPy, what does `a * b` compute for two vectors of the same length?', options: ['Their dot product', 'Their element-wise product (a new vector)', 'Their cosine similarity', 'An error'], answer: 1, explain: '`*` multiplies element by element. Use `a @ b` or `np.dot(a, b)` for the dot product.' },
+      {"type":"fill","q":"What is the L1 norm of the vector [3, −4]?","answer":["7"],"explain":"|3| + |−4| = 7. (Its L2 norm is 5 and its L∞ norm is 4.)"},
+      {"type":"mcq","q":"Which penalty tends to set many weights exactly to zero?","options":["L2: the sum of squared weights","L1: the sum of absolute weights","L∞: the largest absolute weight","None of them"],"answer":1,"explain":"The L1 ball has corners on the axes, where some weights are exactly 0, and the optimum usually lands on such a corner."}
     ],
     problems: [
       {
@@ -682,6 +811,7 @@ Replace x with a model parameter and f with the loss. The derivative says which 
 | ReLU max(0, x) | 1 if x > 0 else 0 | the most common activation |
 
 Example: the squared error (ŷ − y)² has derivative **2(ŷ − y)** with respect to ŷ — large errors produce large corrections.` },
+      { type: 'chart', title: "A function and its derivative", after: `Wherever the dashed derivative is positive, f rises; wherever it is negative, f falls. Where the derivative crosses zero, f has a flat spot: a local maximum at x = −1 and a local minimum at x = 1. Optimisers hunt for exactly these points, and the derivative's sign tells them which way to go.`, chart: {"kind":"line","x":[-2.2,-2.15,-2.1,-2.05,-2,-1.95,-1.9,-1.85,-1.8,-1.75,-1.7,-1.65,-1.6,-1.55,-1.5,-1.45,-1.4,-1.35,-1.3,-1.25,-1.2,-1.15,-1.1,-1.05,-1,-0.95,-0.9,-0.85,-0.8,-0.75,-0.7,-0.65,-0.6,-0.55,-0.5,-0.45,-0.4,-0.35,-0.3,-0.25,-0.2,-0.15,-0.1,-0.05,0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1,1.05,1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75,1.8,1.85,1.9,1.95,2,2.05,2.1,2.15,2.2],"points":false,"series":[{"name":"f(x) = x³ − 3x","y":[-4.048,-3.4884,-2.961,-2.4651,-2,-1.5649,-1.159,-0.7816,-0.432,-0.1094,0.187,0.4579,0.704,0.9261,1.125,1.3014,1.456,1.5896,1.703,1.7969,1.872,1.9291,1.969,1.9924,2,1.9926,1.971,1.9359,1.888,1.8281,1.757,1.6754,1.584,1.4836,1.375,1.2589,1.136,1.0071,0.873,0.7344,0.592,0.4466,0.299,0.1499,0,-0.1499,-0.299,-0.4466,-0.592,-0.7344,-0.873,-1.0071,-1.136,-1.2589,-1.375,-1.4836,-1.584,-1.6754,-1.757,-1.8281,-1.888,-1.9359,-1.971,-1.9926,-2,-1.9924,-1.969,-1.9291,-1.872,-1.7969,-1.703,-1.5896,-1.456,-1.3014,-1.125,-0.9261,-0.704,-0.4579,-0.187,0.1094,0.432,0.7816,1.159,1.5649,2,2.4651,2.961,3.4884,4.048]},{"name":"f′(x) = 3x² − 3","y":[11.52,10.8675,10.23,9.6075,9,8.4075,7.83,7.2675,6.72,6.1875,5.67,5.1675,4.68,4.2075,3.75,3.3075,2.88,2.4675,2.07,1.6875,1.32,0.9675,0.63,0.3075,0,-0.2925,-0.57,-0.8325,-1.08,-1.3125,-1.53,-1.7325,-1.92,-2.0925,-2.25,-2.3925,-2.52,-2.6325,-2.73,-2.8125,-2.88,-2.9325,-2.97,-2.9925,-3,-2.9925,-2.97,-2.9325,-2.88,-2.8125,-2.73,-2.6325,-2.52,-2.3925,-2.25,-2.0925,-1.92,-1.7325,-1.53,-1.3125,-1.08,-0.8325,-0.57,-0.2925,0,0.3075,0.63,0.9675,1.32,1.6875,2.07,2.4675,2.88,3.3075,3.75,4.2075,4.68,5.1675,5.67,6.1875,6.72,7.2675,7.83,8.4075,9,9.6075,10.23,10.8675,11.52],"dash":true}],"xLabel":"x","yLabel":"value","vlines":[{"x":-1,"label":"f′ = 0: local maximum"},{"x":1,"label":"f′ = 0: local minimum"}]} },
       { type: 'code', title: 'Estimating derivatives numerically', md: `You can always *estimate* a derivative by nudging the input. The **central difference** (look a little left *and* a little right) is far more accurate than the one-sided version, and it is how ML engineers sanity-check gradient code (*gradient checking*).`, code: `
 def f(x):
     return x ** 2
@@ -697,6 +827,7 @@ print("exact derivative 2x =", 2 * x)
 for h in [0.1, 0.01, 0.001]:
     print(f"h={h:<6} forward={forward_diff(f, x, h):.6f}   central={central_diff(f, x, h):.6f}")
 `, after: `The forward difference has an error proportional to h; the central difference's error shrinks like h² — for a parabola it is exact. Don't make h *too* small, though (like 1e-15): floating-point rounding then dominates.`, predict: {"type":"mcq","q":"Both formulas estimate the derivative of x² at x = 3 (exactly 6) with the same step h = 0.1. Which one prints the more accurate value?","options":["The forward difference (f(x+h) − f(x)) / h","The central difference (f(x+h) − f(x−h)) / 2h","Both give exactly the same number","Neither: h = 0.1 is far too large for either to be close"],"answer":1,"explain":"For x² the central difference is exact (6.000000) at every h, while the forward difference is off by h (6.1 at h = 0.1). In general the central error shrinks like h², the forward error only like h.","expect":["h=0.1    forward=6.100000   central=6.000000"]} },
+      { type: 'chart', title: "Error of a numerical derivative against the step size h", md: `Estimating the derivative of sin(x) at x = 1 (exactly cos 1) with ever smaller steps:`, after: `Read from left to right as h shrinks. At first the error falls, by 10× per decade of h for the forward difference and by 100× for the central one. Then floating-point rounding takes over: f(x + h) and f(x) agree in almost every digit, and their difference is mostly rounding noise divided by a tiny h. The best forward step is about 10⁻⁸ (error about 3 × 10⁻⁹); the best central step about 10⁻⁵ to 10⁻⁶ (error about 6 × 10⁻¹³).`, chart: {"kind":"line","x":[0.1,0.0316,0.01,0.00316,0.001,0.000316,0.0001,0.0000316,0.00001,0.00000316,0.000001,3.16e-7,1e-7,3.16e-8,1e-8,3.16e-9,1e-9,3.16e-10,1e-10,3.16e-11,1e-11,3.16e-12,1e-12,3.16e-13,1e-13],"xLog":true,"yLog":true,"series":[{"name":"forward difference","y":[0.04294,0.01339,0.004216,0.001331,0.0004208,0.0001331,0.00004207,0.0000133,0.000004207,0.00000133,4.207e-7,1.33e-7,4.183e-8,1.227e-8,2.97e-9,2.631e-8,5.254e-8,1.316e-7,5.848e-8,9.216e-7,0.000001169,0.00001496,0.00004324,0.00001496,0.0007339]},{"name":"central difference","y":[0.0009001,0.00009005,0.000009005,9.005e-7,9.005e-8,9.005e-9,9.004e-10,8.893e-11,1.114e-11,6.005e-13,2.772e-11,1.815e-11,1.943e-10,1.815e-11,2.581e-9,8.759e-9,2.97e-9,1.316e-7,5.848e-8,9.216e-7,0.000001169,0.000002589,0.00001227,0.00001496,0.0001788]}],"xLabel":"step size h (log scale; smaller to the right is not better!)","yLabel":"error (log scale)","points":false} },
       { type: 'check', question: { type: 'fill', q: 'f(x) = x³. What is f′(2)?', answer: ['12', '12.0'], explain: 'f′(x) = 3x², so f′(2) = 3·4 = 12.' } },
       { type: 'text', title: 'Partial derivatives and the gradient', md: `Models have many parameters, so the loss is a function of many variables. Take a one-feature linear model with weight w and bias b, and a single training example x = 2, y = 7:
 
@@ -783,7 +914,43 @@ print("chain rule:", analytic)
 print("numerical :", numeric)
 print("difference:", abs(analytic - numeric))
 ` },
-      { type: 'check', question: { type: 'mcq', q: 'y = sin(x²). Using the chain rule, dy/dx equals…', options: ['cos(x²)', '2x·cos(x²)', 'cos(2x)', '2x·sin(x²)'], answer: 1, explain: 'Outer function sin(u) has derivative cos(u); inner u = x² has derivative 2x. Multiply: cos(x²)·2x.' } }
+      { type: 'check', question: { type: 'mcq', q: 'y = sin(x²). Using the chain rule, dy/dx equals…', options: ['cos(x²)', '2x·cos(x²)', 'cos(2x)', '2x·sin(x²)'], answer: 1, explain: 'Outer function sin(u) has derivative cos(u); inner u = x² has derivative 2x. Multiply: cos(x²)·2x.' } },
+      { type: 'text', title: "Curvature and Taylor approximations", md: `The derivative of the derivative, the **second derivative** f″(x), measures how the slope itself changes: the **curvature**.
+
+- f″(x) > 0: the slope is increasing and the curve bends upwards like a bowl. A flat point (f′ = 0) with f″ > 0 is a local **minimum**.
+- f″(x) < 0: the curve bends downwards like a dome. A flat point with f″ < 0 is a local **maximum**.
+- f″(x) = 0 at a flat point: the test is inconclusive (x³ is flat at 0 but has neither).
+
+For f(x) = x³ − 3x from the chart above, f″(x) = 6x: negative at x = −1 (the maximum) and positive at x = 1 (the minimum).
+
+Derivatives also let you approximate a function near a point by a polynomial, its **Taylor expansion**:
+
+$$ f(x₀ + h) ≈ f(x₀) + f′(x₀)·h + ½·f″(x₀)·h² $$
+:::where
+x₀ — the point you expand around, where you know f and its derivatives
+h — how far you step away from x₀
+f′(x₀)·h — the first-order term: follow the tangent line
+½·f″(x₀)·h² — the second-order term: correct for the curvature
+:::
+
+This one formula is the theory behind optimisation. **Gradient descent** trusts only the first-order (tangent-line) model, which is accurate only for small steps: hence the learning rate. **Newton's method** minimises the second-order (parabola) model, which tells it how far to go as well as which way (see [Optimization Theory](#/concept/optimization-theory)). With many parameters f″ becomes the matrix of second derivatives, the Hessian (see [Matrix Calculus](#/concept/matrix-calculus)).` },
+      { type: 'chart', title: "Taylor approximations of cos(x) around x₀ = 1", after: `Near x₀ both approximations hug the curve; further away the tangent line drifts off quickly, and the parabola, which also knows the curvature, stays close for longer. Gradient descent trusts the tangent line (so it must take small steps); Newton's method jumps straight to the bottom of the parabola.`, chart: {"kind":"line","x":[-1,-0.95,-0.9,-0.85,-0.8,-0.75,-0.7,-0.65,-0.6,-0.55,-0.5,-0.45,-0.4,-0.35,-0.3,-0.25,-0.2,-0.15,-0.1,-0.05,0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1,1.05,1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75,1.8,1.85,1.9,1.95,2,2.05,2.1,2.15,2.2,2.25,2.3,2.35,2.4,2.45,2.5,2.55,2.6,2.65,2.7,2.75,2.8,2.85,2.9,2.95,3],"points":false,"series":[{"name":"cos(x)","y":[0.5403,0.5817,0.6216,0.66,0.6967,0.7317,0.7648,0.7961,0.8253,0.8525,0.8776,0.9004,0.9211,0.9394,0.9553,0.9689,0.9801,0.9888,0.995,0.9988,1,0.9988,0.995,0.9888,0.9801,0.9689,0.9553,0.9394,0.9211,0.9004,0.8776,0.8525,0.8253,0.7961,0.7648,0.7317,0.6967,0.66,0.6216,0.5817,0.5403,0.4976,0.4536,0.4085,0.3624,0.3153,0.2675,0.219,0.17,0.1205,0.0707,0.0208,-0.0292,-0.0791,-0.1288,-0.1782,-0.2272,-0.2756,-0.3233,-0.3702,-0.4161,-0.4611,-0.5048,-0.5474,-0.5885,-0.6282,-0.6663,-0.7027,-0.7374,-0.7702,-0.8011,-0.8301,-0.8569,-0.8816,-0.9041,-0.9243,-0.9422,-0.9578,-0.971,-0.9817,-0.99]},{"name":"first order: the tangent line","y":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,1.5921,1.5501,1.508,1.4659,1.4238,1.3818,1.3397,1.2976,1.2556,1.2135,1.1714,1.1293,1.0873,1.0452,1.0031,0.961,0.919,0.8769,0.8348,0.7927,0.7507,0.7086,0.6665,0.6244,0.5824,0.5403,0.4982,0.4562,0.4141,0.372,0.3299,0.2879,0.2458,0.2037,0.1616,0.1196,0.0775,0.0354,-0.0067,-0.0487,-0.0908,-0.1329,-0.1749,-0.217,-0.2591,-0.3012,-0.3432,-0.3853,-0.4274,-0.4695,-0.5115,-0.5536,-0.5957,-0.6378,-0.6798,-0.7219,-0.764,-0.8061,-0.8481,-0.8902,-0.9323,-0.9743,-1.0164,-1.0585,-1.1006,-1.1426],"dash":true},{"name":"second order: a parabola","y":[1.1426,1.1539,1.1639,1.1724,1.1797,1.1855,1.1901,1.1932,1.1951,1.1955,1.1947,1.1924,1.1889,1.1839,1.1777,1.17,1.161,1.1507,1.139,1.126,1.1116,1.0959,1.0788,1.0604,1.0406,1.0194,0.997,0.9731,0.9479,0.9214,0.8935,0.8643,0.8337,0.8017,0.7684,0.7338,0.6978,0.6604,0.6217,0.5817,0.5403,0.4976,0.4535,0.408,0.3612,0.3131,0.2635,0.2127,0.1605,0.1069,0.052,-0.0042,-0.0618,-0.1208,-0.1811,-0.2428,-0.3058,-0.3701,-0.4358,-0.5029,-0.5713,-0.6411,-0.7122,-0.7847,-0.8585,-0.9336,-1.0102,-1.088,-1.1673,-1.2478,-1.3297,-1.413,-1.4976,-1.5836,null,null,null,null,null,null,null],"dash":true}],"xLabel":"x","yLabel":"value","vlines":[{"x":1,"label":"x₀ = 1"}],"yMin":-1.6,"yMax":1.6} },
+      { type: 'code', title: "How good is a Taylor approximation?", code: `import math
+x0 = 1.0
+f, f1, f2 = math.cos(x0), -math.sin(x0), -math.cos(x0)    # cos and its first two derivatives at x0
+
+errors = {}
+for h in [0.4, 0.2, 0.1, 0.05]:
+    exact = math.cos(x0 + h)
+    first = f + f1 * h
+    second = first + 0.5 * f2 * h ** 2
+    errors[h] = (abs(exact - first), abs(exact - second))
+    print(f"h = {h:<5} first-order error {errors[h][0]:.2e}   second-order error {errors[h][1]:.2e}")
+
+r1 = errors[0.1][0] / errors[0.05][0]
+r2 = errors[0.1][1] / errors[0.05][1]
+print(f"halving h divides the errors by {r1:.1f} and {r2:.1f}")
+print("first-order error ratio about 4:", 3.5 < r1 < 4.5)`, after: `The tangent line's error shrinks like h², so halving the step divides it by about 4; the parabola's error shrinks like h³, about 8 times per halving. Higher-order approximations are dramatically better, but only near x₀.`, predict: {"type":"mcq","q":"When the step h is halved, the error of the first-order (tangent-line) approximation shrinks by about…","options":["2 times","4 times","8 times","It does not change"],"answer":1,"explain":"The first neglected term is ½·f″(x₀)·h², so the error is proportional to h²: halving h divides it by about 4.","expect":["first-order error ratio about 4: True"]} }
     ],
     when: `- Think in **derivatives** whenever you ask "how sensitive is the output to this input or parameter?" — tuning, debugging, feature importance.
 - Use **numerical derivatives** to *check* gradient code (gradient checking) or for a handful of parameters; they are too slow for training big models (two function evaluations per parameter).
@@ -805,7 +972,9 @@ print("difference:", abs(analytic - numeric))
       { type: 'mcq', q: 'What is the derivative of the sigmoid σ(x) in terms of σ itself?', options: ['σ(x)²', 'σ(x)·(1 − σ(x))', '1 − σ(x)', 'e⁻ˣ'], answer: 1, explain: 'σ′(x) = σ(x)(1 − σ(x)). Its maximum is 0.25 at x = 0, which matters for vanishing gradients.' },
       { type: 'tf', q: 'The central difference (f(x+h) − f(x−h)) / 2h is usually more accurate than the forward difference (f(x+h) − f(x)) / h.', answer: true, explain: 'Its error shrinks like h² instead of h.' },
       { type: 'mcq', q: 'Why is the chain rule central to training neural networks?', options: ['It removes the need for a loss function', 'It lets us compute how the loss depends on every weight by multiplying local derivatives backwards through the network', 'It guarantees finding the global minimum', 'It makes networks linear'], answer: 1, explain: 'Backpropagation is the chain rule applied systematically from the loss back to every parameter.' },
-      { type: 'fill', q: 'L(w) = (2w − 6)². What is dL/dw at w = 1?', answer: ['-16', '-16.0'], explain: 'dL/dw = 2(2w − 6)·2. At w = 1: 2·(−4)·2 = −16.' }
+      { type: 'fill', q: 'L(w) = (2w − 6)². What is dL/dw at w = 1?', answer: ['-16', '-16.0'], explain: 'dL/dw = 2(2w − 6)·2. At w = 1: 2·(−4)·2 = −16.' },
+      {"type":"mcq","q":"At a point where f′(x) = 0 and f″(x) > 0, the function has…","options":["A local maximum","A local minimum","Certainly an inflection point","Nothing can be concluded"],"answer":1,"explain":"The slope is zero and increasing, so the curve bends upwards around a flat point: a local minimum."},
+      {"type":"tf","q":"Making the step h of a finite-difference derivative as small as possible (say 1e-15) always gives the most accurate estimate.","answer":false,"explain":"Below an optimal h, floating-point rounding dominates: f(x + h) and f(x) agree in almost every digit, and their difference is mostly rounding noise divided by a tiny h."}
     ],
     problems: [
       {
@@ -955,6 +1124,32 @@ Rule of thumb: about **68%** of values fall within 1σ of the mean, **95%** with
 :::warn A density is not a probability
 For continuous variables, P(x = exactly 1.70000…) is 0. The PDF gives probability *per unit*, and you integrate it over a range to get a probability. Densities can therefore exceed 1 (a very narrow Gaussian has a tall peak).
 :::` },
+      { type: 'text', title: "A field guide to common distributions", md: `A handful of distributions cover most situations in data work. Knowing which one fits tells you which loss to use, how much variation is normal, and how to simulate the process.
+
+| Distribution | Models | Parameters | Mean | Variance |
+| --- | --- | --- | --- | --- |
+| Bernoulli | one yes/no trial | p | p | p(1 − p) |
+| Binomial | the number of successes in n independent trials | n, p | np | np(1 − p) |
+| Poisson | counts of rare events in a fixed interval (calls per hour, typos per page) | rate λ | λ | λ |
+| Uniform | every value in [a, b] equally likely | a, b | (a + b)/2 | (b − a)²/12 |
+| Exponential | the waiting time until the next event | rate λ | 1/λ | 1/λ² |
+| Normal | sums of many small effects, measurement noise | μ, σ | μ | σ² |
+| Beta | an unknown probability itself, such as a click rate | a, b | a/(a + b) | ab / ((a + b)²(a + b + 1)) |
+| Categorical | one of K outcomes, such as the next token | p₁ … p_K | – | – |
+
+The **binomial** probability of exactly k successes counts the ways of choosing which trials succeed:
+
+$$ P(K = k) = C(n, k) · pᵏ · (1 − p)ⁿ⁻ᵏ $$
+:::where
+n — the number of independent trials
+p — the probability of success in each trial
+k — the number of successes we ask about (0 to n)
+C(n, k) — "n choose k" = n! / (k! (n − k)!): the number of ways to pick which k of the n trials succeed
+pᵏ · (1 − p)ⁿ⁻ᵏ — the probability of one particular arrangement with k successes and n − k failures
+:::
+
+For large n and small p the binomial is close to a **Poisson** with λ = np; for large n with p not too extreme it is close to a **normal** with mean np and variance np(1 − p).` },
+      { type: 'chart', title: "A binomial distribution: heads in 20 tosses of a coin with P(heads) = 0.3", after: `The most likely count is 6 (= 20 × 0.3), but 4, 5, 7 and 8 are all common: a single experiment rarely lands exactly on its expected value. The bars add up to 1.`, chart: {"kind":"bar","x":["0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20"],"series":[{"name":"probability","y":[0.0008,0.0068,0.0278,0.0716,0.1304,0.1789,0.1916,0.1643,0.1144,0.0654,0.0308,0.012,0.0039,0.001,0.0002,0,0,0,0,0,0]}],"xLabel":"number of heads","yLabel":"probability"} },
       { type: 'code', title: 'Simulating randomness with NumPy', md: `Simulation is a superpower: when you are unsure about a probability, generate a million random trials and count. Always use a seeded generator so results are reproducible.`, code: `
 import numpy as np
 rng = np.random.default_rng(42)          # seeded: the same "random" numbers on every run
@@ -974,6 +1169,7 @@ within1 = np.mean(np.abs(heights - 170) < 8)
 within2 = np.mean(np.abs(heights - 170) < 16)
 print(f"within 1 std: {within1:.3f}   within 2 std: {within2:.3f}   (theory: 0.683, 0.954)")
 ` },
+      { type: 'chart', title: "The law of large numbers: the share of heads settles down", after: `After a few tosses the share of heads swings wildly; after thousands it hugs 0.5. Frequencies converge to probabilities, slowly: the typical deviation shrinks like 1 / √n.`, chart: {"kind":"line","x":[1,2,3,4,5,6,7,9,10,13,15,19,23,28,34,41,50,60,73,89,108,131,160,194,236,287,349,424,515,626,761,925,1124,1366,1661,2019,2454,2982,3625,4406,5356,6510,7912,9617,11690,14208,17270,20991,25514,31012,37694,45816,55688,67688,82272,100000],"xLog":true,"points":false,"series":[{"name":"share of heads so far","y":[0,0,0,0.25,0.4,0.5,0.5714,0.6667,0.6,0.6154,0.5333,0.5263,0.5217,0.5,0.5,0.5366,0.52,0.5,0.5068,0.4831,0.4907,0.4962,0.5062,0.5103,0.5297,0.5366,0.5301,0.5283,0.5301,0.5399,0.5427,0.5286,0.5214,0.522,0.5148,0.5191,0.5114,0.5064,0.5117,0.5102,0.5118,0.5065,0.5015,0.5009,0.5004,0.5017,0.5028,0.5025,0.5023,0.5024,0.5033,0.5026,0.5019,0.5001,0.4992,0.4994]}],"xLabel":"number of tosses (log scale)","yLabel":"share of heads","hlines":[{"y":0.5,"label":"true probability 0.5"}],"yMin":0,"yMax":1} },
       { type: 'text', title: 'Expected value and variance', md: `The **expected value** E[X] is the probability-weighted average of the outcomes — the long-run average if you repeated the experiment forever:
 
 $$ E[X] = Σ x · P(x)          die: (1 + 2 + 3 + 4 + 5 + 6) · 1/6 = 3.5 $$
@@ -1000,6 +1196,41 @@ E[X] — the expected value (mean) of X
 :::key The loss is an expectation
 When we train a model we want to minimise the *expected* loss over all the data the model will ever see. We can't compute that, so we estimate it with the average over the training set — and that average gets more reliable as the dataset grows.
 :::` },
+      { type: 'text', title: "Rules for sums and averages", md: `A few rules let you reason about combinations of random variables without simulating anything.
+
+$$ E[aX + b] = a·E[X] + b          E[X + Y] = E[X] + E[Y] $$
+$$ Var(aX + b) = a²·Var(X)          Var(X + Y) = Var(X) + Var(Y) + 2·Cov(X, Y) $$
+:::where
+X, Y — random variables
+a, b — fixed numbers: a rescales, b shifts
+E[ … ] — the expected value; it is linear, so these two rules hold for any X and Y, independent or not
+Var( … ) — the variance; shifting by b does not change the spread, and rescaling by a multiplies it by a²
+Cov(X, Y) — the covariance of X and Y; it is 0 when they are independent
+:::
+
+The most useful consequence: the **average** of n independent values with variance σ² has variance σ²/n, so its standard deviation is σ/√n. That single fact explains why:
+- larger test sets give more reliable accuracy estimates (the [standard error](#/concept/statistics));
+- mini-batch gradients get less noisy as the batch grows, but only like √B;
+- averaging the predictions of several models, as in [bagging and random forests](#/concept/ensembles), reduces variance, as long as the models' errors are not strongly correlated. If they are, the covariance terms keep the variance high.` },
+      { type: 'code', title: "Checking the rules by simulation", code: `import numpy as np
+rng = np.random.default_rng(7)
+rolls = rng.integers(1, 7, size=(200_000, 4))          # 200,000 experiments, 4 dice each
+
+one = rolls[:, 0]
+print("one die:       mean", one.mean().round(3), "  variance", one.var().round(3), "  (theory 3.5 and 35/12 = 2.917)")
+total = rolls[:, 0] + rolls[:, 1]
+print("sum of two:    mean", total.mean().round(3), "  variance", total.var().round(3), "  (theory 7 and 5.833)")
+avg4 = rolls.mean(axis=1)
+print("average of 4:  mean", avg4.mean().round(3), "  variance", avg4.var().round(3), "  (theory 3.5 and 0.729)")
+ratio = one.var() / avg4.var()
+print("variance ratio about 4:", 3.8 < ratio < 4.2)
+
+# correlated errors: averaging helps much less
+shared = rng.normal(size=200_000)
+models = [0.8 * shared + 0.6 * rng.normal(size=200_000) for _ in range(10)]   # each error has variance 1
+print("variance of one model's error:     ", round(float(models[0].var()), 3))
+print("variance of the 10-model average:  ", round(float(np.mean(models, axis=0).var()), 3))`, after: `Averaging 4 independent dice divides the variance by 4. The ten "models" at the end share a common error component (any two have correlation 0.64), so averaging them only reduces the variance from 1 to about 0.68 instead of 0.1: diversity is what makes ensembles work.`, predict: {"type":"mcq","q":"How does the variance of the average of 4 independent dice compare with the variance of a single die?","options":["The same","Half as large","A quarter as large","A sixteenth as large"],"answer":2,"explain":"Var(average of n) = σ²/n, so with n = 4 the variance is divided by 4 (and the standard deviation by 2).","expect":["variance ratio about 4: True"]} },
+      { type: 'check', question: {"type":"tf","q":"Averaging the predictions of 10 models always divides the variance of the error by 10.","answer":false,"explain":"Only if the errors are independent. Correlated errors add covariance terms, so averaging similar models helps much less."} },
       { type: 'text', title: 'Conditional probability and Bayes\' rule', md: `**P(A | B)** — "the probability of A *given* B" — restricts attention to the cases where B happened:
 
 $$ P(A | B) = P(A and B) / P(B) $$
@@ -1049,6 +1280,27 @@ print("P(condition | positive) ~", round((positive & has_it).sum() / positive.su
 p = 0.99 * 0.01 / (0.99 * 0.01 + 0.05 * 0.99)
 print("Bayes' rule:             ", round(p, 4))
 `, predict: {"type":"mcq","q":"1% of people have a condition. The test catches 99% of real cases but also flags 5% of healthy people. If you test positive, roughly how likely is it that you really have the condition?","options":["About 99%","About 95%","About 50%","Under 20%"],"answer":3,"explain":"Only about 17%. Healthy people vastly outnumber sick ones, so the 5% false alarms (about 49,500 per million people) swamp the 9,900 true positives. This is the base-rate fallacy; Bayes’ rule gives exactly 0.1667.","expect":["P(condition | positive) ~ 0.167"]} },
+      { type: 'text', title: "Joint, marginal and conditional distributions", md: `With two variables, the **joint distribution** gives the probability of every combination, and everything else can be computed from it. Example: the weather, and whether a commuter carries an umbrella.
+
+| | Umbrella | No umbrella | Total |
+| --- | --- | --- | --- |
+| Rain | 0.24 | 0.06 | 0.30 |
+| No rain | 0.07 | 0.63 | 0.70 |
+| Total | 0.31 | 0.69 | 1.00 |
+
+- **Marginal**: sum the joint over the variable you don't care about. P(rain) = 0.24 + 0.06 = 0.30.
+- **Conditional**: restrict to one row or column and renormalise. P(umbrella given rain) = 0.24 / 0.30 = 0.80, while P(rain given umbrella) = 0.24 / 0.31 ≈ 0.77.
+- **Independence** would mean every cell equals the product of its two totals. Here P(rain and umbrella) = 0.24 is far from 0.30 × 0.31 ≈ 0.093, so the two are strongly dependent.
+
+$$ P(x) = Σ_y P(x, y)          P(x, y) = P(y | x) · P(x) $$
+:::where
+P(x, y) — the joint probability that X = x and Y = y
+Σ_y — summing over all values of Y "marginalises it out", leaving the marginal P(x)
+P(y | x) — the conditional probability of y given x
+The second rule (the product rule) is the definition of conditional probability rearranged; applying it repeatedly gives the chain rule used by language models.
+:::
+
+The same distinction separates two families of classifiers. **Generative** models such as [Naive Bayes](#/concept/naive-bayes) learn the joint distribution, as P(x | y) · P(y), and classify with Bayes' rule. **Discriminative** models such as [logistic regression](#/concept/logistic-regression) learn P(y | x) directly and never model how the inputs themselves are distributed.` },
       { type: 'check', question: { type: 'mcq', q: 'A test for a very rare condition (1 in 10,000) is 99.9% accurate in both directions. Someone tests positive. The probability they have the condition is…', options: ['About 99.9%', 'About 50%', 'About 9%', 'Exactly 0.01%'], answer: 2, explain: 'In 10,000,000 people: 1,000 have it (999 test positive) and 9,999,000 don\'t (about 9,999 false positives). 999 / (999 + 9,999) ≈ 9%. The tiny base rate dominates.' } },
       { type: 'text', title: 'Independence, products and log-probabilities', md: `When events are independent, the probability of all of them is the product of their probabilities. Models often *assume* independence to keep things tractable — Naive Bayes assumes the words of an email are independent given its class; an LLM writes the probability of a whole sentence as a product of next-token probabilities:
 
@@ -1094,7 +1346,10 @@ Sums don't underflow, and maximising a log-probability is the same as maximising
       { type: 'mcq', q: 'For a Gaussian with mean 100 and standard deviation 15, roughly what fraction of values lies between 70 and 130?', options: ['50%', '68%', '95%', '99.7%'], answer: 2, explain: '70 to 130 is mean ± 2σ, which contains about 95% of the values.' },
       { type: 'tf', q: 'If P(positive | sick) = 0.99, then P(sick | positive) must also be about 0.99.', answer: false, explain: 'Those are different conditionals. With a rare condition, P(sick | positive) can be far lower (the base-rate fallacy).' },
       { type: 'mcq', q: 'Why do ML libraries work with log-probabilities?', options: ['Logs are faster to compute than products', 'Products of many small probabilities underflow to zero; sums of logs do not', 'Log-probabilities are always positive', 'It makes the model more accurate by itself'], answer: 1, explain: 'log(a·b) = log a + log b. Summing logs is numerically stable even for thousands of terms.' },
-      { type: 'fill', q: 'A game pays €10 with probability 0.2 and €0 otherwise. What is the expected payout in euros?', answer: ['2', '2.0', '€2', '2 euros'], explain: 'E = 10·0.2 + 0·0.8 = 2.' }
+      { type: 'fill', q: 'A game pays €10 with probability 0.2 and €0 otherwise. What is the expected payout in euros?', answer: ['2', '2.0', '€2', '2 euros'], explain: 'E = 10·0.2 + 0·0.8 = 2.' },
+      {"type":"fill","q":"A binomial variable counts successes in n = 50 trials with p = 0.2. What is its expected value?","answer":["10","10.0"],"explain":"E = n · p = 50 × 0.2 = 10."},
+      {"type":"mcq","q":"X and Y are independent with Var(X) = 4 and Var(Y) = 9. What is Var(X − Y)?","options":["−5","5","13","36"],"answer":2,"explain":"Var(X − Y) = Var(X) + (−1)² · Var(Y) = 4 + 9 = 13 for independent variables: subtracting a noisy quantity still adds its noise."},
+      {"type":"mcq","q":"Which distribution is the natural model for the number of support tickets arriving per hour?","options":["Bernoulli","Poisson","Uniform","Beta"],"answer":1,"explain":"Counts of independent events in a fixed interval follow (approximately) a Poisson distribution, whose mean and variance both equal the rate λ."}
     ],
     problems: [
       {
@@ -1212,6 +1467,28 @@ Ten salaries in k€: 38, 41, 42, 45, 47, 50, 52, 55, 58, **950** (the CEO).
 - Median = **48.5** — a much better summary of a typical salary.
 
 The mean is pulled by **outliers**; the median is **robust**. Use the median for skewed data (incomes, house prices, response times) and report both when in doubt.` },
+      { type: 'text', title: "Percentiles, quartiles and box plots", md: `The **p-th percentile** is the value below which p% of the data falls. Three of them have special names, the **quartiles**:
+
+- **Q1**, the 25th percentile: a quarter of the values are smaller;
+- **Q2**, the 50th percentile: the median;
+- **Q3**, the 75th percentile: three quarters of the values are smaller.
+
+The middle half of the data lies between Q1 and Q3, and the width of that range is a robust measure of spread:
+
+$$ IQR = Q3 − Q1          outlier fences:  Q1 − 1.5 · IQR   and   Q3 + 1.5 · IQR $$
+:::where
+Q1, Q3 — the first and third quartiles (the 25th and 75th percentiles)
+IQR — the interquartile range: the width of the middle 50% of the data
+1.5 · IQR — Tukey's rule of thumb: values beyond these fences are flagged as possible outliers
+:::
+
+For the ten salaries above, NumPy gives Q1 = 42.75 and Q3 = 54.25, so the IQR is 11.5 and the upper fence is 54.25 + 17.25 = 71.5. The CEO's 950 is flagged at once, while the standard deviation (about 271) is itself inflated by the very outlier it should help detect. (Libraries interpolate between data points in slightly different ways, so quartiles of small samples can differ a little between tools.)
+
+The **five-number summary** (minimum, Q1, median, Q3, maximum) is what a **box plot** draws: a box from Q1 to Q3, a line at the median, whiskers out to the furthest points inside the fences, and a dot for each outlier. Box plots are ideal for comparing one variable across groups, such as response times per server or prices per neighbourhood.
+
+Two more summaries worth knowing:
+- the **mode**, the most frequent value, is the only "average" that works for categories (the most common payment method);
+- the **trimmed mean** drops, say, the top and bottom 10% before averaging: a compromise between the efficiency of the mean and the robustness of the median.` },
       { type: 'text', title: 'Spread: variance and standard deviation', md: `Two datasets can share a mean but differ wildly in spread: [49, 50, 51] versus [0, 50, 100]. The **variance** is the average squared distance from the mean; the **standard deviation** (std, σ) is its square root, in the original units:
 
 $$ Var = (1/n) Σ (xᵢ − x̄)²          σ = √Var $$
@@ -1231,6 +1508,7 @@ Var — the variance, the average squared distance (in squared units)
 :::
 
 **z-scores** express a value as "standard deviations from the mean": z = (x − x̄) / σ. Subtracting the mean and dividing by the std for every feature is called **standardization**, and it puts features measured in m² and in years on a comparable scale.` },
+      { type: 'chart', title: "The normal distribution and the 68–95–99.7 rule", after: `For bell-shaped data, about **68%** of values lie within one standard deviation of the mean, **95%** within two and **99.7%** within three. That is what makes the standard deviation interpretable, and why a value 3 standard deviations away is unusual. The rule only holds for roughly normal data; skewed data breaks it.`, chart: {"kind":"line","x":[-4,-3.95,-3.9,-3.85,-3.8,-3.75,-3.7,-3.65,-3.6,-3.55,-3.5,-3.45,-3.4,-3.35,-3.3,-3.25,-3.2,-3.15,-3.1,-3.05,-3,-2.95,-2.9,-2.85,-2.8,-2.75,-2.7,-2.65,-2.6,-2.55,-2.5,-2.45,-2.4,-2.35,-2.3,-2.25,-2.2,-2.15,-2.1,-2.05,-2,-1.95,-1.9,-1.85,-1.8,-1.75,-1.7,-1.65,-1.6,-1.55,-1.5,-1.45,-1.4,-1.35,-1.3,-1.25,-1.2,-1.15,-1.1,-1.05,-1,-0.95,-0.9,-0.85,-0.8,-0.75,-0.7,-0.65,-0.6,-0.55,-0.5,-0.45,-0.4,-0.35,-0.3,-0.25,-0.2,-0.15,-0.1,-0.05,0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1,1.05,1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75,1.8,1.85,1.9,1.95,2,2.05,2.1,2.15,2.2,2.25,2.3,2.35,2.4,2.45,2.5,2.55,2.6,2.65,2.7,2.75,2.8,2.85,2.9,2.95,3,3.05,3.1,3.15,3.2,3.25,3.3,3.35,3.4,3.45,3.5,3.55,3.6,3.65,3.7,3.75,3.8,3.85,3.9,3.95,4],"points":false,"series":[{"name":"normal density, mean 0, standard deviation 1","y":[0.0001,0.0002,0.0002,0.0002,0.0003,0.0004,0.0004,0.0005,0.0006,0.0007,0.0009,0.001,0.0012,0.0015,0.0017,0.002,0.0024,0.0028,0.0033,0.0038,0.0044,0.0051,0.006,0.0069,0.0079,0.0091,0.0104,0.0119,0.0136,0.0154,0.0175,0.0198,0.0224,0.0252,0.0283,0.0317,0.0355,0.0396,0.044,0.0488,0.054,0.0596,0.0656,0.0721,0.079,0.0863,0.094,0.1023,0.1109,0.12,0.1295,0.1394,0.1497,0.1604,0.1714,0.1826,0.1942,0.2059,0.2179,0.2299,0.242,0.2541,0.2661,0.278,0.2897,0.3011,0.3123,0.323,0.3332,0.3429,0.3521,0.3605,0.3683,0.3752,0.3814,0.3867,0.391,0.3945,0.397,0.3984,0.3989,0.3984,0.397,0.3945,0.391,0.3867,0.3814,0.3752,0.3683,0.3605,0.3521,0.3429,0.3332,0.323,0.3123,0.3011,0.2897,0.278,0.2661,0.2541,0.242,0.2299,0.2179,0.2059,0.1942,0.1826,0.1714,0.1604,0.1497,0.1394,0.1295,0.12,0.1109,0.1023,0.094,0.0863,0.079,0.0721,0.0656,0.0596,0.054,0.0488,0.044,0.0396,0.0355,0.0317,0.0283,0.0252,0.0224,0.0198,0.0175,0.0154,0.0136,0.0119,0.0104,0.0091,0.0079,0.0069,0.006,0.0051,0.0044,0.0038,0.0033,0.0028,0.0024,0.002,0.0017,0.0015,0.0012,0.001,0.0009,0.0007,0.0006,0.0005,0.0004,0.0004,0.0003,0.0002,0.0002,0.0002,0.0001]}],"xLabel":"distance from the mean, in standard deviations","yLabel":"density","vlines":[{"x":-2,"label":"−2σ"},{"x":-1,"label":"−1σ"},{"x":1,"label":"+1σ"},{"x":2,"label":"+2σ"}],"yMin":0} },
       { type: 'code', title: 'Describing a dataset', code: `
 import numpy as np
 
@@ -1244,6 +1522,39 @@ print("25th / 75th percentiles :", np.percentile(salaries, [25, 75]))
 z = (salaries - salaries.mean()) / salaries.std()
 print("z-scores:", z.round(2))              # the CEO sits 3 std above the mean
 `, predict: {"type":"mcq","q":"Ten salaries in k€: nine between 38 and 58, plus one CEO at 950. How do the mean and the median compare?","options":["They are almost equal, around 50","The median is much larger than the mean","The mean is much larger than the median","Both are pulled up to about 140"],"answer":2,"explain":"The mean is 137.8, nearly three times the median of 48.5: one extreme value drags the mean but barely moves the middle value. For skewed data, report the median (or both).","expect":["mean  : 137.8","median: 48.5"]} },
+      { type: 'text', title: "Shape: skew, heavy tails and log transforms", md: `Centre and spread are not the whole story; the **shape** of a distribution matters too.
+
+- **Symmetric** data (heights, measurement errors) has mean ≈ median.
+- **Right-skewed** data has a long tail of large values: incomes, house prices, city sizes, response times, word frequencies. The mean is dragged above the median.
+- **Left-skewed** data has a long tail of small values, such as scores on an easy exam.
+- **Heavy-tailed** data produces extreme values far more often than a normal distribution would. Stock returns and insurance claims behave like this: a "6σ event", which a normal model calls a one-in-500-million event, happens far more often.
+
+**Skewness** puts a number on the asymmetry: it is the average cubed z-score.
+
+$$ skew = (1/n) Σ ( (xᵢ − x̄) / σ )³ $$
+:::where
+(xᵢ − x̄) / σ — the z-score of value i
+( … )³ — cubing keeps the sign, so big values above the mean push the result up and big values below push it down
+skew — about 0 for symmetric data, positive for a long right tail, negative for a long left tail
+:::
+
+Strongly right-skewed positive data often becomes nearly symmetric after a **log transform**, because the log turns multiplicative differences (one house costs twice as much as another) into additive ones. Many models, and the mean and standard deviation themselves, behave better on log(price) than on price. Use log(1 + x) when the data contains zeros.` },
+      { type: 'chart', title: "A right-skewed distribution: incomes", after: `Simulated incomes: most people earn a moderate amount and a few earn a lot (about 2% earn more than 140k and are off the chart). The mean (48k) sits to the right of the median (40k), pulled by the long tail. For skewed data like this, report the median, and consider a log transform before modelling.`, chart: {"kind":"bar","x":["5","15","25","35","45","55","65","75","85","95","105","115","125","135"],"series":[{"name":"number of people (of 20,000)","y":[209,2179,3903,3714,2774,2100,1550,1092,722,501,347,243,177,130]}],"xLabel":"income in thousands (centre of each 10k-wide bin)","yLabel":"people"} },
+      { type: 'code', title: "Summaries of skewed data with pandas", md: `\`describe()\` prints the count, mean, standard deviation and five-number summary in one go, and \`skew()\` measures the asymmetry.`, code: `import numpy as np
+import pandas as pd
+rng = np.random.default_rng(0)
+income = pd.Series(rng.lognormal(mean=10.6, sigma=0.6, size=10_000).round(-2), name="income")
+
+print(income.describe().round(0))
+print("skewness:", round(income.skew(), 2))
+print("mean > median:", income.mean() > income.median())
+
+q1, q3 = income.quantile([0.25, 0.75])
+upper = q3 + 1.5 * (q3 - q1)
+print(f"upper outlier fence {upper:,.0f}; share of incomes above it: {(income > upper).mean():.1%}")
+
+log_income = np.log(income)
+print("skewness after a log transform:", round(log_income.skew(), 2))`, after: `The raw incomes are strongly skewed (skewness about 1.9), and the 1.5 × IQR rule flags several percent of perfectly genuine high earners as "outliers": the rule assumes roughly symmetric data. After the log transform the skewness is close to 0 and the distribution is nearly symmetric.`, predict: {"type":"mcq","q":"For right-skewed data such as incomes, how do the mean and the median compare?","options":["The mean is larger than the median","The median is larger than the mean","They are equal","It depends only on the sample size"],"answer":0,"explain":"The long right tail pulls the mean up; the median ignores how extreme the largest values are.","expect":["mean > median: True"]} },
       { type: 'check', question: { type: 'mcq', q: 'Website response times are mostly 100–200 ms with occasional 30-second timeouts. Which single number best describes a typical response?', options: ['The mean', 'The median', 'The maximum', 'The variance'], answer: 1, explain: 'The rare huge timeouts inflate the mean. The median reflects the typical experience (and percentiles like p95 describe the slow tail).' } },
       { type: 'text', title: 'Covariance and correlation', md: `Do two variables move together? **Covariance** averages the product of their deviations from their means:
 
@@ -1287,6 +1598,42 @@ for name, y in [("linear", linear), ("quadratic", quadratic), ("noise", noise)]:
     print(f"{name:<9} r = {r:+.3f}")
 # 'quadratic' depends strongly on x, yet r is near 0: correlation only sees straight-line patterns
 `, predict: {"type":"mcq","q":"x is spread evenly between −3 and 3, and y = x² plus a little noise, so y depends strongly on x. What correlation r will NumPy report?","options":["Close to +1","Close to −1","Close to 0","Exactly +0.5"],"answer":2,"explain":"r is about 0 (+0.000 here). Pearson correlation only measures straight-line association: the left half of the parabola goes down, the right half goes up, and the two cancel.","expect":["quadratic r = +0.000"]} },
+      { type: 'text', title: "Rank correlation: curves and outliers", md: `**Spearman's rank correlation** replaces every value by its rank (1 for the smallest, 2 for the next, and so on) and computes Pearson's r on the ranks. Two consequences:
+
+- it measures any **monotonic** relationship, not just straight lines: if y always increases when x increases, Spearman's ρ is 1 even when the curve bends (y = eˣ, y = log x);
+- it is **robust**: an outlier can only take the top rank, however extreme it is.
+
+$$ ρ = r( rank(x), rank(y) ) $$
+:::where
+rank(x) — the position of each value of x in sorted order (tied values share the average of their ranks)
+r( … ) — Pearson's correlation, computed on the ranks instead of the raw values
+ρ — "rho": Spearman's rank correlation, between −1 and 1
+:::
+
+Neither coefficient sees a U-shape like y = x²: there y goes down and then up, which is not monotonic. For that you need a plot, or a measure such as [mutual information](#/concept/information-theory).
+
+In pandas, \`df.corr()\` gives the Pearson correlation matrix of all numeric columns and \`df.corr(method="spearman")\` the rank version. Comparing the two is a quick way to spot curved relationships and correlations created by a few outliers.` },
+      { type: 'code', title: "Pearson against Spearman", code: `import numpy as np
+rng = np.random.default_rng(2)
+
+def ranks(a):
+    return a.argsort().argsort()             # 0 for the smallest value, 1 for the next, ... (fine without ties)
+
+def pearson(a, b):
+    return np.corrcoef(a, b)[0, 1]
+
+def spearman(a, b):
+    return pearson(ranks(a), ranks(b))
+
+x = rng.uniform(0, 5, 200)
+curved = np.exp(x)                           # always increasing, strongly curved
+print(f"y = exp(x):   Pearson {pearson(x, curved):.3f}   Spearman {spearman(x, curved):.3f}")
+
+a = rng.normal(size=50)
+b = rng.normal(size=50)                      # unrelated to a
+a_out, b_out = np.append(a, 20.0), np.append(b, 20.0)   # plus one extreme point
+print(f"one outlier:  Pearson {pearson(a_out, b_out):.3f}   Spearman {spearman(a_out, b_out):.3f}")
+print("Spearman is 1 for an increasing curve:", round(spearman(x, curved), 6) == 1.0)`, after: `For the exponential curve every increase in x increases y, so the two rankings agree perfectly (Spearman 1) while Pearson, which looks for a straight line, reports less. For the unrelated variables, a single extreme point manufactures a large Pearson correlation; Spearman barely moves.`, predict: {"type":"mcq","q":"y = eˣ for 200 random values of x. What is Spearman's rank correlation between x and y?","options":["About 0.5","Exactly 1","About 0","It cannot be computed for curves"],"answer":1,"explain":"y increases whenever x increases, so the two rankings are identical and the rank correlation is exactly 1.","expect":["Spearman is 1 for an increasing curve: True"]} },
       { type: 'check', question: { type: 'tf', q: 'If two variables have a correlation of 0, they are unrelated.', answer: false, explain: 'r = 0 only rules out a *linear* relationship. y = x² on symmetric x has r ≈ 0 but is completely determined by x.' } },
       { type: 'text', title: 'Samples, noise and the standard error', md: `Every statistic computed from a sample is itself noisy: a different sample gives a slightly different answer. The **standard error** of a mean tells you how noisy:
 
@@ -1299,7 +1646,9 @@ n — the sample size (the number of observations)
 
 To halve the noise you need **four times** the data.
 
-This matters every time you evaluate a model. Accuracy on a test set of 100 examples is a sample statistic: at 90% accuracy its standard error is about √(0.9·0.1/100) = **3 percentage points**. "Model B scored 91%, model A 89%" on 100 examples is well within noise — don't celebrate yet. On 10,000 examples the standard error drops to 0.3 points and the same gap becomes meaningful.` }
+This matters every time you evaluate a model. Accuracy on a test set of 100 examples is a sample statistic: at 90% accuracy its standard error is about √(0.9·0.1/100) = **3 percentage points**. "Model B scored 91%, model A 89%" on 100 examples is well within noise — don't celebrate yet. On 10,000 examples the standard error drops to 0.3 points and the same gap becomes meaningful.` },
+      { type: 'chart', title: "The central limit theorem in action", md: `Start from a strongly skewed distribution (exponential, mean 1), draw samples of size n, and plot the distribution of their **means**:`, after: `A single value (n = 1) follows the skewed original. Averages of 5 values are already more symmetric, and averages of 30 are close to a bell curve centred on the true mean, with a spread of σ / √n. This is the **central limit theorem**: averages of many independent values are approximately normal, whatever the original distribution. It is why confidence intervals for averages and accuracies work.`, chart: {"kind":"line","x":[0.025,0.075,0.125,0.175,0.225,0.275,0.325,0.375,0.425,0.475,0.525,0.575,0.625,0.675,0.725,0.775,0.825,0.875,0.925,0.975,1.025,1.075,1.125,1.175,1.225,1.275,1.325,1.375,1.425,1.475,1.525,1.575,1.625,1.675,1.725,1.775,1.825,1.875,1.925,1.975,2.025,2.075,2.125,2.175,2.225,2.275,2.325,2.375,2.425,2.475,2.525,2.575,2.625,2.675,2.725,2.775,2.825,2.875,2.925,2.975],"points":false,"series":[{"name":"mean of 1 value","y":[1.023,0.983,0.935,0.885,0.85,0.802,0.758,0.714,0.688,0.653,0.627,0.578,0.572,0.541,0.523,0.486,0.467,0.442,0.412,0.395,0.379,0.355,0.346,0.323,0.307,0.288,0.285,0.263,0.254,0.238,0.235,0.219,0.212,0.189,0.183,0.166,0.169,0.162,0.15,0.146,0.137,0.133,0.127,0.116,0.122,0.109,0.103,0.095,0.092,0.088,0.083,0.081,0.075,0.073,0.071,0.063,0.06,0.059,0.054,0.055]},{"name":"mean of 5 values","y":[0,0.004,0.015,0.053,0.103,0.194,0.286,0.394,0.492,0.616,0.723,0.81,0.88,0.934,0.94,0.983,0.976,0.974,0.925,0.891,0.871,0.813,0.736,0.69,0.634,0.592,0.546,0.479,0.444,0.389,0.346,0.309,0.261,0.237,0.206,0.184,0.157,0.137,0.118,0.101,0.084,0.075,0.062,0.053,0.048,0.038,0.034,0.029,0.023,0.021,0.018,0.015,0.015,0.009,0.008,0.007,0.005,0.006,0.004,0.003]},{"name":"mean of 30 values","y":[0,0,0,0,0,0,0,0,0.002,0.006,0.025,0.083,0.212,0.417,0.743,1.162,1.567,1.942,2.151,2.199,2.085,1.875,1.556,1.232,0.92,0.654,0.445,0.288,0.182,0.11,0.067,0.035,0.02,0.01,0.006,0.002,0.001,0.001,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}],"xLabel":"value of the sample mean","yLabel":"density"} },
+      { type: 'check', question: {"type":"mcq","q":"Response times have Q1 = 120 ms and Q3 = 200 ms. Above what value does the 1.5 × IQR rule flag a response as an outlier?","options":["200 ms","280 ms","320 ms","400 ms"],"answer":2,"explain":"IQR = 200 − 120 = 80, so the upper fence is 200 + 1.5 × 80 = 320 ms."} }
     ],
     when: `- Compute **mean, median, std and percentiles** for every feature before modelling ("know your data").
 - Prefer the **median** and percentiles for skewed data or data with outliers.
@@ -1322,7 +1671,11 @@ This matters every time you evaluate a model. Accuracy on a test set of 100 exam
       { type: 'mcq', q: 'What does a z-score of −2 mean?', options: ['The value is 2 units below the mean', 'The value is 2 standard deviations below the mean', 'The value is in the bottom 2%', 'The value is negative'], answer: 1, explain: 'z = (x − mean)/std, so z = −2 means two standard deviations below the mean.' },
       { type: 'mcq', q: 'Two features have Pearson correlation 0.98. What is the most reasonable conclusion?', options: ['One causes the other', 'They are nearly linearly related — possibly redundant features', 'They are independent', 'The model will be perfectly accurate'], answer: 1, explain: 'A very high correlation means they carry almost the same linear information; it says nothing about causation.' },
       { type: 'tf', q: '`np.std(x)` and pandas `pd.Series(x).std()` give slightly different answers by default.', answer: true, explain: 'NumPy uses ddof=0 (divide by n); pandas uses ddof=1 (divide by n − 1).' },
-      { type: 'mcq', q: 'To halve the standard error of an estimated mean, you need…', options: ['twice as much data', 'four times as much data', 'half as much data', 'the same data with a different seed'], answer: 1, explain: 'SE = σ/√n, so halving it requires √n to double, i.e. n × 4.' }
+      { type: 'mcq', q: 'To halve the standard error of an estimated mean, you need…', options: ['twice as much data', 'four times as much data', 'half as much data', 'the same data with a different seed'], answer: 1, explain: 'SE = σ/√n, so halving it requires √n to double, i.e. n × 4.' },
+      {"type":"mcq","q":"Which summary is most robust to a few extreme values?","options":["The mean","The standard deviation","The interquartile range","The range (maximum − minimum)"],"answer":2,"explain":"The IQR depends only on the middle half of the data; the mean, the standard deviation and the range are all pulled by extremes."},
+      {"type":"tf","q":"Spearman's rank correlation is 1 whenever y increases every time x increases, even if the relationship is curved.","answer":true,"explain":"Spearman compares rankings, so any strictly increasing relationship gives identical rankings and ρ = 1."},
+      {"type":"mcq","q":"What does the central limit theorem say?","options":["Every dataset is normally distributed","Averages of many independent values are approximately normal, whatever the original distribution","The median equals the mean in large samples","Outliers disappear with enough data"],"answer":1,"explain":"The individual values can be skewed or discrete; it is their average that becomes approximately normal, with spread σ / √n."},
+      {"type":"mcq","q":"Incomes are strongly right-skewed. Which transformation usually makes them close to symmetric?","options":["Squaring","Taking the logarithm","Subtracting the mean","Dividing by the maximum"],"answer":1,"explain":"The log turns multiplicative differences into additive ones and pulls in the long right tail. Subtracting the mean or dividing by the maximum only shifts or rescales; the shape stays the same."}
     ],
     problems: [
       {
@@ -1481,6 +1834,7 @@ Intuition: entropy is roughly the average number of yes/no questions needed to i
 :::real Where entropy shows up
 Decision trees choose the split that reduces the entropy (impurity) of the labels the most — that reduction is called *information gain*. An LLM's next-token distribution has low entropy after "The capital of France is" and high entropy after "My favourite colour is".
 :::` },
+      { type: 'chart', title: "Entropy of a coin with P(heads) = p", after: `A fair coin (p = 0.5) is the most uncertain two-outcome variable: exactly 1 bit. As the coin becomes predictable, entropy falls towards 0; a coin that always lands heads carries no information at all.`, chart: {"kind":"line","x":[0.001,0.011,0.021,0.031,0.041,0.051,0.061,0.072,0.082,0.092,0.102,0.112,0.122,0.132,0.142,0.152,0.162,0.172,0.182,0.193,0.203,0.213,0.223,0.233,0.243,0.253,0.263,0.273,0.283,0.293,0.303,0.314,0.324,0.334,0.344,0.354,0.364,0.374,0.384,0.394,0.404,0.414,0.424,0.434,0.445,0.455,0.465,0.475,0.485,0.495,0.505,0.515,0.525,0.535,0.545,0.555,0.566,0.576,0.586,0.596,0.606,0.616,0.626,0.636,0.646,0.656,0.666,0.676,0.686,0.697,0.707,0.717,0.727,0.737,0.747,0.757,0.767,0.777,0.787,0.797,0.807,0.818,0.828,0.838,0.848,0.858,0.868,0.878,0.888,0.898,0.908,0.918,0.928,0.939,0.949,0.959,0.969,0.979,0.989,0.999],"points":false,"series":[{"name":"entropy H(p) in bits","y":[0.0114,0.0879,0.1479,0.2006,0.2483,0.2923,0.3333,0.3717,0.408,0.4422,0.4747,0.5056,0.535,0.563,0.5898,0.6153,0.6398,0.6631,0.6854,0.7067,0.7271,0.7466,0.7652,0.783,0.7999,0.816,0.8314,0.846,0.8599,0.873,0.8854,0.8972,0.9082,0.9186,0.9284,0.9374,0.9459,0.9537,0.9609,0.9674,0.9734,0.9787,0.9834,0.9876,0.9911,0.9941,0.9964,0.9982,0.9993,0.9999,0.9999,0.9993,0.9982,0.9964,0.9941,0.9911,0.9876,0.9834,0.9787,0.9734,0.9674,0.9609,0.9537,0.9459,0.9374,0.9284,0.9186,0.9082,0.8972,0.8854,0.873,0.8599,0.846,0.8314,0.816,0.7999,0.783,0.7652,0.7466,0.7271,0.7067,0.6854,0.6631,0.6398,0.6153,0.5898,0.563,0.535,0.5056,0.4747,0.4422,0.408,0.3717,0.3333,0.2923,0.2483,0.2006,0.1479,0.0879,0.0114]}],"xLabel":"p, the probability of heads","yLabel":"entropy (bits)","yMin":0} },
       { type: 'code', title: 'Computing entropy', md: `Writing entropy as Σ p · log(1/p) — "probability × surprise" — avoids an awkward −0.0 for certain events.`, code: `
 import numpy as np
 
@@ -1495,6 +1849,20 @@ print("fair die        :", round(entropy_bits([1/6] * 6), 3))
 print("certain outcome :", entropy_bits([1.0]))
 print("uniform over 1024 tokens:", entropy_bits(np.ones(1024) / 1024), "bits")
 `, predict: {"type":"mcq","q":"A fair coin has an entropy of 1 bit. What is the entropy of a fair six-sided die, in bits?","options":["1","About 2.6","3","6"],"answer":1,"explain":"log₂ 6 ≈ 2.585 bits. Six equally likely outcomes need more than 2 bits (enough for 4 outcomes) but less than 3 bits (enough for 8).","expect":["fair die        : 2.585"]} },
+      { type: 'text', title: "Why bits? Entropy as the limit of compression", md: `Entropy has a concrete meaning: it is the smallest possible average number of bits per symbol for encoding messages from a source (Shannon's source coding theorem). The trick is to give **short codes to frequent symbols** and long codes to rare ones, each code about −log₂ p bits long.
+
+| Symbol | Probability | Surprise (bits) | Code |
+| --- | --- | --- | --- |
+| A | 1/2 | 1 | 0 |
+| B | 1/4 | 2 | 10 |
+| C | 1/8 | 3 | 110 |
+| D | 1/8 | 3 | 111 |
+
+The average code length is ½·1 + ¼·2 + ⅛·3 + ⅛·3 = **1.75 bits**, exactly the entropy, instead of the 2 bits a fixed-length code needs for four symbols. No code can do better on average; Huffman coding, used inside ZIP, JPEG and MP3, builds such codes automatically.
+
+Two consequences for machine learning:
+- **Prediction is compression.** A model that assigns probability q to what actually happens could encode it in −log₂ q bits. A language model's cross-entropy loss is literally the number of bits (or nats) per token it would need to compress the text, which is why better language models are also better compressors.
+- **Tokenizers** such as byte-pair encoding follow the same instinct: frequent strings get a single token, rare ones are spelled out in pieces.` },
       { type: 'text', title: 'Cross-entropy: the classification loss', md: `Now suppose the true distribution is **p** but our model predicts **q**. The **cross-entropy** is the average surprise we experience when outcomes come from p but we judge them with q:
 
 $$ H(p, q) = − Σ pᵢ log qᵢ $$
@@ -1522,6 +1890,7 @@ q_k — the probability the model assigned to that correct class
 | 0.01 (confident and wrong) | 4.61 |
 
 The loss explodes as the probability of the truth approaches 0, so cross-entropy **punishes confident mistakes** severely. This is exactly how an LLM is trained: at every position, the loss is −log(probability the model assigned to the actual next token), averaged over trillions of tokens.` },
+      { type: 'chart', title: "The loss −log q for the probability q given to the correct answer", after: `Near q = 1 the curve is almost flat: making a confident correct answer even more confident gains little. Towards q = 0 it shoots up: going from 0.1 to 0.01 adds as much loss (2.3 nats) as going from 1.0 to 0.1. This steepness is what makes confident mistakes so expensive.`, chart: {"kind":"line","x":[0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1,0.11,0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.19,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.31,0.32,0.33,0.34,0.35,0.36,0.37,0.38,0.39,0.4,0.41,0.42,0.43,0.44,0.45,0.46,0.47,0.48,0.49,0.5,0.51,0.52,0.53,0.54,0.55,0.56,0.57,0.58,0.59,0.6,0.61,0.62,0.63,0.64,0.65,0.66,0.67,0.68,0.69,0.7,0.71,0.72,0.73,0.74,0.75,0.76,0.77,0.78,0.79,0.8,0.81,0.82,0.83,0.84,0.85,0.86,0.87,0.88,0.89,0.9,0.91,0.92,0.93,0.94,0.95,0.96,0.97,0.98,0.99,1],"points":false,"series":[{"name":"cross-entropy loss −ln q (nats)","y":[4.6052,3.912,3.5066,3.2189,2.9957,2.8134,2.6593,2.5257,2.4079,2.3026,2.2073,2.1203,2.0402,1.9661,1.8971,1.8326,1.772,1.7148,1.6607,1.6094,1.5606,1.5141,1.4697,1.4271,1.3863,1.3471,1.3093,1.273,1.2379,1.204,1.1712,1.1394,1.1087,1.0788,1.0498,1.0217,0.9943,0.9676,0.9416,0.9163,0.8916,0.8675,0.844,0.821,0.7985,0.7765,0.755,0.734,0.7133,0.6931,0.6733,0.6539,0.6349,0.6162,0.5978,0.5798,0.5621,0.5447,0.5276,0.5108,0.4943,0.478,0.462,0.4463,0.4308,0.4155,0.4005,0.3857,0.3711,0.3567,0.3425,0.3285,0.3147,0.3011,0.2877,0.2744,0.2614,0.2485,0.2357,0.2231,0.2107,0.1985,0.1863,0.1744,0.1625,0.1508,0.1393,0.1278,0.1165,0.1054,0.0943,0.0834,0.0726,0.0619,0.0513,0.0408,0.0305,0.0202,0.0101,0]}],"xLabel":"q, the probability the model gave the correct class","yLabel":"loss (nats)","yMin":0,"hlines":[{"y":0.693,"label":"a 50/50 guess: 0.69"}]} },
       { type: 'check', question: { type: 'mcq', q: 'A model assigns probability 1.0 to the correct class. What is its cross-entropy loss on that example?', options: ['1', '0', '−∞', 'log 2'], answer: 1, explain: '−log(1) = 0. A perfectly confident, correct prediction costs nothing.' } },
       { type: 'text', title: 'KL divergence: the extra cost', md: `How much worse is using q instead of the true p? The difference between cross-entropy and entropy is the **Kullback–Leibler (KL) divergence**:
 
@@ -1539,6 +1908,37 @@ Properties:
 - Because H(p) does not depend on the model, **minimising cross-entropy is the same as minimising KL divergence** to the true distribution.
 
 KL appears in VAEs (keeping the latent distribution close to a Gaussian), knowledge distillation (a small student matching a big teacher's probabilities), and RLHF (a penalty that stops the tuned chatbot drifting too far from the pretrained model).` },
+      { type: 'text', title: "Mutual information: what one variable tells you about another", md: `How much does knowing X reduce your uncertainty about Y? The **conditional entropy** H(Y | X) is the uncertainty about Y that remains once X is known, averaged over the values of X. The reduction is the **mutual information**:
+
+$$ I(X; Y) = H(Y) − H(Y | X) = D_KL( p(x, y) ‖ p(x) · p(y) ) $$
+:::where
+H(Y) — the uncertainty about Y before seeing anything
+H(Y | X) — the uncertainty about Y that remains after seeing X
+I(X; Y) — the mutual information: how many bits (or nats) X tells you about Y; it is symmetric, I(X; Y) = I(Y; X)
+p(x, y) — the joint distribution; p(x) · p(y) is what the joint would be if X and Y were independent
+:::
+
+Mutual information is 0 **exactly when** X and Y are independent, and it detects relationships of any shape. Correlation only sees straight lines: y = x² with x spread symmetrically around 0 has correlation 0 but high mutual information.
+
+Where it appears:
+- **Decision trees**: the *information gain* of a split is the mutual information between the split and the label.
+- **Feature selection**: scikit-learn's \`mutual_info_classif\` and \`mutual_info_regression\` rank features by how much they tell you about the target, including through non-linear relationships.
+- **Representation learning**: contrastive objectives such as InfoNCE (behind CLIP) maximise a bound on the mutual information between two views of the same thing.` },
+      { type: 'code', title: "Mutual information sees what correlation misses", code: `import numpy as np
+from sklearn.feature_selection import mutual_info_regression
+rng = np.random.default_rng(1)
+x = rng.uniform(-3, 3, size=1000)
+targets = {"linear": 2 * x + rng.normal(0, 1, 1000),
+           "quadratic": x ** 2 + rng.normal(0, 0.3, 1000),
+           "noise": rng.normal(0, 1, 1000)}
+
+mi = {}
+for name, y in targets.items():
+    r = np.corrcoef(x, y)[0, 1]
+    mi[name] = mutual_info_regression(x.reshape(-1, 1), y, random_state=0)[0]
+    print(f"{name:<9}  correlation {r:+.3f}   mutual information {mi[name]:.3f} nats")
+print("quadratic detected by MI:", mi["quadratic"] > 10 * mi["noise"] and mi["quadratic"] > 0.5)`, after: `Correlation calls the quadratic relationship "nothing" (r ≈ 0), while mutual information rates it as the most informative of the three, ahead of the noisy straight line. For pure noise the estimate is 0. The estimates come from a nearest-neighbour method, so they are approximate, and scikit-learn clips slightly negative estimates to 0.`, predict: {"type":"mcq","q":"y = x² plus a little noise, with x spread symmetrically around 0. The correlation is about 0. What will the mutual information between x and y be?","options":["About 0, like the correlation","Clearly positive: x tells you a lot about y","Negative","Undefined for non-linear relationships"],"answer":1,"explain":"Mutual information measures any kind of dependence, not just straight-line trends. Knowing x pins down y almost exactly here, so the mutual information is high.","expect":["quadratic detected by MI: True"]} },
+      { type: 'check', question: {"type":"tf","q":"If the Pearson correlation between two variables is 0, their mutual information must also be 0.","answer":false,"explain":"Zero correlation only rules out a straight-line relationship. y = x² with symmetric x has zero correlation but high mutual information."} },
       { type: 'code', title: 'Cross-entropy, KL and perplexity in NumPy', code: `
 import numpy as np
 
@@ -1596,7 +1996,10 @@ A loss of 2.0 nats ↔ perplexity e² ≈ 7.4. Lowering the loss from 2.0 to 1.8
       { type: 'mcq', q: 'For a single example whose correct class received probability 0.1, the cross-entropy loss is…', options: ['0.1', '−log(0.1) ≈ 2.30 nats', 'log(0.9)', '0.9'], answer: 1, explain: 'With a one-hot label the loss is −log(q_correct) = −ln 0.1 ≈ 2.30.' },
       { type: 'tf', q: 'KL divergence is symmetric: D_KL(p‖q) = D_KL(q‖p).', answer: false, explain: 'It is asymmetric in general, which is why it is called a divergence rather than a distance.' },
       { type: 'mcq', q: 'An LLM\'s average loss falls from 3.0 to 2.0 nats per token. What happens to its perplexity?', options: ['It falls from about 20.1 to about 7.4', 'It falls from 3 to 2', 'It rises', 'It is unchanged'], answer: 0, explain: 'Perplexity = e^loss: e³ ≈ 20.1 and e² ≈ 7.4.' },
-      { type: 'mcq', q: 'Why does minimising cross-entropy H(p, q) also minimise D_KL(p‖q)?', options: ['Because they are the same formula', 'Because H(p, q) = H(p) + D_KL(p‖q), and H(p) does not depend on the model', 'Because KL is always zero', 'It does not'], answer: 1, explain: 'The true entropy H(p) is a constant with respect to the model, so the two objectives differ only by that constant.' }
+      { type: 'mcq', q: 'Why does minimising cross-entropy H(p, q) also minimise D_KL(p‖q)?', options: ['Because they are the same formula', 'Because H(p, q) = H(p) + D_KL(p‖q), and H(p) does not depend on the model', 'Because KL is always zero', 'It does not'], answer: 1, explain: 'The true entropy H(p) is a constant with respect to the model, so the two objectives differ only by that constant.' },
+      {"type":"fill","q":"Symbols A, B, C and D occur with probabilities 1/2, 1/4, 1/8 and 1/8. What is the entropy in bits? (decimal)","answer":["1.75"],"explain":"½·1 + ¼·2 + ⅛·3 + ⅛·3 = 1.75 bits, which the prefix code 0, 10, 110, 111 achieves exactly."},
+      {"type":"tf","q":"The mutual information between two variables is zero exactly when they are independent.","answer":true,"explain":"I(X; Y) is the KL divergence between the joint distribution and the product of the marginals, which is zero only when the two are equal, that is, under independence."},
+      {"type":"mcq","q":"A decision tree's information gain for a split is…","options":["The accuracy after the split","The mutual information between the split and the label: the drop in label entropy","The number of samples in each child","The depth of the tree"],"answer":1,"explain":"Information gain = H(label) − H(label given the split), which is the mutual information between the split and the label."}
     ],
     problems: [
       {

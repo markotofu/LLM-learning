@@ -118,6 +118,19 @@ LM head (tied) — the output layer reuses the token-embedding matrix, so it add
 :::
 
 GPT-2 small: 50,257·768 + 1,024·768 + 12·(12·768² + 13·768) + 2·768 = **124,439,808**. For small models the embedding table is a big share (31% here); for large models the blocks dominate, so "parameters ≈ 12·d²·layers" is a handy estimate.` },
+      { type: 'chart', title: "Where GPT-2's parameters live", after: `In GPT-2 small, nearly a third of the 124 million parameters are the token-embedding table. The embeddings grow only linearly with the width, while the blocks grow with width² × depth, so in GPT-2 XL they are just 5% of the total. That is why parameter counts are often quoted without embeddings, and why vocabulary size matters most for small models.`, chart: {"kind":"bar","x":["GPT-2 small","GPT-2 medium","GPT-2 large","GPT-2 XL"],"series":[{"name":"embeddings (tokens and positions)","y":[39.4,52.5,65.6,82]},{"name":"transformer blocks","y":[85.1,302.3,708.4,1475.6]}],"xLabel":"model","yLabel":"parameters (millions)","yMin":0} },
+      { type: 'code', title: "Counting GPT-2's parameters", code: `V, T_max = 50257, 1024                         # GPT-2's vocabulary and context length
+sizes = {"small": (768, 12), "medium": (1024, 24), "large": (1280, 36), "XL": (1600, 48)}
+
+def gpt2_params(d, layers):
+    embeddings = V * d + T_max * d             # token and position tables (the LM head is tied: no extra cost)
+    per_block = 12 * d * d + 13 * d            # attention 4d² + 4d, MLP 8d² + 5d, two LayerNorms 4d
+    return embeddings, layers * per_block + 2 * d   # plus the final LayerNorm
+
+for name, (d, layers) in sizes.items():
+    emb, rest = gpt2_params(d, layers)
+    print(f"GPT-2 {name:<6}: {(emb + rest) / 1e6:7.1f} M parameters ({emb / (emb + rest):.0%} in the embeddings)")
+print("GPT-2 small has about 124 M parameters:", round(sum(gpt2_params(768, 12)) / 1e6) == 124)`, after: `The formula reproduces the published sizes: 124 million, 355 million, 774 million and 1.56 billion. The share held by the embeddings falls from about a third to about 5% as the models grow.`, predict: {"type":"mcq","q":"Roughly what share of GPT-2 small's 124 million parameters is in its embedding tables?","options":["About 3%","About 30%","About 60%","About 90%"],"answer":1,"explain":"The token table alone is 50,257 × 768 ≈ 38.6 million parameters, about 31% of the total.","expect":["about 124 M parameters: True"]} },
       { type: 'check', question: { type: 'tf', q: 'With weight tying, the output layer reuses the token embedding matrix.', answer: true, explain: 'logits = x · wteᵀ — the same (V, d) matrix is used for input lookup and output scoring.' } }
     ],
     when: `- Decoder-only GPT models are the default for generative LLMs: chat, code, reasoning, agents.
@@ -140,7 +153,9 @@ GPT-2 small: 50,257·768 + 1,024·768 + 12·(12·768² + 13·768) + 2·768 = **1
       { type: 'fill', q: 'A freshly initialized GPT has a 32,000-token vocabulary. Roughly what loss (natural log) should it start at? (1 decimal)', answer: ['10.4', '10.37', '10.373'], display: 'ln 32,000 ≈ 10.4', explain: 'A uniform guess over 32,000 tokens has cross-entropy ln 32,000 ≈ 10.37.' },
       { type: 'mcq', q: 'Why can a GPT be trained on all positions of a sequence in parallel?', options: ['Because of the residual stream', 'The causal mask stops each position from seeing its own target, so every position is a valid example at once', 'Because of weight tying', 'Because tokens are independent of each other'], answer: 1, explain: 'Without the mask, positions could peek at the answer.' },
       { type: 'tf', q: 'The KV cache stores the keys and values of previous tokens so generation does not recompute them.', answer: true, explain: 'Past positions never change under a causal mask, so their K and V can be reused.' },
-      { type: 'mcq', q: 'The inputs are x = tokens[0:T]. What are the targets?', options: ['tokens[0:T]', 'tokens[1:T+1]', 'tokens[T] only', 'random tokens'], answer: 1, explain: 'Each input position is paired with the token that follows it.' }
+      { type: 'mcq', q: 'The inputs are x = tokens[0:T]. What are the targets?', options: ['tokens[0:T]', 'tokens[1:T+1]', 'tokens[T] only', 'random tokens'], answer: 1, explain: 'Each input position is paired with the token that follows it.' },
+      {"type":"mcq","q":"Doubling d_model (keeping the depth) multiplies a transformer block's parameter count by about…","options":["2","4","8","It does not change"],"answer":1,"explain":"A block has about 12·d² parameters, so doubling d multiplies them by 4."},
+      {"type":"tf","q":"In small GPT models, the token-embedding table can hold a large share of all the parameters.","answer":true,"explain":"The table has V·d parameters, which grows only linearly with d, so it matters most when the blocks are small: about a third of GPT-2 small."}
     ],
     problems: [
       {
@@ -318,6 +333,7 @@ Temperature never changes the *ranking* of tokens, only how peaked the distribut
 - **min-p** — keep tokens whose probability is at least min_p × the top probability; another adaptive rule.
 
 Other knobs: **repetition / frequency / presence penalties** lower the scores of tokens that already appeared; **stop sequences** end generation; a fixed **seed** makes sampling reproducible.` },
+      { type: 'chart', title: "How many tokens top-p keeps", md: `Two next-token distributions over a 1,000-token vocabulary, one peaked and one flat:`, after: `With p = 0.9, top-p keeps only 6 tokens when the model is confident but 668 when it is uncertain: the candidate set adapts to the situation. A fixed top-k cannot do this; k = 40 would either cut off plausible options in the flat case or let unlikely tokens through in the peaked one.`, chart: {"kind":"line","x":[0.5,0.6,0.7,0.8,0.85,0.9,0.93,0.95,0.97,0.99],"yLog":true,"series":[{"name":"confident model (steep distribution)","y":[1,1,2,3,4,6,9,12,20,57]},{"name":"uncertain model (flat distribution)","y":[86,156,265,430,538,668,756,821,889,962]}],"xLabel":"top-p threshold","yLabel":"tokens kept (of 1,000, log scale)"} },
       { type: 'code', title: 'Decoding strategies on a toy model', code: `
 import numpy as np
 words = ["<s>", "the", "cat", "dog", "sat", "ran", "on", "mat", "away", "."]
@@ -355,6 +371,30 @@ for label, kw in [("T=0.5", dict(T=0.5)), ("T=1.0", dict(T=1.0)), ("T=2.0", dict
         print("   ", generate(seed=seed, **kw))
 `, after: `Greedy decoding always writes the same sentence. Low temperature gives short, safe sentences; T = 2 produces word salad (even the start token shows up mid-sentence); the nucleus filter removes the unlikely tail and pulls high-temperature samples back towards sense.` },
       { type: 'check', question: { type: 'mcq', q: 'What happens to the distribution as the temperature goes from 1 toward 0?', options: ['It becomes uniform', 'It concentrates on the most likely token (approaching greedy)', 'The ranking of tokens reverses', 'Nothing changes'], answer: 1, explain: 'Dividing by a small T magnifies differences between logits.' } },
+      { type: 'text', title: "Penalties, min-p and constrained decoding", md: `A few more controls appear in most LLM APIs and libraries. **Repetition penalties** lower the logits of tokens that already appeared in the output, to break loops:
+
+$$ z′ᵢ = zᵢ − α_freq · countᵢ − α_pres · 1[ countᵢ > 0 ] $$
+:::where
+zᵢ — the original logit of token i
+countᵢ — how many times token i has already appeared in the output
+α_freq — the frequency penalty, which grows with every repetition
+α_pres — the presence penalty, a flat penalty once the token has appeared at all
+1[ … ] — 1 if the condition holds, otherwise 0
+:::
+
+- **Min-p sampling** keeps every token whose probability is at least a fraction (say 0.1) of the top token's probability. Like top-p it adapts to the model's confidence, and it holds up better at high temperatures.
+- **Stop sequences and length limits** end generation at a chosen string or after a number of tokens.
+- **Constrained (structured) decoding** masks every token that would break a required format, such as a JSON schema or a regular expression, before sampling, so the output is guaranteed to parse. Most providers offer this as "structured outputs".` },
+      { type: 'code', title: "Top-p and min-p on confident and uncertain distributions", code: `import numpy as np
+ranks = np.arange(1, 1001)                                 # a 1,000-token vocabulary
+kept = {}
+for name, w in [("confident", 1 / ranks ** 2.0), ("uncertain", 1 / ranks ** 0.8)]:
+    p = w / w.sum()                                        # already sorted from most to least likely
+    top_p = int(np.searchsorted(np.cumsum(p), 0.9) + 1)    # the smallest set holding 90% of the probability
+    min_p = int(np.sum(p >= 0.1 * p[0]))                   # tokens at least 10% as likely as the best one
+    kept[name] = top_p
+    print(f"{name:<9}: top token {p[0]:.3f}   top-p 0.9 keeps {top_p:4d} tokens   min-p 0.1 keeps {min_p:3d} tokens")
+print("top-p keeps far more tokens when uncertain:", kept["uncertain"] > 50 * kept["confident"])`, after: `In the confident case both filters keep a handful of tokens. In the uncertain case top-p keeps 668 of the 1,000 tokens, most of them individually unlikely, while min-p keeps 17: it only admits tokens that are reasonably competitive with the best one, which is why it degrades more gracefully at high temperatures.`, predict: {"type":"mcq","q":"With top-p = 0.9, roughly how many tokens are kept when the model is uncertain (a flat distribution over 1,000 tokens)?","options":["About 6","About 40","Hundreds","All 1,000"],"answer":2,"explain":"When probability is spread thinly, it takes hundreds of tokens to accumulate 90% of the mass.","expect":["top-p keeps far more tokens when uncertain: True"]} },
       { type: 'text', title: 'Choosing settings', md: `| Task | Typical settings |
 | --- | --- |
 | Code, math, extraction, classification | temperature 0–0.2 (near-greedy) |
@@ -387,7 +427,9 @@ Two caveats: temperature 0 on a served model is *nearly* but not perfectly deter
       { type: 'fill', q: 'Sorted probabilities are [0.5, 0.3, 0.15, 0.05]. With top-p = 0.75, how many tokens are kept?', answer: ['2', 'two'], explain: '0.5 < 0.75 but 0.5 + 0.3 = 0.8 ≥ 0.75, so the top 2 tokens form the nucleus.' },
       { type: 'mcq', q: 'Why is beam search rarely used for chatbots?', options: ['It is too random', 'It tends to produce generic, repetitive text in open-ended generation', 'It cannot use a KV cache', 'It needs a bigger vocabulary'], answer: 1, explain: 'Maximizing likelihood favours safe, dull continuations.' },
       { type: 'tf', q: 'Setting the temperature to 0 makes an LLM\'s answers factually correct.', answer: false, explain: 'It makes outputs (nearly) deterministic, not correct.' },
-      { type: 'mcq', q: 'Which setting suits generating code that must compile?', options: ['Temperature 1.5, top-p 1.0', 'Temperature near 0', 'Top-k = 1,000 with temperature 2', 'Random tokens with a seed'], answer: 1, explain: 'Low temperature keeps the model on its most likely (usually correct) path.' }
+      { type: 'mcq', q: 'Which setting suits generating code that must compile?', options: ['Temperature 1.5, top-p 1.0', 'Temperature near 0', 'Top-k = 1,000 with temperature 2', 'Random tokens with a seed'], answer: 1, explain: 'Low temperature keeps the model on its most likely (usually correct) path.' },
+      {"type":"mcq","q":"What does constrained (structured) decoding guarantee?","options":["That the answer is factually correct","That the output follows a required format, such as valid JSON, because tokens that would break it are masked","Faster generation","A lower temperature"],"answer":1,"explain":"It restricts which tokens can be sampled at each step, so the format is guaranteed; the content can still be wrong."},
+      {"type":"mcq","q":"With min-p = 0.1 and a top-token probability of 0.6, which tokens are kept?","options":["Only the top token","Every token with a probability of at least 0.06","The tokens making up 10% of the probability","Every token"],"answer":1,"explain":"Min-p keeps tokens whose probability is at least 0.1 × 0.6 = 0.06."}
     ],
     problems: [
       {
@@ -607,6 +649,14 @@ for N in [5e9, 20e9, 70e9, 150e9, 400e9, 1e12]:
     D = C / (6 * N)
     print(f"  N = {N:8.2e}  D = {D:8.2e}  tokens/param = {D / N:8.1f}  loss = {loss(N, D):.4f}")
 `, after: `Too small a model can't use the data; too big a model sees too little data. The minimum sits near 70B parameters (~20 tokens per parameter), and it is shallow: being 2× off costs little.` },
+      { type: 'chart', title: "IsoFLOP curves: the best model size for each budget", md: `For each fixed compute budget C, every model size N implies a number of training tokens D = C / (6N). The fitted scaling law then predicts the loss:`, after: `Each curve is a U: models that are too small cannot use their data, and models that are too big see too few tokens. The bottom of each U is the compute-optimal size, and it moves right roughly in proportion to √C, so ten times more compute buys a model about three times larger trained on three times more data. The minima are shallow, which is why practitioners deliberately choose smaller models trained on more tokens: they cost less to serve.`, chart: {"kind":"line","x":[100000000,126000000,158000000,200000000,251000000,316000000,398000000,501000000,631000000,794000000,1000000000,1260000000,1580000000,2000000000,2510000000,3160000000,3980000000,5010000000,6310000000,7940000000,10000000000,12600000000,15800000000,20000000000,25100000000,31600000000,39800000000,50100000000,63100000000,79400000000,100000000000,126000000000,158000000000,200000000000,251000000000,316000000000,398000000000,501000000000,631000000000,794000000000,1000000000000],"xLog":true,"points":false,"series":[{"name":"budget 1e20 FLOPs","y":[2.7765,2.7297,2.6888,2.6537,2.6241,2.5998,2.5807,2.5667,2.5577,2.5536,2.5546,2.5605,2.5715,2.5876,2.609,2.6359,2.6684,2.7067,2.7513,2.8024,2.8603,2.9255,2.9985,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]},{"name":"budget 1e21 FLOPs","y":[2.6833,2.6282,2.5785,2.5336,2.4935,2.4577,2.4261,2.3986,2.3748,2.3547,2.3381,2.325,2.3153,2.3089,2.3058,2.306,2.3096,2.3164,2.3267,2.3404,2.3578,2.3788,2.4038,2.4328,2.4661,2.504,2.5466,2.5944,2.6476,2.7066,2.7719,2.844,2.9233,null,null,null,null,null,null,null,null]},{"name":"budget 1e22 FLOPs","y":[2.6431,2.5846,2.531,2.4819,2.4372,2.3965,2.3596,2.3261,2.296,2.269,2.2449,2.2236,2.205,2.1889,2.1753,2.164,2.155,2.1483,2.1438,2.1415,2.1413,2.1434,2.1476,2.1542,2.163,2.1742,2.1878,2.2041,2.223,2.2447,2.2694,2.2973,2.3285,2.3633,2.402,2.4448,2.492,2.5439,2.601,2.6637,2.7323]},{"name":"budget 1e23 FLOPs","y":[2.6258,2.5657,2.5105,2.4597,2.413,2.3702,2.3309,2.2949,2.2621,2.2321,2.2047,2.1799,2.1575,2.1372,2.119,2.1028,2.0885,2.0759,2.065,2.0558,2.0481,2.0419,2.0373,2.0341,2.0324,2.0321,2.0333,2.0359,2.0401,2.0457,2.053,2.0618,2.0724,2.0847,2.0988,2.115,2.1332,2.1536,2.1764,2.2017,2.2297]}],"xLabel":"parameters N (log scale); data D = C / (6N)","yLabel":"predicted loss (nats per token)"} },
+      { type: 'text', title: "Data: the other half of scaling", md: `Scaling laws treat all tokens as interchangeable, but the quality of the data changes the constants dramatically:
+
+- **Filtering and deduplication.** Removing near-duplicate documents and low-quality pages lets a model reach the same loss with fewer tokens and reduces verbatim memorisation. Quality classifiers that favour text resembling textbooks and reference material have produced small models that punch far above their size.
+- **Mixtures.** The shares of code, mathematics, multilingual text and dialogue shape what the model is good at; adding code, for example, tends to help reasoning as well.
+- **Repetition.** When fresh data runs out, repeating it for up to about four epochs is almost as good as new data; beyond that the returns fall off quickly.
+- **Synthetic data.** Text generated by stronger models (worked solutions, rewritten documents, reasoning traces) makes up a growing part of training sets, especially for small models and later training stages.
+- **The data wall.** The stock of high-quality public human text is finite, estimated at a few hundred trillion tokens, and frontier training runs already use tens of trillions. This is why so much effort now goes into data quality, synthetic data and learning from interaction (reinforcement learning) rather than ever larger crawls.` },
       { type: 'text', title: 'Base models and emergent abilities', md: `Pretraining produces a **base model**: a superb document completer, not an assistant. Ask a base model "What is the capital of France?" and it may continue with more quiz questions, because that's what such text looks like on the web. Instruction tuning and preference tuning (the next lessons) turn it into a helpful assistant, but almost all of its knowledge and skills come from pretraining.
 
 As models scale, some abilities — multi-step arithmetic, following few-shot examples, writing working code — improve sharply, which is often called **emergence**. Part of the apparent jump comes from all-or-nothing metrics (an answer is right or wrong) while the underlying loss improves smoothly, but the practical effect is real.` },
@@ -632,7 +682,9 @@ As models scale, some abilities — multi-step arithmetic, following few-shot ex
       { type: 'mcq', q: 'What did the Chinchilla paper show?', options: ['Bigger models are always better at a fixed compute budget', 'For a fixed compute budget, model size and data should grow together (~20 tokens per parameter)', 'Data quality does not matter', 'Scaling laws do not hold for language'], answer: 1, explain: 'Many earlier models were too big for the amount of data they saw.' },
       { type: 'mcq', q: 'Why are popular open models trained on far more than 20 tokens per parameter?', options: ['To lower training cost', 'Smaller models are cheaper to run, so extra training compute pays off over billions of inference requests', 'Because scaling laws are wrong', 'Because they have more layers'], answer: 1, explain: 'Compute-optimal minimizes training cost, not total lifetime cost.' },
       { type: 'tf', q: 'Deduplicating pretraining data reduces wasted compute and memorization.', answer: true, explain: 'Repeated documents add little new information and encourage verbatim recall.' },
-      { type: 'fill', q: 'Compute-optimal split: with C = 6·N·D and D = 20·N, what is N (in billions) for C = 1.2e21 FLOPs?', answer: ['3.16', '3.2', '3.162', 'sqrt(10)'], display: '≈ 3.16B', explain: 'C = 120·N² → N = √(1.2e21 / 120) = √(1e19) ≈ 3.16·10⁹.' }
+      { type: 'fill', q: 'Compute-optimal split: with C = 6·N·D and D = 20·N, what is N (in billions) for C = 1.2e21 FLOPs?', answer: ['3.16', '3.2', '3.162', 'sqrt(10)'], display: '≈ 3.16B', explain: 'C = 120·N² → N = √(1.2e21 / 120) = √(1e19) ≈ 3.16·10⁹.' },
+      {"type":"mcq","q":"With ten times more compute, how does the compute-optimal model size roughly change?","options":["It stays the same","About 3 times larger (√10), trained on about 3 times more data","10 times larger, with the same data","100 times larger"],"answer":1,"explain":"The optimum scales roughly like N ∝ √C and D ∝ √C, so a factor of 10 in compute is split about evenly between model size and data."},
+      {"type":"tf","q":"Repeating the same training data for a few epochs is almost as useful as fresh data, but the returns fall off quickly with many more repetitions.","answer":true,"explain":"Experiments on data-constrained scaling found up to about 4 epochs nearly as good as new data, with rapidly diminishing value after that."}
     ],
     problems: [
       {
@@ -856,6 +908,53 @@ print("mean loss over all tokens:", round(token_losses.mean(), 3), "| SFT loss (
 | Make the model "know" new facts | usually RAG; fine-tuning on facts is unreliable and can increase hallucination |
 
 Risks: **catastrophic forgetting** (losing general abilities — mix in general data, use a low learning rate or LoRA), **overfitting** small datasets (watch validation loss; 1–3 epochs), faithfully learning the flaws of noisy data, and safety regressions (fine-tuning can undo safety training).` },
+      { type: 'text', title: "Data and settings that matter", md: `**Quality beats quantity.** A few thousand carefully written, diverse examples often teach a format or a behaviour better than a million scraped ones (the LIMA experiments used just 1,000). Good fine-tuning data is:
+- **representative** of the real requests, including the hard and unusual ones;
+- **consistent**: the same kind of question always gets the same kind of answer, otherwise the model learns the inconsistency;
+- **clean**: deduplicated, free of personal data you have no right to use, and checked against your evaluation set so that test questions do not leak into training.
+
+Synthetic data generated by a stronger model is common, but it inherits that model's mistakes and style, and the provider's terms may restrict using its outputs to train other models.
+
+**Typical settings**, as starting points (they vary with the model and its size):
+
+| Setting | Full fine-tuning | LoRA |
+| --- | --- | --- |
+| learning rate | about 1e-5 to 2e-5 | about 1e-4 to 2e-4 |
+| epochs | 1 to 3 | 1 to 3 |
+| batch size | as large as fits, often with gradient accumulation | the same |
+| schedule | a short warm-up, then cosine or linear decay | the same |
+
+Watch the validation loss **and** a few general benchmarks: fine-tuning that improves the target task while silently breaking general abilities is the most common failure, shown here in miniature.` },
+      { type: 'code', title: "Catastrophic forgetting in miniature", md: `A small network learns digits 0 to 4, then is fine-tuned on digits 5 to 9: once on the new data only, and once with some old examples replayed.`, code: `import numpy as np, warnings
+from sklearn.datasets import load_digits
+from sklearn.neural_network import MLPClassifier
+warnings.filterwarnings("ignore")
+X, y = load_digits(return_X_y=True)
+X = X / 16.0
+rng = np.random.default_rng(0)
+order = rng.permutation(len(X))
+X, y = X[order], y[order]
+Xtr, ytr, Xte, yte = X[:1300], y[:1300], X[1300:], y[1300:]
+old_tr, new_tr, old_te, new_te = ytr < 5, ytr >= 5, yte < 5, yte >= 5
+
+def experiment(replay):
+    model = MLPClassifier(hidden_layer_sizes=(64,), learning_rate_init=0.01, random_state=0)
+    Xa, ya = Xtr[old_tr], ytr[old_tr]
+    for _ in range(30):                                   # stage 1: learn digits 0-4
+        model.partial_fit(Xa, ya, classes=np.arange(10))
+    Xb, yb = Xtr[new_tr], ytr[new_tr]
+    if replay:                                            # mix in a fifth as many old examples
+        keep = rng.choice(len(Xa), len(Xb) // 5, replace=False)
+        Xb, yb = np.vstack([Xb, Xa[keep]]), np.concatenate([yb, ya[keep]])
+    for _ in range(30):                                   # stage 2: fine-tune
+        model.partial_fit(Xb, yb)
+    return model.score(Xte[old_te], yte[old_te]), model.score(Xte[new_te], yte[new_te])
+
+plain, replayed = experiment(False), experiment(True)
+print(f"new data only:  old digits {plain[0]:.0%}, new digits {plain[1]:.0%}")
+print(f"with replay:    old digits {replayed[0]:.0%}, new digits {replayed[1]:.0%}")
+print("replay keeps most of the old task:", replayed[0] > 0.7 > plain[0])`, after: `Fine-tuned on new data only, the network forgets the old digits completely: nothing in its new training data asks it to output 0 to 4 any more, so it stops. Replaying a small share of old examples keeps about 85% of the old ability, at no cost to the new task.`, predict: {"type":"mcq","q":"After 30 epochs of fine-tuning on digits 5 to 9 only, what accuracy will the network have on digits 0 to 4?","options":["Still about 99%","About 70%","About 50%","About 0%"],"answer":3,"explain":"Every update now pushes towards the classes 5 to 9, and nothing pushes back, so the network stops predicting 0 to 4 at all.","expect":["replay keeps most of the old task: True"]} },
+      { type: 'chart', title: "Catastrophic forgetting, and how replay prevents it", md: `A small network first learns digits 0 to 4, then is fine-tuned on digits 5 to 9:`, after: `Trained only on the new digits, the network learns them within a few epochs and almost completely forgets the old ones (accuracy on 0 to 4 drops from 100% to 0%): nothing in the new data asks it to keep answering 0 to 4. With a fifth as many old examples mixed into the fine-tuning data, the old task still collapses at first, while the new classes take over, but it recovers to about 85% within about a dozen epochs, and the new task is learned just as well. LLM fine-tuning uses the same remedies: replay some general data, keep the learning rate small, train few epochs, or change few weights (LoRA).`, chart: {"kind":"line","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],"points":false,"series":[{"name":"old task (digits 0–4), fine-tuned on new data only","y":[0.996,0.939,0.284,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"name":"old task, with 20% old examples mixed in","y":[0.996,0.943,0.349,0,0.004,0.065,0.264,0.421,0.471,0.54,0.632,0.736,0.793,0.828,0.854,0.862,0.858,0.862,0.858,0.854,0.854,0.854,0.854,0.858,0.858,0.862,0.858,0.847,0.854,0.851,0.854],"dash":true},{"name":"new task (digits 5–9), new data only","y":[0,0.008,0.487,0.589,0.661,0.847,0.852,0.936,0.941,0.949,0.966,0.966,0.97,0.97,0.966,0.97,0.975,0.97,0.975,0.975,0.979,0.975,0.979,0.983,0.983,0.983,0.983,0.983,0.983,0.983,0.983]},{"name":"new task, with replay","y":[0,0.004,0.504,0.551,0.657,0.754,0.835,0.869,0.907,0.928,0.941,0.953,0.962,0.962,0.97,0.97,0.97,0.97,0.97,0.975,0.975,0.979,0.979,0.979,0.979,0.983,0.983,0.983,0.983,0.983,0.983],"dash":true}],"xLabel":"fine-tuning epochs on the new task","yLabel":"test accuracy","yMin":0,"yMax":1} },
       { type: 'code', title: 'SFT with Hugging Face transformers (run locally)', lang: 'pytorch', code: `
 # pip install torch transformers
 # (In practice TRL's SFTTrainer does this formatting and masking for you.)
@@ -904,7 +1003,9 @@ for step in range(3):
       { type: 'mcq', q: 'At inference, a chat prompt should end with…', options: ['the end-of-sequence token', 'the assistant header (generation prompt) so the model writes the reply', 'the system prompt', 'a random token'], answer: 1, explain: 'The model then continues as the assistant.' },
       { type: 'tf', q: 'The end-of-turn token after the assistant\'s reply should usually be included in the training labels.', answer: true, explain: 'Otherwise the model never learns when to stop talking.' },
       { type: 'mcq', q: 'Which is a sign of catastrophic forgetting?', options: ['Training loss goes down', 'The fine-tuned model became worse at general tasks it used to do well', 'The model uses more memory', 'Validation loss equals training loss'], answer: 1, explain: 'Fine-tuning overwrote general abilities.' },
-      { type: 'mcq', q: 'A typical learning rate for full fine-tuning of a 7B LLM is…', options: ['1.0', '0.1', 'around 1e-5', '1e-12'], answer: 2, explain: 'Much lower than pretraining peaks, to avoid destroying what the model knows.' }
+      { type: 'mcq', q: 'A typical learning rate for full fine-tuning of a 7B LLM is…', options: ['1.0', '0.1', 'around 1e-5', '1e-12'], answer: 2, explain: 'Much lower than pretraining peaks, to avoid destroying what the model knows.' },
+      {"type":"mcq","q":"Which remedy helps against catastrophic forgetting during fine-tuning?","options":["A higher learning rate","Mixing some general or old-task data into the fine-tuning set","Training for many more epochs","Removing the validation set"],"answer":1,"explain":"Replaying old data keeps the old behaviour in the training signal; small learning rates, few epochs and parameter-efficient methods also help."},
+      {"type":"tf","q":"A few thousand high-quality, diverse examples can teach a model a format or behaviour better than a much larger noisy dataset.","answer":true,"explain":"Fine-tuning mostly steers existing abilities, so consistency and quality of the examples matter more than sheer volume."}
     ],
     problems: [
       {
@@ -1086,6 +1187,30 @@ print(f"trainable parameters: {A.size + B.size} vs {W.size} in W ({(A.size + B.s
 - **Merging**: after training compute W' = W + (α/r)·B·A once, and inference costs exactly the same as the base model. Or keep adapters separate and hot-swap them, serving one base model with many adapters.
 - **QLoRA** (Dettmers et al., 2023): store the frozen base model in **4-bit** (NF4) and train bf16 LoRA adapters on top — enough to fine-tune a 65B model on a single 48 GB GPU.
 - **Other PEFT methods**: adapters (small bottleneck MLPs inserted in each block), prefix and prompt tuning (learned virtual tokens), IA³, DoRA.` },
+      { type: 'chart', title: "Memory to fine-tune a 7-billion-parameter model", md: `A Llama-style 7B model (32 layers), with LoRA on all its linear layers; activations, which depend on batch size and sequence length, are not included:`, after: `Full fine-tuning needs about 16 bytes per parameter, roughly 108 GB, so it takes several large GPUs. LoRA freezes the base weights (2 bytes each, no gradients or optimizer state) and trains only 40 million adapter parameters, about 0.6% of the model: about 14 GB. QLoRA stores the frozen weights in 4 bits and fits in about 4.0 GB, within reach of a single consumer GPU.`, chart: {"kind":"bar","x":["full fine-tuning","LoRA (r = 16)","QLoRA (r = 16)"],"series":[{"name":"weights + gradients + optimizer state (GB, before activations)","y":[107.8,14.1,4]}],"xLabel":"method","yLabel":"GPU memory (GB)","yMin":0} },
+      { type: 'text', title: "The parameter-efficient family", md: `LoRA is the most popular member of a family of **parameter-efficient fine-tuning** (PEFT) methods, which all freeze the pretrained weights and train something small:
+
+| Method | What is trained | Notes |
+| --- | --- | --- |
+| LoRA | low-rank updates B·A added to chosen weight matrices | can be merged into the weights: no extra cost at inference |
+| QLoRA | LoRA on top of a 4-bit quantized base model | fine-tunes large models on a single GPU |
+| DoRA | separate updates of each weight vector's length and direction | often a little better than LoRA at the same rank |
+| adapters | small bottleneck layers inserted into each block | an extra cost at inference unless fused |
+| prefix and prompt tuning | learned "virtual tokens" in front of the input or of each layer | very few parameters, weaker on hard tasks |
+| (IA)³ | learned scaling vectors for activations | tiny, but less expressive |
+
+**Why low rank works.** Fine-tuning mostly *steers* abilities the model already has rather than teaching new ones, and that steering lives in a small subspace: experiments find that the weight changes made by full fine-tuning have a low "intrinsic dimension". When the new task is far from the pretraining data (a new language or modality), higher ranks or full fine-tuning help.
+
+A practical bonus: adapters are small files, so one base model can serve many customers or tasks, loading a different adapter per request.` },
+      { type: 'code', title: "Counting LoRA parameters for a 7B model", code: `layers, d, d_ff = 32, 4096, 11008                 # a Llama-style 7B model
+total = 6.74e9
+attention = 4 * (d + d)                           # q, k, v, o are d x d; LoRA adds r * (d_in + d_out) to each
+mlp = 3 * (d + d_ff)                              # the gate, up and down projections
+per_rank = layers * (attention + mlp)             # trainable parameters per unit of rank
+for r in (4, 8, 16, 64):
+    print(f"rank {r:3d}: {per_rank * r / 1e6:6.1f} M trainable parameters ({per_rank * r / total:.2%} of the model), "
+          f"adapter file about {per_rank * r * 2 / 1e6:.0f} MB in bf16")
+print("rank 16 trains under 1% of the parameters:", per_rank * 16 / total < 0.01)`, after: `Even at rank 64 the adapters hold under 2.5% of the parameters, and a rank-16 adapter file is about 80 MB, against roughly 13 GB for the model itself.`, predict: {"type":"mcq","q":"LoRA with rank 16 on every linear layer of a 7B model trains roughly what share of its parameters?","options":["About 0.6%","About 6%","About 25%","100%"],"answer":0,"explain":"Each matrix gets r·(d_in + d_out) parameters instead of d_in·d_out; summed over the model that is about 40 million of 6.7 billion.","expect":["rank 16 trains under 1% of the parameters: True"]} },
       { type: 'code', title: 'LoRA with Hugging Face PEFT (run locally)', lang: 'pytorch', code: `
 # pip install torch transformers peft
 from transformers import AutoModelForCausalLM
@@ -1123,7 +1248,9 @@ merged = model.merge_and_unload()         # fold (alpha/r)·B·A into W for fast
       { type: 'mcq', q: 'Why is B initialized to zero?', options: ['To save memory', 'So that BA = 0 and training starts from the exact pretrained model', 'Because quantization requires it', 'To make A unnecessary'], answer: 1, explain: 'The update starts at nothing and grows as needed.' },
       { type: 'fill', q: 'About how many bytes per parameter does full fine-tuning with Adam in mixed precision need (weights + gradients + optimizer states, no activations)?', answer: ['16'], explain: '2 (bf16 weight) + 2 (gradient) + 4 (fp32 master) + 4 + 4 (Adam m, v) = 16.' },
       { type: 'tf', q: 'After merging, a LoRA-fine-tuned model runs slower at inference than the base model.', answer: false, explain: 'The merged W\' has the same shape as W, so inference cost is unchanged.' },
-      { type: 'mcq', q: 'What is QLoRA?', options: ['LoRA on a quantum computer', 'LoRA adapters trained on top of a 4-bit quantized, frozen base model', 'LoRA with rank 1', 'Quantizing only the adapters'], answer: 1, explain: 'It slashes the memory needed for the frozen weights.' }
+      { type: 'mcq', q: 'What is QLoRA?', options: ['LoRA on a quantum computer', 'LoRA adapters trained on top of a 4-bit quantized, frozen base model', 'LoRA with rank 1', 'Quantizing only the adapters'], answer: 1, explain: 'It slashes the memory needed for the frozen weights.' },
+      {"type":"mcq","q":"Why can one base model serve many LoRA fine-tunes efficiently?","options":["LoRA models are smaller than the base model","Each adapter is a small file, so different adapters can be loaded per task or customer on top of the same frozen weights","LoRA does not need GPUs","All tasks share one adapter"],"answer":1,"explain":"The large base weights are loaded once; only the small adapter changes between requests."},
+      {"type":"fill","q":"LoRA adds r·(d_in + d_out) parameters to a weight matrix. How many does it add to a 4096 × 11008 matrix with r = 8?","answer":["120704","120,704"],"explain":"8 × (4,096 + 11,008) = 8 × 15,104 = 120,704, compared with 45 million in the full matrix."}
     ],
     problems: [
       {
@@ -1370,6 +1497,27 @@ for name, pi_c, pi_r in [("policy = reference", ref_c, ref_r),
     loss, m = dpo_loss(pi_c, pi_r, ref_c, ref_r)
     print(f"{name:22s} loss {loss:.4f}   margins {m.round(2)}")
 `, after: `At the start the policy equals the reference, every margin is 0 and the loss is ln 2 ≈ 0.693. Making chosen responses more likely and rejected ones less likely (relative to the reference) grows the margins and lowers the loss.` },
+      { type: 'text', title: "Goodhart's law: optimising a proxy", md: `"When a measure becomes a target, it ceases to be a good measure." A reward model is a learned approximation of human preferences, trained on a limited set of comparisons. Optimise hard against it, and the policy finds the places where the approximation is wrong. Known patterns:
+
+- **Length bias**: raters often prefer longer, more detailed answers, so the reward model learns "longer is better" and the policy pads its answers.
+- **Sycophancy**: agreeing with and flattering the user earns approval, even when the user is wrong.
+- **Style over substance**: answers that sound authoritative score well whether or not they are correct.
+- **Exploits**: in reinforcement learning on code or tasks, the policy may game the checker (special-casing the tests) instead of solving the problem.
+
+Mitigations: the KL penalty (stay close to the reference model), ensembles of reward models, refreshing the reward model with comparisons of the current policy's outputs, length-controlled evaluation, and, where possible, **verifiable rewards** such as unit tests or exact answers, which cannot be flattered.` },
+      { type: 'code', title: "Best-of-n against a flawed reward model", md: `Best-of-n sampling is the simplest way to optimise against a reward model: generate n answers and keep the one it scores highest. Here each answer's true quality is random, and the reward model sees that quality plus an error that is usually small but occasionally huge.`, code: `import numpy as np
+rng = np.random.default_rng(0)
+trials, true_quality = 3000, {}
+for n in (1, 4, 16, 64, 256, 1024):
+    quality = rng.normal(size=(trials, n))                       # true quality of each candidate
+    error = rng.standard_t(2, size=(trials, n)) * 0.6            # heavy-tailed reward-model error
+    score = quality + error                                      # what the reward model reports
+    best = np.argmax(score, axis=1)                              # keep the highest-scoring candidate
+    rows = np.arange(trials)
+    true_quality[n] = quality[rows, best].mean()
+    print(f"n = {n:5d}: reward-model score {score[rows, best].mean():6.2f}   true quality {true_quality[n]:+.2f}")
+print("true quality peaks before the largest n:", true_quality[1024] < max(true_quality.values()))`, after: `The reward model's score for the chosen answer climbs steadily, from 0 to about 25. True quality rises at first, to about +1 standard deviation at n = 16, then falls back towards 0 (about +0.2 at n = 1,024): the larger the pool, the more likely the winner is an answer whose reward-model error is enormous rather than one that is genuinely good. Light optimisation against a proxy helps; heavy optimisation hurts.`, predict: {"type":"mcq","q":"As n grows from 16 to 1,024, what happens to the true quality of the answer the reward model picks?","options":["It keeps rising","It falls","It stays exactly the same","It drops to random at once"],"answer":1,"explain":"With many candidates, the top score increasingly belongs to an answer whose reward-model error happens to be huge, not to a genuinely better answer.","expect":["true quality peaks before the largest n: True"]} },
+      { type: 'chart', title: "Best-of-n: the proxy reward keeps rising, the true quality does not", md: `Sample n answers, keep the one the reward model likes best. Each answer's true quality is random; the reward model sees it plus an error that is usually small but occasionally huge (heavy-tailed):`, after: `Choosing from more candidates always raises the reward model's score of the winner. True quality improves at first, peaking at about 1.00 standard deviations with n ≈ 16, and then declines: with many candidates the winner is increasingly an answer the reward model merely over-rates. That is reward hacking in its simplest form, and why RLHF limits how far the policy may move (the KL penalty) and why reward models are re-trained on the policy's new outputs.`, chart: {"kind":"line","x":[1,2,4,8,16,32,64,128,256,512,1024],"xLog":true,"series":[{"name":"reward-model score of the chosen answer","y":[0.009,0.901,1.747,2.54,3.582,4.625,6.154,8.944,12.938,17.965,23.949]},{"name":"true quality of the chosen answer","y":[-0.034,0.414,0.732,0.947,1.004,0.972,0.836,0.617,0.444,0.271,0.177]}],"xLabel":"n, the number of candidate answers to choose from (log scale)","yLabel":"average score (true quality has mean 0, sd 1)"} },
       { type: 'text', title: 'Beyond human labels', md: `- **RLAIF and Constitutional AI** (Anthropic, 2022): an AI model critiques, revises and compares responses according to a written set of principles — a "constitution" — producing feedback at scale. People write and refine the principles instead of labelling every pair.
 - **RL with verifiable rewards**: for math and code the reward can be checked automatically (is the final answer right? do the unit tests pass?). Large-scale RL on such tasks — for example with GRPO, a PPO variant without a value network — produced "reasoning" models that learn to work through problems step by step.
 - **Open problems**: reward hacking, sycophancy (telling users what they want to hear), evaluating outputs that are hard for people to check, and keeping models honest about uncertainty. Alignment is an active research field, not a solved pipeline step.` },
@@ -1396,7 +1544,9 @@ for name, pi_c, pi_r in [("policy = reference", ref_c, ref_r),
       { type: 'fill', q: 'In DPO, if the policy equals the reference model, what is the loss for every pair? (natural log, 3 decimals)', answer: ['0.693', 'ln2', 'ln 2', '0.6931'], display: 'ln 2 ≈ 0.693', explain: 'The margin is 0, and −log σ(0) = log 2.' },
       { type: 'mcq', q: 'What is reward hacking?', options: ['Stealing reward-model weights', 'The policy exploiting flaws in the reward model to score highly without really being better', 'Using a higher learning rate', 'Labelling data with AI'], answer: 1, explain: 'Goodhart\'s law in action.' },
       { type: 'tf', q: 'In Constitutional AI, an AI model uses written principles to help generate feedback and preference labels.', answer: true, explain: 'People supply the principles; the model applies them at scale.' },
-      { type: 'mcq', q: 'Which of these is a verifiable reward?', options: ['A human rating of politeness', 'Whether generated code passes unit tests', 'A reward model\'s score', 'The response length'], answer: 1, explain: 'It can be checked automatically and objectively.' }
+      { type: 'mcq', q: 'Which of these is a verifiable reward?', options: ['A human rating of politeness', 'Whether generated code passes unit tests', 'A reward model\'s score', 'The response length'], answer: 1, explain: 'It can be checked automatically and objectively.' },
+      {"type":"mcq","q":"A reward model has learned that longer answers are usually preferred. What is the likely effect of optimising a policy hard against it?","options":["Shorter, crisper answers","Padded, overly long answers: a form of reward hacking","No effect","Better factual accuracy"],"answer":1,"explain":"The policy exploits whatever the reward model over-values; length is a classic example, which is why evaluations control for it."},
+      {"type":"tf","q":"In best-of-n sampling against an imperfect reward model, choosing from more candidates always gives better answers.","answer":false,"explain":"Beyond some n, the winner is increasingly an answer the reward model over-rates: the proxy keeps rising while true quality falls."}
     ],
     problems: [
       {
@@ -1603,6 +1753,42 @@ for bits in (8, 4):
     print(f"per-tensor int{bits}:      mean abs error {np.abs(w - q * s).mean():.6f}   distinct levels used: {len(np.unique(q))}")
 print(f"block-wise int4 (64):  mean abs error {np.abs(w - blockwise(w)).mean():.6f}")
 `, after: `With one outlier, per-tensor 4-bit quantization rounds almost every weight to zero. Giving each block of 64 weights its own scale cuts the error several-fold at the same bit width.` },
+      { type: 'text', title: "Post-training quantization methods", md: `Rounding every weight to the nearest grid point ("round-to-nearest") works well at 8 bits but loses noticeable quality at 4 bits and below. The standard methods do better without any retraining:
+
+| Method | Idea |
+| --- | --- |
+| group-wise scales | one scale per small block of weights (32 to 128), so an outlier only spoils its own block |
+| GPTQ | quantize the weights one column at a time and adjust the not-yet-quantized weights to compensate for each rounding error, using second-order information from a small calibration set |
+| AWQ | find the few input channels with large activations, whose weights matter most, and rescale them so that they are quantized more precisely |
+| SmoothQuant | move activation outliers into the weights with a per-channel rescaling, so that both can use 8 bits |
+| NF4 | a 4-bit grid placed at the quantiles of a normal distribution, matching how weights are distributed (used by QLoRA) |
+
+**Quantization-aware training** goes further: it simulates the rounding during training so the model learns to tolerate it, which recovers more quality at very low bit widths but costs a training run. Whatever the method, check quality on your own tasks: perplexity can hide losses in reasoning, long contexts and less common languages.` },
+      { type: 'code', title: "Block-wise scales tame outliers", code: `import numpy as np
+rng = np.random.default_rng(0)
+w = rng.normal(0, 0.02, 4096 * 64)                       # ordinary weights
+w[rng.choice(len(w), 20, replace=False)] = 0.6           # plus 20 large outliers
+
+def quantize(x, bits, block=None):
+    qmax = 2 ** (bits - 1) - 1                            # 7 for 4 bits, 127 for 8 bits
+    if block is None:
+        scale = np.abs(x).max() / qmax                    # one scale for the whole tensor
+        return np.round(x / scale) * scale
+    xb = x.reshape(-1, block)
+    scale = np.abs(xb).max(axis=1, keepdims=True) / qmax  # one scale per block
+    return (np.round(xb / scale) * scale).reshape(-1)
+
+def relative_error(q):
+    return np.sqrt(np.mean((q - w) ** 2)) / np.sqrt(np.mean(w ** 2))
+
+results = {}
+for bits in (8, 4):
+    per_tensor, per_block = relative_error(quantize(w, bits)), relative_error(quantize(w, bits, 64))
+    results[bits] = (per_tensor, per_block)
+    print(f"{bits}-bit: one scale per tensor {per_tensor:6.1%} error   one scale per 64 weights {per_block:6.1%} error")
+print(f"weights rounded to zero at 4 bits with one scale: {np.mean(quantize(w, 4) == 0):.0%}")
+print("per-block scales cut the 4-bit error:", results[4][1] < results[4][0] / 4)`, after: `With one scale, the step between 4-bit levels is set by the outliers (0.6 / 7 ≈ 0.086), more than four times a typical weight, so about 97% of the weights round to zero and the error is about 92% of the weights' own size. Per-block scales let every block use its full range, cutting the 4-bit error to about 12%. At 8 bits even a single scale is tolerable (about 7%), and per-block scales make it nearly exact.`, predict: {"type":"mcq","q":"A tensor contains a few large outliers. At 4 bits with a single absmax scale, what happens to most ordinary weights?","options":["They are stored almost exactly","They round to zero","They become outliers","They are clipped to the maximum"],"answer":1,"explain":"The outliers set the step between levels to about 0.6 / 7 ≈ 0.086, several times larger than a typical weight, so most weights round to the zero level.","expect":["per-block scales cut the 4-bit error: True"]} },
+      { type: 'chart', title: "Quantisation error: one scale per tensor or one per block", md: `262,144 weights drawn from a normal distribution, plus 20 large outliers, quantized with absmax rounding:`, after: `With one scale per tensor, the outliers stretch the range so much that at 4 bits almost every ordinary weight rounds to zero: the error is 92% of the weights' size. Giving every block of 64 weights its own scale confines each outlier's damage to its own block, cutting the 4-bit error to 12%. That is why practical 4-bit formats (GPTQ, AWQ, NF4) all use small groups of weights per scale.`, chart: {"kind":"line","x":[2,3,4,5,6,8],"yLog":true,"series":[{"name":"one scale for the whole tensor","y":[0.9674,0.9674,0.9175,0.5562,0.2701,0.06598]},{"name":"one scale per block of 64 weights","y":[0.6975,0.2526,0.1226,0.0619,0.03002,0.00731]}],"xLabel":"bits per weight","yLabel":"relative error (RMS error ÷ RMS weight, log scale)"} },
       { type: 'check', question: { type: 'mcq', q: 'Why does a single outlier weight hurt per-tensor absmax quantization?', options: ['It overflows int8', 'It makes the scale large, so small weights round onto just a few levels', 'It changes the data type', 'It removes the zero point'], answer: 1, explain: 'The scale is set by max|w|.' } },
       { type: 'text', title: 'The KV cache: the other memory hog', md: `During generation every layer keeps the keys and values of every previous token:
 
@@ -1659,7 +1845,9 @@ for ctx in (8_192, 32_768, 131_072):
       { type: 'mcq', q: 'Why is bf16 preferred over fp16 for training?', options: ['It uses less memory', 'It has fp32\'s exponent range, so values rarely overflow', 'It is more precise than fp32', 'GPUs cannot use fp16'], answer: 1, explain: 'bf16 trades mantissa precision for range.' },
       { type: 'mcq', q: 'What does grouped-query attention reduce?', options: ['The number of FFN parameters', 'The size of the KV cache', 'The vocabulary size', 'The amount of training data'], answer: 1, explain: 'Fewer distinct key/value heads means fewer cached values per token.' },
       { type: 'tf', q: 'For single-user generation, LLM speed is often limited by memory bandwidth (reading the weights) rather than by arithmetic.', answer: true, explain: 'Each token needs all the weights read once; there is little computation per byte.' },
-      { type: 'mcq', q: 'In absmax int8 quantization, the scale is…', options: ['max|w| / 127', 'mean(w)', '1 / 127', 'max|w| × 127'], answer: 0, explain: 'The largest weight maps to ±127.' }
+      { type: 'mcq', q: 'In absmax int8 quantization, the scale is…', options: ['max|w| / 127', 'mean(w)', '1 / 127', 'max|w| × 127'], answer: 0, explain: 'The largest weight maps to ±127.' },
+      {"type":"mcq","q":"What does GPTQ do differently from round-to-nearest quantization?","options":["It uses more bits","It adjusts the remaining weights to compensate for each rounding error, guided by calibration data","It deletes outlier weights","It retrains the model from scratch"],"answer":1,"explain":"By correcting later weights for the error made on earlier ones, GPTQ keeps each layer's output close to the original at 4 bits and below."},
+      {"type":"tf","q":"Giving each small block of weights its own scale reduces the damage caused by outliers.","answer":true,"explain":"An outlier then only stretches the range of its own block, so the other blocks keep a fine grid."}
     ],
     problems: [
       {
@@ -1899,6 +2087,31 @@ def sample(start, n=160, temperature=0.8):
     return "".join(out)
 print(sample("the "))
 `, after: `The loss falls from ln V to near zero: with only a few hundred characters the network memorizes the text, and the sample stitches memorized fragments together. Paste in a few hundred kilobytes of text (and keep a validation split) to watch it generalize instead. This is the classic Bengio et al. (2003) neural language model; a GPT replaces the fixed 4-character window and the MLP with attention over hundreds of positions.` },
+      { type: 'chart', title: "The loss curve you should see", md: `The model above, step by step (the mini-batch loss is noisy; the loss on the whole text is smooth):`, after: `The loss starts at ln 25 ≈ 3.22, a uniform guess over the 25 characters. It quickly drops below what letter frequencies alone achieve (2.81), then below the best possible bigram model (1.84), because four characters of context say more than one. By the end it reaches about 0.15: on such a tiny text the network has largely memorised which character follows each 4-character window.`, chart: {"kind":"line","x":[0,25,50,75,100,125,150,175,200,225,250,275,300,325,350,375,400,425,450,475,500,525,550,575,600,625,650,675,700,725,750,775,800,825,850,875,900,925,950,975,1000,1025,1050,1075,1100,1125,1150,1175,1200,1225,1250,1275,1300,1325,1350,1375,1400,1425,1450,1475,1500,1525,1550,1575,1600,1625,1650,1675,1700,1725,1750,1775,1800,1825,1850,1875,1900,1925,1950,1975,2000],"points":false,"series":[{"name":"mini-batch loss","y":[3.224,1.988,1.634,1.306,1.169,0.958,0.609,0.41,0.378,0.575,0.407,0.217,0.261,0.138,0.155,0.204,0.131,0.144,0.198,0.283,0.072,0.203,0.123,0.179,0.057,0.23,0.225,0.115,0.167,0.251,0.143,0.171,0.176,0.148,0.161,0.333,0.233,0.2,0.217,0.226,0.135,0.224,0.108,0.197,0.166,0.204,0.117,0.134,0.095,0.205,0.092,0.122,0.153,0.239,0.144,0.151,0.283,0.12,0.217,0.139,0.293,0.158,0.25,0.11,0.167,0.119,0.134,0.104,0.15,0.146,0.191,0.215,0.17,0.212,0.137,0.128,0.283,0.233,0.215,0.097,0.05]},{"name":"loss on the whole text","y":[3.225,2.084,1.653,1.32,1.081,0.863,0.691,0.55,0.418,0.364,0.341,0.288,0.257,0.247,0.22,0.216,0.215,0.222,0.204,0.192,0.185,0.184,0.19,0.179,0.166,0.167,0.181,0.165,0.169,0.174,0.163,0.165,0.183,0.169,0.157,0.163,0.164,0.156,0.157,0.156,0.178,0.156,0.159,0.167,0.152,0.159,0.162,0.152,0.159,0.147,0.154,0.154,0.153,0.161,0.151,0.149,0.153,0.157,0.15,0.148,0.145,0.15,0.151,0.153,0.154,0.152,0.154,0.15,0.159,0.145,0.154,0.148,0.148,0.152,0.147,0.146,0.167,0.16,0.161,0.146,0.147]}],"xLabel":"training step","yLabel":"cross-entropy (nats per character)","yMin":0,"hlines":[{"y":3.219,"label":"uniform guess: ln 25"},{"y":2.81,"label":"letter frequencies only"},{"y":1.845,"label":"best bigram model"}]} },
+      { type: 'text', title: "What the loss numbers mean", md: `A loss value means little without reference points. For a character model, three simple baselines frame it:
+
+| Model | Loss (nats per character) | Perplexity |
+| --- | --- | --- |
+| a uniform guess over V characters | ln V | V |
+| letter frequencies only (unigram) | the entropy of the character distribution | e raised to that entropy |
+| the previous character only (bigram) | the entropy of each character given the one before | lower again |
+
+Each extra piece of context lowers the achievable loss. A model that does not beat the unigram baseline has learned only which letters are common; one that does not beat the bigram baseline is not using its context window yet. And a training loss far below anything plausible for language (here it ends near 0.15 nats, a perplexity of about 1.16) means memorisation: always compare with a validation set the model never trained on.` },
+      { type: 'code', title: "Computing the baselines", code: `import math
+from collections import Counter
+text = ("the model reads the text one character at a time. it learns which letters tend to follow which, "
+        "then which words follow which. with more data and more layers it learns grammar, facts and style. "
+        "the network is small, the data is tiny and the training is short, so the samples will look like "
+        "words but will not make much sense. bigger models trained on more text write better text. ")
+V = len(set(text))
+freq = Counter(text)
+unigram = -sum(c / len(text) * math.log(c / len(text)) for c in freq.values())
+pairs = Counter(zip(text, text[1:]))
+firsts = Counter(text[:-1])
+bigram = -sum(c * math.log(c / firsts[a]) for (a, b), c in pairs.items()) / (len(text) - 1)
+print(f"uniform: {math.log(V):.3f} nats   unigram: {unigram:.3f} nats   bigram: {bigram:.3f} nats")
+print(f"perplexities: {V}, {math.exp(unigram):.1f}, {math.exp(bigram):.1f}")
+print("more context, lower loss:", math.log(V) > unigram > bigram)`, after: `With 25 distinct characters a uniform guess costs 3.22 nats. Letter frequencies cut that to 2.81, and knowing the previous character to 1.85 (a perplexity of about 6: on average the model chooses among six characters). The 4-character network's final loss, about 0.15, is far below anything genuine language modelling achieves: it has memorised this short text.`, predict: {"type":"mcq","q":"Which baseline gives the lowest loss on this text?","options":["A uniform guess","Letter frequencies (unigram)","The previous character (bigram)","They are all equal"],"answer":2,"explain":"Each additional piece of context can only help: the previous character narrows down the next one far more than overall letter frequencies.","expect":["more context, lower loss: True"]} },
       { type: 'check', question: { type: 'mcq', q: 'In the model above, what does `np.add.at(gC, X[bi], ...)` do?', options: ['Adds noise to the embeddings', 'Accumulates gradient into each embedding row that was used, even if a character appears several times in the batch', 'Normalizes the embeddings', 'Computes the loss'], answer: 1, explain: 'Plain fancy-index assignment would keep only one update per repeated index; add.at sums them.' } },
       { type: 'text', title: 'Step 3 — from MLP to GPT', md: `To turn this into a GPT, replace "concatenate 4 embeddings → MLP" with the transformer stack you built in earlier lessons:
 
@@ -2043,7 +2256,8 @@ Karpathy's nanoGPT and llm.c reproduce GPT-2 (124M) this way for the price of a 
       { type: 'order', q: 'Order one training step.', items: ['Sample a random batch of (input, target) windows', 'Forward pass to get the logits', 'Compute the cross-entropy loss', 'Backward pass to get the gradients', 'Optimizer step to update the weights'], explain: 'Batch → forward → loss → backward → update, thousands of times.' },
       { type: 'tf', q: 'In the PyTorch GPT, weight tying makes the LM head share its weight matrix with the token embedding.', answer: true, explain: '`self.head.weight = self.tok.weight`.' },
       { type: 'mcq', q: 'Validation loss rises while training loss keeps falling. What is happening?', options: ['Underfitting', 'Overfitting: the model is memorizing the training text', 'A tokenizer bug', 'Perfect training'], answer: 1, explain: 'Stop early, add data, or regularize (dropout, weight decay).' },
-      { type: 'mcq', q: 'What does the MLP language model\'s fixed context of 4 characters correspond to in a GPT?', options: ['The vocabulary size', 'The block size, except attention lets every position use all earlier positions in the window', 'The number of layers', 'The batch size'], answer: 1, explain: 'A GPT conditions on up to block_size previous tokens.' }
+      { type: 'mcq', q: 'What does the MLP language model\'s fixed context of 4 characters correspond to in a GPT?', options: ['The vocabulary size', 'The block size, except attention lets every position use all earlier positions in the window', 'The number of layers', 'The batch size'], answer: 1, explain: 'A GPT conditions on up to block_size previous tokens.' },
+      {"type":"fill","q":"A character model's vocabulary has 25 characters. What loss (in nats, 2 decimals) does a uniform guess give?","answer":["3.22","3.219","3.2189"],"explain":"A uniform guess gives every character probability 1/25, so the loss is −ln(1/25) = ln 25 ≈ 3.22 nats."}
     ],
     problems: [
       {

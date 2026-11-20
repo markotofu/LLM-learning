@@ -142,6 +142,108 @@ print("learned mean:", model.mean_)
 print("predictions:", model.predict(3))
 ` },
       { type: 'check', question: { type: 'mcq', q: 'Inside a class method, what is `self`?', options: ['A keyword that makes the method run faster', 'The particular object the method was called on', 'The class\'s parent class', 'A global variable'], answer: 1, explain: '`model.predict(3)` calls `predict` with `self` set to `model`, so the method can read `self.mean_` for that specific object.' } },
+      { type: 'text', title: "Exceptions: when things go wrong", md: `When Python cannot do what you asked, it **raises an exception** and, unless something catches it, stops with a traceback. The ones you will meet most often:
+
+| Exception | Typical cause |
+| --- | --- |
+| \`KeyError\` | a dictionary has no such key: \`config["batch_size"]\` |
+| \`IndexError\` | a list index past the end |
+| \`TypeError\` | the wrong kind of value: \`"3" + 4\`, or calling something that is not a function |
+| \`ValueError\` | the right type but an unacceptable value: \`int("abc")\`, mismatched shapes in many libraries |
+| \`ZeroDivisionError\` | dividing by zero with plain Python numbers |
+| \`FileNotFoundError\` | a path that does not exist |
+
+\`try\` / \`except\` handles a problem you expect; \`raise\` signals one in your own code:
+
+\`\`\`python
+try:
+    batch = config["batch_size"]
+except KeyError:
+    batch = 32                     # fall back to a default
+\`\`\`
+
+Catch only the exceptions you expect and know how to handle. A bare \`except:\` that swallows everything also hides real bugs, such as a typo in a variable name. For missing dictionary keys, \`config.get("batch_size", 32)\` is shorter still.
+
+**Assertions** document assumptions and fail loudly when they break: \`assert len(X) == len(y), "one label per row"\`. They are cheap insurance in data code, where a silently mismatched array is far worse than a crash.` },
+      { type: 'text', title: "Names, references and copies", md: `A Python variable is a **name attached to an object**, not a box holding a value. \`b = a\` attaches a second name to the same object; nothing is copied. That matters for **mutable** objects (lists, dicts, sets, NumPy arrays), whose contents can change in place:
+
+- after \`b = a\`, \`b.append(4)\` changes the list that \`a\` also names;
+- \`list(a)\`, \`a.copy()\` or \`dict(d)\` make a **shallow copy**: a new outer container holding the same items; \`copy.deepcopy\` copies nested structures all the way down.
+
+Immutable objects (numbers, strings, tuples) cannot change in place, so sharing them is always safe: \`x += 1\` simply makes \`x\` name a new number.
+
+The classic trap is a **mutable default argument**. Default values are evaluated once, when the function is defined, so every call that relies on the default shares the same list. Use \`None\` and create the list inside:
+
+\`\`\`python
+def add_item(item, items=None):
+    if items is None:
+        items = []
+    items.append(item)
+    return items
+\`\`\`` },
+      { type: 'code', title: "Exceptions, aliases and the mutable-default trap", code: `config = {"lr": 0.01, "epochs": 5}
+try:
+    batch = config["batch_size"]
+except KeyError as err:
+    print("missing key:", err)
+print("with a default:", config.get("batch_size", 32))
+
+def safe_ratio(a, b):
+    if b == 0:
+        raise ValueError("b must not be zero")
+    return a / b
+
+try:
+    safe_ratio(1, 0)
+except ValueError as err:
+    print("caught:", err)
+
+a = [1, 2, 3]
+b = a                          # a second name for the same list
+b.append(4)
+print("a after changing b:", a)
+c = list(a)                    # a real (shallow) copy
+c.append(5)
+print("a after changing the copy:", a)
+
+def add_item(item, items=[]):  # the default list is created only once!
+    items.append(item)
+    return items
+
+add_item(1)
+print("second call returns:", add_item(2))`, after: `The second call returns [1, 2], not [2]: both calls appended to the single default list that was created when the function was defined. With \`items=None\` and a fresh list inside the function, every call starts empty.`, predict: {"type":"mcq","q":"add_item(1) is called, then add_item(2). What does the second call return?","options":["[2]","[1, 2]","An error","[]"],"answer":1,"explain":"The default list is created once, when the function is defined, and every call that uses the default appends to that same list.","expect":["second call returns: [1, 2]"]} },
+      { type: 'text', title: "Iterators, generators and batching", md: `A \`for\` loop works on anything **iterable**: lists, strings, dicts (their keys), files (their lines), \`range\`, and **generators**. A generator function uses \`yield\` instead of \`return\`: each \`yield\` hands out one value and pauses the function until the next value is requested. Nothing is computed in advance, so a generator can describe a stream far larger than memory.
+
+\`\`\`python
+def batches(items, size):
+    for start in range(0, len(items), size):
+        yield items[start:start + size]
+\`\`\`
+
+This is exactly how training data reaches a model: a data loader is an iterator that yields one mini-batch at a time, reading, decoding and augmenting examples only when they are needed. A **generator expression** such as \`(x * x for x in data)\` is the lazy cousin of a list comprehension.
+
+Files work the same way. \`with open(path) as f:\` opens a file and guarantees it is closed again, even if an error occurs; looping over \`f\` yields one line at a time. For structured settings, the \`json\` module converts between Python dicts and JSON text: \`json.dump(config, f)\` saves an experiment's configuration, and \`json.load(f)\` reads it back.` },
+      { type: 'code', title: "Batches, generators and a saved config", code: `import json
+import os
+import tempfile
+
+def batches(items, size):
+    for start in range(0, len(items), size):
+        yield items[start:start + size]          # hand out one batch, then pause
+
+for i, batch in enumerate(batches(list(range(10)), 4)):
+    print("batch", i, batch)
+
+squares = (x * x for x in range(1_000_000))     # a generator expression: nothing computed yet
+print("sum of a million squares:", sum(squares))
+
+config = {"model": "tiny-gpt", "lr": 0.001, "layers": [64, 64]}
+path = os.path.join(tempfile.gettempdir(), "config.json")
+with open(path, "w") as f:                      # 'with' closes the file even if an error occurs
+    json.dump(config, f)
+with open(path) as f:
+    loaded = json.load(f)
+print("round trip ok:", loaded == config, loaded)`, after: `The last batch has only 2 items, because 10 is not a multiple of 4; that is why data loaders have a \`drop_last\` option. The generator expression added up a million squares without ever building a list of a million numbers.` },
       { type: 'text', title: 'Python habits for ML code', md: `- **Let libraries do the number crunching.** A Python \`for\` loop over a million numbers is ~100× slower than the equivalent NumPy operation. Use plain Python for logic and orchestration, NumPy/PyTorch for math.
 - **Don't modify inputs by surprise.** If a function needs to change a list or array, work on a copy (\`xs = list(xs)\` or \`arr.copy()\`).
 - **Read tracebacks from the bottom up.** The last line says what went wrong (\`KeyError: 'lr'\`); the lines above show where.
@@ -171,7 +273,10 @@ print("predictions:", model.predict(3))
       { type: 'mcq', q: 'A function has no `return` statement. What does calling it return?', options: ['0', 'An empty string', 'None', 'An error'], answer: 2, explain: 'Python functions return None by default — a very common source of bugs in practice problems.' },
       { type: 'mcq', q: 'Which data structure is best for looking up a word\'s integer id in a tokenizer?', options: ['A list of words', 'A dict mapping word → id', 'A tuple', 'A set'], answer: 1, explain: 'Dicts give fast lookup by key: word_to_id["cat"].' },
       { type: 'tf', q: '`xs[-1]` gives the last element of a non-empty list xs.', answer: true, explain: 'Negative indices count from the end: -1 is the last item, -2 the second-to-last.' },
-      { type: 'mcq', q: 'Why do ML libraries wrap models in classes?', options: ['Classes run faster than functions', 'A model needs to keep its parameters (data) together with its methods like predict/forward', 'Python requires it', 'To avoid using dictionaries'], answer: 1, explain: 'The parameters live on the object (self.w) and the methods use them — the PyTorch nn.Module pattern.' }
+      { type: 'mcq', q: 'Why do ML libraries wrap models in classes?', options: ['Classes run faster than functions', 'A model needs to keep its parameters (data) together with its methods like predict/forward', 'Python requires it', 'To avoid using dictionaries'], answer: 1, explain: 'The parameters live on the object (self.w) and the methods use them — the PyTorch nn.Module pattern.' },
+      {"type":"mcq","q":"After a = [1, 2]; b = a; b.append(3), what is a?","options":["[1, 2]","[1, 2, 3]","[3]","An error"],"answer":1,"explain":"b = a makes b a second name for the same list, so appending through b changes the list that a names too."},
+      {"type":"mcq","q":"Which exception does config['missing'] raise when the dict has no such key?","options":["IndexError","ValueError","KeyError","TypeError"],"answer":2,"explain":"Looking up a missing dictionary key raises KeyError; config.get('missing', default) returns the default instead."},
+      {"type":"tf","q":"A generator computes all of its values as soon as it is created.","answer":false,"explain":"A generator is lazy: it computes each value only when the next one is requested, which is why it can describe streams larger than memory."}
     ],
     problems: [
       {
@@ -399,7 +504,80 @@ for i in range(len(a)):
 t1 = time.perf_counter(); s2 = a @ b; t2 = time.perf_counter()
 print(f"python loop: {t1 - t0:.4f}s   numpy: {t2 - t1:.6f}s   same result: {np.isclose(s, s2)}")
 ` },
-      { type: 'check', question: { type: 'fill', q: 'What is the shape of `np.ones((3, 1)) + np.ones(4)`? (write it like (a, b))', answer: ['(3, 4)', '(3,4)'], display: '(3, 4)', explain: 'Align from the right: (3, 1) vs (·, 4). 1 stretches to 4 and the missing dimension stretches to 3 → (3, 4).' } }
+      { type: 'check', question: { type: 'fill', q: 'What is the shape of `np.ones((3, 1)) + np.ones(4)`? (write it like (a, b))', answer: ['(3, 4)', '(3,4)'], display: '(3, 4)', explain: 'Align from the right: (3, 1) vs (·, 4). 1 stretches to 4 and the missing dimension stretches to 3 → (3, 4).' } },
+      { type: 'text', title: "dtypes, precision and memory", md: `Every array has one **dtype**, which decides both how much memory each element takes and which numbers it can represent:
+
+| dtype | Bytes | Approximate range | Significant decimal digits | Typical use |
+| --- | --- | --- | --- | --- |
+| float64 | 8 | ±1.8 × 10³⁰⁸ | about 16 | NumPy's default; statistics and scientific computing |
+| float32 | 4 | ±3.4 × 10³⁸ | about 7 | the classic deep-learning default |
+| bfloat16 | 2 | ±3.4 × 10³⁸ | about 2 to 3 | training large models on modern accelerators |
+| float16 | 2 | ±65,504 | about 3 | inference, and mixed-precision training with loss scaling |
+| int8 | 1 | −128 to 127 | exact integers | quantised model weights |
+| int64 | 8 | ±9.2 × 10¹⁸ | exact integers | counts, indices, token ids |
+
+Floating-point numbers keep a fixed number of significant bits, so the **gap** between neighbouring representable numbers grows with their size, and the result of every operation is rounded to the nearest representable value. Three consequences show up again and again:
+- **Comparisons need a tolerance.** 0.1 + 0.2 is not exactly 0.3 in binary floating point, so compare results with \`np.isclose\`, never with \`==\`.
+- **Large plus small loses the small.** In float32, 16,777,216 + 1 is still 16,777,216. Adding many small values to a large total silently drops information, which is why libraries accumulate sums in higher precision or in pairs.
+- **Overflow and wrap-around.** float16 turns anything above 65,504 into \`inf\`, and integer arrays silently wrap around (in int8, 127 + 1 = −128). NaN ("not a number") comes from 0/0 or inf − inf, spreads through every computation it touches and is not even equal to itself: test for it with \`np.isnan\`.
+
+Memory is simply elements × bytes: a million float64 values take 8 MB and the same values in float16 take 2 MB. A model with 7 billion parameters needs 28 GB in float32, 14 GB in bfloat16 and about 3.5 GB at 4 bits per weight, which is the whole point of [quantization](#/concept/quantization).` },
+      { type: 'chart', title: "The gap between neighbouring floating-point numbers", after: `Every format keeps a fixed number of significant bits, so the gap grows with the size of the number. Near 1,000, float16 can only step in units of 0.5 and bfloat16 in units of 4; float32 resolves about 0.00006, and float64 about 10⁻¹³. float16 also stops at 65,504 (larger values become inf), while bfloat16 keeps float32's huge range by sacrificing precision. That trade-off is why it is the favourite format for training large models.`, chart: {"kind":"line","x":[0.001,0.00178,0.00316,0.00562,0.01,0.0178,0.0316,0.0562,0.1,0.178,0.316,0.562,1,1.78,3.16,5.62,10,17.8,31.6,56.2,100,178,316,562,1000,1780,3160,5620,10000,17800,31600,56200,100000,178000,316000,562000,1000000],"xLog":true,"yLog":true,"points":false,"series":[{"name":"float16","y":[9.537e-7,9.537e-7,0.000001907,0.000003815,0.000007629,0.00001526,0.00003052,0.00003052,0.00006104,0.0001221,0.0002441,0.0004883,0.0009766,0.0009766,0.001953,0.003906,0.007812,0.01562,0.01562,0.03125,0.0625,0.125,0.25,0.5,0.5,1,2,4,8,16,16,32,null,null,null,null,null]},{"name":"bfloat16","y":[0.000007629,0.000007629,0.00001526,0.00003052,0.00006104,0.0001221,0.0002441,0.0002441,0.0004883,0.0009766,0.001953,0.003906,0.007812,0.007812,0.01562,0.03125,0.0625,0.125,0.125,0.25,0.5,1,2,4,4,8,16,32,64,128,128,256,512,1024,2048,4096,4096]},{"name":"float32","y":[1.164e-10,1.164e-10,2.328e-10,4.657e-10,9.313e-10,1.863e-9,3.725e-9,3.725e-9,7.451e-9,1.49e-8,2.98e-8,5.96e-8,1.192e-7,1.192e-7,2.384e-7,4.768e-7,9.537e-7,0.000001907,0.000001907,0.000003815,0.000007629,0.00001526,0.00003052,0.00006104,0.00006104,0.0001221,0.0002441,0.0004883,0.0009766,0.001953,0.001953,0.003906,0.007812,0.01562,0.03125,0.0625,0.0625]},{"name":"float64","y":[2.168e-19,2.168e-19,4.337e-19,8.674e-19,1.735e-18,3.469e-18,6.939e-18,6.939e-18,1.388e-17,2.776e-17,5.551e-17,1.11e-16,2.22e-16,2.22e-16,4.441e-16,8.882e-16,1.776e-15,3.553e-15,3.553e-15,7.105e-15,1.421e-14,2.842e-14,5.684e-14,1.137e-13,1.137e-13,2.274e-13,4.547e-13,9.095e-13,1.819e-12,3.638e-12,3.638e-12,7.276e-12,1.455e-11,2.91e-11,5.821e-11,1.164e-10,1.164e-10]}],"xLabel":"size of the number (log scale)","yLabel":"gap to the next representable number"} },
+      { type: 'code', title: "Precision surprises", code: `import numpy as np
+big = np.float32(16_777_216)                      # 2**24
+print(f"float32: {float(big + np.float32(1)):,.0f}    float64: {float(np.float64(16_777_216) + 1):,.0f}")
+print("float32 lost the +1:", bool(big + np.float32(1) == big))
+
+print(f"largest float16: {float(np.finfo(np.float16).max):,.0f}")
+with np.errstate(over="ignore"):
+    print("float16(70000) becomes:", np.float16(70000))
+print("int8 wraps around:", np.array([120, 127], dtype=np.int8) + np.int8(10))
+
+print("0.1 + 0.2 == 0.3:", 0.1 + 0.2 == 0.3, "   np.isclose(0.1 + 0.2, 0.3):", np.isclose(0.1 + 0.2, 0.3))
+print("nan == nan:", np.nan == np.nan, "   np.isnan(nan):", np.isnan(np.nan))
+
+values = np.ones(1_000_000)
+for dt in ["float64", "float32", "float16", "int8"]:
+    print(f"one million {dt:<8} values: {values.astype(dt).nbytes / 1e6:.0f} MB")`, predict: {"type":"mcq","q":"In float32, what is 16,777,216 + 1?","options":["16,777,217","16,777,216","inf","An error"],"answer":1,"explain":"float32 has 24 significant bits. Above 2²⁴ = 16,777,216 the gap between neighbouring floats is 2, so adding 1 rounds back to the same number.","expect":["float32 lost the +1: True"]} },
+      { type: 'text', title: "Reshaping, stacking and everyday moves", md: `| Operation | What it does | Example shapes |
+| --- | --- | --- |
+| \`X.reshape(6, -1)\` | the same data in a new shape; \`-1\` means "work it out" | (2, 3, 4) → (6, 4) |
+| \`X.ravel()\` or \`X.reshape(-1)\` | flatten to one dimension | (2, 3, 4) → (24,) |
+| \`X.T\`, \`X.transpose(0, 2, 1)\` | swap axes | (2, 3, 4) → (2, 4, 3) |
+| \`np.concatenate([a, b], axis=0)\` | join along an existing axis | (2, 3) and (2, 3) → (4, 3) |
+| \`np.stack([a, b])\` | join along a **new** axis | (2, 3) and (2, 3) → (2, 2, 3) |
+| \`v[:, None]\`, \`v[None, :]\` | add an axis of size 1 (\`None\` is \`np.newaxis\`) | (3,) → (3, 1) or (1, 3) |
+| \`np.where(cond, a, b)\` | element-wise if/else | |
+| \`np.eye(k)[labels]\` | one-hot encode integer labels | (n,) → (n, k) |
+
+Reshaping never changes the order of the elements in memory (row by row, last axis fastest); it only regroups them. Transposing changes the order in which you walk through them. Mixing the two up is a classic source of silently scrambled images and batches: to turn a batch of images from (batch, height, width, channels) into (batch, channels, height, width) you need \`transpose\`, not \`reshape\`.
+
+One more recipe you will need: the **numerically stable softmax**. exp(1000) overflows to inf, so a naive softmax of large logits returns NaN. Subtracting the largest logit first changes nothing mathematically, because the common factor cancels between numerator and denominator, but it keeps every exponent at or below 0.` },
+      { type: 'code', title: "Reshape, stack, one-hot and a stable softmax", code: `import numpy as np
+X = np.arange(24).reshape(2, 3, 4)
+print(X.shape, X.reshape(6, -1).shape, X.reshape(-1).shape, X.transpose(0, 2, 1).shape)
+
+a, b = np.ones((2, 3)), np.zeros((2, 3))
+print(np.concatenate([a, b]).shape, np.stack([a, b]).shape, np.concatenate([a, b], axis=1).shape)
+
+v = np.array([1.0, 2.0, 3.0])
+print(v[:, None].shape, v[None, :].shape)
+print(np.where(v > 1.5, "big", "small"))
+
+labels = np.array([2, 0, 1, 2])
+print(np.eye(3)[labels])                          # one row per label, a 1 in that label's column
+
+def softmax_naive(z):
+    return np.exp(z) / np.exp(z).sum()
+
+def softmax(z):
+    e = np.exp(z - z.max())                       # the largest exponent becomes exp(0) = 1
+    return e / e.sum()
+
+z = np.array([1000.0, 1001.0])
+with np.errstate(over="ignore", invalid="ignore"):
+    print("naive softmax: ", softmax_naive(z))
+print("stable softmax:", softmax(z).round(4))`, predict: {"type":"mcq","q":"X has shape (2, 3, 4). What is the shape of X.reshape(6, -1)?","options":["(6, 4)","(6, 24)","(6, 2)","An error"],"answer":0,"explain":"X has 24 elements; with 6 rows, -1 is worked out as 24 / 6 = 4.","expect":["(2, 3, 4) (6, 4) (24,) (2, 4, 3)"]} }
     ],
     when: `- Use NumPy for **any** numeric work on more than a handful of numbers.
 - Reach for **axis** arguments instead of looping over rows or columns.
@@ -422,7 +600,10 @@ print(f"python loop: {t1 - t0:.4f}s   numpy: {t2 - t1:.6f}s   same result: {np.i
       { type: 'mcq', q: 'Which shapes broadcast together?', options: ['(5, 3) and (5,)', '(5, 3) and (3,)', '(5, 3) and (2, 3)', '(4,) and (5,)'], answer: 1, explain: 'Aligned from the right, (3,) matches the last dimension of (5, 3). (5,) would be compared with 3 and fail.' },
       { type: 'tf', q: 'After `r = X[0]; r[0] = 7`, the array X is unchanged.', answer: false, explain: 'Basic slicing returns a view, so writing into r writes into X. Use X[0].copy() for an independent array.' },
       { type: 'fill', q: 'Logits have shape (32, 10). Which axis do you pass to `argmax` to get the predicted class of each of the 32 examples?', answer: ['1', 'axis=1', '-1', 'axis=-1'], display: '1 (or -1)', explain: 'Collapse the class dimension (axis 1), leaving one index per example: shape (32,).' },
-      { type: 'mcq', q: 'Why is `a @ b` so much faster than a Python for-loop computing the same dot product?', options: ['It uses a different algorithm with fewer multiplications', 'It runs in compiled code over contiguous typed memory, avoiding Python\'s per-element overhead', 'It skips small numbers', 'It caches the result'], answer: 1, explain: 'Same arithmetic, but no interpreter overhead per element, plus CPU vector instructions.' }
+      { type: 'mcq', q: 'Why is `a @ b` so much faster than a Python for-loop computing the same dot product?', options: ['It uses a different algorithm with fewer multiplications', 'It runs in compiled code over contiguous typed memory, avoiding Python\'s per-element overhead', 'It skips small numbers', 'It caches the result'], answer: 1, explain: 'Same arithmetic, but no interpreter overhead per element, plus CPU vector instructions.' },
+      {"type":"mcq","q":"Why should you compare floating-point results with np.isclose instead of ==?","options":["== is slower","Rounding makes mathematically equal results differ in their last bits","np.isclose also works on strings","== does not work on arrays"],"answer":1,"explain":"Every floating-point operation rounds, so 0.1 + 0.2 and 0.3 differ in the last bit. np.isclose compares within a small tolerance."},
+      {"type":"fill","q":"How many megabytes does an array of 2 million float32 values take?","answer":["8","8 MB","8MB","8.0"],"explain":"float32 uses 4 bytes per value: 2,000,000 × 4 = 8,000,000 bytes = 8 MB."},
+      {"type":"mcq","q":"a and b both have shape (2, 3). What is the shape of np.stack([a, b])?","options":["(4, 3)","(2, 6)","(2, 2, 3)","(2, 3, 2)"],"answer":2,"explain":"np.stack joins along a new first axis; np.concatenate would give (4, 3)."}
     ],
     problems: [
       {
@@ -570,6 +751,106 @@ print(df.describe())                # count, mean, std, min, quartiles, max
 | **Model-based imputation** (predict the missing value) | lots of data, strong relationships | complex; can leak |
 
 The golden rule: **compute imputation statistics on the training set only**, then apply those same numbers to validation and test data. The test set must look like truly unseen data.` },
+      { type: 'code', title: "Handling missing data in pandas", md: `pandas marks missing values as **NaN** ("not a number"; \`None\` is treated the same way). The tools are few and worth knowing well: detect (\`isna\`), drop (\`dropna\`) or fill (\`fillna\`, \`ffill\`).`, code: `import numpy as np
+import pandas as pd
+
+df = pd.DataFrame({
+    "city":   ["Lyon", "Paris", None, "Nice", "Lyon"],
+    "rooms":  [3, np.nan, 2, np.nan, 4],
+    "price":  [320, 410, np.nan, np.nan, 390],
+})
+print(df, "\\n")
+print("missing per column:", df.isna().sum().to_dict())
+print("rows with no gaps:", len(df.dropna()), "of", len(df))
+print("rows kept if at least 2 values are present:", len(df.dropna(thresh=2)))
+
+filled = df.fillna({"city": "unknown", "rooms": df["rooms"].median(), "price": df["price"].mean()})
+print("\\nfilled with a value per column:")
+print(filled)
+print("\\nforward fill (carry the last valid value down):")
+print(df["price"].ffill().tolist())`, after: `- \`dropna()\` drops every row with **any** gap; \`how="all"\` drops only fully empty rows, \`thresh=k\` keeps rows with at least k values, and \`axis=1\` drops columns instead.
+- \`fillna\` accepts one value, or a dictionary with a value per column. Filling with the mean or median is common, but compute that statistic on the **training data only** (see *Data leakage* below), ideally with \`SimpleImputer\` inside a pipeline.
+- Forward fill (\`ffill\`) suits ordered data such as time series, where "the last known value" is a reasonable guess.
+- A column of integers with a gap becomes floats, because NaN is a float. Use the nullable type \`"Int64"\` if you must keep integers.` },
+      { type: 'code', title: "Duplicates, mapping and replacing values", code: `import numpy as np
+import pandas as pd
+
+food = pd.DataFrame({
+    "item":   ["bacon", "pulled pork", "Bacon", "pastrami", "corned beef", "bacon", "nova lox"],
+    "ounces": [4, 3, 12, 6, 7.5, 4, 6],
+})
+print("duplicate rows:", food.duplicated().tolist())
+food = food.drop_duplicates()                         # keeps the first occurrence
+
+animal = {"bacon": "pig", "pulled pork": "pig", "pastrami": "cow", "corned beef": "cow", "nova lox": "salmon"}
+food["animal"] = food["item"].str.lower().map(animal)   # normalize case, then look up
+print(food, "\\n")
+
+readings = pd.Series([1.0, -999.0, 2.0, -999.0, -1000.0, 3.0])
+print("sentinels replaced:", readings.replace([-999, -1000], np.nan).tolist())
+print("renamed columns:", list(food.rename(columns=str.upper).columns))`, after: `- \`duplicated()\` flags rows identical to an earlier row; \`drop_duplicates(subset=["item"], keep="last")\` compares only some columns and keeps the last copy instead.
+- \`map\` transforms each value with a dictionary or a function. Here "Bacon" had to be lower-cased first, or the lookup would miss it: **normalize text before matching**.
+- \`replace\` swaps specific values, typically **sentinel codes** such as −999 that some system used to mean "missing". Left in place, a −999 silently drags every average down.
+- \`rename\` relabels columns or rows with a dictionary or a function.` },
+      { type: 'code', title: "Binning, outliers and random sampling", code: `import numpy as np
+import pandas as pd
+
+ages = pd.Series([20, 22, 25, 27, 21, 23, 37, 31, 61, 45, 41, 32])
+groups = pd.cut(ages, bins=[18, 25, 35, 60, 100], labels=["youth", "young adult", "middle aged", "senior"])
+print("equal-meaning bins (pd.cut):")
+print(groups.value_counts(sort=False).to_dict())
+quartiles = pd.qcut(ages, 4, labels=["Q1", "Q2", "Q3", "Q4"])
+print("equal-count bins (pd.qcut):", quartiles.value_counts(sort=False).to_dict())
+
+rng = np.random.default_rng(12345)
+data = pd.DataFrame(rng.standard_normal((1000, 3)), columns=["a", "b", "c"])
+data.iloc[5, 1] = 7.5                                  # plant one outlier
+outlier_rows = data[(data.abs() > 3).any(axis=1)]
+print("\\nrows with any value beyond 3 standard deviations:", len(outlier_rows))
+capped = data.clip(-3, 3)
+print("largest value after capping at +/-3:", capped.values.max())
+
+print("\\na random sample of 3 rows:")
+print(data.sample(n=3, random_state=0).round(2))`, after: `- **\`pd.cut\`** splits by *value*: you choose the edges (by default each bin includes its right edge). **\`pd.qcut\`** splits by *quantiles*, so every bin holds about the same number of values. Both return a categorical with ordered labels.
+- **Outliers**: with standardized data, |value| > 3 is a common first filter. It found 11 rows here although only one outlier was planted: in normally distributed data about 0.3% of values lie beyond 3 standard deviations by chance, so 3,000 values produce several. An extreme value is a reason to look, not proof of an error. Then decide case by case: fix data-entry errors, **cap** extreme values (\`clip\`), or keep them if they are real but rare.
+- **Sampling**: \`sample(n)\` draws rows without replacement (set \`random_state\` to make it repeatable); \`replace=True\` draws with replacement, as in the bootstrap. \`np.random.permutation\` with \`take\` shuffles all rows.` },
+      { type: 'code', title: "Strings and regular expressions", md: `Text columns need cleaning too: stray spaces, inconsistent case, information buried inside a longer string. Python's string methods handle simple cases; **regular expressions** (the \`re\` module) describe patterns.`, code: `import re
+import pandas as pd
+
+raw = "  apple, banana ,  cherry  "
+pieces = [p.strip() for p in raw.split(",")]
+print(pieces, "| joined:", " + ".join(pieces))
+
+text = "Ana ana@example.com\\nBen ben.k@mail.example.org\\nChloe chloe@example.net"
+pattern = re.compile(r"([A-Z0-9._%+-]+)@([A-Z0-9.-]+)\\.([A-Z]{2,4})", flags=re.IGNORECASE)
+print("all addresses:", pattern.findall(text))           # one (user, domain, suffix) tuple each
+print("hidden:", pattern.sub("[email]", text).splitlines())
+
+emails = pd.Series({"Ana": "ana@example.com", "Ben": None, "Chloe": "chloe@example.net"})
+print("\\nvectorized string methods handle missing values without errors:")
+print(emails.str.contains("example.com").to_dict())
+print(emails.str.split("@").str[0].to_dict())          # the part before the @`, after: `- \`split\`, \`strip\`, \`join\`, \`replace\`, \`lower\` and the \`in\` operator cover most simple cleaning.
+- A regular expression such as \`[A-Z0-9._%+-]+@…\` matches a whole family of strings. \`findall\` returns every match, parentheses create **groups** that are returned separately, \`sub\` replaces matches, and \`re.IGNORECASE\` makes the letters case-insensitive. Compile a pattern once with \`re.compile\` when you use it repeatedly.
+- On a pandas column, use the **\`.str\` accessor** (\`.str.contains\`, \`.str.split\`, \`.str.extract\`, \`.str[0:5]\`): it applies the method to every value and never raises an error on a missing one. A missing value comes back as missing (NaN), or, for true/false methods such as \`contains\` in recent pandas versions, as False; pass \`na=False\` to get the same result everywhere.` },
+      { type: 'code', title: "Categorical data", md: `Columns with a few distinct values repeated many times (country, product type, size) can be stored as **categoricals**: an array of small integer **codes** plus one list of the distinct **categories**. They use less memory, make operations such as grouping faster, and can carry an order.`, code: `import numpy as np
+import pandas as pd
+
+rng = np.random.default_rng(0)
+fruit = pd.Series(rng.choice(["apple", "orange", "banana"], size=100_000))
+cat = fruit.astype("category")
+print("categories:", list(cat.cat.categories))
+print("first codes:", cat.cat.codes[:6].tolist())
+print(f"memory: text {fruit.memory_usage(deep=True) / 1e6:.1f} MB, categorical {cat.memory_usage(deep=True) / 1e6:.2f} MB")
+
+sizes = pd.Categorical(["M", "S", "L", "M", "XL"], categories=["S", "M", "L", "XL"], ordered=True)
+print("sorted by meaning, not alphabet:", list(sizes.sort_values()))
+print("at least M:", list(sizes[sizes >= "M"]))
+
+grades = pd.Series(["A", "B", "A"]).astype("category").cat.set_categories(["A", "B", "C"])
+print("unused categories still count:", grades.value_counts(sort=False).to_dict())`, after: `- \`.cat.codes\` and \`.cat.categories\` expose the integer codes and the category list; \`pd.qcut\` and \`pd.cut\` return categoricals automatically.
+- An **ordered** categorical sorts and compares by meaning (S < M < L < XL), not alphabetically.
+- \`set_categories\`, \`add_categories\` and \`remove_unused_categories\` edit the category list; unused categories still appear in counts, which keeps tables consistent between datasets.
+- For modelling, categories usually become one-hot columns (see [Feature Engineering](#/concept/feature-engineering)).` },
       { type: 'text', title: 'Training, validation and test sets', md: `You need data the model has never seen to estimate how it will perform in the real world:
 
 - **Training set** (e.g. 70–80%) — used to fit the model's parameters.
@@ -643,7 +924,10 @@ If a model scores 99.9% on a hard problem, suspect leakage before celebrating. C
       { type: 'multi', q: 'Which of these are data leakage? (select all)', options: ['Scaling features using the mean of the full dataset before splitting', 'Including the column "refund_issued" when predicting whether an order will be returned', 'Imputing missing values with the training-set median', 'Having the same customer\'s duplicate records in both train and test'], answer: [0, 1, 3], explain: 'Training-set statistics are correct practice. The others let test or future information reach training.' },
       { type: 'mcq', q: 'A classification dataset has 2% positive examples. Why stratify the split?', options: ['To make the classes balanced 50/50', 'So each split keeps about 2% positives — otherwise a small test set might contain almost none', 'Stratification speeds up training', 'It removes outliers'], answer: 1, explain: 'Stratification preserves class proportions in every split so rare classes are represented.' },
       { type: 'tf', q: 'For data with a natural time order, a random shuffled split can make results look better than they will be in production.', answer: true, explain: 'Shuffling lets the model train on data from after the test period — future information leaks into training.' },
-      { type: 'mcq', q: 'A model scores 99.8% accuracy on a problem experts find hard. What should you check first?', options: ['Whether to add more layers', 'Whether some feature leaks the label or test examples duplicate training ones', 'Whether to use a bigger test set', 'Nothing — ship it'], answer: 1, explain: 'Implausibly good results are usually leakage. Inspect the most important features and look for duplicates.' }
+      { type: 'mcq', q: 'A model scores 99.8% accuracy on a problem experts find hard. What should you check first?', options: ['Whether to add more layers', 'Whether some feature leaks the label or test examples duplicate training ones', 'Whether to use a bigger test set', 'Nothing — ship it'], answer: 1, explain: 'Implausibly good results are usually leakage. Inspect the most important features and look for duplicates.' },
+      {"type":"mcq","q":"A sensor writes −999 when a reading fails. What should you do before computing averages?","options":["Nothing: −999 is a valid number","Replace −999 with NaN (missing) and handle the gaps explicitly","Multiply the column by −1","Drop the whole column"],"answer":1,"explain":"A sentinel value is a missing value in disguise; left in place it distorts every statistic. `replace(-999, np.nan)` makes it a proper missing value."},
+      {"type":"mcq","q":"What is the difference between `pd.cut` and `pd.qcut`?","options":["cut uses edges you choose (or equal-width bins); qcut uses quantiles so bins hold about equal counts","cut works on text, qcut on numbers","They are the same function","qcut removes outliers"],"answer":0,"explain":"cut bins by value; qcut bins by rank, so each bin contains roughly the same number of observations."},
+      {"type":"tf","q":"pandas' vectorized string methods (`Series.str…`) raise an error when a value is missing.","answer":false,"explain":"They skip missing values and return NaN for them, which is one of their main advantages over looping with plain Python string methods."}
     ],
     problems: [
       {
@@ -821,6 +1105,22 @@ for row, city in enumerate(cities):
 print(categories)
 print(encoded)
 ` },
+      { type: 'code', title: "Dummy variables with pandas", md: `\`pd.get_dummies\` turns a categorical column into **indicator** ("dummy") columns: one per category, 1 where the row has that category. Combined with binning, it can also turn a number into a set of range indicators.`, code: `import numpy as np
+import pandas as pd
+
+df = pd.DataFrame({"key": ["b", "b", "a", "c", "a", "b"], "value": range(6)})
+print(pd.get_dummies(df["key"], prefix="key", dtype=int).join(df["value"]))
+
+movies = pd.DataFrame({"title": ["Toy Story", "Heat", "Sabrina"],
+                       "genres": ["Animation|Children's|Comedy", "Action|Crime|Thriller", "Comedy|Romance"]})
+print("\\none row can belong to several genres:")
+print(movies[["title"]].join(movies["genres"].str.get_dummies("|")))
+
+values = np.array([0.04, 0.29, 0.62, 0.95, 0.51])
+print("\\nbins as indicators:")
+print(pd.get_dummies(pd.cut(values, [0, 0.2, 0.4, 0.6, 0.8, 1.0]), dtype=int))`, after: `- With \`drop_first=True\` one column per feature is dropped, since it is implied by the others ("not a and not c" means b). That matters for unregularized linear models; with regularization or trees it is unnecessary.
+- \`str.get_dummies("|")\` handles **multi-valued** fields, where a row can have several categories at once.
+- **Train/test consistency:** \`get_dummies\` creates columns from whatever values it sees, so a category that only appears in the test data creates an extra column, and a missing one drops a column. In a real model use \`OneHotEncoder(handle_unknown="ignore")\` inside a pipeline, which remembers the training categories.` },
       { type: 'text', title: 'Transforming and creating features', md: `- **Log transforms** for skewed, positive quantities (incomes, prices, counts): \`np.log1p(x)\`. They compress the long tail and often make relationships more linear.
 - **Ratios and differences** that match the domain: price per m², debt-to-income, time since last purchase.
 - **Date and time parts**: hour of day, day of week, month, "is weekend". Cyclical features can be encoded with sine/cosine so that 23:00 is close to 00:00.
@@ -829,7 +1129,82 @@ print(encoded)
 - **Text** becomes numbers via bag-of-words, TF-IDF or embeddings — the start of the NLP branch.
 
 Always ask: *would this feature be available at prediction time?* — a feature computed from the future is leakage.` },
-      { type: 'check', question: { type: 'mcq', q: 'Which model is essentially unaffected by standardizing its features?', options: ['k-nearest neighbours', 'A decision tree', 'Logistic regression with L2 regularization', 'A neural network'], answer: 1, explain: 'Trees choose thresholds on one feature at a time, so rescaling a feature just rescales its thresholds.' } }
+      { type: 'check', question: { type: 'mcq', q: 'Which model is essentially unaffected by standardizing its features?', options: ['k-nearest neighbours', 'A decision tree', 'Logistic regression with L2 regularization', 'A neural network'], answer: 1, explain: 'Trees choose thresholds on one feature at a time, so rescaling a feature just rescales its thresholds.' } },
+      { type: 'text', title: "Binning: letting a linear model bend", md: `A linear model can only learn "y changes by w per unit of x". When the real relationship rises and falls, **binning** (discretisation) gives it more freedom: cut the range of x into intervals, one-hot encode the interval each value falls into, and the model learns a separate level for every interval.
+
+\`\`\`python
+from sklearn.preprocessing import KBinsDiscretizer
+binner = KBinsDiscretizer(n_bins=10, encode="onehot-dense", strategy="uniform")
+X_binned = binner.fit_transform(X_train)        # learn the bin edges on the training data only
+\`\`\`
+
+\`strategy="uniform"\` uses equal-width bins; \`strategy="quantile"\` puts the same number of training points into each bin, which copes better with skewed data. In pandas, \`pd.cut\` and \`pd.qcut\` do the same.
+
+Binning helps linear models and makes features easy to explain ("customers aged 30 to 40"). It does little for tree-based models, which choose their own split points, and it throws away the order of the bins and the detail inside each one.` },
+      { type: 'chart', title: "A linear model before and after binning its input", after: `On the raw feature a linear model can only draw one straight line through a wavy pattern. After binning x into 10 intervals and one-hot encoding them, the same linear model learns one level per bin: a step function that follows the wave. The price: the steps are crude, the model knows nothing about how neighbouring bins relate, and with too many bins each level rests on very few points.`, chart: {"kind":"line","series":[{"name":"data","x":[0.822,-1.381,-2.754,-2.901,1.88,2.477,0.64,1.377,0.262,2.61,1.895,-2.984,2.144,-2.798,1.378,-1.946,2.179,0.249,-1.202,-0.464,-2.83,-2.254,1.024,0.883,0.692,-0.698,2.983,2.885,1.113,0.903,1.131,-0.666,-2.189,1.329,0.152,-1.139,-0.085,2.337,2.604,-0.853,0.429,-1.069,0.566,-0.973,-0.65,2.342,-1.637,0.739,-2.496,1.996,1.723,-1.564,2.259,-2.649,-0.983,-2.098,-0.298,1.778,-1.616,-2.688,-0.573,-1.809,-2.455,0.482,-1.208,1.032,-1.803,2.653,-0.809,-2.367,0.775,2.563,-0.358,2.728,-0.001,-0.449,0.721,2.971,2.694,-0.24,1.546,-0.015,0.176,1.715,-0.512,1.407,1.267,2.592,-2.31,1.374,2.565,2.808,-2.912,2.182,2.887,2.743,-2.107,2.836,2.34,1.934],"y":[0.842,-1.205,0.024,-0.11,-0.065,-0.551,1.412,0.407,0.365,0.096,-0.711,-0.468,-0.443,-0.173,0.767,0.159,-0.076,0.324,-0.607,-0.722,-0.012,0.652,1.432,1.499,1.213,-1.622,0.543,0.144,0.7,1.321,0.94,-1.481,-0.025,0.944,0.453,-0.706,-0.199,0.014,0.323,-0.902,0.176,-0.796,1.177,-1.095,-1.047,-0.182,-0.263,1.11,-0.358,-0.185,-0.023,-0.159,-0.39,0.064,-1.473,0.087,-0.654,-0.315,-0.304,-0.05,-1.438,-0.804,0.398,0.877,-1.185,1.12,0.452,-0.048,-1.216,-0.156,1.726,0.128,-0.443,0.096,0.274,-0.805,1.392,0.51,-0.415,-0.225,-0.068,-0.108,0.336,-0.082,-0.824,0.684,0.82,0.043,0.16,1.212,-0.04,0.08,-1.013,-0.678,0.705,0.093,0.162,0.769,-0.682,-0.26],"scatter":true},{"name":"linear regression on x","x":[-3,-2.98,-2.96,-2.94,-2.92,-2.9,-2.88,-2.86,-2.84,-2.82,-2.8,-2.78,-2.76,-2.74,-2.72,-2.7,-2.68,-2.66,-2.64,-2.62,-2.6,-2.58,-2.56,-2.54,-2.52,-2.5,-2.48,-2.46,-2.44,-2.42,-2.4,-2.38,-2.36,-2.34,-2.32,-2.3,-2.28,-2.26,-2.24,-2.22,-2.2,-2.18,-2.16,-2.14,-2.12,-2.1,-2.08,-2.06,-2.04,-2.02,-2,-1.98,-1.96,-1.94,-1.92,-1.9,-1.88,-1.86,-1.84,-1.82,-1.8,-1.78,-1.76,-1.74,-1.72,-1.7,-1.68,-1.66,-1.64,-1.62,-1.6,-1.58,-1.56,-1.54,-1.52,-1.5,-1.48,-1.46,-1.44,-1.42,-1.4,-1.38,-1.36,-1.34,-1.32,-1.3,-1.28,-1.26,-1.24,-1.22,-1.2,-1.18,-1.16,-1.14,-1.12,-1.1,-1.08,-1.06,-1.04,-1.02,-1,-0.98,-0.96,-0.94,-0.92,-0.9,-0.88,-0.86,-0.84,-0.82,-0.8,-0.78,-0.76,-0.74,-0.72,-0.7,-0.68,-0.66,-0.64,-0.62,-0.6,-0.58,-0.56,-0.54,-0.52,-0.5,-0.48,-0.46,-0.44,-0.42,-0.4,-0.38,-0.36,-0.34,-0.32,-0.3,-0.28,-0.26,-0.24,-0.22,-0.2,-0.18,-0.16,-0.14,-0.12,-0.1,-0.08,-0.06,-0.04,-0.02,0,0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2,0.22,0.24,0.26,0.28,0.3,0.32,0.34,0.36,0.38,0.4,0.42,0.44,0.46,0.48,0.5,0.52,0.54,0.56,0.58,0.6,0.62,0.64,0.66,0.68,0.7,0.72,0.74,0.76,0.78,0.8,0.82,0.84,0.86,0.88,0.9,0.92,0.94,0.96,0.98,1,1.02,1.04,1.06,1.08,1.1,1.12,1.14,1.16,1.18,1.2,1.22,1.24,1.26,1.28,1.3,1.32,1.34,1.36,1.38,1.4,1.42,1.44,1.46,1.48,1.5,1.52,1.54,1.56,1.58,1.6,1.62,1.64,1.66,1.68,1.7,1.72,1.74,1.76,1.78,1.8,1.82,1.84,1.86,1.88,1.9,1.92,1.94,1.96,1.98,2,2.02,2.04,2.06,2.08,2.1,2.12,2.14,2.16,2.18,2.2,2.22,2.24,2.26,2.28,2.3,2.32,2.34,2.36,2.38,2.4,2.42,2.44,2.46,2.48,2.5,2.52,2.54,2.56,2.58,2.6,2.62,2.64,2.66,2.68,2.7,2.72,2.74,2.76,2.78,2.8,2.82,2.84,2.86,2.88,2.9,2.92,2.94,2.96,2.98,3],"y":[-0.368,-0.365,-0.363,-0.361,-0.359,-0.356,-0.354,-0.352,-0.349,-0.347,-0.345,-0.342,-0.34,-0.338,-0.335,-0.333,-0.331,-0.328,-0.326,-0.324,-0.321,-0.319,-0.317,-0.314,-0.312,-0.31,-0.308,-0.305,-0.303,-0.301,-0.298,-0.296,-0.294,-0.291,-0.289,-0.287,-0.284,-0.282,-0.28,-0.277,-0.275,-0.273,-0.27,-0.268,-0.266,-0.263,-0.261,-0.259,-0.256,-0.254,-0.252,-0.25,-0.247,-0.245,-0.243,-0.24,-0.238,-0.236,-0.233,-0.231,-0.229,-0.226,-0.224,-0.222,-0.219,-0.217,-0.215,-0.212,-0.21,-0.208,-0.205,-0.203,-0.201,-0.199,-0.196,-0.194,-0.192,-0.189,-0.187,-0.185,-0.182,-0.18,-0.178,-0.175,-0.173,-0.171,-0.168,-0.166,-0.164,-0.161,-0.159,-0.157,-0.154,-0.152,-0.15,-0.148,-0.145,-0.143,-0.141,-0.138,-0.136,-0.134,-0.131,-0.129,-0.127,-0.124,-0.122,-0.12,-0.117,-0.115,-0.113,-0.11,-0.108,-0.106,-0.103,-0.101,-0.099,-0.096,-0.094,-0.092,-0.09,-0.087,-0.085,-0.083,-0.08,-0.078,-0.076,-0.073,-0.071,-0.069,-0.066,-0.064,-0.062,-0.059,-0.057,-0.055,-0.052,-0.05,-0.048,-0.045,-0.043,-0.041,-0.039,-0.036,-0.034,-0.032,-0.029,-0.027,-0.025,-0.022,-0.02,-0.018,-0.015,-0.013,-0.011,-0.008,-0.006,-0.004,-0.001,0.001,0.003,0.006,0.008,0.01,0.012,0.015,0.017,0.019,0.022,0.024,0.026,0.029,0.031,0.033,0.036,0.038,0.04,0.043,0.045,0.047,0.05,0.052,0.054,0.057,0.059,0.061,0.064,0.066,0.068,0.07,0.073,0.075,0.077,0.08,0.082,0.084,0.087,0.089,0.091,0.094,0.096,0.098,0.101,0.103,0.105,0.108,0.11,0.112,0.115,0.117,0.119,0.121,0.124,0.126,0.128,0.131,0.133,0.135,0.138,0.14,0.142,0.145,0.147,0.149,0.152,0.154,0.156,0.159,0.161,0.163,0.166,0.168,0.17,0.172,0.175,0.177,0.179,0.182,0.184,0.186,0.189,0.191,0.193,0.196,0.198,0.2,0.203,0.205,0.207,0.21,0.212,0.214,0.217,0.219,0.221,0.224,0.226,0.228,0.23,0.233,0.235,0.237,0.24,0.242,0.244,0.247,0.249,0.251,0.254,0.256,0.258,0.261,0.263,0.265,0.268,0.27,0.272,0.275,0.277,0.279,0.281,0.284,0.286,0.288,0.291,0.293,0.295,0.298,0.3,0.302,0.305,0.307,0.309,0.312,0.314,0.316,0.319,0.321,0.323,0.326,0.328]},{"name":"linear regression on 10 one-hot bins","x":[-3,-2.98,-2.96,-2.94,-2.92,-2.9,-2.88,-2.86,-2.84,-2.82,-2.8,-2.78,-2.76,-2.74,-2.72,-2.7,-2.68,-2.66,-2.64,-2.62,-2.6,-2.58,-2.56,-2.54,-2.52,-2.5,-2.48,-2.46,-2.44,-2.42,-2.4,-2.38,-2.36,-2.34,-2.32,-2.3,-2.28,-2.26,-2.24,-2.22,-2.2,-2.18,-2.16,-2.14,-2.12,-2.1,-2.08,-2.06,-2.04,-2.02,-2,-1.98,-1.96,-1.94,-1.92,-1.9,-1.88,-1.86,-1.84,-1.82,-1.8,-1.78,-1.76,-1.74,-1.72,-1.7,-1.68,-1.66,-1.64,-1.62,-1.6,-1.58,-1.56,-1.54,-1.52,-1.5,-1.48,-1.46,-1.44,-1.42,-1.4,-1.38,-1.36,-1.34,-1.32,-1.3,-1.28,-1.26,-1.24,-1.22,-1.2,-1.18,-1.16,-1.14,-1.12,-1.1,-1.08,-1.06,-1.04,-1.02,-1,-0.98,-0.96,-0.94,-0.92,-0.9,-0.88,-0.86,-0.84,-0.82,-0.8,-0.78,-0.76,-0.74,-0.72,-0.7,-0.68,-0.66,-0.64,-0.62,-0.6,-0.58,-0.56,-0.54,-0.52,-0.5,-0.48,-0.46,-0.44,-0.42,-0.4,-0.38,-0.36,-0.34,-0.32,-0.3,-0.28,-0.26,-0.24,-0.22,-0.2,-0.18,-0.16,-0.14,-0.12,-0.1,-0.08,-0.06,-0.04,-0.02,0,0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2,0.22,0.24,0.26,0.28,0.3,0.32,0.34,0.36,0.38,0.4,0.42,0.44,0.46,0.48,0.5,0.52,0.54,0.56,0.58,0.6,0.62,0.64,0.66,0.68,0.7,0.72,0.74,0.76,0.78,0.8,0.82,0.84,0.86,0.88,0.9,0.92,0.94,0.96,0.98,1,1.02,1.04,1.06,1.08,1.1,1.12,1.14,1.16,1.18,1.2,1.22,1.24,1.26,1.28,1.3,1.32,1.34,1.36,1.38,1.4,1.42,1.44,1.46,1.48,1.5,1.52,1.54,1.56,1.58,1.6,1.62,1.64,1.66,1.68,1.7,1.72,1.74,1.76,1.78,1.8,1.82,1.84,1.86,1.88,1.9,1.92,1.94,1.96,1.98,2,2.02,2.04,2.06,2.08,2.1,2.12,2.14,2.16,2.18,2.2,2.22,2.24,2.26,2.28,2.3,2.32,2.34,2.36,2.38,2.4,2.42,2.44,2.46,2.48,2.5,2.52,2.54,2.56,2.58,2.6,2.62,2.64,2.66,2.68,2.7,2.72,2.74,2.76,2.78,2.8,2.82,2.84,2.86,2.88,2.9,2.92,2.94,2.96,2.98,3],"y":[-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,-0.17,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,0.076,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-0.621,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-1.149,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,-0.514,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.53,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,1.225,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,0.435,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,-0.332,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155,0.155]}],"xLabel":"input feature x","yLabel":"target y"} },
+      { type: 'text', title: "Polynomial features and interactions", md: `Another way to let a linear model bend is to add **powers** of a feature (x², x³) and **interactions** between features (x₁·x₂). An interaction lets the effect of one feature depend on another: an extra bedroom is worth more in a large house than in a small one.
+
+\`PolynomialFeatures(degree=k)\` generates every product of the inputs up to total degree k, and the count grows fast:
+
+$$ number of features = C(d + k, k) − 1 $$
+:::where
+d — the number of input features
+k — the polynomial degree
+C(d + k, k) — "d + k choose k": the number of distinct products of the d inputs with total degree at most k
+− 1 — leaving out the constant term, which the model's intercept already covers
+:::
+
+High powers also behave badly at the edges of the data (x⁵ explodes), and they need scaling and regularisation. Use a low degree, add only the interactions you have a reason to believe in (\`interaction_only=True\` keeps the products of different features and drops the pure powers), or let a model that finds interactions on its own, such as trees, kernel methods or neural networks, do the work.` },
+      { type: 'chart', title: "How many polynomial features?", after: `With 10 inputs, degree 3 gives 285 features: manageable. With 100 inputs it gives 176,850, and with 1,000 inputs over 167 million. Full polynomial expansions only make sense for a handful of inputs; otherwise add the few interactions you have a reason to believe in, or use a model (trees, kernels, neural networks) that finds them for you.`, chart: {"kind":"line","x":[1,2,3,4,5],"yLog":true,"series":[{"name":"10 input features","y":[10,65,285,1000,3002]},{"name":"100 input features","y":[100,5150,176850,4598125,96560645]},{"name":"1000 input features","y":[1000,501500,167668500,42084793750,8459043543950]}],"xLabel":"polynomial degree","yLabel":"number of features (log scale)"} },
+      { type: 'text', title: "Target encoding for high-cardinality categories", md: `A feature such as \`city\` with 400 values, or \`product_id\` with 100,000, makes one-hot encoding huge and sparse. **Target encoding** replaces each category by the average target of the training rows in that category ("the click rate of this city"), smoothed towards the overall average for small categories:
+
+$$ enc(c) = ( n_c · ȳ_c + m · ȳ ) / ( n_c + m ) $$
+:::where
+c — a category, for example one city
+n_c — the number of training rows in category c
+ȳ_c — the average target within category c
+ȳ — the overall average target
+m — the smoothing strength: a category needs about m rows before its own average dominates
+:::
+
+It is powerful and **dangerously leaky**. Each row's own label is part of its category's average, so on the training data the encoding partly *is* the label, especially for small categories, and the model learns to trust it far too much. The fix is to compute the encoding **out of fold**: split the training data into k folds and encode each fold using statistics from the other folds only. scikit-learn's \`TargetEncoder\` does this automatically inside \`fit_transform\`.` },
+      { type: 'code', title: "Naive versus out-of-fold target encoding", md: `The label here is pure noise: the city tells you nothing. Watch what each encoding claims anyway.`, code: `import numpy as np
+import pandas as pd
+from sklearn.metrics import roc_auc_score
+rng = np.random.default_rng(0)
+n = 2000
+df = pd.DataFrame({"city": rng.integers(0, 400, n),          # 400 cities, about 5 rows each
+                   "y": (rng.random(n) < 0.3).astype(int)})   # random labels
+train, test = df.iloc[:1500].copy(), df.iloc[1500:].copy()
+prior, m = train["y"].mean(), 10
+
+stats = train.groupby("city")["y"].agg(["sum", "count"])
+train["naive"] = train["city"].map(stats["sum"] / stats["count"])   # includes each row's own label
+
+train["oof"] = np.nan
+folds = np.arange(len(train)) % 5
+for k in range(5):
+    other = train[folds != k].groupby("city")["y"].agg(["sum", "count"])
+    smooth = (other["sum"] + m * prior) / (other["count"] + m)
+    train.loc[folds == k, "oof"] = train.loc[folds == k, "city"].map(smooth).fillna(prior).values
+
+full = (stats["sum"] + m * prior) / (stats["count"] + m)
+test["enc"] = test["city"].map(full).fillna(prior)
+
+auc_naive = roc_auc_score(train["y"], train["naive"])
+print(f"training rows, naive encoding:        AUC {auc_naive:.2f}")
+print(f"training rows, out-of-fold encoding:  AUC {roc_auc_score(train['y'], train['oof']):.2f}")
+print(f"test rows:                            AUC {roc_auc_score(test['y'], test['enc']):.2f}")
+print("naive encoding leaks:", auc_naive > 0.7)`, after: `On the training rows the naive encoding looks strongly predictive (AUC around 0.79) even though the labels are random: with about 4 rows per city, each row's own label moves its city's average a lot. A model trained on it would lean on a feature that is worthless on new data, where the AUC is close to 0.5. The out-of-fold version tells the truth on the training rows too.`, predict: {"type":"mcq","q":"The labels are random. How predictive will the naive target encoding look on the training rows?","options":["Not at all: AUC about 0.5","Clearly predictive: AUC well above 0.5","Perfect: AUC exactly 1.0","Worse than random: AUC well below 0.5"],"answer":1,"explain":"Each row's own label is included in its category's average, so on the training data the encoding partly copies the label. The effect is strongest for small categories.","expect":["naive encoding leaks: True"]} },
+      { type: 'text', title: "Choosing features: filter, wrapper and embedded methods", md: `More features are not always better: irrelevant ones add noise, cost memory and time, and make models harder to explain. Three families of methods pick a subset:
+
+| Family | How it works | Examples in scikit-learn | Trade-off |
+| --- | --- | --- | --- |
+| Filter | score each feature on its own against the target and keep the best | \`SelectKBest\` with \`f_classif\` or \`mutual_info_classif\`; \`VarianceThreshold\` | fast, but blind to interactions between features |
+| Wrapper | train models on different subsets and keep the best subset | \`RFE\` (recursive feature elimination), \`SequentialFeatureSelector\` | accounts for interactions, but expensive |
+| Embedded | the model selects while it trains | L1-regularised (lasso) models; tree importances with \`SelectFromModel\` | a good middle ground |
+
+Whatever you use, **select inside the cross-validation loop**, on the training folds only, by putting the selector in a [pipeline](#/concept/sklearn-workflow). Selecting features on the full dataset and then cross-validating is a famous leak: among enough random features, some correlate with the target by chance, and the cross-validated score looks excellent on pure noise.` }
     ],
     when: `- **Standardize** by default for linear models, SVMs, kNN, PCA, k-means and neural networks; skip scaling for tree ensembles.
 - **One-hot** low-cardinality nominal features; **ordinal-encode** naturally ordered ones; consider **embeddings** for high-cardinality ids when you have lots of data.
@@ -852,7 +1227,10 @@ Always ask: *would this feature be available at prediction time?* — a feature 
       { type: 'mcq', q: 'One-hot encoding a "country" column with 5 distinct countries produces how many columns?', options: ['1', '5', '2', '25'], answer: 1, explain: 'One indicator column per category: 5.' },
       { type: 'mcq', q: 'Incomes in a dataset range from 10k to 10 million with a long right tail. A common, helpful transform is…', options: ['Squaring the values', 'Taking the logarithm', 'One-hot encoding them', 'Removing all values above the mean'], answer: 1, explain: 'A log transform compresses the tail so that ratios (doubling) become equal steps.' },
       { type: 'tf', q: 'At prediction time you should re-fit the scaler on the new incoming data before transforming it.', answer: false, explain: 'Use the scaler fitted on the training data — the model was trained on features scaled with those statistics.' },
-      { type: 'multi', q: 'Which models usually benefit from feature scaling? (select all)', options: ['k-nearest neighbours', 'Random forest', 'Neural network', 'Support vector machine'], answer: [0, 2, 3], explain: 'Distance and gradient-based models are sensitive to scale; tree ensembles are not.' }
+      { type: 'multi', q: 'Which models usually benefit from feature scaling? (select all)', options: ['k-nearest neighbours', 'Random forest', 'Neural network', 'Support vector machine'], answer: [0, 2, 3], explain: 'Distance and gradient-based models are sensitive to scale; tree ensembles are not.' },
+      {"type":"mcq","q":"With 20 input features, how many features does PolynomialFeatures(degree=2) produce, leaving out the constant term?","options":["40","210","230","400"],"answer":2,"explain":"C(20 + 2, 2) − 1 = 231 − 1 = 230: the 20 originals, 20 squares and 190 pairwise products."},
+      {"type":"mcq","q":"Why should target encoding be computed out of fold on the training data?","options":["It is faster","Otherwise each row's own label leaks into its encoding and the feature looks more predictive than it is","Out-of-fold encodings need no smoothing","Because the test data has no categories"],"answer":1,"explain":"Including a row's own label in its category average makes the encoding partly a copy of the label on the training data."},
+      {"type":"tf","q":"Selecting the best features on the full dataset and then cross-validating gives an honest estimate of performance.","answer":false,"explain":"The selection already looked at the validation folds' labels. Put the selector inside a pipeline so that it is refitted on the training folds only."}
     ],
     problems: [
       {

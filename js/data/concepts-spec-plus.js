@@ -74,6 +74,7 @@ columns of W_dec — the learned feature directions (the "dictionary")
 :::
 
 Trained on a large model's activations, SAEs have found millions of interpretable features — from specific landmarks to code bugs to deception-related concepts — and clamping a feature on or off measurably changes the model's behaviour.` },
+      { type: 'chart', title: "How many directions fit almost perpendicularly?", md: `Pick N random unit vectors in d dimensions and measure the largest overlap (|cosine|) between any two of them:`, after: `In 1,024 dimensions, even 4,096 random directions (four times the dimension) overlap by at most about 0.16, and a typical pair by only about 0.025. Interference grows very slowly with N, so a model can store many more sparse features than it has neurons, at the price of a little crosstalk. That is the geometry behind superposition, and why one neuron rarely means one thing.`, chart: {"kind":"line","x":[64,128,256,512,1024,2048,4096],"xLog":true,"series":[{"name":"d = 64 dimensions","y":[0.475,0.475,0.54,0.55,0.55,0.597,0.601]},{"name":"d = 256 dimensions","y":[0.225,0.225,0.241,0.297,0.297,0.301,0.317]},{"name":"d = 1024 dimensions","y":[0.104,0.117,0.128,0.148,0.149,0.153,0.16]}],"xLabel":"number of random feature directions N (log scale)","yLabel":"worst |cosine| between any two","yMin":0,"yMax":0.7} },
       { type: 'text', title: 'Circuits and steering', md: `- **Circuits** are small subnetworks that implement an algorithm. The best known is the **induction head** pair: a "previous-token" head writes "the token before me was A" into each position, and an induction head searches for an earlier position preceded by the current token and copies what came next ("…A B … A → B"). Induction heads appear suddenly during training, together with a jump in in-context learning ability.
 - **Steering**: add a direction to the residual stream to push behaviour. A simple way to find one is the **difference of means** between activations on two contrasting prompt sets (e.g. positive versus negative reviews). Researchers have found directions that control refusals, sentiment, truthfulness and topic.
 - **Limits**: explanations can be partial or misleading; probes find correlates; interventions can have side effects; scaling these methods to frontier models is an open research problem.` },
@@ -93,7 +94,17 @@ h = rng.normal(size=d)                                           # a neutral act
 for alpha in (0, 2, 4, -4):
     print(f"alpha = {alpha:+d}: position along the concept = {(h + alpha * steer) @ direction:+.2f}")
 `, after: `Averaging over many examples cancels the noise and leaves the concept direction; adding a multiple of it moves any activation along the concept, which is how steering shifts a model's behaviour.` },
-      { type: 'check', question: { type: 'tf', q: 'A sparse autoencoder\'s L1 penalty encourages each activation to be explained by only a few active features.', answer: true, explain: 'Sparsity is what makes the learned features individually interpretable.' } }
+      { type: 'check', question: { type: 'tf', q: 'A sparse autoencoder\'s L1 penalty encourages each activation to be explained by only a few active features.', answer: true, explain: 'Sparsity is what makes the learned features individually interpretable.' } },
+      { type: 'text', title: "Behavioural and mechanistic explanations", md: `Interpretability comes in two flavours, and it helps to know which question you are asking.
+
+**Behavioural (attribution) methods** treat the model as a black box and ask which inputs mattered for an output:
+- **permutation importance** and **SHAP** for tabular models (see [Responsible AI](#/concept/responsible-ai));
+- **saliency maps** and **integrated gradients** for images and text, which use the gradient of the output with respect to the input;
+- **attention maps**, which show where attention heads look. They are a weak explanation on their own: attention weights say what was mixed together, not what changed the answer.
+
+**Mechanistic methods**, the subject of this lesson, open the box and ask *how* the computation works: which features are represented, and which circuits combine them.
+
+Both can mislead. A probe may find information the model never uses; a saliency map may highlight edges in any image; a patching result depends on what you patch with. Good practice is to treat every explanation as a **hypothesis** and test it with an intervention: if a direction really encodes "French", steering along it should change the language of the output, and removing it should remove that ability.` }
     ],
     when: `- Debugging surprising model behaviour and validating that a model relies on the right signals.
 - Safety research: monitoring internal features, detecting harmful capabilities, checking for deceptive reasoning.
@@ -116,7 +127,9 @@ for alpha in (0, 2, 4, -4):
       { type: 'mcq', q: 'What does superposition mean in interpretability?', options: ['Two models trained together', 'Representing more features than dimensions using nearly perpendicular directions', 'Adding residual connections', 'Running attention twice'], answer: 1, explain: 'It explains polysemantic neurons.' },
       { type: 'tf', q: 'A sparse autoencoder\'s hidden layer is usually much wider than the activation it encodes.', answer: true, explain: 'An overcomplete dictionary with sparse codes.' },
       { type: 'mcq', q: 'What does an induction head do?', options: ['Normalizes activations', 'Finds an earlier occurrence of the current token and copies the token that followed it', 'Predicts the first token', 'Masks future tokens'], answer: 1, explain: 'A key mechanism behind in-context learning.' },
-      { type: 'fill', q: 'A steering vector is computed as the mean activation on set A minus the mean on set B. What is this method called? (three words)', answer: ['difference of means', 'difference-of-means'], explain: 'Averaging cancels noise and leaves the contrasting direction.' }
+      { type: 'fill', q: 'A steering vector is computed as the mean activation on set A minus the mean on set B. What is this method called? (three words)', answer: ['difference of means', 'difference-of-means'], explain: 'Averaging cancels noise and leaves the contrasting direction.' },
+      {"type":"tf","q":"A space with d dimensions can hold far more than d directions that are all nearly, but not exactly, perpendicular to each other.","answer":true,"explain":"Random directions in high dimensions are almost orthogonal (typical |cosine| about 1/√d), which is what makes superposition possible."},
+      {"type":"mcq","q":"Why is an attention map alone a weak explanation of a model's answer?","options":["Attention maps are random","They show which tokens were mixed together, not which ones changed the answer","They only exist for convolutional networks","They cannot be visualised"],"answer":1,"explain":"Attention weights describe information flow in one layer; whether that information mattered for the output has to be tested, for example by intervening on it."}
     ],
     problems: [
       {
@@ -252,6 +265,7 @@ ACF(k) — the autocorrelation at lag k, between −1 and 1
 :::
 
 Daily data with a weekly pattern shows ACF peaks at lags 7, 14, 21, … A series is **stationary** when its statistics don't change over time; differencing (y_t − y_{t−1}) removes a trend and seasonal differencing (y_t − y_{t−7}) removes a weekly pattern.` },
+      { type: 'chart', title: "Four years of monthly sales and their trend", after: `Averaging over exactly one full year cancels the seasonal swing and leaves the trend (the moving average is undefined for the first and last six months). What remains after subtracting the trend is the seasonal pattern plus noise: here a yearly wave of about ±12 around a steady rise of 1.5 per month.`, chart: {"kind":"line","x":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48],"points":false,"series":[{"name":"observed","y":[98.04,106.98,118.38,118.48,111.47,113.48,107.13,104.95,96.78,102.23,105.31,115.23,118.95,127.03,126.91,141.26,128.65,134.81,126.01,119.86,117.64,117.48,123.75,128.17,140.45,138.01,149.38,149.82,154.72,143.15,143.97,141.13,133.15,140.46,141.14,149.52,156.88,158.56,165,169.89,172.64,170.05,160.87,156.68,153.21,153.75,157.89,164.1]},{"name":"trend: centred 12-month moving average","y":[null,null,null,null,null,null,109.08,110.78,111.97,113.28,114.94,116.55,118.22,119.63,121.12,122.63,124.03,125.34,126.77,128.13,129.52,130.81,132.26,133.69,134.79,136.42,137.95,139.56,141.24,142.85,144.43,145.97,147.47,148.96,150.54,152.41,154.24,155.59,157.07,158.46,159.71,161.02,null,null,null,null,null,null]}],"xLabel":"month","yLabel":"sales"} },
       { type: 'text', title: 'Baselines you must beat', md: `Always compare a model with simple forecasts — surprisingly often they win:
 
 - **Naive**: tomorrow equals today, ŷ_{t+h} = y_t.
@@ -268,6 +282,7 @@ y_t — the latest observed value
 :::
 
 **Holt–Winters** extends exponential smoothing with a trend and a seasonal component and is a strong classic method.` },
+      { type: 'chart', title: "Three baseline forecasts for the next two weeks", after: `The naive forecast freezes today's value and the mean flattens everything; only the seasonal naive forecast, which repeats last week, follows the weekly rhythm, and its error is about half that of the others. A model that cannot beat this one-line baseline is not worth deploying.`, chart: {"kind":"line","points":false,"series":[{"name":"history","x":[-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0],"y":[127.55,129.14,131.78,130.81,131.63,140.52,139.51,129.89,128.69,128.67,130.05,133.48,135.85,137.16,126.21,129.34,130.81,131.37,134.92,143.29,138.04,132.13,130.17,133.3,134.51,134.99,140.41,137.16]},{"name":"what actually happened","x":[1,2,3,4,5,6,7,8,9,10,11,12,13,14],"y":[129.18,132.64,131.28,132.98,135.18,143.68,140.13,131.51,131.59,133.74,135.67,139.19,140.78,143.43],"dash":true},{"name":"naive (MAE 4.4)","x":[1,2,3,4,5,6,7,8,9,10,11,12,13,14],"y":[137.16,137.16,137.16,137.16,137.16,137.16,137.16,137.16,137.16,137.16,137.16,137.16,137.16,137.16]},{"name":"seasonal naive (MAE 2.1)","x":[1,2,3,4,5,6,7,8,9,10,11,12,13,14],"y":[132.13,130.17,133.3,134.51,134.99,140.41,137.16,132.13,130.17,133.3,134.51,134.99,140.41,137.16]},{"name":"mean of 4 weeks (MAE 4.0)","x":[1,2,3,4,5,6,7,8,9,10,11,12,13,14],"y":[133.26,133.26,133.26,133.26,133.26,133.26,133.26,133.26,133.26,133.26,133.26,133.26,133.26,133.26]}],"xLabel":"day (0 = today)","yLabel":"daily sales","vlines":[{"x":0,"label":"forecast starts"}]} },
       { type: 'code', title: 'Baselines on a seasonal series', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -328,6 +343,35 @@ for h in range(28):                                         # recursive forecast
 seasonal_naive = np.array([train[-7 + (h % 7)] for h in range(28)])
 print(f"AR model MAE {np.mean(np.abs(np.array(preds) - y[-28:])):.2f}    seasonal naive MAE {np.mean(np.abs(seasonal_naive - y[-28:])):.2f}")
 `, after: `Almost all the weight sits on lags 7 and 14 — the model discovered the weekly cycle by itself — and averaging the same weekday from two past weeks cancels part of the noise, which is why it beats the seasonal naive forecast.` },
+      { type: 'text', title: "Autocorrelation, trends and differencing", md: `A time series is correlated with its own past. The **autocorrelation function** (ACF) measures how strongly, for every lag k:
+
+$$ ACF(k) = corr( y_t , y_{t−k} ) $$
+:::where
+y_t — the value at time t
+y_{t−k} — the value k steps earlier
+corr — Pearson's correlation, computed over all pairs of values that are k steps apart
+:::
+
+A spike at lag 7 in daily data reveals a weekly pattern; a spike at lag 12 in monthly data, a yearly one. A **trend** spoils the picture: when the series keeps rising, every value resembles every earlier value, and the ACF stays high at all lags.
+
+**Differencing** removes the trend: model the changes y_t − y_{t−1} instead of the levels. **Seasonal differencing**, y_t − y_{t−7}, removes a weekly pattern in the same way. A series whose mean and variance no longer drift over time is called **stationary**, and most classical models work on such a series. ARIMA (autoregressive, integrated, moving average) is the classic example: the "integrated" part is exactly this differencing, and the forecasts are added back up to recover the levels.
+
+Machine-learning forecasters use the same ideas as features: lags at the seasonal period, differences, rolling means and calendar features.` },
+      { type: 'code', title: "Seeing the weekly pattern in the autocorrelation", code: `import numpy as np
+import pandas as pd
+rng = np.random.default_rng(0)
+t = np.arange(364)                                           # one year of daily sales
+weekly = np.array([0, 2, 3, 3, 5, 12, 9])                    # Monday ... Sunday
+sales = pd.Series(100 + 0.1 * t + weekly[t % 7] + rng.normal(0, 2, 364))
+
+print("raw series:        ", {k: round(float(sales.autocorr(k)), 2) for k in (1, 3, 7, 14)})
+changes = sales.diff().dropna()                              # day-to-day changes remove the trend
+acf = {k: float(changes.autocorr(k)) for k in range(1, 15)}
+print("after differencing:", {k: round(v, 2) for k, v in acf.items() if k in (1, 3, 7, 14)})
+best = max(acf, key=acf.get)
+print("strongest lag after differencing:", best)
+print("weekly pattern found:", best % 7 == 0)`, after: `On the raw series every lag looks strongly correlated (around 0.8 to 0.97), because the upward trend makes every value resemble every earlier one. After differencing, the ordinary lags fall to around zero or below and the weekly structure stands out: lags 7 and 14 stay strongly positive.`, predict: {"type":"mcq","q":"Daily sales have an upward trend and a weekly pattern. After differencing away the trend, which lag will show the strongest autocorrelation?","options":["Lag 1","Lag 3","Lag 7","Lag 30"],"answer":2,"explain":"Each day resembles the same weekday a week earlier, so after the trend is removed the correlation peaks at lag 7 (and again at 14).","expect":["weekly pattern found: True"]} },
+      { type: 'chart', title: "Autocorrelation before and after differencing", after: `The trend makes every raw lag look strongly correlated. After differencing, the ordinary lags drop to around zero or below, and only lags 7 and 14 stay high: the signature of a weekly cycle.`, chart: {"kind":"bar","x":["1","2","3","4","5","6","7","8","9","10","11","12","13","14"],"series":[{"name":"raw series","y":[0.886,0.798,0.805,0.805,0.794,0.883,0.968,0.882,0.787,0.8,0.792,0.785,0.878,0.965]},{"name":"after differencing","y":[-0.122,-0.416,0.036,0.044,-0.417,0.023,0.717,0.03,-0.458,0.096,-0.004,-0.41,0.035,0.702]}],"xLabel":"lag (days)","yLabel":"autocorrelation","yMin":-0.6,"yMax":1} },
       { type: 'text', title: 'Honest evaluation: walk-forward validation', md: `Never shuffle time series. **Walk-forward** (rolling-origin) validation trains on the past and tests on the period right after it, then moves forward and repeats:
 
 \`\`\`text
@@ -368,7 +412,9 @@ Watch for leakage: features computed with future values (centered rolling window
       { type: 'fill', q: 'Exponential smoothing with α = 0.5: the previous forecast was 10 and the new observation is 20. What is the next forecast?', answer: ['15', '15.0'], explain: '0.5 · 20 + 0.5 · 10 = 15.' },
       { type: 'mcq', q: 'What is walk-forward validation?', options: ['Shuffling and splitting k times', 'Training on the past and testing on the following period, repeatedly moving forward in time', 'Testing on the first part of the series', 'Validating on random days'], answer: 1, explain: 'It mirrors how forecasts are used in reality.' },
       { type: 'tf', q: 'A MASE below 1 means the model beats the naive forecast.', answer: true, explain: 'MASE is the model\'s error divided by the naive method\'s error.' },
-      { type: 'mcq', q: 'Why might differencing (y_t − y_{t−1}) help?', options: ['It removes the trend and makes the series closer to stationary', 'It adds seasonality', 'It increases the data size', 'It removes noise completely'], answer: 0, explain: 'Many models assume stable statistics over time.' }
+      { type: 'mcq', q: 'Why might differencing (y_t − y_{t−1}) help?', options: ['It removes the trend and makes the series closer to stationary', 'It adds seasonality', 'It increases the data size', 'It removes noise completely'], answer: 0, explain: 'Many models assume stable statistics over time.' },
+      {"type":"mcq","q":"Hourly electricity demand has a daily pattern. At which lag would you expect a strong autocorrelation spike?","options":["1","7","12","24"],"answer":3,"explain":"Each hour resembles the same hour one day earlier, which is 24 hourly steps back."},
+      {"type":"mcq","q":"What does differencing a series (modelling y_t − y_{t−1}) mainly remove?","options":["Seasonality","A trend in the level","Noise","Outliers"],"answer":1,"explain":"A steady trend becomes a constant change, so the differenced series no longer drifts. Seasonal differencing (y_t − y_{t−s}) removes a repeating pattern."}
     ],
     problems: [
       {
@@ -548,6 +594,7 @@ s(x) — the anomaly score: close to 1 for anomalies, around 0.5 or below for no
 :::
 
 They are fast, scale to many features, need no distance computations, and work well as a first method on tabular data.` },
+      { type: 'chart', title: "Isolation-forest scores: normal points against anomalies", md: `2,000 points from a 2-D normal distribution plus 15 scattered far away; each point's score is based on its average path length over 200 random trees:`, after: `Normal points sit in the dense cloud and need many random splits to be isolated, so their scores bunch at the low end. The anomalies are cut off after a few splits and score clearly higher. The groups overlap only at the edge: a threshold just below the lowest anomaly score (about 0.66) would catch all 15 anomalies at the cost of 3 false alarms among 2,000 normal points, while a threshold of 0.6 would add over 50. Real data is rarely this clean.`, chart: {"kind":"bar","x":["0.36","0.39","0.41","0.44","0.46","0.49","0.51","0.54","0.56","0.59","0.61","0.64","0.66","0.69","0.71","0.74","0.76","0.79","0.81","0.84"],"series":[{"name":"2,000 normal points (% of group)","y":[0,9.65,32.55,21.05,11.25,8,6.8,3.5,2.25,2.1,1.9,0.7,0.2,0.05,0,0,0,0,0,0]},{"name":"15 anomalies (% of group)","y":[0,0,0,0,0,0,0,0,0,0,0,0,26.67,33.33,20,0,13.33,6.67,0,0]}],"xLabel":"anomaly score (higher = isolated sooner)","yLabel":"% of the group"} },
       { type: 'text', title: 'Distance, density and reconstruction', md: `- **Distance-based**: the distance to the k-th nearest neighbour; far from everyone = suspicious.
 - **Density-based**: the **Local Outlier Factor** compares a point's local density with its neighbours' — it finds points that are sparse *relative to their surroundings*.
 - **One-class SVM**: learns a boundary around normal data.
@@ -577,12 +624,39 @@ for name, score in [("per-feature |z|", per_feature), ("isolation forest", iso_s
     top = np.argsort(-score)[:10]
     print(f"{name:26s} precision@10 = {is_anomaly[top].mean():.1f}")
 `, after: `Each anomaly looks ordinary feature by feature — only the combination is odd, because the two features normally rise together. So per-feature z-scores put none of them in their top ten, while PCA reconstruction error, which models the correlation directly, ranks all ten at the top. The isolation forest lands in between: its splits test one feature at a time (axis-aligned), a known weakness for this kind of anomaly that the extended isolation forest addresses with random slanted splits.` },
+      { type: 'text', title: "Anomalies in time series: compare with what was expected", md: `A value is often anomalous only **in context**: 75 orders is a quiet Saturday but a wild Tuesday. A single threshold over all values misses such contextual anomalies and fires on every busy weekend instead. The fix is to model what was **expected** at that moment and look for unusually large **residuals**:
+
+1. Build an expectation: the typical value for that weekday and hour, a seasonal-naive or moving-average forecast, or a proper forecasting model.
+2. Compute the residuals: observed minus expected.
+3. Flag residuals that are extreme on a **robust** scale (median and MAD), so the anomalies themselves cannot inflate the threshold.
+
+The same recipe works for metrics dashboards, sensor streams and fraud rates. Two refinements matter in production. A sudden but *lasting* change, such as a new normal after a product launch, is a **change point**, not a stream of anomalies, and should reset the baseline. And the expectation must be built from the past only, or tomorrow's spike leaks into today's baseline.` },
+      { type: 'code', title: "Contextual anomalies in daily orders", code: `import numpy as np
+import pandas as pd
+rng = np.random.default_rng(1)
+days = pd.date_range("2026-01-05", periods=140, freq="D")         # starts on a Monday
+weekday_effect = np.array([0, 6, 9, 9, 15, 36, 27])                 # Monday ... Sunday
+orders = pd.Series(50 + weekday_effect[days.dayofweek] + rng.normal(0, 2, len(days)), index=days)
+for day in ["2026-02-04", "2026-03-12", "2026-04-16"]:              # three incidents on quiet weekdays
+    orders[day] += 15
+
+z = (orders - orders.mean()) / orders.std()
+print("global z-score flags:", list(orders.index[z.abs() > 3].strftime("%Y-%m-%d")))
+
+expected = orders.groupby(orders.index.dayofweek).transform("median")   # the typical value for that weekday
+resid = orders - expected
+mad = (resid - resid.median()).abs().median()
+robust_z = (resid - resid.median()) / (1.4826 * mad)
+flagged = list(orders.index[robust_z.abs() > 4].strftime("%Y-%m-%d"))
+print("residual flags:      ", flagged)
+print("all three incidents found:", flagged == ["2026-02-04", "2026-03-12", "2026-04-16"])`, after: `The incident days, at about 75 orders, are still below every normal Saturday, so the global z-score rule flags nothing at all. Measured against the usual value for their own weekday, each is about 15 orders too high, more than seven robust standard deviations, and all three are caught with no false alarms.`, predict: {"type":"mcq","q":"Three incidents add 15 orders on quiet weekdays, leaving them below a normal Saturday. How many will a global z-score rule (|z| > 3) catch?","options":["All three","One","None","It flags every Saturday instead"],"answer":2,"explain":"Judged against all days, the incident days look ordinary; only a comparison with the expected value for the same weekday reveals them.","expect":["all three incidents found: True"]} },
       { type: 'text', title: 'Thresholds and evaluation', md: `Anomaly scores still need a **threshold**:
 - by an expected rate ("flag the top 0.5%");
 - by a review **budget** ("analysts can check 50 cases a day" — then measure **precision@k**);
 - with a small labelled set, by choosing a point on the **precision–recall curve** (ROC curves look deceptively good when positives are rare).
 
 In production, the analysts' verdicts become labels: over time you can move to semi-supervised or supervised models. And remember that "normal" drifts — retrain and re-check thresholds regularly.` },
+      { type: 'chart', title: "Precision and recall within a review budget", md: `The isolation forest above, reviewing its top-scored points one by one:`, after: `Reviewing only the top few points, almost every flag is a real anomaly (high precision) but most anomalies are still unfound. As the budget grows, recall climbs to 100% at around k = 18, and from then on every extra review is a false alarm, so precision falls. The right k is a business decision: how much analyst time is a missed anomaly worth?`, chart: {"kind":"line","x":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60],"points":false,"series":[{"name":"precision@k: share of flagged points that are anomalies","y":[1,1,1,1,1,1,0.857,0.875,0.889,0.9,0.909,0.917,0.923,0.857,0.867,0.875,0.824,0.833,0.789,0.75,0.714,0.682,0.652,0.625,0.6,0.577,0.556,0.536,0.517,0.5,0.484,0.469,0.455,0.441,0.429,0.417,0.405,0.395,0.385,0.375,0.366,0.357,0.349,0.341,0.333,0.326,0.319,0.312,0.306,0.3,0.294,0.288,0.283,0.278,0.273,0.268,0.263,0.259,0.254,0.25]},{"name":"recall@k: share of all anomalies found","y":[0.067,0.133,0.2,0.267,0.333,0.4,0.4,0.467,0.533,0.6,0.667,0.733,0.8,0.8,0.867,0.933,0.933,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]}],"xLabel":"k, the number of top-scored points reviewed","yLabel":"share","yMin":0,"yMax":1,"vlines":[{"x":15,"label":"k = 15 (the true number)"}]} },
       { type: 'check', question: { type: 'tf', q: 'In an isolation forest, anomalies tend to have shorter average path lengths than normal points.', answer: true, explain: 'Few, different points are separated by few random splits.' } }
     ],
     when: `- Fraud, intrusion and abuse detection; predictive maintenance; monitoring business metrics.
@@ -607,7 +681,9 @@ In production, the analysts' verdicts become labels: over time you can move to s
       { type: 'mcq', q: 'Q1 = 20 and Q3 = 30. Which value is flagged by the IQR rule?', options: ['14', '38', '46', '25'], answer: 2, explain: 'Fences: 20 − 15 = 5 and 30 + 15 = 45; only 46 is outside.' },
       { type: 'mcq', q: 'What does an isolation forest measure?', options: ['Distance to the class centre', 'How few random splits it takes to isolate a point', 'Reconstruction error', 'The number of neighbours'], answer: 1, explain: 'Short paths mean anomalous.' },
       { type: 'tf', q: 'With 0.1% anomalies, a detector that flags nothing has 99.9% accuracy — so accuracy is a poor metric here.', answer: true, explain: 'Use precision, recall and precision@k instead.' },
-      { type: 'mcq', q: 'Novelty detection means…', options: ['Training on data that contains anomalies', 'Training only on known-normal data and flagging anything that looks new', 'Detecting new features', 'Supervised classification'], answer: 1, explain: 'A semi-supervised setting.' }
+      { type: 'mcq', q: 'Novelty detection means…', options: ['Training on data that contains anomalies', 'Training only on known-normal data and flagging anything that looks new', 'Detecting new features', 'Supervised classification'], answer: 1, explain: 'A semi-supervised setting.' },
+      {"type":"mcq","q":"Analysts can review 20 alerts a day. Which metric best matches that situation?","options":["ROC AUC","Precision@20","Accuracy","R²"],"answer":1,"explain":"With a fixed review budget, what matters is how many of the top 20 alerts are real: precision at k = 20 (and recall at 20 tells you how much you still miss)."},
+      {"type":"tf","q":"A value inside the normal overall range can still be an anomaly.","answer":true,"explain":"Contextual anomalies are unusual only for their context, such as a weekday or season, so compare each value with what was expected at that moment."}
     ],
     problems: [
       {
@@ -812,6 +888,7 @@ R_k — the recall of the top k: true positives so far divided by the number of 
 :::
 
 **mAP** is the mean AP over classes. The COCO benchmark also averages over IoU thresholds from 0.5 to 0.95, rewarding tight boxes.` },
+      { type: 'chart', title: "A precision–recall curve and its average precision", md: `90 detections of one class, sorted by confidence, scored against 60 ground-truth objects:`, after: `Walking down the list, every true positive moves the curve right and up a little, and every false positive pulls precision down. Even at the lowest threshold the detector finds only 90% of the 60 objects, so recall never reaches 1. Average precision is the area under the dashed envelope, the best precision achievable at each recall level or beyond: here AP ≈ 0.72. mAP averages it over classes, and COCO's metric also averages over IoU thresholds from 0.5 to 0.95.`, chart: {"kind":"line","points":false,"series":[{"name":"precision at each confidence threshold","x":[0.017,0.033,0.05,0.067,0.083,0.1,0.117,0.133,0.15,0.15,0.15,0.15,0.167,0.183,0.2,0.217,0.233,0.25,0.267,0.267,0.283,0.3,0.3,0.317,0.333,0.35,0.367,0.383,0.383,0.4,0.417,0.433,0.45,0.45,0.467,0.467,0.483,0.483,0.5,0.517,0.533,0.55,0.55,0.567,0.583,0.583,0.6,0.617,0.633,0.633,0.633,0.633,0.633,0.65,0.667,0.667,0.667,0.667,0.667,0.683,0.7,0.7,0.7,0.717,0.733,0.75,0.767,0.767,0.767,0.767,0.767,0.767,0.767,0.783,0.8,0.8,0.817,0.833,0.833,0.85,0.867,0.883,0.883,0.883,0.883,0.9,0.9,0.9,0.9,0.9],"y":[1,1,1,1,1,1,1,1,1,0.9,0.818,0.75,0.769,0.786,0.8,0.812,0.824,0.833,0.842,0.8,0.81,0.818,0.783,0.792,0.8,0.808,0.815,0.821,0.793,0.8,0.806,0.812,0.818,0.794,0.8,0.778,0.784,0.763,0.769,0.775,0.78,0.786,0.767,0.773,0.778,0.761,0.766,0.771,0.776,0.76,0.745,0.731,0.717,0.722,0.727,0.714,0.702,0.69,0.678,0.683,0.689,0.677,0.667,0.672,0.677,0.682,0.687,0.676,0.667,0.657,0.648,0.639,0.63,0.635,0.64,0.632,0.636,0.641,0.633,0.637,0.642,0.646,0.639,0.631,0.624,0.628,0.621,0.614,0.607,0.6]},{"name":"interpolated envelope (used for AP)","x":[0.017,0.033,0.05,0.067,0.083,0.1,0.117,0.133,0.15,0.15,0.15,0.15,0.167,0.183,0.2,0.217,0.233,0.25,0.267,0.267,0.283,0.3,0.3,0.317,0.333,0.35,0.367,0.383,0.383,0.4,0.417,0.433,0.45,0.45,0.467,0.467,0.483,0.483,0.5,0.517,0.533,0.55,0.55,0.567,0.583,0.583,0.6,0.617,0.633,0.633,0.633,0.633,0.633,0.65,0.667,0.667,0.667,0.667,0.667,0.683,0.7,0.7,0.7,0.717,0.733,0.75,0.767,0.767,0.767,0.767,0.767,0.767,0.767,0.783,0.8,0.8,0.817,0.833,0.833,0.85,0.867,0.883,0.883,0.883,0.883,0.9,0.9,0.9,0.9,0.9],"y":[1,1,1,1,1,1,1,1,1,0.9,0.842,0.842,0.842,0.842,0.842,0.842,0.842,0.842,0.842,0.821,0.821,0.821,0.821,0.821,0.821,0.821,0.821,0.821,0.818,0.818,0.818,0.818,0.818,0.8,0.8,0.786,0.786,0.786,0.786,0.786,0.786,0.786,0.778,0.778,0.778,0.776,0.776,0.776,0.776,0.76,0.745,0.731,0.727,0.727,0.727,0.714,0.702,0.69,0.689,0.689,0.689,0.687,0.687,0.687,0.687,0.687,0.687,0.676,0.667,0.657,0.648,0.646,0.646,0.646,0.646,0.646,0.646,0.646,0.646,0.646,0.646,0.646,0.639,0.631,0.628,0.628,0.621,0.614,0.607,0.6],"dash":true}],"xLabel":"recall: share of the 60 objects found","yLabel":"precision","xMin":0,"xMax":1,"yMin":0,"yMax":1.02} },
       { type: 'text', title: 'Segmentation', md: `**Semantic segmentation** predicts a class for every pixel with an **encoder–decoder** network. The encoder shrinks the image into rich, low-resolution features (what is there); the decoder upsamples back to full resolution (where it is). **U-Net** adds **skip connections** that copy high-resolution encoder features directly to the matching decoder level, so fine boundaries survive — it remains a workhorse in medical imaging and is the backbone of many diffusion models.
 
 The loss is per-pixel cross-entropy, often combined with the **Dice** loss, which handles small objects better. Both IoU and Dice measure the overlap of masks:
@@ -838,7 +915,13 @@ print(f"IoU  = {inter / union:.3f}")
 print(f"Dice = {2 * inter / (gt.sum() + pred.sum()):.3f}")
 print(pred.astype(int) + 2 * gt.astype(int))          # 3 = correct, 2 = missed, 1 = false alarm
 ` },
-      { type: 'check', question: { type: 'tf', q: 'Non-maximum suppression removes boxes that overlap a higher-scoring box by more than a threshold.', answer: true, explain: 'It keeps one box per object.' } }
+      { type: 'check', question: { type: 'tf', q: 'Non-maximum suppression removes boxes that overlap a higher-scoring box by more than a threshold.', answer: true, explain: 'It keeps one box per object.' } },
+      { type: 'text', title: "Modern detectors and promptable segmentation", md: `- **DETR** (2020) treats detection as set prediction: a transformer decoder with a fixed number of learned "object queries" outputs boxes directly, matched one-to-one with the ground truth during training (Hungarian matching), so it needs neither anchors nor non-maximum suppression. Its successors (Deformable DETR, DINO-DETR) fixed its slow training.
+- **YOLO-family** one-stage detectors keep improving the speed–accuracy trade-off for real-time use on cameras and small devices.
+- **Open-vocabulary detectors** (OWL-ViT, Grounding DINO) take a text prompt such as "a red backpack" and find matching objects, building on image–text pretraining as in CLIP, so new categories need no new labels.
+- **Segment Anything (SAM)** is a promptable segmentation model: given a point, a box or a rough mask, it returns the object's mask; it was trained on over a billion masks. Combined with an open-vocabulary detector, it can segment objects named in text.
+
+Detection metrics depend on the IoU threshold (a box that overlaps by 0.5 may count at one threshold and not at another), so always report which variant of mAP you use.` }
     ],
     when: `- Detection for counting and locating objects: vehicles, people, products, defects, text regions.
 - Semantic segmentation for per-pixel understanding: medical scans, satellite imagery, road scenes, background removal.
@@ -861,7 +944,9 @@ print(pred.astype(int) + 2 * gt.astype(int))          # 3 = correct, 2 = missed,
       { type: 'mcq', q: 'What do U-Net\'s skip connections do?', options: ['Skip training steps', 'Copy high-resolution encoder features to the decoder so fine detail is preserved', 'Remove layers', 'Connect two different images'], answer: 1, explain: 'They restore detail lost by downsampling.' },
       { type: 'fill', q: 'A predicted mask has 30 pixels, the true mask 50, and they share 20. What is the Dice score?', answer: ['0.5', '0.50'], explain: '2 · 20 / (30 + 50) = 0.5.' },
       { type: 'tf', q: 'Semantic segmentation gives two overlapping cars different labels.', answer: false, explain: 'That is instance segmentation; semantic segmentation labels both pixels "car".' },
-      { type: 'mcq', q: 'What does mAP stand for in detection benchmarks?', options: ['Mean absolute precision', 'Mean average precision over classes', 'Maximum area of prediction', 'Mapped accuracy percentage'], answer: 1, explain: 'AP per class, averaged.' }
+      { type: 'mcq', q: 'What does mAP stand for in detection benchmarks?', options: ['Mean absolute precision', 'Mean average precision over classes', 'Maximum area of prediction', 'Mapped accuracy percentage'], answer: 1, explain: 'AP per class, averaged.' },
+      {"type":"mcq","q":"Why does DETR need no non-maximum suppression?","options":["It predicts only one box","Training matches each predicted box one-to-one with a ground-truth object, so duplicate predictions are penalised","It uses anchors","It works at low resolution"],"answer":1,"explain":"With one-to-one matching, a second box on the same object is matched to nothing and penalised as a false detection, so the model learns not to produce duplicates."},
+      {"type":"tf","q":"Average precision summarises a detector's whole precision–recall curve, not just one confidence threshold.","answer":true,"explain":"AP is the area under the (interpolated) precision–recall curve, so it reflects every threshold at once."}
     ],
     problems: [
       {
@@ -1053,11 +1138,48 @@ for layers in (0, 1, 2, 4, 8, 16):
 | **Graph classification / regression** | is this molecule toxic? its solubility? | pool all node vectors (sum, mean) into one graph vector, then an MLP |
 
 Edge features (bond types, road lengths) can enter the messages, and many chemistry models add 3-D coordinates with symmetry-aware layers.` },
+      { type: 'text', title: "What message passing cannot see", md: `Message passing has a precise limit. A GNN that aggregates its neighbours with sums or means can tell two graphs apart at most as well as the **Weisfeiler–Lehman (1-WL) test**, a classic procedure that repeatedly relabels every node by its own label plus the multiset of its neighbours' labels. Graphs that 1-WL cannot distinguish, every message-passing GNN also confuses, whatever its weights.
+
+The standard example: one ring of 6 nodes, and two separate triangles. Every node in both graphs has exactly two neighbours, each of which also has two neighbours, so at every layer every node receives the same messages and computes the same vector. The GNN cannot detect that one graph contains triangles and the other does not, which matters in chemistry, where rings define molecules.
+
+Ways around it:
+- **features that break the symmetry**: node degrees, random or learned node identifiers, counts of small cycles;
+- **positional encodings** computed from the graph's structure, such as eigenvectors of the graph Laplacian or random-walk statistics;
+- **higher-order GNNs**, which pass messages between pairs or triples of nodes (more expressive and more expensive);
+- **graph transformers**, which let every node attend to every other node, with structural encodings added.` },
+      { type: 'code', title: "Two graphs a GNN cannot tell apart", code: `import numpy as np
+
+def ring(n):
+    A = np.zeros((n, n))
+    for i in range(n):
+        A[i, (i + 1) % n] = A[(i + 1) % n, i] = 1
+    return A
+
+six_ring = ring(6)                                    # one cycle of 6 nodes
+triangles = np.zeros((6, 6))
+triangles[:3, :3] = ring(3)                           # two separate triangles
+triangles[3:, 3:] = ring(3)
+
+rng = np.random.default_rng(0)
+W_self, W_neigh = rng.normal(size=(4, 4)), rng.normal(size=(4, 4))
+
+def gnn_readout(A, layers=3):
+    H = np.ones((len(A), 4))                          # identical starting features for every node
+    for _ in range(layers):
+        H = np.tanh(H @ W_self + (A @ H) / A.sum(1, keepdims=True) @ W_neigh)   # mean aggregation
+    return H.sum(axis=0)                              # graph-level readout
+
+a, b = gnn_readout(six_ring), gnn_readout(triangles)
+print("readout, 6-ring:   ", a.round(4))
+print("readout, triangles:", b.round(4))
+print("same representation:", np.allclose(a, b))
+print("triangles in each graph:", round(np.trace(np.linalg.matrix_power(six_ring, 3)) / 6), round(np.trace(np.linalg.matrix_power(triangles, 3)) / 6))`, after: `Both readouts are identical, for any weights and any number of layers, although one graph contains two triangles and the other none (the trace of A³ counts closed walks of length 3, six per triangle). A feature that breaks the symmetry, such as each node's number of triangles or a positional encoding, would let the GNN tell the graphs apart.`, predict: {"type":"mcq","q":"Every node starts with the same features. Will a message-passing GNN produce different graph representations for one 6-node ring and two separate triangles?","options":["Yes, always","No: every node receives exactly the same messages in both graphs","Only with more layers","Only with sum aggregation"],"answer":1,"explain":"All 12 nodes have two neighbours of degree two, so every node computes the same vector at every layer, in both graphs.","expect":["same representation: True"]} },
       { type: 'text', title: 'Pitfalls', md: `- **Over-smoothing**: too many layers make all node vectors alike (see the code above).
 - **Over-squashing**: information from far away must squeeze through a few bottleneck nodes.
 - **Scalability**: full-graph training does not fit in memory for huge graphs — sample neighbourhoods and train on mini-batches of subgraphs.
 - **Leakage in link prediction**: the edges you test on must be removed from the graph the model sees during training.
 - **Expressiveness**: standard message passing cannot distinguish some differently structured graphs (it is bounded by the Weisfeiler–Lehman test).` },
+      { type: 'chart', title: "Over-smoothing: node vectors become indistinguishable", md: `Random features on a 40-node graph with two communities, propagated with the normalised adjacency Â of a GCN (no learned weights), measuring how much the directions of the node vectors still differ:`, after: `Each propagation step averages every node with its neighbours, so the differences shrink geometrically: after a few dozen layers every node's vector points in the same direction (only its length still depends on its degree), and a classifier on top can no longer tell the nodes apart. Keeping half of each node's own vector at every step (a residual-style update) slows the collapse considerably. This is why most GNNs use only 2 to 4 layers, plus residual connections, normalisation or jumping-knowledge readouts when they need more.`, chart: {"kind":"line","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48],"yLog":true,"points":false,"series":[{"name":"plain propagation: H ← ÂH","y":[0.9748,0.8378,0.6442,0.4955,0.3851,0.3022,0.2388,0.1894,0.1507,0.1202,0.09605,0.07687,0.06161,0.04943,0.0397,0.0319,0.02566,0.02065,0.01662,0.01338,0.01078,0.008689,0.007004,0.005646,0.004553,0.003672,0.002962,0.002389,0.001927,0.001555,0.001255,0.001012,0.0008169,0.0006592,0.000532,0.0004293,0.0003465,0.0002796,0.0002257,0.0001821,0.000147,0.0001186,0.00009573,0.00007726,0.00006236,0.00005033,0.00004062,0.00003278,0.00002646]},{"name":"half residual: H ← ½H + ½ÂH","y":[0.9748,0.9338,0.8687,0.7868,0.6989,0.6158,0.5418,0.4774,0.4215,0.3731,0.3313,0.2948,0.2629,0.2349,0.2101,0.1881,0.1686,0.1512,0.1357,0.1219,0.1095,0.09842,0.08851,0.07962,0.07165,0.0645,0.05807,0.05231,0.04712,0.04246,0.03827,0.0345,0.0311,0.02804,0.02529,0.02281,0.02058,0.01857,0.01675,0.01512,0.01364,0.01231,0.01111,0.01003,0.009055,0.008175,0.007381,0.006664,0.006017]}],"xLabel":"number of message-passing layers","yLabel":"spread of node-vector directions (log scale)"} },
       { type: 'check', question: { type: 'tf', q: 'A GNN\'s output for a node changes if you renumber the nodes of the graph.', answer: false, explain: 'Shared weights and order-independent aggregation make it permutation-equivariant.' } }
     ],
     when: `- Molecules and materials (property prediction, generation), proteins.
@@ -1080,7 +1202,9 @@ Edge features (bond types, road lengths) can enter the messages, and many chemis
       { type: 'fill', q: 'In a GCN, a node has 2 neighbours. Including its self-loop, what is its degree in D̃?', answer: ['3'], explain: 'Ã = A + I adds the node itself.' },
       { type: 'mcq', q: 'Which head would you use to predict whether a molecule is toxic?', options: ['Node classification', 'Graph-level pooling followed by a classifier', 'Link prediction', 'No head'], answer: 1, explain: 'One prediction per whole graph.' },
       { type: 'tf', q: 'Stacking many GNN layers can make all node vectors very similar (over-smoothing).', answer: true, explain: 'Repeated averaging washes out differences.' },
-      { type: 'mcq', q: 'How is a transformer related to graph neural networks?', options: ['It is unrelated', 'Self-attention is message passing on a fully connected graph with learned weights', 'Transformers can only process trees', 'GNNs are a kind of tokenizer'], answer: 1, explain: 'Every token attends to every other token.' }
+      { type: 'mcq', q: 'How is a transformer related to graph neural networks?', options: ['It is unrelated', 'Self-attention is message passing on a fully connected graph with learned weights', 'Transformers can only process trees', 'GNNs are a kind of tokenizer'], answer: 1, explain: 'Every token attends to every other token.' },
+      {"type":"mcq","q":"What limits the ability of standard message-passing GNNs to distinguish graphs?","options":["The number of parameters","They are at most as powerful as the 1-WL graph isomorphism test","They cannot use node features","They need labelled edges"],"answer":1,"explain":"Message passing with sum or mean aggregation sees exactly what 1-WL refinement sees, so graphs that 1-WL cannot tell apart get identical representations."},
+      {"type":"tf","q":"Adding more message-passing layers always improves a GNN.","answer":false,"explain":"Many layers cause over-smoothing (the node vectors converge) and over-squashing, so most GNNs use only a few layers."}
     ],
     problems: [
       {
@@ -1231,6 +1355,7 @@ mel(f) — the perceived pitch on the mel scale: roughly linear below 1 kHz and 
 :::
 
 Pooling the spectrogram into about 80 mel bands and taking the logarithm gives the **log-mel spectrogram**, the standard input to modern speech models. Because it is an image, CNNs and transformers can process it directly.` },
+      { type: 'chart', title: "The mel scale compresses high frequencies", after: `Below about 1 kHz the mel scale is nearly linear; above it the curve flattens, so the 4,000 Hz between 4 and 8 kHz span only about 694 mels, while the first 1,000 Hz span 1000. Spacing filters evenly in mels mirrors human hearing, which separates low pitches finely and high pitches coarsely, and gives speech models more detail where speech carries most of its information.`, chart: {"kind":"line","x":[0,100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000,3100,3200,3300,3400,3500,3600,3700,3800,3900,4000,4100,4200,4300,4400,4500,4600,4700,4800,4900,5000,5100,5200,5300,5400,5500,5600,5700,5800,5900,6000,6100,6200,6300,6400,6500,6600,6700,6800,6900,7000,7100,7200,7300,7400,7500,7600,7700,7800,7900,8000],"points":false,"series":[{"name":"mel(f) = 2595 · log₁₀(1 + f / 700)","y":[0,150.5,283.2,402,509.4,607.4,697.7,781.2,858.9,931.7,1000,1064.4,1125.3,1183.1,1238.1,1290.6,1340.7,1388.6,1434.6,1478.8,1521.4,1562.3,1601.9,1640.1,1677.1,1712.8,1747.5,1781.2,1813.8,1845.6,1876.5,1906.5,1935.8,1964.3,1992.1,2019.3,2045.8,2071.7,2097.1,2121.8,2146.1,2169.8,2193,2215.8,2238.1,2260,2281.5,2302.5,2323.2,2343.5,2363.5,2383.1,2402.3,2421.3,2439.9,2458.2,2476.3,2494,2511.5,2528.7,2545.6,2562.3,2578.8,2595,2611,2626.7,2642.3,2657.6,2672.8,2687.7,2702.4,2717,2731.3,2745.5,2759.5,2773.3,2787,2800.5,2813.8,2827,2840]},{"name":"a linear scale, for comparison","y":[0,35.5,71,106.5,142,177.5,213,248.5,284,319.5,355,390.5,426,461.5,497,532.5,568,603.5,639,674.5,710,745.5,781,816.5,852,887.5,923,958.5,994,1029.5,1065,1100.5,1136,1171.5,1207,1242.5,1278,1313.5,1349,1384.5,1420,1455.5,1491,1526.5,1562,1597.5,1633,1668.5,1704,1739.5,1775,1810.5,1846,1881.5,1917,1952.5,1988,2023.5,2059,2094.5,2130,2165.5,2201,2236.5,2272,2307.5,2343,2378.5,2414,2449.5,2485,2520.5,2556,2591.5,2627,2662.5,2698,2733.5,2769,2804.5,2840],"dash":true}],"xLabel":"frequency f (Hz)","yLabel":"mels"} },
       { type: 'code', title: 'A spectrogram from scratch', code: `
 import numpy as np
 sr = 8000
@@ -1266,6 +1391,39 @@ I — inserted words (extra)
 N — the number of words in the reference transcript
 These are counted from the minimum edit (Levenshtein) alignment between the hypothesis and the reference; WER can exceed 1.
 :::` },
+      { type: 'text', title: "Measuring speech recognition: word error rate", md: `Speech recognisers are scored by the **word error rate**: align the recognised words with a reference transcript using the smallest number of edits, and count the edits:
+
+$$ WER = ( S + D + I ) / N $$
+:::where
+S — substitutions: reference words replaced by a wrong word
+D — deletions: reference words the recogniser missed
+I — insertions: extra words that are not in the reference
+N — the number of words in the reference
+:::
+
+Because insertions count, WER can exceed 100%. It treats every error alike ("a" for "the" costs as much as a wrong name) and depends on normalisation (punctuation, capital letters, numbers written as digits or as words), so compare systems only under the same normalisation. For languages written without spaces between words, the character error rate (CER) is used instead.` },
+      { type: 'code', title: "Word error rate with edit distance", code: `def wer(reference, hypothesis):
+    r, h = reference.lower().split(), hypothesis.lower().split()
+    d = [[0] * (len(h) + 1) for _ in range(len(r) + 1)]    # d[i][j]: edits turning r[:i] into h[:j]
+    for i in range(len(r) + 1):
+        d[i][0] = i
+    for j in range(len(h) + 1):
+        d[0][j] = j
+    for i in range(1, len(r) + 1):
+        for j in range(1, len(h) + 1):
+            cost = 0 if r[i - 1] == h[j - 1] else 1
+            d[i][j] = min(d[i - 1][j] + 1,                  # deletion
+                          d[i][j - 1] + 1,                  # insertion
+                          d[i - 1][j - 1] + cost)           # substitution, or a match
+    return d[len(r)][len(h)] / len(r)
+
+reference = "please book a table for two at seven tonight"
+for hyp in ["please book a table for two at seven tonight",
+            "please book the table for two at seven tonight",
+            "please book a table for at seven tonight",
+            "please look a table for two at eleven tonight please"]:
+    print(f"WER {wer(reference, hyp):5.1%}  | {hyp}")
+print("one wrong word in nine is about 11%:", round(wer(reference, "please book the table for two at seven tonight"), 3) == 0.111)`, after: `One substituted or missing word out of nine costs 11%. Two substitutions and an insertion cost 33%, and that last transcript is the one that ruins the booking ("look" for "book", "eleven" for "seven"), while "the" for "a" hardly matters: WER counts errors, it does not weigh them.`, predict: {"type":"mcq","q":"The reference has 9 words. The recogniser substitutes 2 words and inserts 1 extra word. What is the WER?","options":["11%","22%","33%","It cannot exceed 22%"],"answer":2,"explain":"(2 substitutions + 0 deletions + 1 insertion) / 9 words = 3/9 ≈ 33%.","expect":["one wrong word in nine is about 11%: True"]} },
       { type: 'text', title: 'Speaking and listening LLMs', md: `- **Text-to-speech (TTS)**: a model predicts acoustic features (often a mel spectrogram) from text, and a **vocoder** network turns them into a waveform. Modern systems sound natural and can clone a voice from seconds of audio.
 - **Neural audio codecs** compress audio into sequences of discrete **tokens** (using residual vector quantization), so a language model can read and generate audio just like text.
 - **Speech-native LLMs** take audio tokens or features in and produce audio out directly — lower latency than chaining speech-to-text, an LLM and text-to-speech, and they keep tone and emotion.
@@ -1292,7 +1450,9 @@ These are counted from the minimum edit (Levenshtein) alignment between the hypo
       { type: 'mcq', q: 'Why use the mel scale for speech features?', options: ['It is faster to compute', 'It spaces frequencies the way humans perceive pitch, with more detail at low frequencies', 'It removes noise', 'It doubles the resolution'], answer: 1, explain: 'Low frequencies carry much of speech information.' },
       { type: 'mcq', q: 'CTC frame outputs "h h _ e e _ l l _ l o o" (_ = blank). What is decoded?', options: ['hello', 'helo', 'hhello', 'hel lo'], answer: 0, explain: 'Collapse repeats: h _ e _ l _ l o; remove blanks: hello.' },
       { type: 'fill', q: 'A 10-word reference is transcribed with 1 substitution, 1 deletion and 1 insertion. What is the WER?', answer: ['0.3', '30%', '0.30'], explain: '(1 + 1 + 1) / 10 = 0.3.' },
-      { type: 'tf', q: 'Whisper is an encoder–decoder transformer that generates text tokens while attending to an encoded spectrogram.', answer: true, explain: 'A sequence-to-sequence model with cross-attention.' }
+      { type: 'tf', q: 'Whisper is an encoder–decoder transformer that generates text tokens while attending to an encoded spectrogram.', answer: true, explain: 'A sequence-to-sequence model with cross-attention.' },
+      {"type":"mcq","q":"Can the word error rate exceed 100%?","options":["No, never","Yes, because inserted extra words count as errors","Only for very short references","Only for the character error rate"],"answer":1,"explain":"WER divides all edits, including insertions, by the number of reference words, so a recogniser that adds many words can exceed 100%."},
+      {"type":"fill","q":"Using mel(f) = 2595 · log₁₀(1 + f / 700), what is the mel value of 700 Hz? (nearest whole number)","answer":["781","780","781.2"],"explain":"2595 × log₁₀(2) ≈ 2595 × 0.30103 ≈ 781."}
     ],
     problems: [
       {
@@ -1446,6 +1606,7 @@ print(f"observational, adjusted for age:   {coef[1]:+.2f}")
 | All patients | 273 / 350 = 78% | 289 / 350 = **83%** |
 
 A is better for small stones *and* for large stones, yet B looks better overall. The reason: doctors gave A mostly for the harder, large stones. Stone size is a **confounder** — the comparison within each size group is the fair one here. Which comparison is right depends on the causal structure, not on the numbers alone.` },
+      { type: 'chart', title: "Simpson's paradox: success rates by stone size", after: `A wins in both groups, yet B wins overall, because A was mostly given to the hard cases: 263 of A's 350 patients had large stones, against 80 of B's. Stone size drives both the choice of treatment and the outcome, so the overall comparison is confounded. Comparing within groups (adjusting for the confounder) gives the right answer: A.`, chart: {"kind":"bar","x":["small stones","large stones","all patients"],"series":[{"name":"treatment A","y":[93.1,73,78]},{"name":"treatment B","y":[86.7,68.8,82.6]}],"xLabel":"patient group","yLabel":"success rate (%)","yMin":0,"yMax":100} },
       { type: 'text', title: 'Causal graphs: what to adjust for', md: `Draw the causal story as a **directed acyclic graph** (DAG), with arrows from causes to effects. Then:
 
 - **Confounder** (a common cause, T ← C → Y): adjust for it, or it biases the estimate (age in the simulation, stone size in the table).
@@ -1485,6 +1646,40 @@ print(f"naive difference {y[t == 1].mean() - y[t == 0].mean():+.2f}")
 print(f"IPW estimate     {ipw:+.2f}")
 print(f"normalized IPW   {hajek:+.2f}   (true +2.00)")
 `, after: `Weighting each person by the inverse of their probability of the treatment they actually got rebalances the groups by age. The normalized version divides by the total weight instead of n, which usually makes it more stable when some weights are large.` },
+      { type: 'text', title: "Difference-in-differences and natural experiments", md: `Sometimes a change hits one group and not another: a city introduces a sugar tax, a store gets a redesign, a country changes a law. Comparing the treated group before and after mixes the effect with everything else that changed over time (the season, the economy). Comparing treated and untreated groups mixes it with the differences between the groups. **Difference-in-differences** (DiD) removes both:
+
+$$ DiD = ( ȳ_treated,after − ȳ_treated,before ) − ( ȳ_control,after − ȳ_control,before ) $$
+:::where
+ȳ_treated,after — the average outcome of the treated group after the change (and likewise for the other three averages)
+the first bracket — the treated group's change: the effect plus the common trend
+the second bracket — the control group's change: the common trend alone
+DiD — what remains: the effect of the treatment
+:::
+
+The key assumption is **parallel trends**: without the treatment, both groups would have changed by the same amount. Check it over several periods before the change; if the groups were already drifting apart, DiD is not credible.
+
+Other **natural experiments** exploit situations that are almost random:
+- **Regression discontinuity**: a scholarship goes to every student scoring at least 80. Students at 79 and 81 are nearly identical, so comparing them estimates the scholarship's effect at the cut-off.
+- **Instrumental variables**: find something that shifts who gets the treatment but affects the outcome only through the treatment, such as a lottery that offers some people a programme, and use only the variation it creates.` },
+      { type: 'chart', title: "Difference-in-differences: the control group supplies the trend", after: `Before the programme both cities rise in parallel. Afterwards the treated city jumps above the dashed line, which continues its old path by borrowing the control city's trend. The gap between the solid and dashed lines is the effect, about 10; the treated city's raw before-and-after change is larger because it also contains the common trend.`, chart: {"kind":"line","series":[{"name":"treated city","x":[-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6],"y":[92.17,94.36,95.12,96.84,97.11,98.9,109.29,111.87,112.55,113.86,115.13,115.19,117.83]},{"name":"control city","x":[-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6],"y":[72.95,73.58,74.87,74.45,79.04,79.72,79.74,81.82,82.62,83.16,85.58,85.75,86.94]},{"name":"treated city without the programme (parallel to the control)","x":[0,1,2,3,4,5,6],"y":[100,101.2,102.4,103.6,104.8,106,107.2],"dash":true}],"xLabel":"month relative to the programme start","yLabel":"average sales","vlines":[{"x":0,"label":"programme starts"}]} },
+      { type: 'code', title: "Difference-in-differences on simulated sales", code: `import numpy as np
+import pandas as pd
+rng = np.random.default_rng(0)
+rows = []
+for treated in (1, 0):                          # city A gets a loyalty programme, city B does not
+    for after in (0, 1):
+        for _ in range(200):                    # 200 stores per city and period
+            sales = (100 if treated else 80) + 15 * after + 10 * treated * after + rng.normal(0, 8)
+            rows.append((treated, after, sales))
+df = pd.DataFrame(rows, columns=["treated", "after", "sales"])
+
+m = df.groupby(["treated", "after"])["sales"].mean()
+naive = m[(1, 1)] - m[(1, 0)]
+did = (m[(1, 1)] - m[(1, 0)]) - (m[(0, 1)] - m[(0, 0)])
+print(f"treated city: {m[(1, 0)]:.1f} -> {m[(1, 1)]:.1f}    control city: {m[(0, 0)]:.1f} -> {m[(0, 1)]:.1f}")
+print(f"before/after in the treated city: {naive:.1f}   (the effect plus the common trend of 15)")
+print(f"difference-in-differences:        {did:.1f}   (the true effect is 10)")
+print("DiD close to the true effect:", bool(abs(did - 10) < 2))`, after: `The treated city's sales rose by about 24, but the control city rose by about 15 over the same period without any programme. Subtracting the common trend leaves roughly 10, the effect built into the simulation. The level difference between the cities (100 against 80) cancels out too, which is why the cities never had to be alike, only to move in parallel.`, predict: {"type":"mcq","q":"Treated city: average sales went from 100 to 125. Control city: from 80 to 95. What is the difference-in-differences estimate of the effect?","options":["25","15","10","45"],"answer":2,"explain":"(125 − 100) − (95 − 80) = 25 − 15 = 10: the treated city's change minus the change it would have had anyway.","expect":["DiD close to the true effect: True"]} },
       { type: 'check', question: { type: 'tf', q: 'Adjusting for a collider (a common effect of treatment and outcome) can create a spurious association.', answer: true, explain: 'Conditioning on a common effect links its causes.' } }
     ],
     when: `- Decisions about actions: pricing, marketing, product changes, medical treatments, policies.
@@ -1508,7 +1703,9 @@ print(f"normalized IPW   {hajek:+.2f}   (true +2.00)")
       { type: 'mcq', q: 'Treatment A is better than B for small stones and for large stones, but worse overall. What is this called?', options: ['Overfitting', 'Simpson\'s paradox', 'Regression to the mean', 'Data leakage'], answer: 1, explain: 'A confounder (stone size) reverses the aggregate comparison.' },
       { type: 'mcq', q: 'Exercise → lower blood pressure → fewer heart attacks. To estimate exercise\'s total effect on heart attacks, should you adjust for blood pressure?', options: ['Yes, always', 'No — it is a mediator on the causal path', 'Only if it is measured', 'Only in randomized trials'], answer: 1, explain: 'Adjusting would remove the part of the effect that flows through it.' },
       { type: 'fill', q: 'A treated unit has propensity score 0.2. What is its inverse propensity weight?', answer: ['5', '5.0'], explain: '1 / 0.2 = 5: only about one in five similar units gets treated, so this one stands in for all five.' },
-      { type: 'tf', q: 'A randomized A/B test is not affected by confounding.', answer: true, explain: 'Randomization makes treatment independent of other characteristics (up to chance imbalance).' }
+      { type: 'tf', q: 'A randomized A/B test is not affected by confounding.', answer: true, explain: 'Randomization makes treatment independent of other characteristics (up to chance imbalance).' },
+      {"type":"mcq","q":"What key assumption does difference-in-differences rely on?","options":["The two groups are identical","Without the treatment, both groups would have followed parallel trends","The treatment was randomised","There is no noise"],"answer":1,"explain":"The control group's change stands in for what the treated group would have done; that only works if their trends would have been parallel."},
+      {"type":"mcq","q":"Kidney stones: treatment A succeeds in 93% of small and 73% of large stones, B in 87% and 69%; overall, A 78% and B 83%. Which treatment would you choose for a patient whose stone size is known?","options":["A","B","Either: they are equal","It cannot be decided"],"answer":0,"explain":"A is better within each group. B only looks better overall because it was mostly given to the easier small-stone cases."}
     ],
     problems: [
       {

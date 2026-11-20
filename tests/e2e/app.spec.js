@@ -107,7 +107,9 @@ test('progress saved by older versions (section positions) is migrated to sectio
 test('a wrong "predict first" answer is explained and queued for review', async ({ page }) => {
   await boot(page, '/home');
   await go(page, '/concept/probability', 'Probability');
-  const box = page.locator('.predict-box').first();
+  // the lesson has several predictions; pick the Bayes one by its section heading
+  const section = page.locator('.lesson-section').filter({ has: page.getByRole('heading', { name: 'Bayes by counting', exact: true }) });
+  const box = section.locator('.predict-box');
   await box.getByText('About 50%', { exact: true }).click();
   await expect(box.locator('.feedback')).toContainText('Not what happens');
   await go(page, '/review?tab=mistakes', 'Review');

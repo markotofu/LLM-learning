@@ -2,6 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <!-- Content-Security-Policy (GitHub Pages cannot send headers, so it lives here). Scripts only from this site and the
+       jsDelivr mirrors that host Pyodide; no inline scripts, so injected markup cannot run code. 'unsafe-eval' is needed
+       by Vue's in-browser template compiler, 'wasm-unsafe-eval' by Pyodide; blob: workers run the Python engine. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' https://*.jsdelivr.net blob:; worker-src 'self' blob:; connect-src 'self' https: blob: data:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0f1012">
   <meta name="description" content="ML Atlas: an interactive mind map of machine learning, neural networks and large language models, with lessons, runnable Python, quizzes and coding problems that run in your browser.">
@@ -10,10 +15,7 @@
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="css/app.css">
-  <script>
-    // apply the saved theme before first paint (avoids a flash of the wrong theme)
-    try { var t = JSON.parse(localStorage.getItem('mla.state.v1') || '{}').profile; if (t && (t.theme === 'light' || t.theme === 'darker')) document.documentElement.setAttribute('data-theme', t.theme); } catch (e) {}
-  </script>
+  <script src="js/core/boot-theme.js"></script>
 </head>
 <body>
   <div id="app"><div style="padding:40px;font-family:system-ui;color:#a3a7b0">Loading ML Atlas…</div></div>
@@ -49,6 +51,7 @@
   <script src="js/data/concepts-apps.js"></script>
   <script src="js/data/concepts-spec.js"></script>
   <script src="js/data/concepts-foundations-plus.js"></script>
+  <script src="js/data/concepts-viz.js"></script>
   <script src="js/data/concepts-llm-plus.js"></script>
   <script src="js/data/concepts-spec-plus.js"></script>
   <script src="js/data/concepts-theory-plus.js"></script>
@@ -72,6 +75,7 @@
   <script src="js/views/editor.js"></script>
   <script src="js/views/demos.js"></script>
   <script src="js/views/diagrams.js"></script>
+  <script src="js/views/charts.js"></script>
   <script src="js/views/demos-more.js"></script>
   <script src="js/views/quiz-view.js"></script>
   <script src="js/views/map-view.js"></script>
@@ -84,11 +88,6 @@
   <script src="js/views/profile.js"></script>
   <script src="js/views/legal.js"></script>
   <script src="js/app.js"></script>
-  <script>
-    // Offline support + installable app (only over http/https, e.g. GitHub Pages or `node serve.js`)
-    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-      window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
-    }
-  </script>
+  <script src="js/core/boot-sw.js"></script>
 </body>
 </html>

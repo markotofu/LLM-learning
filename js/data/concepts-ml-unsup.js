@@ -36,6 +36,12 @@ n — the number of training examples
 In scikit-learn the trade-off is written with **C ≈ 1/λ**: large C → violations are expensive → narrow margin, fits the training data tightly (risk of overfitting); small C → wide margin, more violations tolerated (more regularization).
 
 Compare with logistic regression: same linear score, different loss. Log loss never reaches zero (it keeps pushing confident points further), while hinge loss stops caring once a point is beyond the margin.` },
+      { type: 'chart', title: "Three losses as a function of the margin", after: `The 0–1 loss counts mistakes but gives no gradient. The hinge loss is zero only for points beyond the margin (t·h ≥ 1) and grows linearly for points inside it or on the wrong side, which is what makes SVM solutions depend only on the support vectors. The log loss of logistic regression is similar but never exactly zero, so every point keeps a small influence.`, chart: {"kind":"line","x":[-2,-1.95,-1.9,-1.85,-1.8,-1.75,-1.7,-1.65,-1.6,-1.55,-1.5,-1.45,-1.4,-1.35,-1.3,-1.25,-1.2,-1.15,-1.1,-1.05,-1,-0.95,-0.9,-0.85,-0.8,-0.75,-0.7,-0.65,-0.6,-0.55,-0.5,-0.45,-0.4,-0.35,-0.3,-0.25,-0.2,-0.15,-0.1,-0.05,0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1,1.05,1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75,1.8,1.85,1.9,1.95,2,2.05,2.1,2.15,2.2,2.25,2.3,2.35,2.4,2.45,2.5,2.55,2.6,2.65,2.7,2.75,2.8,2.85,2.9,2.95,3],"points":false,"series":[{"name":"0–1 loss (wrong or not)","y":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"name":"hinge: max(0, 1 − t·h)","y":[3,2.95,2.9,2.85,2.8,2.75,2.7,2.65,2.6,2.55,2.5,2.45,2.4,2.35,2.3,2.25,2.2,2.15,2.1,2.05,2,1.95,1.9,1.85,1.8,1.75,1.7,1.65,1.6,1.55,1.5,1.45,1.4,1.35,1.3,1.25,1.2,1.15,1.1,1.05,1,0.95,0.9,0.85,0.8,0.75,0.7,0.65,0.6,0.55,0.5,0.45,0.4,0.35,0.3,0.25,0.2,0.15,0.1,0.05,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"name":"log loss (in bits)","y":[3.069,3.005,2.942,2.88,2.818,2.756,2.695,2.634,2.574,2.514,2.455,2.396,2.338,2.28,2.223,2.167,2.111,2.056,2.002,1.948,1.895,1.842,1.791,1.74,1.69,1.64,1.592,1.544,1.497,1.451,1.405,1.361,1.317,1.274,1.233,1.192,1.151,1.112,1.074,1.037,1,0.964,0.93,0.896,0.863,0.831,0.8,0.77,0.74,0.712,0.684,0.657,0.631,0.606,0.582,0.558,0.535,0.513,0.492,0.472,0.452,0.433,0.415,0.397,0.38,0.363,0.348,0.333,0.318,0.304,0.291,0.278,0.265,0.253,0.242,0.231,0.221,0.211,0.201,0.192,0.183,0.175,0.167,0.159,0.152,0.145,0.138,0.131,0.125,0.119,0.114,0.108,0.103,0.098,0.094,0.089,0.085,0.081,0.077,0.074,0.07]}],"xLabel":"t · h(x): the signed score (positive = correct side)","yLabel":"loss"} },
+      { type: 'text', title: "Support vectors, scaling and C in practice", md: `Three practical facts follow from the "widest street" picture:
+
+- **Only the support vectors matter.** The training points that lie on the edge of the street, or inside it, fix the boundary. Every other point could move (staying off the street) or be deleted without changing the model. That is where the name comes from, and why a trained SVM only needs to store those points.
+- **Scale the features.** The width of the street is measured in the units of the features. If one feature ranges from 0 to 1,000 and another from 0 to 1, the street is effectively measured along the large feature only. Always standardize the features first (\`StandardScaler\`).
+- **C trades street width against violations.** A *hard margin* (no point allowed inside the street) only exists when the classes are perfectly separable, and a single outlier can ruin it. The *soft margin* allows violations, weighted by C: a **small C** gives a wide street with more violations (a simpler, more regularized model); a **large C** gives a narrow street with few violations. If an SVM overfits, lower C.` },
       { type: 'code', title: 'A linear SVM trained by subgradient descent', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -67,6 +73,62 @@ The SVM's solution only ever needs **dot products between examples**. A **kernel
 With an RBF kernel the decision function becomes a weighted sum of similarities to the support vectors — a smooth, flexible boundary. Hyperparameters: C and γ (large γ = very local, wiggly boundary).
 
 The cost: kernel SVMs scale roughly quadratically with the number of examples, so they suit datasets up to tens of thousands of points.` },
+      { type: 'code', title: "Polynomial features versus the polynomial kernel", md: `Two ways to give a linear SVM curved boundaries on the two-moons data. The first adds all polynomial features up to degree 3 explicitly and fits a linear SVM on them. The second uses the **polynomial kernel**, which computes the same kind of decision function *without ever creating those features*.`, code: `import warnings
+from sklearn.datasets import make_moons
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+from sklearn.svm import LinearSVC, SVC
+warnings.filterwarnings("ignore")
+
+X, y = make_moons(n_samples=300, noise=0.3, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+explicit = make_pipeline(PolynomialFeatures(degree=3), StandardScaler(), LinearSVC(C=10, max_iter=100_000))
+explicit.fit(X_train, y_train)
+print("features created explicitly:", explicit[0].n_output_features_)
+print(f"polynomial features + linear SVM   test accuracy {explicit.score(X_test, y_test):.3f}")
+
+kernel = make_pipeline(StandardScaler(), SVC(kernel="poly", degree=3, coef0=1, C=5))
+kernel.fit(X_train, y_train)
+print(f"polynomial kernel SVM              test accuracy {kernel.score(X_test, y_test):.3f}")`, after: `Both reach a similar accuracy. With 2 features and degree 3 the explicit route creates only 10 features, but with 100 features and degree 3 it would create about 177,000, and with higher degrees the count explodes. The kernel trick computes the dot products those features would produce directly from the original inputs, so its cost does not depend on the number of implicit features. The \`coef0\` setting controls how much high-degree terms count compared with low-degree ones.` },
+      { type: 'text', title: "Similarity features and the Gaussian RBF kernel", md: `Another way to bend the boundary is to describe each point by its **similarity** to a few reference points called *landmarks*. The Gaussian radial basis function (RBF) measures similarity as a bell curve:
+
+$$ φ(x, ℓ) = exp( −γ · ‖x − ℓ‖² ) $$
+:::where
+x — an input point
+ℓ — "ell": a landmark, a reference point in the same space
+‖x − ℓ‖ — the distance between x and the landmark
+γ — "gamma": how quickly the similarity falls off with distance (larger γ means a narrower bell)
+φ(x, ℓ) — the similarity: 1 when x sits on the landmark, falling towards 0 far away
+:::
+
+Replacing each point by its similarities to a few landmarks can turn a curved problem into a linearly separable one. The simplest choice is a landmark at **every** training point, which would create as many features as there are examples. The **RBF kernel** gets the result of that construction without building the features, which is what \`SVC(kernel="rbf")\` (the default) does.
+
+The two settings work together:
+
+- **gamma** acts like an inverse range of influence. A large γ makes each training point's bell narrow, so the boundary wiggles around individual points (overfitting). A small γ makes broad bells and a smooth boundary (possibly underfitting).
+- **C** limits violations as before. If the model overfits, reduce γ, C or both.` },
+      { type: 'code', title: "gamma and C on noisy moons", code: `from sklearn.datasets import make_moons
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+
+X, y = make_moons(n_samples=300, noise=0.3, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+print("gamma      C    train   test   support vectors")
+for gamma in [0.1, 1, 10]:
+    for C in [0.1, 1, 1000]:
+        svm = SVC(kernel="rbf", gamma=gamma, C=C).fit(X_train, y_train)
+        print(f"{gamma:5}  {C:5}    {svm.score(X_train, y_train):.3f}  {svm.score(X_test, y_test):.3f}   {len(svm.support_):4d}")`, after: `Small gamma and small C give a very smooth boundary that underfits, with many support vectors (a wide street touches many points). Large gamma and large C fit the training data almost perfectly, but the test score drops: the boundary now curls around individual noisy points. The best models sit in between, and the right combination depends on the data, so choose it with a [grid search](#/concept/cross-validation).` },
+      { type: 'text', title: "Which kernel, and how fast?", md: `**Start with a linear kernel.** \`LinearSVC\` is much faster than \`SVC(kernel="linear")\`, especially with many examples or many features, as in text classification. If the data is not too large, try the **RBF kernel** next; it works well in most cases. Specialised kernels exist for particular data structures (string kernels for text or DNA sequences), and cross-validation plus a grid search can compare them.
+
+| Class | Time to train | Kernel trick | Scaling required | Works out of core |
+| --- | --- | --- | --- | --- |
+| \`LinearSVC\` | grows like m × n | no | yes | no |
+| \`SGDClassifier(loss="hinge")\` | grows like m × n | no | yes | yes (\`partial_fit\`) |
+| \`SVC\` | grows like m² × n to m³ × n | yes | yes | no |
+
+Here m is the number of training examples and n the number of features. \`SVC\` is a good choice for small and medium datasets (up to a few tens of thousands of examples) but becomes painfully slow on hundreds of thousands.` },
       { type: 'code', title: 'Linear vs RBF kernel on rings (scikit-learn)', code: `
 from sklearn.datasets import make_circles
 from sklearn.svm import SVC
@@ -79,7 +141,72 @@ for kernel in ["linear", "rbf"]:
     clf = SVC(kernel=kernel, C=1.0).fit(X_tr, y_tr)
     print(f"{kernel:>6} kernel: test accuracy {clf.score(X_te, y_te):.3f}, support vectors {len(clf.support_)}")
 `, predict: {"type":"mcq","q":"The two classes form concentric rings. Roughly what test accuracy does a linear-kernel SVM reach?","options":["About 50%","About 75%","About 90%","100%"],"answer":0,"explain":"0.525: no straight line separates an inner ring from an outer one. The RBF kernel works in a space where they are separable and scores 1.000, with far fewer support vectors.","expect":["linear kernel: test accuracy 0.5"]} },
-      { type: 'check', question: { type: 'tf', q: 'Increasing C in scikit-learn\'s SVC makes margin violations more expensive, which tends to narrow the margin and fit the training data more tightly.', answer: true, explain: 'C acts like 1/λ: less regularization, more risk of overfitting.' } }
+      { type: 'check', question: { type: 'tf', q: 'Increasing C in scikit-learn\'s SVC makes margin violations more expensive, which tends to narrow the margin and fit the training data more tightly.', answer: true, explain: 'C acts like 1/λ: less regularization, more risk of overfitting.' } },
+      { type: 'code', title: "SVM regression", md: `SVMs also do regression, by reversing the goal: instead of the widest street *between* the classes, fit as many points as possible *on* a street of width 2ε around the prediction, and limit the points that fall outside it. Points inside the street cost nothing, so the model is called **ε-insensitive**. \`LinearSVR\` handles linear regression; \`SVR\` supports kernels.`, code: `import numpy as np
+from sklearn.svm import SVR
+
+rng = np.random.default_rng(0)
+x = np.sort(rng.uniform(0, 6, 120))[:, None]
+y = np.sin(x[:, 0]) + rng.normal(0, 0.15, 120)
+counts = []
+for eps in [0.05, 0.2, 0.5]:
+    svr = SVR(kernel="rbf", C=10, epsilon=eps).fit(x, y)
+    counts.append(len(svr.support_))
+    print(f"epsilon={eps:<5} support vectors {counts[-1]:3d}   R2 {svr.score(x, y):.3f}")
+print("fewer support vectors as epsilon grows:", counts[0] > counts[1] > counts[2])`, after: `Only the points **outside or on the edge of** the ε-street become support vectors, so a wider street needs far fewer of them. Too wide a street, though, ignores real structure: with ε = 0.5 the model barely notices the noise-free shape and the fit worsens.`, predict: {"type":"mcq","q":"In SVM regression, ε sets the width of the street inside which errors cost nothing. As ε grows from 0.05 to 0.5, what happens to the number of support vectors?","options":["It grows, because the street holds more points","It shrinks, because fewer points fall outside the street","It stays the same","It becomes zero immediately"],"answer":1,"explain":"Only points on or outside the street are support vectors. A wider street contains more points at no cost, so fewer remain outside: 83, then 25, then just 2 here.","expect":["fewer support vectors as epsilon grows: True"]} },
+      { type: 'text', title: "Under the hood: the training objective", md: `For a linear SVM the decision function is h = w·x + b; the predicted class is positive when h ≥ 0. The street's edges are where h = 1 and h = −1, so the street's width is 2 / ‖w‖: **a smaller weight vector means a wider street.** Training a hard-margin SVM is therefore a constrained minimisation:
+
+$$ minimise  ½ ‖w‖²   subject to   tᵢ · (w·xᵢ + b) ≥ 1   for every training example i $$
+:::where
+w, b — the weight vector and the bias of the decision function
+‖w‖² — the squared length of w; minimising it maximises the street's width 2 / ‖w‖
+tᵢ — the label of example i, written as −1 or +1
+xᵢ — the features of example i
+tᵢ · (w·xᵢ + b) ≥ 1 — every example is on the correct side of the street, at least one unit away from the boundary
+:::
+
+The soft margin adds a **slack variable** ζᵢ ≥ 0 for each example, measuring how far it is allowed to violate the margin, and pays for the total slack:
+
+$$ minimise  ½ ‖w‖² + C · Σᵢ ζᵢ   subject to   tᵢ · (w·xᵢ + b) ≥ 1 − ζᵢ  and  ζᵢ ≥ 0 $$
+:::where
+ζᵢ — "zeta": the slack of example i, 0 when it is off the street on the correct side
+C — the trade-off between a wide street (small ‖w‖) and few, small violations
+Σᵢ — the sum over all training examples
+:::
+
+Both are **quadratic programs** (a quadratic objective with linear constraints), a well-studied class of problems with efficient solvers.` },
+      { type: 'text', title: "The dual problem and the kernel trick", md: `A constrained problem can be rewritten as a related **dual problem** with one variable αᵢ ≥ 0 per training example. For SVMs the solution of the dual gives the solution of the original problem, and it has two useful properties:
+
+- αᵢ is non-zero only for the **support vectors**, so the model is a weighted sum over a few training points.
+- The training examples appear in the dual **only through dot products** xᵢ·xⱼ. Replace every dot product by a kernel K(xᵢ, xⱼ) and you train a linear SVM in the (possibly enormous) feature space of that kernel, without ever computing the features. Predictions use the same trick:
+
+$$ h(x) = Σᵢ αᵢ · tᵢ · K(xᵢ, x) + b $$
+:::where
+h(x) — the decision score of a new point x
+αᵢ — the dual weight of training example i (zero except for the support vectors)
+tᵢ — the label of example i (−1 or +1)
+K(xᵢ, x) — the kernel: a similarity between training example i and x, equal to a dot product in some feature space
+b — the bias
+:::
+
+A function can serve as a kernel only if it really is a dot product in some space (Mercer's condition); the linear, polynomial and RBF kernels all qualify. Solving the dual is also faster than the original form when there are fewer training examples than features.` },
+      { type: 'text', title: "Online SVMs and the hinge loss", md: `A linear SVM can also be trained by gradient descent on the **hinge loss** with an L2 penalty, which lets it learn from data that arrives in a stream or does not fit in memory:
+
+$$ L(w, b) = (λ / 2) · ‖w‖² + (1/m) · Σᵢ max(0, 1 − tᵢ · (w·xᵢ + b)) $$
+:::where
+L(w, b) — the training objective
+λ — "lambda": the regularization strength (it plays the role of 1/C)
+m — the number of training examples
+max(0, 1 − tᵢ · (w·xᵢ + b)) — the hinge loss: 0 for points off the street on the correct side, growing linearly with the violation
+:::
+
+In scikit-learn this is \`SGDClassifier(loss="hinge")\`, which updates the model one batch at a time with \`partial_fit\`. It converges more slowly than \`LinearSVC\`, but it never needs all the data at once.` },
+      { type: 'text', title: "Strengths and weaknesses", md: `| Strengths | Weaknesses |
+| --- | --- |
+| powerful on small and medium datasets, with few or many features | \`SVC\` scales badly: slow beyond tens of thousands of examples |
+| a kernel can capture complex boundaries even with few features | needs careful scaling and tuning of C and gamma |
+| the model depends only on the support vectors | hard to inspect or explain why a prediction was made |
+| works well when all features are measurements of the same kind (pixels, sensor readings) | no probabilities by default (\`probability=True\` adds a slow, cross-validated calibration) |` }
     ],
     when: `- Small/medium datasets with many features (text classification with TF-IDF features is a classic fit for linear SVMs).
 - When a robust, max-margin linear classifier is wanted, or a smooth non-linear boundary via the RBF kernel on modest data sizes.
@@ -101,7 +228,10 @@ for kernel in ["linear", "rbf"]:
       { type: 'fill', q: 'A point has label y = −1 and score s = 0.4. What is its hinge loss?', answer: ['1.4'], explain: 'max(0, 1 − (−1)(0.4)) = max(0, 1.4) = 1.4 — it is on the wrong side.' },
       { type: 'mcq', q: 'What does the kernel trick allow?', options: ['Training without labels', 'Computing dot products in a high-dimensional feature space without constructing it', 'Removing the need for regularization', 'Making SVMs output probabilities'], answer: 1, explain: 'Kernels give similarities that equal dot products of implicit feature maps.' },
       { type: 'mcq', q: 'How does SVM\'s hinge loss differ from logistic regression\'s log loss?', options: ['Hinge loss is zero for points beyond the margin; log loss is never exactly zero', 'They are identical', 'Hinge loss is used for regression', 'Log loss ignores misclassified points'], answer: 0, explain: 'Log loss keeps pushing even confident correct points; hinge loss is satisfied once the margin is met.' },
-      { type: 'tf', q: 'A wider margin corresponds to a smaller ‖w‖.', answer: true, explain: 'The margin width is 2/‖w‖.' }
+      { type: 'tf', q: 'A wider margin corresponds to a smaller ‖w‖.', answer: true, explain: 'The margin width is 2/‖w‖.' },
+      {"type":"mcq","q":"An RBF-kernel SVM scores 100% on its training data and 82% on the test set. Which change is most likely to help?","options":["Increase gamma","Increase C","Decrease gamma and/or C","Remove feature scaling"],"answer":2,"explain":"Large gamma (narrow bells) and large C (few allowed violations) both let the boundary curl around individual points. Reducing them smooths the boundary."},
+      {"type":"mcq","q":"Why does the kernel trick make the polynomial kernel practical for high degrees?","options":["It drops most of the features at random","It computes the dot products of the high-dimensional features directly from the original inputs, without creating the features","It only works with two features","It replaces the SVM by a decision tree"],"answer":1,"explain":"K(a, b) equals the dot product the explicit features would give, computed in the original space, so the cost does not grow with the number of implicit features."},
+      {"type":"tf","q":"In SVM regression, training points that fall inside the ε-street do not affect the model.","answer":true,"explain":"Errors inside the street cost nothing (the ε-insensitive loss), so only points on or outside it become support vectors."}
     ],
     problems: [
       {
@@ -307,6 +437,84 @@ for msg in ["win cheap money", "meeting tomorrow at noon", "money for the projec
     scores = {c: round(log_score(msg, c), 2) for c in classes}
     print(f"{msg!r:30} -> {max(scores, key=scores.get):4}  {scores}")
 ` },
+      { type: 'text', title: "Three flavours of naive Bayes in scikit-learn", md: `All three make the same "naive" independence assumption and differ only in how they model each feature within a class:
+
+| Class | Features | What training stores per class |
+| --- | --- | --- |
+| \`GaussianNB\` | continuous measurements | the mean and variance of every feature |
+| \`BernoulliNB\` | binary (present / absent) | how often each feature is present |
+| \`MultinomialNB\` | counts, such as word counts | the average count of each feature |
+
+For \`GaussianNB\`, the likelihood of a feature value is a bell curve centred on that class's mean:
+
+$$ P(x_j | c) = (1 / √(2π σ²_cj)) · exp( −(x_j − μ_cj)² / (2 σ²_cj) ) $$
+:::where
+x_j — the value of feature j for the example being classified
+c — a candidate class
+μ_cj — the mean of feature j among the training examples of class c
+σ²_cj — the variance of feature j among the training examples of class c
+π — the constant 3.14159…
+exp — the exponential function
+:::
+
+\`BernoulliNB\` and \`MultinomialNB\` have one setting, **alpha**, the smoothing strength (alpha = 1 is the add-one smoothing from the spam filter above). Larger alpha makes the model smoother and less confident; results are usually not very sensitive to it.` },
+      { type: 'code', title: "Training is just counting", md: `Bernoulli naive Bayes on four tiny examples with four binary features. Training only needs, for each class, how often every feature is present:`, code: `import numpy as np
+from sklearn.naive_bayes import BernoulliNB, GaussianNB
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+
+X = np.array([[0, 1, 0, 1],
+              [1, 0, 1, 1],
+              [0, 0, 0, 1],
+              [1, 0, 1, 0]])
+y = np.array([0, 1, 0, 1])
+for label in np.unique(y):
+    print(f"class {label}: feature counts {X[y == label].sum(axis=0)}")
+
+model = BernoulliNB(alpha=1.0).fit(X, y)
+print("P(class | [1, 0, 1, 1]) =", model.predict_proba([[1, 0, 1, 1]]).round(3))
+
+X, y = load_breast_cancer(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
+gnb = GaussianNB().fit(X_train, y_train)
+print(f"Gaussian naive Bayes on breast cancer: test accuracy {gnb.score(X_test, y_test):.3f}")
+print("learned means of the first 3 features, per class:")
+print(gnb.theta_[:, :3].round(2))`, after: `Class 1 contains features 0 and 2 in both of its examples, so a new example that has them is classified as class 1 with high confidence. On the breast-cancer data, Gaussian naive Bayes is a few points less accurate than logistic regression, but it trains in a fraction of the time, because "training" is computing means and variances.` },
+      { type: 'text', title: "Strengths and weaknesses", md: `| Strengths | Weaknesses |
+| --- | --- |
+| extremely fast to train (one pass of counting) and to predict | usually a bit less accurate than linear models |
+| works with very high-dimensional, sparse data such as text | its probabilities are poorly calibrated: often too close to 0 or 1, because evidence from correlated features is counted twice |
+| almost no tuning: alpha rarely matters much | Gaussian NB assumes bell-shaped features within each class |
+| a sensible baseline for huge datasets where even linear models are slow | classification only |` },
+      { type: 'text', title: "Generative or discriminative?", md: `Naive Bayes is a **generative** classifier: it models how each class produces its features, P(x | y), and how common each class is, P(y), then applies Bayes' rule. Logistic regression is its **discriminative** counterpart: it models P(y | x) directly. For word counts the two even share the same form, a linear score per class, but they fit it differently: naive Bayes by counting, logistic regression by minimising the log loss.
+
+That difference shapes how they learn, as a classic comparison by Ng and Jordan showed:
+- naive Bayes has fewer and simpler estimates to make, so it approaches its best accuracy with very little data;
+- its best accuracy is limited by the independence assumption, which is almost always wrong;
+- logistic regression needs more data but keeps improving, because it never assumes how the features relate to each other.` },
+      { type: 'chart', title: "Naive Bayes against logistic regression as the training set grows", md: `The breast-cancer dataset (30 numeric features), averaged over 30 random splits per size:`, after: `With 10 examples naive Bayes is slightly ahead (0.909 against 0.904): it only has to estimate a mean and a variance per feature and class. But it levels off around 0.94, limited by its wrong independence assumption, while logistic regression keeps improving to 0.98. The textbook pattern: generative models reach their (lower) ceiling faster.`, chart: {"kind":"line","x":[10,15,20,30,40,60,80,120,160,240,320],"xLog":true,"series":[{"name":"Gaussian naive Bayes","y":[0.909,0.915,0.927,0.937,0.937,0.939,0.937,0.936,0.935,0.935,0.936]},{"name":"logistic regression","y":[0.904,0.919,0.928,0.942,0.95,0.959,0.964,0.967,0.968,0.974,0.976]}],"xLabel":"training examples (log scale)","yLabel":"test accuracy (average of 30 splits)"} },
+      { type: 'text', title: "Why naive Bayes is overconfident", md: `The independence assumption also distorts the probabilities. If "free", "free!" and "FREE" all appear in an email, naive Bayes counts them as three independent pieces of evidence, although they say almost the same thing. Correlated features are counted again and again, so the predicted probabilities are pushed towards 0 and 1: naive Bayes is typically very **overconfident**.
+
+Its *ranking* of examples is often still good, which is why it works well as a classifier (only the side of 0.5 matters) and as a fast baseline. If you need trustworthy probabilities, calibrate it on held-out data (see [Calibration & Uncertainty](#/concept/calibration-uncertainty)).` },
+      { type: 'code', title: "Duplicated evidence, inflated confidence", code: `import numpy as np
+from sklearn.naive_bayes import MultinomialNB
+docs = np.array([[3, 0, 1, 0],          # counts of 4 words in 6 short documents
+                 [2, 1, 0, 0],
+                 [0, 2, 0, 3],
+                 [0, 3, 1, 2],
+                 [1, 0, 2, 0],
+                 [0, 1, 0, 2]])
+labels = np.array([1, 1, 0, 0, 1, 0])
+new_doc = np.array([[1, 1, 1, 1]])
+
+once = MultinomialNB().fit(docs, labels)
+thrice = MultinomialNB().fit(np.hstack([docs] * 3), labels)      # every word column copied three times
+p1 = once.predict_proba(new_doc)[0, 1]
+p3 = thrice.predict_proba(np.hstack([new_doc] * 3))[0, 1]
+print(f"P(class 1) with each word once:          {p1:.3f}")
+print(f"P(class 1) with each word three times:   {p3:.3f}")
+print("same prediction:", once.predict(new_doc)[0] == thrice.predict(np.hstack([new_doc] * 3))[0])
+print("duplicating features makes it more confident:", bool(p3 > p1 > 0.5))`, after: `No information was added, only copies, yet the probability moved from about 0.58 to about 0.72; the predicted class did not change. Real text is full of near-duplicates (word forms, synonyms, set phrases), so naive Bayes probabilities close to 0 or 1 should not be taken literally.`, predict: {"type":"mcq","q":"Every word column is duplicated three times, which adds no new information. What happens to naive Bayes' probability for the more likely class?","options":["It stays the same","It moves closer to 0.5","It moves further from 0.5, towards 1","The predicted class flips"],"answer":2,"explain":"Naive Bayes treats each copy as independent evidence, so the evidence in the log-odds is tripled and the probability becomes more extreme, while the predicted class stays the same.","expect":["duplicating features makes it more confident: True"]} },
       { type: 'check', question: { type: 'mcq', q: 'Why is Laplace (add-one) smoothing needed in Naive Bayes?', options: ['To speed up training', 'So a word never seen with a class doesn\'t force that class\'s probability to zero', 'To remove stop words', 'To balance the classes'], answer: 1, explain: 'One zero factor in a product makes the whole product zero; adding α keeps every word probability positive.' } }
     ],
     when: `- **Text classification baselines** (spam, sentiment, topic, language detection), especially with little data or a need for speed.
@@ -329,7 +537,10 @@ for msg in ["win cheap money", "meeting tomorrow at noon", "money for the projec
       { type: 'fill', q: 'Class "spam" has 8 words in total, the word "free" appears 3 times, and the vocabulary has 10 words. With α = 1, what is P(free | spam)? (fraction or decimal)', answer: ['4/18', '2/9', '0.222', '0.2222', '0.22'], display: '4/18 = 2/9', explain: '(3 + 1) / (8 + 1·10) = 4/18.' },
       { type: 'tf', q: 'Naive Bayes assumes that all words in a document are independent of each other given the class.', answer: true, explain: 'That conditional-independence assumption is the "naive" part.' },
       { type: 'mcq', q: 'Why does the implementation add log-probabilities instead of multiplying probabilities?', options: ['Logs are more accurate for big numbers', 'Products of many small numbers underflow to zero', 'It is required by Bayes\' rule', 'To make the classifier linear'], answer: 1, explain: 'Sums of logs are numerically stable.' },
-      { type: 'mcq', q: 'How should Naive Bayes treat a word that never appeared in the training data?', options: ['Give it probability 0', 'Skip it (it is not in the vocabulary)', 'Reject the document', 'Retrain the model'], answer: 1, explain: 'Out-of-vocabulary words carry no learned information, so they are ignored.' }
+      { type: 'mcq', q: 'How should Naive Bayes treat a word that never appeared in the training data?', options: ['Give it probability 0', 'Skip it (it is not in the vocabulary)', 'Reject the document', 'Retrain the model'], answer: 1, explain: 'Out-of-vocabulary words carry no learned information, so they are ignored.' },
+      {"type":"mcq","q":"Which naive Bayes variant fits word counts in documents?","options":["GaussianNB","BernoulliNB","MultinomialNB","None: naive Bayes cannot use counts"],"answer":2,"explain":"MultinomialNB models counts (how many times each word appears). BernoulliNB only uses presence or absence; GaussianNB assumes continuous, bell-shaped features."},
+      {"type":"mcq","q":"Compared with logistic regression, naive Bayes typically…","options":["Needs more data and reaches a higher final accuracy","Reaches its best accuracy with less data, but that best accuracy is often lower","Is always more accurate","Cannot handle text"],"answer":1,"explain":"As a generative model with simple estimates it learns quickly, but its independence assumption caps its accuracy; logistic regression keeps improving with more data."},
+      {"type":"tf","q":"Naive Bayes' predicted probabilities are usually well calibrated.","answer":false,"explain":"Correlated features are counted as independent evidence, which pushes its probabilities towards 0 and 1. Its rankings are often good, but its probabilities need calibration."}
     ],
     problems: [
       {
@@ -527,6 +738,37 @@ for k in range(1, 7):
 - Every point must belong to some cluster.
 
 Alternatives: **DBSCAN** (density-based, finds arbitrary shapes, labels noise), **hierarchical clustering** (a tree of merges), **Gaussian mixture models** (soft, elliptical clusters).` },
+      { type: 'chart', title: "The elbow: inertia against k", md: `The three-blob data from the code above, clustered with k = 1 to 8:`, after: `Inertia always falls as k grows, but it falls steeply only until k reaches the true number of groups. After the elbow each extra cluster merely splits a real group in two and buys little.`, chart: {"kind":"line","x":[1,2,3,4,5,6,7,8],"series":[{"name":"inertia (best of 10 starts)","y":[901,485.4,108.8,92.7,79.1,67,57,49.2]}],"xLabel":"number of clusters k","yLabel":"inertia","vlines":[{"x":3,"label":"elbow at k = 3"}],"yMin":0} },
+      { type: 'chart', title: "The silhouette score against k", after: `Unlike inertia, the silhouette does not automatically improve with more clusters, so its peak can be read directly: k = 3 scores clearly best (about 0.71).`, chart: {"kind":"bar","x":["2","3","4","5","6","7","8"],"series":[{"name":"average silhouette (higher is better)","y":[0.498,0.709,0.582,0.469,0.335,0.361,0.371]}],"xLabel":"number of clusters k","yLabel":"silhouette score","yMin":0,"yMax":1} },
+      { type: 'text', title: "When k-means fails, and what to use instead", md: `k-means draws straight boundaries: every point goes to its nearest centroid, so the space is cut into convex cells. Whenever the true groups are not round blobs of similar size, it cuts in the wrong places:
+
+| Data | What k-means does | Better choice |
+| --- | --- | --- |
+| Curved or nested shapes (two moons, rings) | slices across them with straight lines | DBSCAN, spectral clustering, single linkage |
+| Elongated or tilted clusters | splits them along their long axis | a Gaussian mixture with full covariances |
+| Clusters of very different sizes | steals points from the big cluster for the small one | a Gaussian mixture, DBSCAN |
+| Features on very different scales | clusters only along the largest-scale feature | standardise the features first |
+| Outliers | drags centroids towards them | k-medoids, DBSCAN, or remove the outliers |
+
+The last two rows are the most common problems in practice, and the easiest to fix.` },
+      { type: 'chart', title: "k-means on two interleaved moons", after: `Each moon is one true group, but k-means can only split the plane with the straight line halfway between two centroids, so each "cluster" takes the tip of the other moon. No initialisation fixes this: the shape violates k-means' assumptions. DBSCAN or single-linkage clustering separates the moons cleanly.`, chart: {"kind":"scatter","series":[{"name":"k-means cluster 1","x":[0.235,-1.023,0.508,-0.711,0.225,-0.056,-0.399,0.075,-0.436,-0.886,-0.846,-0.769,-0.362,0.314,-0.87,0.009,0.111,0.134,-0.275,-0.175,0.381,-0.909,0.251,0.624,-0.012,0.044,-0.652,0.205,0.053,-0.037,-0.921,-1.118,0.233,-0.734,0.557,0.014,-0.954,-0.465,-0.98,-0.796,0.018,-0.041,0.559,-0.026,-0.008,-0.495,0.373,0.288,-0.843,0.152,0.073,0.042,0.006,0.666,-0.314,0.242,0.162,-0.702,-0.91,0.426,-0.117,-0.616,0.125,0.008,-0.416,0.148,0.337,0.032,-0.976,0.717,-0.585,0.063,-0.847,-0.025,-0.173,0.338,-0.478,0.26,-0.172,0.393,0.74,-0.056,0.56,-0.915,0.326,0.268,-0.992,0.577,-0.71,-0.956,-0.985,-0.655,-0.61,-0.457,0.02,0.155,-0.749,-0.329,-0.362,0.236,0.524,0.486,-0.198,-0.959,-1.008,-1.109,-0.142,0.16,-0.525,-0.896,0.044,-0.283,0.081,-0.824,-1.087,-0.976,-0.3,-0.171,-0.81,-0.589,0.333,0.024,0.194,-0.892,0.238,0.65,-0.581,-0.923,-0.099,0.669,-0.945,0.318,-1.02,0.176,0.123,-0.035,-0.874,0.17,-0.987,0.11,-0.48,-0.796,0.132,0.111,0.136,0.625,-0.311,0.064,-0.111,0.258,-0.735,0.575,0.105],"y":[-0.244,0.178,0.851,0.802,-0.24,1.003,0.963,0.199,0.905,0.489,0.449,0.597,0.955,0.981,0.568,0.514,-0.035,-0.154,0.994,0.967,0.816,0.274,0.941,0.854,0.916,0.003,0.784,0.958,0.135,0.413,0.304,0.208,1.032,0.689,0.893,0.409,0.078,0.954,0.297,0.591,0.284,1.135,0.9,0.441,0.342,0.869,0.822,-0.149,0.466,0.092,1.007,0.322,0.364,0.664,0.923,0.865,0.159,0.636,0.114,0.946,1.021,0.75,-0.051,0.256,0.908,0.272,0.995,0.995,0.256,0.764,0.779,0.346,0.427,1.015,0.946,0.895,0.872,-0.127,1.001,0.781,0.794,0.374,0.947,0.516,0.951,-0.238,0.468,0.798,0.736,0.334,-0.053,0.788,0.904,0.89,0.243,0.034,0.662,0.879,0.892,0.991,0.752,0.86,1.013,0.058,0.089,0.087,1.044,-0.119,0.886,0.397,1.016,0.945,-0.009,0.534,0.11,0.167,0.917,0.969,0.591,0.83,0.957,0.125,1.062,0.556,-0.095,0.635,0.831,0.378,0.916,0.679,0.396,0.922,0.374,-0.08,0.253,0.546,0.504,-0.279,0.107,0.027,0.997,0.698,0.993,0.156,-0.008,0.807,0.911,0.932,0.831,-0.256,0.525,0.938,0.102]},{"name":"k-means cluster 2","x":[0.727,0.938,0.983,1.227,1.187,0.675,1.934,0.923,1.437,0.932,1.774,1.092,0.381,0.986,0.417,2.017,1.246,1.94,0.928,0.792,1.967,0.925,1.058,0.746,1.191,0.998,0.665,1.597,0.877,2.068,1.95,1.974,0.927,1.589,1.051,1.05,1.775,0.835,1.585,0.752,0.283,1.697,0.797,1.211,0.697,1.055,1.646,1.101,1.831,1.906,0.278,0.89,1.818,1.483,1.041,1.403,0.617,2.024,0.804,1.496,1.955,0.886,0.87,0.908,0.438,1.1,0.526,1.677,1.884,1.736,1.012,0.882,0.993,0.828,0.743,2.006,0.671,0.933,1.552,1.315,1.737,0.878,1.203,1.024,0.433,0.954,2.151,1.139,0.529,0.934,0.733,1.601,1.981,0.763,1.315,0.916,0.806,0.738,1.065,1.885,1.957,1.554,1.24,2,0.642,0.92,1.39,0.558,1.768,2.021,0.406,0.936,0.505,1.653,1.856,1.71,1.921,0.984,0.768,1.186,1.062,1.868,0.914,1.67,1.185,1.616,0.844,1.445,0.504,0.921,0.779,1.872,1.81,1.798,0.508,1.456,1.712,0.816,1.945,1.882,0.432,1.395,1.888,0.649,1.087,0.371,1.531],"y":[-0.505,0.366,-0.492,-0.403,-0.474,-0.406,0.27,0.312,-0.513,0.351,0.019,-0.566,-0.197,-0.596,-0.306,0.248,-0.508,0.391,0.147,-0.489,0.525,0.152,-0.624,0.639,-0.559,0.128,-0.434,-0.32,0.355,0.212,0.466,0.246,-0.427,-0.258,0.346,-0.475,0.078,0.498,-0.328,0.694,-0.305,-0.222,-0.529,-0.479,-0.409,-0.571,-0.371,-0.429,0.176,-0.066,-0.306,0.339,0.101,-0.322,-0.522,-0.476,-0.476,0.255,-0.45,-0.469,0.097,0.383,0.643,0.264,-0.332,0.125,-0.512,-0.187,0.006,-0.089,0.271,-0.565,0.075,0.478,0.64,0.453,-0.586,0.387,-0.371,-0.429,0.004,0.01,-0.518,0.271,-0.384,0.304,0.349,-0.515,-0.372,-0.594,-0.365,-0.351,0.34,-0.544,-0.338,-0.484,-0.495,0.616,-0.154,0.021,0.515,-0.217,-0.493,0.489,-0.387,0.444,-0.466,-0.591,-0.19,0.502,-0.338,0.115,-0.385,-0.234,0.021,-0.365,0.095,0.33,0.651,-0.409,-0.039,-0.096,0.294,-0.264,-0.482,-0.374,0.58,-0.365,-0.56,0.511,0.768,0.137,-0.104,-0.039,-0.339,-0.412,-0.174,0.475,0.219,0.237,-0.252,-0.51,-0.007,-0.528,0.181,-0.279,-0.305]},{"name":"centroids","x":[-0.196,1.21],"y":[0.563,-0.089]}],"xLabel":"x₁","yLabel":"x₂"} },
+      { type: 'code', title: "Scaling decides what k-means sees", md: `Customers come in two age groups. Their income varies a lot but has nothing to do with the groups. Watch what k-means finds with and without scaling.`, code: `import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.metrics import adjusted_rand_score
+from sklearn.preprocessing import StandardScaler
+rng = np.random.default_rng(0)
+n = 300
+group = rng.integers(0, 2, n)                                    # the hidden truth: younger or older
+age = np.where(group == 0, rng.normal(28, 4, n), rng.normal(58, 5, n))
+income = rng.normal(60_000, 25_000, n)                           # large numbers, unrelated to the groups
+X = np.column_stack([age, income])
+
+ari = {}
+for name, data in [("raw features", X), ("standardised", StandardScaler().fit_transform(X))]:
+    labels = KMeans(n_clusters=2, n_init=10, random_state=0).fit_predict(data)
+    ari[name] = adjusted_rand_score(group, labels)
+    print(f"{name:<13} agreement with the age groups (adjusted Rand index): {ari[name]:.2f}")
+print("scaling recovers the age groups:", ari["standardised"] > 0.9 > ari["raw features"])`, after: `On the raw features, distances are almost entirely income differences (tens of thousands) rather than age differences (tens of years), so k-means splits customers into lower and higher earners, which has nothing to do with the real groups (an adjusted Rand index near 0). After standardisation both features count equally and the age groups are recovered perfectly.`, predict: {"type":"mcq","q":"Without scaling, what will k-means split these customers by?","options":["Age","Income","Both equally","Nothing: it fails to run"],"answer":1,"explain":"Euclidean distance is dominated by the feature with the largest numbers, here income in the tens of thousands, so the clusters follow income.","expect":["scaling recovers the age groups: True"]} },
       { type: 'check', question: { type: 'tf', q: 'Increasing k always decreases (or keeps equal) the best achievable inertia.', answer: true, explain: 'More centroids can only fit the points as well or better; that is why inertia alone can\'t choose k.' } },
       { type: 'text', title: 'Going further: k-means++, choosing k and scaling up', md: `- **k-means++ initialization** picks the first centroid at random and each next one with probability proportional to its squared distance from the nearest centroid already chosen. Spreading the starting points out gives faster convergence and better solutions; scikit-learn uses it by default and keeps the best of several runs.
 - **Choosing k**: look for the elbow of the inertia curve, compare silhouette scores, or let the downstream use decide; Gaussian mixtures add the BIC (see *Gaussian Mixtures & EM*). The silhouette of a point compares its own cluster with the nearest other one:
@@ -562,7 +804,9 @@ s(i) — the silhouette of point i, from −1 (probably in the wrong cluster) to
       { type: 'mcq', q: 'What does k-means minimise?', options: ['The number of clusters', 'The sum of squared distances from points to their cluster centroid (inertia)', 'The classification error', 'The distance between centroids'], answer: 1, explain: 'Both steps of the algorithm reduce the inertia.' },
       { type: 'mcq', q: 'Which data would k-means handle poorly?', options: ['Three compact round blobs', 'Two concentric rings', 'Well-separated equal-size groups', 'Standardized customer features with clear segments'], answer: 1, explain: 'Rings are not spherical clusters around a mean; density-based methods like DBSCAN fit them better.' },
       { type: 'tf', q: 'k-means is a supervised learning algorithm.', answer: false, explain: 'It uses no labels: it is unsupervised.' },
-      { type: 'mcq', q: 'What does k-means++ improve?', options: ['The choice of k', 'The initial centroids, spreading them out for better and more consistent results', 'The distance metric', 'Training speed on GPUs'], answer: 1, explain: 'Smart seeding avoids starting several centroids in the same cluster.' }
+      { type: 'mcq', q: 'What does k-means++ improve?', options: ['The choice of k', 'The initial centroids, spreading them out for better and more consistent results', 'The distance metric', 'Training speed on GPUs'], answer: 1, explain: 'Smart seeding avoids starting several centroids in the same cluster.' },
+      {"type":"mcq","q":"The silhouette score for k = 2, 3, 4 and 5 is 0.50, 0.71, 0.58 and 0.47. Which k does it suggest?","options":["2","3","4","5"],"answer":1,"explain":"Unlike inertia, the silhouette does not automatically improve with more clusters, so you pick its maximum: k = 3."},
+      {"type":"mcq","q":"Two features are age (20 to 70) and income (20,000 to 150,000). Without scaling, k-means clusters will mostly reflect…","options":["Age","Income","Both equally","Neither"],"answer":1,"explain":"Squared Euclidean distances are dominated by the feature with the largest spread, so standardise first."}
     ],
     problems: [
       {
@@ -768,6 +1012,45 @@ print("reconstruction MSE with 1 component:", round(float(np.mean((X - X_rec) **
 print("original feature variance:          ", X.var(axis=0).round(3))
 ` },
       { type: 'check', question: { type: 'mcq', q: 'Explained variance ratios are [0.72, 0.18, 0.06, 0.04]. How many components keep at least 90% of the variance?', options: ['1', '2', '3', '4'], answer: 1, explain: '0.72 + 0.18 = 0.90 — two components.' } },
+      { type: 'text', title: "Reading the components: scores, loadings and whitening", md: `After fitting, PCA gives you two things to look at:
+
+- **Scores** are the coordinates of each example along the components (\`pca.transform(X)\`). They are new, uncorrelated features, and a scatter plot of the first two scores is the classic way to look at high-dimensional data.
+- **Loadings** are the weights of each component on the original features (the rows of \`pca.components_\`). A component with large weights on rooms, area and bathrooms is a "size" axis; one that contrasts price with distance to the centre is a "location" axis. Reading loadings is how PCA becomes a tool for understanding data, not only for compressing it.
+
+$$ score_ik = Σ_j ( x_ij − x̄_j ) · v_kj $$
+:::where
+x_ij — feature j of example i; x̄_j — the mean of feature j
+v_kj — the loading of feature j on component k (component k is a unit vector v_k)
+score_ik — where example i lands along component k
+:::
+
+**Whitening** (\`PCA(whiten=True)\`) also divides each score by its component's standard deviation, so that every component has variance 1. That suits algorithms that expect equally scaled, uncorrelated inputs, but it also inflates low-variance components that are mostly noise.
+
+**How many components?** Look at the cumulative explained variance: \`PCA(n_components=0.90)\` keeps just enough components for 90% of the variance. The handwritten digits below show what that means on real data.` },
+      { type: 'code', title: "PCA on handwritten digits", md: `Each 8 × 8 image of a digit is a vector of 64 pixel intensities. How many directions does the data really use?`, code: `import numpy as np
+from sklearn.datasets import load_digits
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+
+X, y = load_digits(return_X_y=True)                 # 1,797 images, 64 pixels each
+X = X / 16.0                                        # pixel values from 0 to 1
+pca = PCA().fit(X)
+cumulative = np.cumsum(pca.explained_variance_ratio_)
+k90 = int(np.searchsorted(cumulative, 0.90) + 1)
+print("variance explained by the first 5 components:", pca.explained_variance_ratio_[:5].round(3))
+print("components needed for 90% of the variance:", k90)
+print("about 20 components suffice:", abs(k90 - 20) <= 2)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+for k in (2, 10, 21, 64):
+    p = PCA(n_components=k).fit(X_train)            # fit on the training data only
+    clf = LogisticRegression(max_iter=2000).fit(p.transform(X_train), y_train)
+    rebuilt = p.inverse_transform(p.transform(X_test))
+    print(f"{k:2d} components: test accuracy {clf.score(p.transform(X_test), y_test):.3f}   "
+          f"reconstruction error {np.mean((X_test - rebuilt) ** 2):.4f}")`, after: `Two components keep less than 30% of the variance, and a classifier on them reaches only about 58% accuracy. 21 components keep 90% of the variance and come within one point of the accuracy on all 64 pixels (about 96%), with a third of the features. The images are far simpler than their 64 numbers suggest.`, predict: {"type":"mcq","q":"How many of the 64 principal components do the digit images need to keep 90% of the variance?","options":["2","About 20","About 50","All 64"],"answer":1,"explain":"Neighbouring pixels are strongly correlated and many border pixels are always blank, so about 21 directions carry 90% of the variation.","expect":["about 20 components suffice: True"]} },
+      { type: 'chart', title: "Cumulative explained variance of the digit images", after: `The curve rises steeply and then flattens: the first 10 components keep 74% of the variance, 21 keep 90%, and the last 20 or so add almost nothing (some pixels at the image border are always blank). Reading the elbow of this curve is the usual way to choose k.`, chart: {"kind":"line","x":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64],"points":false,"series":[{"name":"share of the variance kept by the first k components","y":[0.1489,0.2851,0.403,0.4871,0.545,0.5941,0.6373,0.6739,0.7074,0.7382,0.762,0.7847,0.8029,0.8206,0.8353,0.8494,0.8626,0.8751,0.8852,0.8943,0.9032,0.9112,0.9188,0.9261,0.933,0.939,0.9447,0.9499,0.9548,0.9591,0.9628,0.9664,0.9697,0.973,0.9761,0.979,0.9816,0.9839,0.9861,0.9882,0.9901,0.9917,0.9932,0.9946,0.9958,0.9968,0.9978,0.9986,0.9991,0.9995,0.9998,0.9998,0.9999,0.9999,1,1,1,1,1,1,1,1,1,1]}],"xLabel":"number of components k (of 64)","yLabel":"cumulative explained variance","yMin":0,"yMax":1,"hlines":[{"y":0.9,"label":"90%"}],"vlines":[{"x":21,"label":"k = 21"}]} },
+      { type: 'chart', title: "The digits projected onto the first two components", md: `Each dot is one 64-pixel image, placed by its scores on the first two components (four of the ten digits shown):`, after: `Even two directions, chosen without ever looking at the labels, separate the zeros, ones, fours and sevens into recognisable regions. Where clouds overlap, two components are not enough, which matches the low accuracy of the 2-component classifier above.`, chart: {"kind":"scatter","series":[{"name":"digit 0","x":[-0.079,0.701,0.402,0.015,0.383,0.314,0.246,0.645,0.394,-0.214,-0.079,0.535,0.478,0.126,0.223,0.505,0.376,0.268,0.176,0.674,0.666,0.357,0.925,0.707,0.009,0.497,0.353,0.197,0.04,0.364,-0.198,0.229,-0.039,0.07,0.124,0.215,0.033,0.074,0.155,-0.33,-0.05,0.284,0.469,-0.167,0.175,0.335,-0.338,0.136,-0.057,0.006,0.179,0.038,-0.22,0.008,-0.404,0.013,-0.39,-0.157,-0.311,0.228,0.107,-0.539,-0.108,-0.545,-0.184,0.195,-0.057,0.472,0.309,-0.004,0.481,-0.002,0.91,0.526,0.36,0.242,0.264,0.21,-0.204,-0.256,0.267,0.246,0.223,0.113,0.335,0.229,0.421,0.728,-0.321,-0.179],"y":[-1.33,-1.057,-1.217,-1.662,-0.994,-1.298,-1.305,-0.874,-1.256,-1.428,-1.488,-1.47,-1.318,-1.508,-1.346,-1.392,-1.302,-1.411,-1.517,-1.011,-1.341,-1.527,-1.018,-1.29,-1.568,-1.451,-1.175,-1.302,-1.301,-1.156,-1.186,-1.284,-1.553,-1.333,-1.295,-1.536,-1.125,-1.27,-1.504,-1.563,-1.559,-1.502,-1.062,-1.41,-1.658,-1.342,-1.635,-1.178,-1.491,-1.692,-1.402,-1.396,-1.5,-1.372,-1.144,-1.387,-1.448,-1.543,-1.824,-1.326,-1.182,-1.128,-1.261,-1.201,-1.541,-1.463,-0.72,-1.32,-1.209,-1.563,-1.401,-0.825,-0.588,-1.253,-1.113,-1.448,-1.413,-1.08,-1.232,-1.658,-1.129,-1.58,-1.472,-1.113,-1.08,-1.358,-1.401,-0.821,-1.328,-1.422]},{"name":"digit 1","x":[0.497,0.188,0.002,0.177,0.103,0.203,0.495,0.012,0.469,0.196,0.785,1.245,-0.049,-0.244,0.175,-0.139,-0.145,-0.12,0.129,0.45,0.09,0.067,-0.102,0.474,0.245,0.596,0.678,0.548,0.839,0.886,0.607,0.35,0.712,0.517,0.43,0.683,0.633,0.217,0.95,-0.379,0.157,0.281,-0.082,0.094,-0.016,-0.03,0.402,0.791,-0.021,0.088,0.082,0.142,-0.055,-0.014,0.101,0.463,0.748,0.605,0.756,0.516,0.31,0.559,0.027,0.495,-0.013,0.644,0.856,1.134,0.641,0.648,0.035,0.947,0.041,0.503,0.618,0.865,0.925,0.671,0.157,-0.157,0.262,0.775,0.471,-0.002,0.052,0.688,0.583,0.646,0.563,0.358],"y":[1.298,0.75,0.646,0.58,0.671,0.6,0.678,0.973,1.304,0.881,1.265,1.2,0.577,-0.239,0.454,0.157,0.213,-0.228,0.462,0.617,0.341,0.667,0.015,0.681,0.688,0.61,1.329,1.162,1.126,1.176,1.053,0.723,1.276,1.584,1.289,1.444,1.296,1.578,0.788,-0.152,0.654,0.529,0.214,0.487,0.21,0.505,0.796,0.755,0.663,0.701,0.365,0.227,0.353,0.25,0.403,0.227,0.176,0.183,0.069,0.332,0.296,0.11,0.581,0.721,0.391,1.631,1,0.696,1.388,1.221,1.513,0.886,1.644,0.933,1.056,1.155,1.096,1.39,1.674,1.278,1.642,0.592,1.184,0.189,1.344,0.8,1.231,1.581,1.407,1.627]},{"name":"digit 4","x":[1.457,1.529,1.096,1.565,1.761,1.215,1.138,1.411,1.423,1.052,1.172,1.044,1.532,1.151,1.401,1.228,1.584,1.274,1.319,1.641,1.553,1.3,1.391,1.097,1.419,1.307,1.653,1.462,1.723,1.806,1.623,1.651,1.9,1.293,1.842,1.756,1.803,1.677,1.111,1.374,1.381,1.199,1.411,1.264,1.084,1.331,1.299,0.934,1.349,1.27,1.188,1.21,0.74,1.395,1.198,1.546,0.917,1.053,1.159,1.239,0.979,1.525,0.776,0.941,1.454,1.698,1.067,1.148,0.983,1.397,1.574,1.22,0.485,0.935,1,1.463,0.863,1.764,1.863,1.609,1.81,1.686,1.804,1.581,1.588,1.605,1.704,1.797,1.847,1.652],"y":[-0.267,-0.166,-0.289,-0.048,-0.464,0.276,0.826,-0.043,-0.312,0.087,-0.168,0.757,-0.077,0.935,0.68,0.776,0.787,0.653,0.799,0.738,0.819,0.804,0.999,0.514,0.83,0.1,0.246,0.063,-0.258,-0.171,-0.161,0.26,-0.488,0.399,-0.586,0.044,-0.105,0.077,0.236,0.608,0.507,0.398,0.301,0.384,-0.066,0.279,0.446,0.211,0.256,0.116,0.593,0.402,0.478,0.083,0.176,0.158,0.572,0.405,0.128,0.223,-0.015,0.052,0.391,0.271,0.653,0.58,0.232,0.664,0.369,0.418,0.422,0.35,0.738,0.042,0.617,-0.16,0.708,-0.195,0.261,-0.155,-0.196,0.057,0.045,-0.853,-0.147,-0.273,0.035,0.023,-0.246,-0.594]},{"name":"digit 7","x":[-0.185,0.351,0.298,0.354,-0.223,0.431,0.298,0.084,0.408,-0.01,0.23,0.148,0.018,0.067,0.305,0.241,0.008,-0.139,0.048,0.557,0.071,0.357,-0.103,-0.013,0.345,-0.356,0.067,0.469,-0.264,0.085,-0.328,0.118,0.165,0.06,-0.123,0.273,0.009,0.324,0.16,0.211,0.391,0.45,-0.272,0.158,0.386,0.552,-0.33,-0.097,0.302,0.18,-0.087,-0.365,-0.451,-0.154,0.236,-0.27,-0.359,-0.087,-0.343,-0.131,0.168,-0.29,-0.185,-0.399,-0.099,0.133,0.251,0.913,0.499,0.258,0.035,0.236,0.611,0.483,0.357,0.794,-0.149,-0.146,-0.18,-0.427,-0.51,-0.196,0.175,-0.462,-0.328,0.05,-0.075,0,-0.145,-0.49],"y":[1.317,0.808,0.324,0.648,1.183,0.833,0.734,1.226,0.232,1.092,0.709,1.104,0.997,1.123,1.275,1.227,1.25,1.221,1.387,1.318,1.476,1.235,1.36,1.305,1.279,1.397,1.111,0.899,1.108,0.858,1.222,1.041,0.891,0.888,1.088,1.064,1,0.745,0.535,0.342,0.294,0.12,1.037,0.444,0.04,-0.043,0.883,0.143,0.389,0.145,0.701,1.154,1.389,1,1.038,1.262,1.04,1.207,1.308,1.306,1.21,1.276,1.092,1.389,1.104,1.182,0.804,0.452,0.523,1.013,1.065,0.846,0.619,0.912,0.781,0.514,1.242,1.013,1.331,1.424,1.13,1.066,1.029,1.288,1.169,1.085,1.329,1.162,1.202,1.26]}],"xLabel":"score on principal component 1","yLabel":"score on principal component 2"} },
       { type: 'text', title: 'Using PCA well', md: `**Good uses:**
 - **Visualization** — project to 2-D or 3-D to eyeball clusters and outliers.
 - **Preprocessing** — fewer, decorrelated features for models that struggle with many correlated ones; faster training.
@@ -806,7 +1089,9 @@ print("original feature variance:          ", X.var(axis=0).round(3))
       { type: 'tf', q: 'Principal components are orthogonal (perpendicular) to each other.', answer: true, explain: 'Each component is orthogonal to all previous ones.' },
       { type: 'mcq', q: 'Why standardize before PCA when features have different units?', options: ['PCA only works on integers', 'Otherwise features with large numeric ranges dominate the variance and therefore the components', 'It makes the SVD faster', 'It is not needed'], answer: 1, explain: 'A feature in grams has 1000× the variance of the same feature in kilograms.' },
       { type: 'fill', q: 'Singular values are S = [3, 2, 1]. What fraction of the variance does the first component explain? (fraction or decimal)', answer: ['9/14', '0.643', '0.64', '0.6429'], display: '9/14 ≈ 0.643', explain: 'Sᵢ²/ΣSⱼ² = 9 / (9 + 4 + 1) = 9/14.' },
-      { type: 'mcq', q: 'Which method would better reveal curved, non-linear structure for visualization?', options: ['PCA with more components', 'UMAP or t-SNE', 'Linear regression', 'One-hot encoding'], answer: 1, explain: 'They are non-linear embedding methods designed for visualization.' }
+      { type: 'mcq', q: 'Which method would better reveal curved, non-linear structure for visualization?', options: ['PCA with more components', 'UMAP or t-SNE', 'Linear regression', 'One-hot encoding'], answer: 1, explain: 'They are non-linear embedding methods designed for visualization.' },
+      {"type":"mcq","q":"What are the loadings of a principal component?","options":["The coordinates of each example along the component","The weights of the original features that define the component's direction","The variance explained by the component","The class labels"],"answer":1,"explain":"Loadings (the rows of components_) say how much each original feature contributes to the direction; scores are the examples' coordinates along it."},
+      {"type":"tf","q":"PCA(n_components=0.9) keeps the smallest number of components that together explain at least 90% of the variance.","answer":true,"explain":"A fraction between 0 and 1 tells scikit-learn to choose the number of components from the cumulative explained-variance ratio."}
     ],
     problems: [
       {
@@ -934,6 +1219,88 @@ model.predict(X_test)            # transforms X_test with the *training* statist
 Pass the pipeline to \`cross_val_score\` or \`GridSearchCV\` and the scaler is re-fitted on each fold's training part — no leakage, by construction.
 
 For tables with mixed types, a **ColumnTransformer** routes columns to different preprocessing: standardize numeric columns, one-hot encode categorical ones (with \`handle_unknown="ignore"\`), impute missing values — all inside the pipeline.` },
+      { type: 'code', title: "The leak you cannot see", md: `Here the features are **pure random noise**: 10,000 of them for 100 examples, and a random target. No model can predict anything. First, the classic mistake: select the 5% of features most correlated with the target using *all* the data, then cross-validate. Then the correct way: put the selection inside a pipeline, so it is redone on the training part of every fold.`, code: `import numpy as np
+from sklearn.feature_selection import SelectPercentile, f_regression
+from sklearn.linear_model import Ridge
+from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import make_pipeline
+
+rng = np.random.default_rng(0)
+X = rng.normal(size=(100, 10_000))       # random features
+y = rng.normal(size=100)                 # a random target: nothing to learn
+
+selected = SelectPercentile(f_regression, percentile=5).fit(X, y).transform(X)   # looks at ALL labels
+leaky = cross_val_score(Ridge(), selected, y, cv=5).mean()
+honest = cross_val_score(make_pipeline(SelectPercentile(f_regression, percentile=5), Ridge()), X, y, cv=5).mean()
+print(f"selection outside cross-validation: R2 = {leaky:.3f}")
+print(f"selection inside a pipeline:        R2 = {honest:.3f}")
+print("the leaky estimate is wildly optimistic:", leaky > 0.5 > honest)`, after: `The leaky version reports an excellent R² on data that contains no signal at all. Among 10,000 random features, some correlate with the random target **by chance**, and choosing them with knowledge of every label, including the labels of the validation folds, carries that chance correlation into every fold. Inside the pipeline, the selection only sees each fold's training part, and the honest result appears: no predictive power (a negative R² means worse than predicting the mean).
+
+The same leak, in milder form, happens with scaling, imputation, encoding or anything else that is *fitted* on data. The rule: **every step that learns from data must be inside the cross-validation loop**, which is exactly what a pipeline guarantees.`, predict: {"type":"mcq","q":"The features and the target are pure random noise. You pick the 500 features most correlated with the target using all 100 examples, then cross-validate a model on them. What R² will cross-validation report?","options":["About 0 or negative: there is nothing to learn","A high value, around 0.9","Exactly 1","Cross-validation will refuse to run"],"answer":1,"explain":"The selection already saw every validation label, so the chosen features fit them by chance, and cross-validation reports around 0.9. Inside a pipeline the honest answer appears: about −0.25.","expect":["the leaky estimate is wildly optimistic: True"]} },
+      { type: 'chart', title: "Cross-validated R² on pure noise", after: `The same data and the same model. Only where the feature selection happens differs, and it turns "no signal at all" into an apparently excellent model.`, chart: {"kind":"bar","x":["features selected before CV (leaky)","selection inside a pipeline (honest)"],"series":[{"name":"mean cross-validation R²","y":[0.898,-0.252]}],"xLabel":"procedure","yLabel":"R² (0 = no better than the mean)","hlines":[{"y":0,"label":"no skill"}]} },
+      { type: 'text', title: "The general pipeline interface", md: `A pipeline is a list of steps. Every step except the last must be a **transformer** (it has \`fit\` and \`transform\`); the last step can be anything with \`fit\`: a classifier, a regressor, or another transformer.
+
+- \`pipe.fit(X, y)\` calls \`fit_transform\` on each step in turn, passing the transformed data along, then \`fit\` on the last step.
+- \`pipe.predict(X)\` calls \`transform\` on each step, then \`predict\` on the last step. \`score\` and \`predict_proba\` work the same way.
+- The pipeline as a whole has the methods of its last step, so it can be used anywhere a model can: in \`cross_val_score\`, in \`GridSearchCV\`, in another pipeline.
+
+\`make_pipeline(StandardScaler(), LogisticRegression())\` names the steps automatically after their classes, in lower case (\`"standardscaler"\`, \`"logisticregression"\`; repeated classes get numbers). With \`Pipeline([("scaler", StandardScaler()), ("model", LogisticRegression())])\` you choose the names yourself.` },
+      { type: 'code', title: "Building a pipeline and looking inside it", code: `from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LogisticRegression
+
+X, y = load_breast_cancer(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=0)
+pipe = make_pipeline(StandardScaler(), PCA(n_components=5), LogisticRegression())
+print("steps:", [name for name, _ in pipe.steps])
+pipe.fit(X_train, y_train)
+print(f"test accuracy: {pipe.score(X_test, y_test):.3f}")
+
+pca = pipe.named_steps["pca"]                 # access a step by name...
+print("PCA components:", pca.components_.shape)
+print("logistic regression weights:", pipe[-1].coef_.round(2))   # ...or by position`, after: `Thirty features are scaled, compressed to five principal components, and classified, all with one \`fit\` and one \`score\`. Fitted steps keep their learned attributes, so you can inspect them through \`named_steps\` or by index.` },
+      { type: 'code', title: "Grid-searching preprocessing and model settings together", md: `Preprocessing has settings too, and the best ones depend on the model's settings. In a pipeline, a parameter is addressed as **step name, two underscores, parameter name**: \`polynomialfeatures__degree\`, \`ridge__alpha\`. Here the degree of the polynomial features and ridge's alpha are tuned together on the diabetes data (442 patients, a disease-progression score as the target).`, code: `import pandas as pd
+from sklearn.datasets import load_diabetes
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler, PolynomialFeatures
+from sklearn.linear_model import Ridge
+
+X, y = load_diabetes(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+pipe = make_pipeline(StandardScaler(), PolynomialFeatures(), Ridge())
+grid = {"polynomialfeatures__degree": [1, 2, 3], "ridge__alpha": [0.1, 1, 10, 100, 1000]}
+search = GridSearchCV(pipe, grid, cv=5).fit(X_train, y_train)
+
+table = pd.DataFrame(search.cv_results_).pivot_table(
+    index="param_polynomialfeatures__degree", columns="param_ridge__alpha", values="mean_test_score")
+print("mean cross-validation R2 (rows: degree, columns: alpha)")
+print(table.round(2).to_string())
+print("best:", search.best_params_)
+print(f"test R2: {search.score(X_test, y_test):.3f}")`, after: `The interaction is the point. Degree-3 features (285 of them) with weak regularization are a disaster (a negative R²: far worse than predicting the mean), but with strong regularization they become usable. Searching the two settings separately would miss that. On this small, noisy dataset the plain linear model still wins, which is a useful result in itself.` },
+      { type: 'code', title: "Letting the search choose the model", md: `The steps of a pipeline are parameters too, so a grid search can choose **which** preprocessing and **which** model to use. Each dictionary in the list is one family of candidates; \`None\` skips a step.`, code: `from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+
+X, y = load_breast_cancer(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+pipe = Pipeline([("preprocessing", StandardScaler()), ("classifier", SVC())])
+param_grid = [
+    {"classifier": [SVC()], "preprocessing": [StandardScaler()],
+     "classifier__gamma": [0.001, 0.01, 0.1, 1], "classifier__C": [0.1, 1, 10, 100]},
+    {"classifier": [RandomForestClassifier(n_estimators=100, random_state=0)], "preprocessing": [None],
+     "classifier__max_features": [1, 3, 5]},
+]
+search = GridSearchCV(pipe, param_grid, cv=5).fit(X_train, y_train)
+print("winner:", search.best_params_["classifier"])
+print("its settings:", {k: v for k, v in search.best_params_.items() if k.startswith("classifier__")})
+print(f"cross-validation accuracy {search.best_score_:.3f}   test accuracy {search.score(X_test, y_test):.3f}")`, after: `The random forest candidates skip scaling (trees do not need it), while the SVM candidates always get it. The search compared 16 SVMs and 3 forests on equal terms and picked a scaled RBF-kernel SVM. Use this sparingly: comparing many model families inflates the selection bias discussed in [cross-validation](#/concept/cross-validation), so confirm the winner on the test set.` },
       { type: 'code', title: 'A complete, leak-free workflow', md: `(The first run downloads scikit-learn into the browser.)`, code: `
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
@@ -996,7 +1363,10 @@ Set \`random_state\` everywhere randomness appears so results are reproducible.`
       { type: 'mcq', q: 'Which method returns class probabilities?', options: ['predict', 'predict_proba', 'transform', 'score'], answer: 1, explain: 'predict returns labels; predict_proba returns probabilities.' },
       { type: 'tf', q: 'A fitted attribute like `coef_` ends with an underscore by convention.', answer: true, explain: 'Trailing underscores mark values learned during fit.' },
       { type: 'mcq', q: 'What does a ColumnTransformer let you do?', options: ['Train several models at once', 'Apply different preprocessing to different columns within one pipeline', 'Plot columns', 'Remove the need for cross-validation'], answer: 1, explain: 'E.g. scale numeric columns and one-hot encode categorical ones.' },
-      { type: 'mcq', q: 'What should you save to deploy a model trained with scaling?', options: ['Only the classifier', 'The whole fitted pipeline (scaler + model)', 'Only the training data', 'The test set predictions'], answer: 1, explain: 'New data must be preprocessed exactly like the training data.' }
+      { type: 'mcq', q: 'What should you save to deploy a model trained with scaling?', options: ['Only the classifier', 'The whole fitted pipeline (scaler + model)', 'Only the training data', 'The test set predictions'], answer: 1, explain: 'New data must be preprocessed exactly like the training data.' },
+      {"type":"mcq","q":"In a pipeline built with `make_pipeline(StandardScaler(), SVC())`, how do you refer to the SVM's C parameter in a grid search?","options":["`C`","`svc.C`","`svc__C`","`SVC_C`"],"answer":2,"explain":"Pipeline parameters are named step__parameter, with two underscores; make_pipeline names the SVC step \"svc\"."},
+      {"type":"mcq","q":"Which steps must be inside the cross-validation loop to avoid leakage?","options":["Only the model","Only scaling","Every step that learns anything from the data: scaling, imputation, encoding, feature selection, the model","None: leakage only matters for the test set"],"answer":2,"explain":"Any fitted step that sees validation data leaks information into the evaluation. A pipeline refits every step on each training fold."},
+      {"type":"tf","q":"Every step of a scikit-learn pipeline except the last must have a `transform` method.","answer":true,"explain":"Intermediate steps pass transformed data along, so they must be transformers; the final step only needs `fit` (and usually `predict`)."}
     ],
     problems: [
       {

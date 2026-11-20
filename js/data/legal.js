@@ -7,7 +7,7 @@
   const legal = {
     owner: 'markotofu',                          // copyright holder shown in the app and in the legal texts
     year: '2026',
-    updated: '20 November 2026',
+    updated: '21 November 2026',
     contact: 'https://github.com/markotofu',     // where people can reach the owner
     codeLicense: 'MIT License',
     terms: `
@@ -25,7 +25,7 @@ The content is for learning. It is not professional, legal, medical, financial o
 
 ### 3. Your progress and your code
 
-Your progress, notes, settings and the code you write are stored **in your own browser**, not on our servers (see the [Privacy Policy](#/privacy)). You are responsible for keeping backups — use **Progress & Sync → Export** — because clearing your browser data or switching browsers or devices can delete them. You keep all rights to the code and notes you write.
+Your progress, notes, settings and the code you write are stored **in your own browser**, not on our servers (see the [Privacy Policy](#/privacy)). You are responsible for keeping backups — use **Progress & Sync → Export** — because clearing your browser data or switching browsers or devices can delete them. You keep all rights to the code and notes you write. Import only progress files and sync codes that you created yourself or fully trust: importing adds their notes, code and settings to your own data.
 
 ### 4. Running code
 
@@ -39,7 +39,7 @@ Do not misuse the app: do not try to disrupt or overload it or its hosting, do n
 
 The lessons, quizzes, practice problems, explanations, glossary, flashcards and other educational content of ML Atlas are © {year} {owner}. All rights reserved. You may use them for your own personal, non-commercial learning, and you may quote short passages with attribution. Do not republish, sell or redistribute the content, or use it to build a competing product, without written permission.
 
-The app's source code (its JavaScript, HTML and CSS) is released under the {codeLicense}; see the LICENSE file that accompanies it. Third-party software included in or loaded by the app — such as Vue and Pyodide with its Python packages — remains under its own licence; the [third-party notices](THIRD_PARTY_NOTICES.md) list each component and its licence. Names and trademarks of products, companies and projects mentioned in the lessons belong to their owners and are used only to identify them. Referenced papers and websites remain the work of their authors.
+The app's source code (its JavaScript, HTML and CSS) is released under the {codeLicense}; see the LICENSE file that accompanies it. Third-party software included in or loaded by the app — such as Vue and Pyodide with its Python packages — remains under its own licence; the [third-party notices](THIRD_PARTY_NOTICES.md) list each component and its licence. Names and trademarks of products, companies and projects mentioned in the lessons belong to their owners and are used only to identify them. Referenced papers, books and websites remain the work of their authors; the lessons explain ideas in their own words and point to these sources for further reading.
 
 ### 7. Third-party services and links
 
@@ -81,7 +81,7 @@ This policy explains what happens to your information when you use ML Atlas, a f
 
 ML Atlas saves the following in your browser so that it works across visits. It never leaves your device unless you export it yourself.
 
-- **Your learning data** (local storage key \`mla.state.v1\`): concepts read, quiz and problem results, the code you write in problems and the playground, notes, flashcard schedules, XP, streaks, achievements, settings (theme, editor size, learning goal) and an optional display name (default "Learner").
+- **Your learning data** (local storage key \`mla.state.v1\`): concepts read, quiz and problem results, the code you write in problems and the playground, notes, flashcard schedules, the review queue of questions and problems you answered incorrectly, a short log of recent activity (what you did and when), XP, streaks, achievements, settings (theme, editor size, learning goal) and an optional display name (default "Learner").
 - **A technical preference** (local storage key \`mla.pyMirror\`): which download server for the Python runtime responded fastest.
 - **Cached app files**: the app's own files are kept in your browser's cache storage so it works offline, and the Python runtime is kept in the browser's normal download cache.
 
@@ -89,7 +89,11 @@ You can delete all of this at any time with **Progress & Sync → Danger zone �
 
 ### 2. Export, import and sync codes
 
-When you export your progress, the app creates a file or a "sync code" **on your device**. It contains your learning data and code. You decide where it goes — treat it like any other personal file. Importing reads such a file or code locally; nothing is uploaded.
+When you export your progress, the app creates a file or a "sync code" **on your device**. It contains your learning data, including your notes and code in readable form. You decide where it goes — treat it like any other personal file, and use it to move your own progress between your own devices rather than sharing it publicly. Importing reads such a file or code locally; nothing is uploaded. Import only files and codes you created yourself or fully trust: the app checks imported data and never runs anything it contains, but an import from someone else adds their notes, code and settings to yours.
+
+### Security
+
+The app tells your browser, through a content security policy, to run scripts only from its own site and from jsDelivr (for the Python runtime), so text you type or import can never run as code in the page: notes, file names and imported data are always displayed as plain text. Python code runs in a separate worker that has no access to the page or to your saved progress. If you find a security problem, please report it through the contact below.
 
 ### 3. Services that deliver the app
 

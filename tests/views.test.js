@@ -53,6 +53,39 @@ T.ok('markdown rendered', mdCount > 0);
   T.ok('where: standalone legend after a table gets its own label', solo.includes('<div class="formula-group"><div class="formula-where"><div class="fw-label">Symbols in this table</div>'), solo);
 }
 
+// security: the renderer is used for user notes and imported files, so nothing a user types may become live HTML
+{
+  const attacks = [
+    '<svg onload=alert(1)>', '<div><img src=x onerror=alert(1)></div>', '<details open ontoggle=alert(1)>x</details>',
+    '<script>alert(1)</script>', 'text <img src=x onerror=alert(1)> more', '- <img src=x onerror=alert(1)>',
+    '| <img src=x onerror=alert(1)> | b |\n| --- | --- |\n| c | d |', '# <iframe src=javascript:alert(1)>', '> <svg onload=alert(1)>',
+    ':::tip <img src=x onerror=alert(1)>\nbody\n:::', '$$ <img src=x onerror=alert(1)> $$', '```<img src=x onerror=alert(1)>\ncode\n```'
+  ];
+  for (const a of attacks) {
+    const h = MLA.util.md(a);
+    // escaped text such as "&lt;svg onload=…&gt;" is harmless; only a real tag (a literal "<") could run anything
+    T.ok('md escapes: ' + a.slice(0, 40), !/<(svg|img|script|iframe|details)\b/i.test(h) && !/<[a-z][^>]*\son\w+\s*=/i.test(h), h);
+  }
+  const link = MLA.util.md('[click](javascript:alert(1)) and [ok](https://example.com) and [route](#/concept/knn)');
+  T.ok('md: no javascript: links', !/href="javascript:/i.test(link) && link.includes('href="https://example.com"') && link.includes('href="#/concept/knn"'), link);
+  T.ok('md: external links open safely', /target="_blank" rel="noopener"/.test(link));
+}
+
+// security: imports drop prototype-tampering keys and refuse absurdly large files
+{
+  const before = JSON.stringify(MLA.store.exportObject());
+  const evil = '{"app":"ml-atlas","version":1,"profile":{"name":"x"},"__proto__":{"polluted":true},"notes":{"constructor":{"prototype":{"bad":1}}}}';
+  let threw = null;
+  try { MLA.store.importJSON(evil, 'merge'); } catch (e) { threw = e; }
+  T.ok('import: prototype keys do not pollute', ({}).polluted === undefined && ({}).bad === undefined && Object.prototype.polluted === undefined);
+  T.ok('import: object prototypes untouched', Object.getPrototypeOf(MLA.store.state) === Object.prototype);
+  let big = null;
+  try { MLA.store.importJSON(' '.repeat(41 * 1024 * 1024), 'merge'); } catch (e) { big = e; }
+  T.ok('import: oversized input rejected', big && /too large/.test(big.message));
+  MLA.store.importJSON(before, 'replace');    // restore the state for the tests below
+  T.ok('import: evil file either imported safely or rejected', threw === null || threw instanceof Error);
+}
+
 // store: export → import round-trip and merge never loses solved problems
 const S = MLA.store;
 const p0 = MLA.data.problems[0];

@@ -649,7 +649,11 @@
     G('Evaluation-driven development', 'Improving a system one measured change at a time against a fixed evaluation set, keeping only changes that help.', 'apps', 'capstone-rag'),
     G('Replay (rehearsal)', 'Mixing examples from the original data into fine-tuning batches so the model keeps practising old skills and forgets less.', 'llm', 'capstone-lora'),
     G('Adapter merging', 'Adding a trained LoRA update A·B into the base weights so the adapted model runs with no extra cost.', 'llm', 'capstone-lora'),
-    G('LoRA rank', 'The inner dimension r of a LoRA update A·B; it limits how much the adapter can change and how many parameters it trains.', 'llm', 'capstone-lora')
+    G('LoRA rank', 'The inner dimension r of a LoRA update A·B; it limits how much the adapter can change and how many parameters it trains.', 'llm', 'capstone-lora'),
+    G("Figure and Axes (matplotlib)", "A Figure is the whole image; an Axes is one plotting area inside it, with its own x and y axes. plt.subplots returns both.", 'code', 'data-visualization'),
+    G("Kernel density estimate (KDE)", "A smooth estimate of a distribution, built by placing a small bell curve on every data point and adding them up; drawn by density plots.", 'code', 'data-visualization'),
+    G("Scatter matrix", "A grid of scatter plots showing every pair of numeric variables, with each variable’s distribution on the diagonal; also called a pair plot.", 'code', 'data-visualization'),
+    G("Small multiples", "A grid of small charts with shared axes, one per group or category (also called facets), so that shapes can be compared at a glance.", 'code', 'data-visualization'),
   ];
 
   // Flashcards are generated from the glossary

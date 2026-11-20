@@ -8,16 +8,17 @@ It is a static site: it runs on GitHub Pages, from any web server, or straight f
 
 | | |
 | --- | --- |
-| **Concept map** | 105 concepts in 8 branches, including three capstone projects, connected by their prerequisites. Three views: mind map, prerequisite lanes, and outline. Search, highlight the chain of prerequisites for any concept, and set a learning goal. |
-| **Lessons** | Each concept explains *why* it matters, how it works, when to use it, common pitfalls and key takeaways. Every formula comes with a "where" legend that defines each symbol. |
-| **Runnable code** | Code samples run in the browser with real Python 3.12 + NumPy (via [Pyodide](https://pyodide.org)). PyTorch and API examples are marked "run locally". |
+| **Concept map** | 106 concepts in 8 branches, including three capstone projects, connected by their prerequisites. Three views: mind map, prerequisite lanes, and outline. Search, highlight the chain of prerequisites for any concept, and set a learning goal. |
+| **Lessons** | Each concept explains *why* it matters, how it works, when to use it, common pitfalls and key takeaways, with worked examples, runnable code and quick checks along the way (a typical lesson is about 1,100 words). Every formula comes with a "where" legend that defines each symbol. |
+| **Runnable code** | 306 code samples run in the browser with real Python 3.12 + NumPy (via [Pyodide](https://pyodide.org)). PyTorch and API examples are marked "run locally". |
 | **Interactive demos** | 28 visual demos: gradient descent, activation functions, line fitting, overfitting, k-NN, k-means, classification thresholds, softmax/temperature/top-p, attention, BPE tokenization, convolution, a single neuron, positional encodings, quantization, embeddings, calibration and temperature scaling, the diffusion forward process, LLM batching on the roofline, PPO's clipped objective, eigenvectors and the SVD of a 2×2 matrix, gradient descent and momentum against the condition number, Bayesian updating (Beta–Binomial), Gaussian-process regression, PCA, learning-rate schedules, the bias–variance trade-off over many training sets, a decision-tree split explorer, and backpropagation step by step. The threshold demo also shows the precision–recall curve. |
 | **Diagrams** | 12 theme-aware diagrams: the transformer block, the RAG pipeline, the agent loop, diffusion training and sampling, the U-Net, the ML lifecycle, cross-validation folds, a LoRA adapter, the LLM training pipeline, an LSTM cell, mixture-of-experts routing, and data / tensor / pipeline parallelism. |
-| **Predict first** | 24 code samples ask you to predict their output before you run them; committing to a guess first is one of the most reliable ways to remember the result. |
-| **Practice problems** | 230 problems (easy / medium / hard) with a LeetCode-style editor: **Run** checks the visible examples, **Submit** runs hidden tests too. Hints, worked solutions and explanations. Drafts are saved automatically. |
-| **Quizzes** | 532 questions (multiple choice, multi-select, true/false, fill-in, ordering, matching) with explanations. Passing a quiz and solving a problem completes a concept. |
+| **Charts** | 127 charts in 90 lessons plot numbers computed by real experiments: loss curves and learning rates, decision boundaries, bias and variance, precision and recall, scaling laws, attention cost, quantization error, and many more. Each has a "Show the numbers" table with the underlying data. |
+| **Predict first** | 104 code samples ask you to predict their output before you run them; committing to a guess first is one of the most reliable ways to remember the result. |
+| **Practice problems** | 232 problems (easy / medium / hard) with a LeetCode-style editor: **Run** checks the visible examples, **Submit** runs hidden tests too. Hints, worked solutions and explanations. Drafts are saved automatically. |
+| **Quizzes** | 754 questions (multiple choice, multi-select, true/false, fill-in, ordering, matching) with explanations. Passing a quiz and solving a problem completes a concept. |
 | **Learning tracks** | Guided paths: ML Foundations, Classical ML Practitioner, Data Science & Experiments, ML Theory & Probabilistic Methods, Deep Learning from Scratch, Build an LLM from Scratch, LLM Application Engineer, Fine-tuning, Alignment & Serving, Frontier Deep Learning, the Complete Atlas — or set any concept as a custom goal. |
-| **Review** | Flashcards for 594 glossary terms, plus **mistakes to revisit**: every quiz question, quick check or prediction you get wrong, and every problem you could only solve with the solution, comes back after a day, then a week, then a few weeks (spaced repetition), until it sticks. |
+| **Review** | Flashcards for 598 glossary terms, plus **mistakes to revisit**: every quiz question, quick check or prediction you get wrong, and every problem you could only solve with the solution, comes back after a day, then a week, then a few weeks (spaced repetition), until it sticks. |
 | **Playground** | A multi-file Python scratchpad with templates (NumPy, linear regression, matplotlib, softmax & attention, pandas, scikit-learn). |
 | **Progress** | XP, levels, streaks and achievements. Everything is stored in your browser (localStorage). |
 | **Sync across devices** | Export your progress and code as a file (or a copyable sync code) and import it on another device — imports *merge* by default, so nothing is lost. You can also download all your code as one `.py` file. |
@@ -65,6 +66,8 @@ No build step is involved: the site is plain HTML, CSS and JavaScript (Vue 3 is 
 - **Progress & Sync → Export progress / Sync code**: download a backup file, or copy a compact *sync code* and paste it on another device. Import offers **Merge** (keeps the best of both: solved problems, best quiz scores, newest drafts) or **Replace**. **Export all my code (.py)** downloads every solution and playground file as one Python file.
 - Clearing your browser's site data erases local progress, so export a backup first.
 
+**Security.** The page sets a Content-Security-Policy (in a `<meta>` tag, because GitHub Pages cannot send headers) that allows scripts only from the site itself and from jsDelivr for the Python runtime, and the page has no inline scripts. The markdown renderer escapes all text and never passes raw HTML through, so notes and imported progress files are always displayed as plain text; imports are size-limited and checked before they are merged. Python runs in a Web Worker with no access to the page or to saved progress. `serve.js` serves only the files inside the project folder (no hidden files, no `node_modules`) and answers only GET and HEAD requests.
+
 ## Project structure
 
 ```text
@@ -78,12 +81,14 @@ js/engines/              graph layout (DAG, mind map, lanes), Python runner (Pyo
 js/data/                 content: branches, concepts-*.js (lessons, quizzes, problems),
                          glossary, learning tracks, achievements
 js/views/                Vue components: map, lesson, problem editor, practice list,
-                         playground, dashboard, tracks, glossary, flashcards, profile, self-test
+                         playground, dashboard, tracks, glossary, flashcards, profile, self-test,
+                         and the demos, diagrams and charts shown inside lessons
 js/app.js                app shell: navigation, onboarding, Python status
 sw.js, manifest.webmanifest   offline support and installable app
 serve.js                 zero-dependency local web server
 tests/                   Node + CPython test suites (see below)
-tools/make-icons.js      regenerates the app icons
+tools/                   lesson-patch.js (adds lesson sections, charts and quiz questions from a
+                         plain-text patch), legacy-sections.js, visual-diff.js, make-icons.js
 docs/CONTENT_GUIDE.md    how to write and test new lessons and problems
 ```
 
@@ -98,9 +103,10 @@ npm test
 | Suite | Checks |
 | --- | --- |
 | `tests/graph.test.js` | the prerequisite graph: cycles, depths, ancestors, both map layouts |
-| `tests/content.test.js` | every concept, quiz question, problem, demo, glossary term and track is well-formed; prerequisites exist; **every formula has a symbol legend**; every concept has glossary terms |
-| `tests/views.test.js` | every Vue template compiles; all markdown renders; store export/import/merge round-trips |
+| `tests/content.test.js` | every concept, quiz question, problem, demo, chart, glossary term and track is well-formed; prerequisites exist; **every formula has a symbol legend**; every concept has glossary terms |
+| `tests/views.test.js` | every Vue template compiles; all markdown renders, and hostile markdown (scripts, event handlers, `javascript:` links) comes out inert; store export/import/merge round-trips, and malformed, oversized or prototype-polluting imports are rejected |
 | `tests/theme.test.js` | every text colour of every theme meets WCAG AA contrast (4.5:1) on every background |
+| `tests/serve.test.js` | the local server refuses path traversal (including encoded variants), hidden files, `node_modules`, directories and non-GET requests, and sends its security headers |
 | `tests/problems.test.js` | runs in CPython: every reference solution passes all of its tests, every starter fails at least one, every code sample compiles, every runnable sample executes, and every "predict first" answer is confirmed by its sample's real output |
 
 You can limit the problem checks to some concepts: `node tests/problems.test.js attention gpt`.

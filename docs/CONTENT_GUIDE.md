@@ -49,7 +49,48 @@ A **new content file** must be added to `index.html` with the other `concepts-*.
 { type: 'code', title: 'Real API call', run: false, md: `…`, code: `…` }   // plain Python, shown but not runnable
 { type: 'demo', title: 'Interactive: attention', md: `optional intro`, demo: 'attention' }
 { type: 'check', question: { /* a quiz question, any type except match */ } }
+{ type: 'chart', title: 'Loss per step for different learning rates', md: `optional intro`, chart: { /* spec */ }, after: `what to notice` }
 ```
+
+**Charts** are static, theme-aware SVG plots drawn by `js/views/charts.js` from numbers stored in the lesson. Compute the numbers with a real experiment or formula (keep the script that generated them in `tools/charts/`), never invent them, and say in `after` what the reader should notice. The spec:
+
+```js
+{ kind: 'line' | 'scatter' | 'bar',
+  x: [ … ],                                   // shared x values (category labels for bars)
+  series: [{ name: 'legend text', y: [ … ] },  // one y per x; null leaves a gap in a line
+           { name: '…', x: [ … ], y: [ … ], dash: true, scatter: true }],   // own x values; dashed; dots only
+  xLabel: '…', yLabel: '…',                   // required
+  xLog: true, yLog: true, xMin, xMax, yMin, yMax, points: false,
+  vlines: [{ x, label }], hlines: [{ y, label }] }
+```
+
+`tests/content.test.js` checks every spec (known kind, matching lengths, finite values, positive values on log axes, a title and both axis labels). Data outside the axis limits is clipped at the plot edge, long legends wrap, and wide log ranges label every second or third decade. Under each chart a "Show the numbers" table lists the data for screen readers and for anyone who wants the values. Check new charts in the browser: no overlapping labels in light and dark themes and at phone width.
+
+**Writing many sections at once.** `node tools/lesson-patch.js patch.txt` inserts sections, quiz questions and charts from a plain-text patch file, so Markdown, Python and JSON never need escaping by hand. A patch is a list of operations:
+
+```text
+### INSERT concept=knn after="Scaling is not optional"      (or before="…", or at=end)
+@@ text | Section title
+Markdown…
+@@ code | Section title
+optional intro
+%% code
+python…
+%% after
+what the output shows
+%% predict
+{"type": "mcq", "q": "…", "options": ["…"], "answer": 0, "explain": "…", "expect": ["…"]}
+@@ chart | Chart title
+%% spec
+{"kind": "line", "x": [ … ], "series": [ … ], "xLabel": "…", "yLabel": "…"}
+@@ check
+{"type": "tf", "q": "…", "answer": true, "explain": "…"}
+@@ quiz
+{"type": "mcq", "q": "…", "options": ["…"], "answer": 1, "explain": "…"}
+### REPLACE concept=knn section="Old title"                  (the blocks below replace that section)
+```
+
+Afterwards run `node --check` on the changed content files, `node tools/legacy-sections.js`, `node tests/content.test.js` and `MLA_SAMPLE_OUTPUT=out.json node tests/problems.test.js <concepts>`, and read the sample outputs against the text you wrote.
 
 **Predict first.** A runnable Python code section can carry a `predict` question, shown above the code. The learner commits to an answer, reads the explanation, then runs the code to see it happen:
 
@@ -67,12 +108,14 @@ A **new content file** must be added to `index.html` with the other `concepts-*.
 
 Runnable code samples execute in the in-browser Python (Pyodide 0.27, Python 3.12, NumPy; pandas, scikit-learn and matplotlib load automatically when imported). Keep them fast (a few seconds at most in the browser) and print something meaningful.
 
-Available demos (25):
+Available demos (28):
 
 - In `js/views/demos.js`: `gradient-descent`, `activations`, `linear-fit`, `overfit-poly`, `knn`, `kmeans`, `threshold`, `softmax`, `attention`, `bpe`, `convolution`, `neuron`, `positional`, `quantization`, `embeddings`, `calibration`, `diffusion`, `roofline` and `ppo-clip`.
-- In `js/views/demos-more.js`: `eigen`, `conditioning`, `beta`, `gp`, `pca` and `lr-schedule`. This file uses the canvas helpers that `demos.js` exports as `MLA.demoKit`.
+- In `js/views/demos-more.js`: `eigen`, `conditioning`, `beta`, `gp`, `pca`, `lr-schedule`, `backprop`, `bias-variance` and `tree-split`. This file uses the canvas helpers that `demos.js` exports as `MLA.demoKit`.
 
-Available diagrams (8), defined in `js/views/diagrams.js`: `dg-transformer`, `dg-rag`, `dg-agent`, `dg-diffusion`, `dg-unet`, `dg-lifecycle`, `dg-cv` and `dg-lora`. Use them like demos, for example `{ type: 'demo', title: 'Diagram: the agent loop', demo: 'dg-agent' }`. A section can also show only a diagram followed by text, using `after` (see the `rag` and `mlops` lessons).
+Available diagrams (12), defined in `js/views/diagrams.js`: `dg-transformer`, `dg-rag`, `dg-agent`, `dg-diffusion`, `dg-unet`, `dg-lifecycle`, `dg-cv`, `dg-lora`, `dg-pipeline`, `dg-lstm`, `dg-moe` and `dg-parallel`. Use them like demos, for example `{ type: 'demo', title: 'Diagram: the agent loop', demo: 'dg-agent' }`. A section can also show only a diagram followed by text, using `after` (see the `rag` and `mlops` lessons).
+
+Use a **demo** when the learner should move a slider and watch something change, a **diagram** for the structure of a system, and a **chart** for numbers: a curve, a comparison or a scaling law.
 
 ### Adding a demo
 
@@ -90,11 +133,9 @@ Call `diagram(name, viewBox, ariaLabel, body, caption)` in `diagrams.js`:
 - Use the theme classes (`dg-box`, `dg-acc`, `dg-grn`, `dg-amb`, `dg-pur`, `dg-red`, `dg-cyn`), never fixed colours.
 - Keep every label inside its box. Diagram text is 14 px bold for box titles and 12 px for small lines, so allow about 8 px per character for titles.
 
-Adding a section in the middle of a lesson shifts the stored "read" and "check" positions of the sections after it; see `docs/ROADMAP.md`, item 2.
-
 ## 3. Markdown features
 
-The renderer (`MLA.util.md` in `js/core/util.js`) supports:
+The renderer (`MLA.util.md` in `js/core/util.js`) also displays learners' notes and imported files, so it is deliberately strict: all text is HTML-escaped, raw HTML is never passed through (a line such as `<div>…</div>` appears as plain text), and links work only for `#/…` app routes and `http(s)` URLs. Use a diagram, a chart or a demo instead of hand-written HTML or SVG. It supports:
 
 - paragraphs, `#`/`##` headings, **bold**, *italic*, `inline code`, `> quotes`, `---` rules
 - nested bullet and numbered lists, and tables (`| a | b |` with a `| --- |` separator row)

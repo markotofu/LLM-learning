@@ -58,7 +58,14 @@ for (const c of concepts) {
   T.ok(where + ': has practice problems', c.problems.length >= 1);
   c.sections.forEach((s, i) => {
     const sw = where + ' section ' + (i + 1);
-    T.ok(sw + ': known type', ['text', 'code', 'demo', 'check'].includes(s.type), s.type);
+    T.ok(sw + ': known type', ['text', 'code', 'demo', 'check', 'chart'].includes(s.type), s.type);
+    if (s.type === 'chart') {
+      const ch = s.chart || {}, ser = ch.series || [];
+      const okKind = ['line', 'scatter', 'bar'].includes(ch.kind || 'line');
+      const okSeries = ser.length > 0 && ser.every(x => Array.isArray(x.y) && x.y.length > 0 && x.y.every(v => v === null || Number.isFinite(v)) && (Array.isArray(x.x) ? x.x.length === x.y.length : Array.isArray(ch.x) && ch.x.length === x.y.length));
+      const okLog = (!ch.xLog || (ch.x || []).concat(...ser.map(x => x.x || [])).every(v => v > 0)) && (!ch.yLog || ser.every(x => x.y.every(v => v === null || v > 0)));
+      T.ok(sw + ': chart spec is valid', okKind && okSeries && okLog && !!s.title && !!ch.xLabel && !!ch.yLabel, JSON.stringify(ch).slice(0, 160));
+    }
     if (s.type === 'text') T.ok(sw + ': text has md', !!s.md && s.md.length > 40);
     if (s.type === 'code') { T.ok(sw + ': code present', !!s.code); T.ok(sw + ': known lang', !s.lang || ['python', 'pytorch', 'bash', 'output', 'text', 'json'].includes(s.lang), s.lang); }
     if (s.type === 'demo') T.ok(sw + ': demo "' + s.demo + '" exists', !!MLA.components['demo-' + s.demo]);

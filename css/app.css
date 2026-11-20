@@ -329,6 +329,25 @@ pre.hl { margin: 0; border: 0; border-radius: 0; background: transparent; paddin
 .diagram .dg-line.dash { stroke-dasharray: 5 4; }
 .diagram .dg-head { fill: var(--muted); fill: context-stroke; }
 .diagram-hint { display: none; }
+/* Inline charts (js/views/charts.js) */
+.chart .ch-grid { stroke: var(--border); stroke-width: 1; }
+.chart .ch-axis { stroke: var(--border2); stroke-width: 1.2; }
+.chart .ch-zero { stroke: var(--muted); stroke-width: 1; opacity: 0.7; }
+.chart .ch-ref { stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.chart .ch-tick, .chart .ch-reflabel { fill: var(--muted); font-size: 11.5px; }
+.chart .ch-reflabel { paint-order: stroke; stroke: var(--editor-bg); stroke-width: 4px; stroke-linejoin: round; }
+.chart .ch-label { fill: var(--text); font-size: 13px; font-weight: 600; }
+.chart .ch-legend { fill: var(--text); font-size: 12.5px; }
+.chart .ch-0 { stroke: var(--accent); fill: var(--accent); } .chart .ch-1 { stroke: var(--amber); fill: var(--amber); }
+.chart .ch-2 { stroke: var(--green); fill: var(--green); } .chart .ch-3 { stroke: var(--purple); fill: var(--purple); }
+.chart .ch-4 { stroke: var(--pink); fill: var(--pink); } .chart .ch-5 { stroke: var(--cyan); fill: var(--cyan); }
+.chart .ch-line { fill: none; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+.chart .ch-dash { stroke-dasharray: 7 5; }
+.chart .ch-dot { stroke: var(--editor-bg); stroke-width: 1; }
+.chart .ch-bar { stroke: none; opacity: 0.9; }
+.chart .ch-key { stroke: none; }
+.chart-data summary { cursor: pointer; color: var(--muted); }
+.chart-data .mini-table { margin-top: 6px; }
 @media (max-width: 600px) { .diagram-hint { display: block; } }
 .mini-table { font-size: 0.82rem; margin: 0; }
 .mini-table th, .mini-table td { padding: 4px 8px; }

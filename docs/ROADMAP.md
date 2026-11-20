@@ -1,13 +1,13 @@
 # ML Atlas roadmap
 
-Possible improvements, ranked by how much they help a learner per unit of effort. Status as of 20 November 2026:
+Possible improvements, ranked by how much they help a learner per unit of effort. Status as of 21 November 2026:
 
-- 105 concepts, including 3 capstones;
-- 230 practice problems and 532 quiz questions;
-- 594 glossary terms;
-- 28 interactive demos and 12 diagrams;
-- 24 "predict first" questions on code samples, and a spaced-repetition queue of mistakes to revisit;
-- Terms of Use and Privacy Policy pages.
+- 106 concepts, including 3 capstones; a typical (median) lesson has about 1,100 words;
+- 232 practice problems and 754 quiz questions;
+- 598 glossary terms;
+- 28 interactive demos, 12 diagrams and 127 charts of computed data;
+- 306 code samples that run in the browser, 104 of them with a "predict first" question, and a spaced-repetition queue of mistakes to revisit;
+- Terms of Use and Privacy Policy pages, a Content-Security-Policy and a hardened local server.
 
 **Effort:**
 
@@ -16,6 +16,13 @@ Possible improvements, ranked by how much they help a learner per unit of effort
 - **L** — a week or more.
 
 **Impact** is the expected gain in learning, reach or safety.
+
+## Done in the third round (21 November 2026)
+
+- **Deeper lessons.** Every lesson except the three capstones and Advanced Agents gained worked examples, runnable samples, quick checks and quiz questions. Lesson text grew by 62% (median lesson from 710 to 1,130 words; lessons under 800 words from 70 to 5), and "predict first" questions went from 24 to 104. The classical-ML, pandas and plotting lessons now cover the ideas of the textbook chapters the owner supplied, in the app's own words.
+- **Charts** (a new `chart` section type): 127 charts in 90 lessons, each computed by a script in `tools/charts/`, with a data table under every chart.
+- **New lesson:** Data Visualization with matplotlib & pandas (from item 14).
+- **Security review:** fixed a stored-XSS path (the markdown renderer passed raw HTML through, and it also renders notes and imported files) and path traversal in `serve.js`; added a Content-Security-Policy, removed inline scripts, and hardened imports. New tests: `tests/serve.test.js` and hostile-input cases in `tests/views.test.js`. The terms and privacy policy now describe the mistakes queue, the activity log, readable notes in exports, trusted imports and the security measures.
 
 ## Done in the second round (also 20 November 2026)
 
@@ -141,6 +148,7 @@ Items 1–4, 6, 7, 8 and part of 10–11 below are done:
 | 15 | Map at scale | Medium | M |
 | 16 | Faster first load | Low–Medium | M |
 | 17 | Legal hardening | Medium | S + external review |
+| 18 | A stricter Content-Security-Policy | Low–Medium | M |
 
 13. **Optional AI tutor.** An "Ask about this lesson" panel that sends the lesson text and the learner's question to the Claude API, using the learner's own API key stored locally.
     - *Pros:* adaptive explanations, hints tailored to the learner's code.
@@ -153,9 +161,9 @@ Items 1–4, 6, 7, 8 and part of 10–11 below are done:
     - equivariant networks;
     - robotics and vision-language-action models;
     - text-generation metrics (BLEU, ROUGE, BERTScore);
-    - data visualization;
+    - data visualization — done;
     - "open in Colab" links for the PyTorch examples that need a GPU.
-15. **Map at scale.** With 105 nodes:
+15. **Map at scale.** With 106 nodes:
     - mark *recommended* prerequisites separately from *required* ones;
     - add a "zoom to branch" view and a progress heat map;
     - let a learner hide finished branches.
@@ -168,12 +176,15 @@ Items 1–4, 6, 7, 8 and part of 10–11 below are done:
     - offer an email contact as well as the GitHub profile;
     - confirm you hold the rights to the original "NetSec Academy" code this app was built from;
     - decide whether the lesson content stays "all rights reserved" or moves to a licence such as CC BY-NC-SA, which invites contributions.
+18. **A stricter Content-Security-Policy.** The policy still allows `'unsafe-eval'`, because the vendored Vue build compiles templates in the browser, and it loads Pyodide from jsDelivr without integrity hashes (`importScripts` in a worker cannot check them).
+    - *Fix:* precompile the templates (or move to Vue's runtime-only build), and self-host a pinned copy of Pyodide.
+    - *Pros:* removes the last ways a script could be injected or swapped.
+    - *Cons:* adds a build step, which the project has avoided so far, and about 10 MB of Pyodide files to the repository. The current risk is small: no user text reaches a template, and the worker has no access to the page.
 
 ## Suggested order
 
-1. Items 1–2: publish, and make progress robust before more content edits.
-2. Item 3: tests that would have caught today's canvas bug.
-3. Items 4–6: quick fixes.
-4. Items 7–8: the biggest learning gains for moderate effort.
-5. Items 10–11: in small batches, alongside the content they illustrate.
-6. Everything else as time allows.
+1. Items 5 and 12: a quick fix and the demo accessibility pass.
+2. Item 9: guided capstones, together with deepening Advanced Agents, the one regular lesson that the third round did not deepen.
+3. Items 10–11: in small batches, alongside the content they illustrate.
+4. Item 17 before promoting the site widely; item 18 if a build step becomes acceptable.
+5. Everything else as time allows.

@@ -101,8 +101,48 @@ print(f"fitted temperature T = {T:.2f}")
 print(f"test ECE       before {ece(before, labels[test]):.3f}   after {ece(after, labels[test]):.3f}")
 print(f"test accuracy  before {np.mean(before.argmax(1) == labels[test]):.3f}   after {np.mean(after.argmax(1) == labels[test]):.3f}")
 `, after: `The fitted temperature recovers the factor by which the logits were inflated, the calibration error drops by an order of magnitude, and accuracy does not move at all.`, predict: {"type":"mcq","q":"Temperature scaling divides every logit by the same number T (about 2.5 here). What happens to the test accuracy?","options":["It rises, because the probabilities are better","It falls, because the model becomes less confident","It stays exactly the same","It drops to chance"],"answer":2,"explain":"Accuracy stays at 0.609. Dividing all logits by the same positive number never changes which one is largest, so every prediction is unchanged; only the confidence changes (ECE 0.206 → 0.013).","expect":["test accuracy  before 0.609   after 0.609"]} },
+      { type: 'chart', title: "Reliability diagram: before and after temperature scaling", md: `The 4-class model from the reliability table above, binned by confidence:`, after: `The original model's curve sags far below the diagonal: in every bin it is more confident than it is accurate. Dividing all logits by a single temperature T = 2.54 (fitted by minimising the log loss) brings every bin onto the diagonal, without changing a single prediction.`, chart: {"kind":"line","series":[{"name":"perfect calibration","x":[0.25,1],"y":[0.25,1],"dash":true},{"name":"original model","x":[0.373,0.459,0.549,0.649,0.751,0.854,0.97],"y":[0.274,0.368,0.413,0.44,0.531,0.592,0.754]},{"name":"after temperature scaling (T = 2.54)","x":[0.362,0.453,0.548,0.648,0.748,0.847,0.937],"y":[0.353,0.454,0.554,0.622,0.754,0.863,0.933]}],"xLabel":"mean confidence in the bin","yLabel":"accuracy in the bin","xMin":0.25,"xMax":1,"yMin":0.25,"yMax":1} },
       { type: 'demo', title: 'Interactive: a reliability diagram and the temperature knob', demo: 'calibration' },
       { type: 'check', question: { type: 'tf', q: 'Temperature scaling can change which class a model predicts.', answer: false, explain: 'Dividing all logits by the same positive number keeps their order.' } },
+      { type: 'text', title: "Scoring probabilities: the Brier score and log loss", md: `Accuracy ignores the probabilities entirely, and the ECE checks only calibration: a model that always predicts the base rate is perfectly calibrated and useless. To compare probabilistic predictions as a whole, use a **proper scoring rule**: a score that is optimised, in expectation, only by reporting the true probabilities, so no model can game it by hedging or exaggerating.
+
+$$ Brier = (1/n) Σᵢ Σ_k ( p_ik − y_ik )²          log loss = −(1/n) Σᵢ log p_i,yᵢ $$
+:::where
+p_ik — the probability the model gave class k for example i
+y_ik — 1 if example i's true class is k, otherwise 0
+p_i,yᵢ — the probability the model gave the true class of example i
+n — the number of examples
+:::
+
+The **Brier score** is the mean squared error of the probabilities: bounded, easy to explain and gentle with confident mistakes. **Log loss** (cross-entropy) punishes a confident mistake without limit, so it is the stricter judge, and the one models are trained on. Both reward calibration *and* sharpness (confident predictions that turn out right), which is why temperature scaling improves them while leaving the accuracy untouched.` },
+      { type: 'code', title: "Temperature scaling improves the scores, not the accuracy", md: `The overconfident 4-class model from above. T is fitted here on the same data for brevity; in practice, fit it on a held-out calibration set.`, code: `import numpy as np
+rng = np.random.default_rng(0)
+n, k = 6000, 4
+true_logits = rng.normal(size=(n, k)) * 1.5
+
+def softmax(z):
+    e = np.exp(z - z.max(axis=1, keepdims=True))
+    return e / e.sum(axis=1, keepdims=True)
+
+labels = (rng.random(n)[:, None] > np.cumsum(softmax(true_logits), axis=1)).sum(axis=1)
+model_logits = 2.5 * true_logits                          # right ranking, logits far too large
+onehot = np.eye(k)[labels]
+
+def scores(P):
+    accuracy = np.mean(P.argmax(axis=1) == labels)
+    brier = np.mean(np.sum((P - onehot) ** 2, axis=1))
+    log_loss = -np.mean(np.log(P[np.arange(n), labels]))
+    return accuracy, brier, log_loss
+
+temps = np.linspace(0.5, 5, 451)
+best_T = temps[np.argmin([scores(softmax(model_logits / T))[2] for T in temps])]
+results = {}
+for name, P in [("original", softmax(model_logits)), (f"T = {best_T:.2f}", softmax(model_logits / best_T))]:
+    results[name] = scores(P)
+    a, b, l = results[name]
+    print(f"{name:<9}  accuracy {a:.3f}   Brier {b:.3f}   log loss {l:.3f}")
+acc = [v[0] for v in results.values()]
+print("accuracy unchanged:", acc[0] == acc[1])`, after: `Same accuracy, but a clearly better Brier score and a much better log loss: the original model's confident mistakes were costing it dearly. Proper scoring rules see the difference that accuracy cannot.`, predict: {"type":"mcq","q":"Temperature scaling divides every logit by the same T. Which of these will change?","options":["Only the accuracy","Only the Brier score and the log loss","All three","None of them"],"answer":1,"explain":"Dividing all logits by a positive T never changes which class has the largest logit, so the predictions and the accuracy stay the same; the probabilities, and therefore the scores, change.","expect":["accuracy unchanged: True"]} },
       { type: 'text', title: 'Two kinds of uncertainty', md: `- **Aleatoric** uncertainty is noise in the data itself — a blurry photo, an ambiguous question, a coin flip. More data does not remove it.
 - **Epistemic** uncertainty is the model's lack of knowledge — inputs unlike anything in the training data. More (relevant) data reduces it, and it is what should make a model say "I don't know" on out-of-distribution inputs.
 
@@ -150,7 +190,32 @@ for alpha in (0.2, 0.1, 0.05):
     inside = np.abs(y_test - predict(x_test)) <= q
     print(f"target {1 - alpha:.0%}: interval ±{q:.2f}  coverage {inside.mean():.1%}  "
           f"(where x < 3: {inside[x_test < 3].mean():.1%},  where x > 7: {inside[x_test > 7].mean():.1%})")
-`, after: `Overall coverage meets the target every time. But one fixed width over-covers where the data is quiet (small x) and under-covers where it is noisy (large x): the guarantee is about the average, not every region.` }
+`, after: `Overall coverage meets the target every time. But one fixed width over-covers where the data is quiet (small x) and under-covers where it is noisy (large x): the guarantee is about the average, not every region.` },
+      { type: 'code', title: "Uncertainty from scikit-learn classifiers", md: `scikit-learn classifiers offer two ways to see how sure they are, besides \`predict\`:
+
+- **\`decision_function\`** returns a raw score. For two classes it is one number per example: positive means the second class in \`classes_\`, negative the first, and its size says how confident the model is, on a scale that depends on the model.
+- **\`predict_proba\`** returns one probability per class; each row adds up to 1, and the predicted class is the column with the largest value.`, code: `import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.model_selection import train_test_split
+
+iris = load_iris()
+names = iris.target_names[iris.target]                 # use the species names as labels
+X_train, X_test, y_train, y_test = train_test_split(iris.data, names, random_state=42)
+gbc = GradientBoostingClassifier(learning_rate=0.01, random_state=0).fit(X_train, y_train)
+
+print("classes_:", gbc.classes_)
+scores = gbc.decision_function(X_test[:4])
+print("decision_function shape:", gbc.decision_function(X_test).shape)   # one column per class
+print(scores.round(2))
+proba = gbc.predict_proba(X_test[:4])
+print("predict_proba:")
+print(proba.round(3))
+print("rows sum to 1:", np.allclose(proba.sum(axis=1), 1))
+print("argmax of scores, mapped through classes_:", gbc.classes_[np.argmax(scores, axis=1)])
+print("predict:                                  ", gbc.predict(X_test[:4]))`, after: `- With three classes, both methods return one column per class, in the order of \`classes_\`. Always map column numbers through \`classes_\`: the classes are sorted, and with string labels the column number is **not** the label.
+- The argmax of either output reproduces \`predict\`.
+- Whether these probabilities can be trusted as real frequencies is exactly the calibration question of this lesson: a model can be confidently wrong, so check a reliability diagram before relying on the numbers.` }
     ],
     when: `- Any decision that uses probabilities: thresholds, expected costs, ranking by risk, deferring to a human.
 - Combining models or feeding probabilities into downstream systems (they must mean what they say).
@@ -173,7 +238,9 @@ for alpha in (0.2, 0.1, 0.05):
       { type: 'mcq', q: 'Which kind of uncertainty can be reduced by collecting more relevant data?', options: ['Aleatoric', 'Epistemic', 'Both equally', 'Neither'], answer: 1, explain: 'Epistemic uncertainty comes from lack of knowledge; aleatoric is noise.' },
       { type: 'fill', q: 'Split conformal with n = 99 calibration scores and α = 0.1: which sorted score (its rank, counting from 1) is used as q?', answer: ['90', '90th'], explain: '⌈(99 + 1) × 0.9⌉ = 90.' },
       { type: 'mcq', q: 'What does split conformal prediction guarantee?', options: ['Every prediction set is small', 'The true answer is in the set with probability at least 1 − α, on average over new data', 'The model becomes calibrated', 'Coverage of 1 − α in every subgroup'], answer: 1, explain: 'Marginal coverage, for any model, under exchangeability.' },
-      { type: 'tf', q: 'Deep ensembles estimate epistemic uncertainty by measuring how much independently trained models disagree.', answer: true, explain: 'Disagreement grows where the data did not pin the function down.' }
+      { type: 'tf', q: 'Deep ensembles estimate epistemic uncertainty by measuring how much independently trained models disagree.', answer: true, explain: 'Disagreement grows where the data did not pin the function down.' },
+      {"type":"mcq","q":"A model predicts the base rate (say 30%) for every example. Which statement is true?","options":["It is perfectly calibrated but useless for ranking","It has the best possible log loss","It is badly calibrated","Its accuracy is 100%"],"answer":0,"explain":"Among all examples given 30%, about 30% are positive, so it is calibrated; but it cannot tell any two examples apart. Proper scoring rules penalise this lack of sharpness."},
+      {"type":"mcq","q":"Why is log loss called a proper scoring rule?","options":["It is always between 0 and 1","Its expected value is optimised only by predicting the true probabilities","It ignores calibration","It counts correct predictions"],"answer":1,"explain":"No model can improve its expected log loss by reporting probabilities other than the ones it believes are true, so hedging and exaggerating are both punished."}
     ],
     problems: [
       {
@@ -410,6 +477,32 @@ report("plain, threshold 0.1", (plain.predict_proba(X_te)[:, 1] >= 0.1).astype(i
 3. Review the flagged examples by hand, starting with the most confident disagreements, and fix or remove them.
 
 Also: measure agreement between annotators, write precise labelling guidelines, and consider robust losses when noise cannot be cleaned.` },
+      { type: 'chart', title: "Test accuracy as training labels get noisier", md: `A synthetic two-class problem; a growing share of the training labels is flipped, and every model is tested on clean labels:`, after: `The 1-nearest-neighbour classifier copies the label of a single training point, so every flipped label becomes a wrong prediction around it: its accuracy falls almost in step with the noise. Averaging over 25 neighbours outvotes isolated errors until about 30% noise, and the simple logistic regression barely moves. Flexible models memorise noise, which is why label quality matters most exactly where models are most powerful.`, chart: {"kind":"line","x":[0,5,10,15,20,25,30,35,40],"series":[{"name":"1-nearest neighbour","y":[0.924,0.893,0.851,0.81,0.762,0.719,0.674,0.622,0.58]},{"name":"25-nearest neighbours","y":[0.924,0.925,0.924,0.923,0.923,0.912,0.894,0.833,0.76]},{"name":"logistic regression","y":[0.883,0.883,0.88,0.874,0.871,0.869,0.872,0.852,0.835]}],"xLabel":"share of training labels flipped at random (%)","yLabel":"accuracy on clean test labels"} },
+      { type: 'text', title: "Finding label errors with out-of-fold predictions", md: `Real datasets contain mistakes; studies of popular benchmarks have found that a few percent of their test labels are wrong. Checking every label by hand is too expensive, but a model can point to the suspicious ones, provided it never judges an example it was trained on:
+
+1. Get **out-of-fold** predicted probabilities with cross-validation (\`cross_val_predict(..., method="predict_proba")\`), so every example is scored by a model that did not see it.
+2. For each example, look at the probability the model gives to its **given** label.
+3. Review the examples with the lowest such probability first: there the model confidently disagrees with the label.
+
+This is the core of **confident learning** (the cleanlab library), which also estimates how often each class is mislabelled as each other class. The flagged examples go to a human, not straight into the bin: some will be genuinely hard or rare cases, the last examples you want to delete.` },
+      { type: 'code', title: "Flagging suspicious labels", code: `import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.model_selection import cross_val_predict
+from sklearn.neighbors import KNeighborsClassifier
+X, y = make_classification(2000, n_features=10, n_informative=5, random_state=0)
+rng = np.random.default_rng(3)
+noisy = y.copy()
+wrong = rng.choice(len(y), 100, replace=False)                   # corrupt 100 of the 2,000 labels (5%)
+noisy[wrong] = 1 - noisy[wrong]
+is_wrong = np.zeros(len(y), dtype=bool)
+is_wrong[wrong] = True
+
+proba = cross_val_predict(KNeighborsClassifier(n_neighbors=15), X, noisy, cv=5, method="predict_proba")
+p_given = proba[np.arange(len(noisy)), noisy]                     # how much the model believes each given label
+suspects = np.argsort(p_given)[:50]                               # the 50 least believable labels
+print("truly wrong among the 50 flagged labels:", int(is_wrong[suspects].sum()))
+print("expected if we picked 50 at random:      ", 50 * 100 // 2000)
+print("most flagged labels are real errors:", bool(is_wrong[suspects].mean() > 0.6))`, after: `A random sample of 50 would contain about 2 or 3 of the corrupted labels; the 50 labels the out-of-fold model believes least are mostly real errors. Reviewing those first gives a human checker the most value per minute.`, predict: {"type":"mcq","q":"5% of the labels were flipped at random. Among the 50 labels the model finds least believable, roughly how many are real errors?","options":["About 2 or 3, as for a random pick","About 10","Most of them","Always exactly 50"],"answer":2,"explain":"A flipped label usually contradicts everything similar examples say, so a model that never saw it gives it a very low probability.","expect":["most flagged labels are real errors: True"]} },
       { type: 'text', title: 'Learning with few labels', md: `When labelled data is scarce but unlabelled data is plentiful:
 
 - **Transfer learning**: start from a pretrained model, or train a small classifier on embeddings from a foundation model — often the strongest first step.
@@ -469,7 +562,9 @@ for strategy in ("random", "uncertainty"):
       { type: 'fill', q: 'A dataset has 1,000 examples: 900 of class A and 100 of class B. With balanced class weights w_c = n / (k · n_c), what is the weight of class B?', answer: ['5', '5.0'], explain: '1000 / (2 × 100) = 5.' },
       { type: 'tf', q: 'Data augmentation should also be applied to the test set so that it matches the training data.', answer: false, explain: 'Evaluation must reflect real inputs; augment only the training data.' },
       { type: 'mcq', q: 'Which active-learning strategy picks the example whose top two class probabilities are closest?', options: ['Random sampling', 'Margin sampling', 'Pseudo-labelling', 'SMOTE'], answer: 1, explain: 'A small margin means the model can hardly decide.' },
-      { type: 'mcq', q: 'How do you find likely mislabelled training examples?', options: ['Look at the examples with the highest training accuracy', 'Find examples where out-of-fold predictions confidently disagree with the label', 'Delete the rare classes', 'Shuffle the labels'], answer: 1, explain: 'A model that never saw the example disagrees with its label confidently.' }
+      { type: 'mcq', q: 'How do you find likely mislabelled training examples?', options: ['Look at the examples with the highest training accuracy', 'Find examples where out-of-fold predictions confidently disagree with the label', 'Delete the rare classes', 'Shuffle the labels'], answer: 1, explain: 'A model that never saw the example disagrees with its label confidently.' },
+      {"type":"mcq","q":"Why must label-error detection use out-of-fold predictions?","options":["They are faster","A model scoring its own training examples has partly memorised their labels, including the wrong ones","Cross-validation removes noise automatically","Out-of-fold predictions are always calibrated"],"answer":1,"explain":"A model that saw an example during training tends to agree with its label, right or wrong, so only predictions from models that never saw it reveal disagreement."},
+      {"type":"mcq","q":"As training labels get noisier, which model typically degrades fastest?","options":["Logistic regression","25-nearest neighbours","1-nearest neighbour","A model that always predicts the majority class"],"answer":2,"explain":"1-nearest neighbour copies the label of a single training point, so every flipped label turns directly into wrong predictions around it."}
     ],
     problems: [
       {
@@ -718,6 +813,38 @@ GROUP BY l.user_id ORDER BY l.user_id
 print("leaky (all orders, even future ones):  ", leaky)
 print("point-in-time (orders before as_of):   ", point_in_time)
 `, after: `For user 1, the leaky version counts the order of 20 January — the very purchase the label says will happen. Moving the time condition into the ON clause keeps every label row while counting only the past.` },
+      { type: 'text', title: "Splitting data reproducibly", md: `How you split data into training and test sets is a data-engineering decision, and the wrong one quietly inflates every metric.
+
+- **Split by entity, not by row.** If one user has 50 rows, a random row split puts some of them in training and some in test, and the model is rewarded for recognising users rather than for generalising. Assign whole users (patients, devices, documents) to one side.
+- **Split by time when you predict the future.** Train on January to June and test on July; never let the model learn from data after the moment it would have been used (see point-in-time correctness above).
+- **Make the split deterministic.** \`ORDER BY RANDOM()\` gives a different split on every run, so results are not reproducible and rows can move between sides as data is added. Instead, hash a stable id and let the hash choose the side: the same user lands in the same bucket today and next month, in SQL or in Python.
+
+$$ bucket(id) = hash(id) mod 100;     training if bucket < 80, otherwise test $$
+:::where
+hash(id) — a deterministic hash of the entity's id (for example MD5), the same on every run and every machine
+mod 100 — the remainder after dividing by 100: a bucket from 0 to 99
+bucket < 80 — about 80% of entities go to training; changing the threshold changes the share without reshuffling everyone else
+:::
+
+Be careful with built-in hash functions: Python's \`hash()\` of a string changes from run to run unless \`PYTHONHASHSEED\` is fixed, so use \`hashlib\`.` },
+      { type: 'code', title: "A deterministic split by user", code: `import hashlib
+import sqlite3
+
+def bucket(user_id, buckets=100):
+    digest = hashlib.md5(str(user_id).encode()).hexdigest()
+    return int(digest, 16) % buckets             # the same id always gives the same bucket
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE events (user_id INTEGER, day INTEGER, clicks INTEGER)")
+rows = [(u, d, (u * 7 + d * 3) % 5) for u in range(1, 201) for d in range(1, 6)]
+con.executemany("INSERT INTO events VALUES (?, ?, ?)", rows)
+con.create_function("bucket", 1, bucket)         # make the Python function callable from SQL
+
+train = {u for (u,) in con.execute("SELECT DISTINCT user_id FROM events WHERE bucket(user_id) < 80")}
+test = {u for (u,) in con.execute("SELECT DISTINCT user_id FROM events WHERE bucket(user_id) >= 80")}
+print("users in train:", len(train), "  users in test:", len(test))
+print("users in both splits:", len(train & test))
+print("user 42 is always in bucket", bucket(42), "-> stable:", bucket(42) == bucket(42))`, after: `About 80% of the 200 users land in training (165 here), and each user's 5 rows stay together, so no user appears on both sides. Because the bucket depends only on the id, rerunning the query next month puts every existing user on the same side, and new users are assigned without disturbing anyone else.`, predict: {"type":"mcq","q":"Rows are assigned to train or test by hashing the user id. How many users can appear in both splits?","options":["About 20%","About half","None","It changes on every run"],"answer":2,"explain":"The bucket depends only on the user id, so all of a user's rows land on the same side, every time.","expect":["users in both splits: 0"]} },
       { type: 'text', title: 'Pipelines and data quality', md: `- **ETL vs ELT**: extract, transform, load (transform before the warehouse) or load raw data first and transform inside the warehouse with SQL (dbt is a popular tool) — the modern default.
 - **Batch vs streaming**: nightly jobs for most training data; streams (Kafka, Flink) for real-time features.
 - **Storage**: columnar formats such as **Parquet** are typed, compressed and let queries read only the needed columns — far better than CSV for analytics. Warehouses (BigQuery, Snowflake, Redshift) and lakehouse tables (Delta Lake, Iceberg) hold the data; engines such as DuckDB and Polars bring the same ideas to a laptop.
@@ -746,7 +873,9 @@ print("point-in-time (orders before as_of):   ", point_in_time)
       { type: 'mcq', q: 'How do you find users with no orders?', options: ['INNER JOIN orders and keep everything', 'LEFT JOIN orders and keep rows where the order id IS NULL', 'GROUP BY user and ORDER BY count', 'SELECT DISTINCT users'], answer: 1, explain: 'That is the anti-join pattern.' },
       { type: 'tf', q: 'A window function such as SUM(amount) OVER (PARTITION BY user_id ORDER BY day) returns one row per user.', answer: false, explain: 'Window functions keep every row; GROUP BY would collapse them.' },
       { type: 'mcq', q: 'Which feature is point-in-time correct for a prediction made on 1 March?', options: ['Total spend over all of the user\'s orders', 'Total spend over orders placed before 1 March', 'Spend in the 30 days after 1 March', 'Whether the user churned in March'], answer: 1, explain: 'Only information available before the prediction time may be used.' },
-      { type: 'fill', q: 'What does SQL\'s COUNT(*) do differently from COUNT(column)? COUNT(column) skips rows where the column is … (one word)', answer: ['null', 'NULL'], explain: 'COUNT(*) counts every row.' }
+      { type: 'fill', q: 'What does SQL\'s COUNT(*) do differently from COUNT(column)? COUNT(column) skips rows where the column is … (one word)', answer: ['null', 'NULL'], explain: 'COUNT(*) counts every row.' },
+      {"type":"mcq","q":"Why is ORDER BY RANDOM() a poor way to create a train/test split?","options":["It is too slow","It gives a different split on every run, so results are not reproducible and rows move between sides","It only works in SQLite","It always puts the newest rows in the test set"],"answer":1,"explain":"A split should be a stable property of each entity. Hashing a stable id gives the same assignment on every run."},
+      {"type":"tf","q":"With several rows per user, a random split by row can let a model score well simply by recognising users it saw in training.","answer":true,"explain":"The same user's behaviour appears on both sides, so the test set no longer measures generalisation to new users. Split by user instead."}
     ],
     problems: [
       {
@@ -914,6 +1043,7 @@ rel_i — the graded relevance of the item at position i
 log₂(i + 1) — the position discount, so lower positions count less
 IDCG@k — the DCG of the ideal ordering (items sorted by relevance), so NDCG lies between 0 and 1
 :::` },
+      { type: 'chart', title: "How much each position counts", after: `Both metrics care most about the top of the list, but differently. MRR's weight drops by half from position 1 to 2 and is almost nothing by position 10: only the first relevant result matters. DCG's logarithmic discount is gentler (position 10 still counts 0.29), so it rewards getting several relevant items into the top positions.`, chart: {"kind":"line","x":[1,2,3,4,5,6,7,8,9,10],"series":[{"name":"DCG discount 1 / log₂(i + 1)","y":[1,0.631,0.5,0.431,0.387,0.356,0.333,0.315,0.301,0.289]},{"name":"reciprocal rank 1 / i (MRR)","y":[1,0.5,0.333,0.25,0.2,0.167,0.143,0.125,0.111,0.1]}],"xLabel":"position i in the ranking","yLabel":"weight","yMin":0,"yMax":1.05} },
       { type: 'code', title: 'NDCG and MRR by hand', code: `
 import numpy as np
 
@@ -977,6 +1107,38 @@ print("learned weights:", w.round(2), "  true weights:", true_w)
 print(f"NDCG@5 on unseen queries: random order {mean_ndcg(lambda q: rng.normal(size=n_docs)):.3f}   "
       f"RankNet {mean_ndcg(lambda q: X[q] @ w):.3f}   true weights {mean_ndcg(lambda q: X[q] @ true_w):.3f}")
 `, after: `Trained only on which document beats which, the ranker recovers the direction of the true weights (scaled up — only the ordering matters) and ranks unseen queries about as well as the true scoring function.` },
+      { type: 'text', title: "Learning from clicks: position bias", md: `Human relevance labels are expensive, so most ranking systems learn from **clicks**. But a click needs two things: the user must **see** the item and find it relevant. Items near the top are seen far more often, so they collect more clicks whether or not they are better. Train on raw clicks and the model learns to repeat whatever the old ranking did: a feedback loop.
+
+$$ P(click at position k) = P(seen at k) · P(click once seen) $$
+$$ relevance estimate = (1/n) Σ clicks / P(seen at the position where the item was shown) $$
+:::where
+P(seen at k) — the propensity: the chance that a user looks at position k at all; it falls steeply with k
+P(click once seen) — the item's relevance, which is what we want to learn
+clicks / P(seen …) — each click is up-weighted by how unlikely it was to be seen: inverse propensity weighting (IPW)
+n — the number of times the item was shown
+:::
+
+Propensities are measured by randomising: swap or shuffle results for a small share of traffic and see how the click rate of the *same* item changes with its position. **Interleaving**, which mixes the results of two rankers into one list and counts which ranker's items get clicked, compares rankers with far less traffic than an A/B test.` },
+      { type: 'code', title: "Correcting click data for position bias", code: `import numpy as np
+rng = np.random.default_rng(0)
+true_relevance = np.array([0.30, 0.50, 0.20, 0.45, 0.10])   # P(click | seen) for items 0..4
+seen_prob = np.array([1.0, 0.6, 0.4, 0.3, 0.2])             # P(seen) at positions 1..5
+old_ranking = np.array([0, 2, 4, 1, 3])                     # the current, poor ranking
+
+shown, clicks, weighted = np.zeros(5), np.zeros(5), np.zeros(5)
+for _ in range(20_000):
+    order = old_ranking if rng.random() < 0.9 else rng.permutation(5)   # 10% of traffic randomised
+    for pos, item in enumerate(order):
+        shown[item] += 1
+        if rng.random() < seen_prob[pos] and rng.random() < true_relevance[item]:
+            clicks[item] += 1
+            weighted[item] += 1 / seen_prob[pos]                 # inverse propensity weight
+
+raw, ipw = clicks / shown, weighted / shown
+print("raw click rate:", raw.round(3), "-> ranking", np.argsort(-raw))
+print("IPW estimate:  ", ipw.round(3), "-> ranking", np.argsort(-ipw))
+print("true relevance:", true_relevance, "-> ranking", np.argsort(-true_relevance))
+print("IPW recovers the true order:", np.array_equal(np.argsort(-ipw), np.argsort(-true_relevance)))`, after: `Raw click rates crown item 0, which nearly always sits at the top, and rate item 2 above item 3, although item 3 is more than twice as relevant. Dividing each click by the chance that it was seen recovers the true relevances and the true order. Here the propensities were known; in practice the randomised share of traffic is how you measure them.`, predict: {"type":"mcq","q":"Item 1 is the most relevant item but is usually shown 4th; item 0 is less relevant and usually shown 1st. Which has the higher raw click rate?","options":["Item 1, because it is more relevant","Item 0, because it is seen far more often","They are equal","It is impossible to say"],"answer":1,"explain":"At position 4 an item is seen only 30% of the time, so even a very relevant item collects few clicks there. Inverse propensity weighting corrects for this.","expect":["IPW recovers the true order: True"]} },
       { type: 'text', title: 'Ranking in production', md: `- **Two stages**: a cheap **retrieval** stage narrows millions of items to a few hundred candidates — lexical search with **BM25**, embedding search (see *Vector Search*) or both — and a heavier **reranker** (LambdaMART on many features, a cross-encoder, or an LLM) orders the top candidates.
 - **BM25**, the classic lexical relevance score, still a strong baseline and a common reranker feature:
 
@@ -1016,7 +1178,9 @@ b — length normalization (typically 0.75), so long documents are not favoured 
       { type: 'fill', q: 'For three queries the first relevant result is at positions 1, 2 and 4. What is the MRR? (decimal, about 2–3 places)', answer: ['0.583', '0.58', '7/12'], explain: '(1 + 1/2 + 1/4) / 3 = 0.583.' },
       { type: 'mcq', q: 'RankNet is an example of which approach?', options: ['Pointwise', 'Pairwise', 'Unsupervised', 'Clustering'], answer: 1, explain: 'Its loss is defined on pairs of items.' },
       { type: 'tf', q: 'Users click higher-ranked results more often even when lower results are equally relevant.', answer: true, explain: 'That is position bias, which raw click labels inherit.' },
-      { type: 'mcq', q: 'How should you split ranking data into training and test sets?', options: ['Randomly by rows', 'By query, so each query\'s items are all in one set', 'By relevance label', 'By document length'], answer: 1, explain: 'Otherwise information about a test query leaks into training.' }
+      { type: 'mcq', q: 'How should you split ranking data into training and test sets?', options: ['Randomly by rows', 'By query, so each query\'s items are all in one set', 'By relevance label', 'By document length'], answer: 1, explain: 'Otherwise information about a test query leaks into training.' },
+      {"type":"mcq","q":"Why can't you train a ranker directly on raw click-through rates?","options":["Clicks are too rare","Items near the top are seen more often, so they collect more clicks regardless of their relevance","Click data is always private","Rankers need numeric labels"],"answer":1,"explain":"A click requires the item to be seen, and being seen depends on the old ranking. Correct for position (inverse propensity weighting) or randomise."},
+      {"type":"fill","q":"With the DCG discount 1 / log₂(i + 1), what is the weight of position 3? (decimal)","answer":["0.5",".5","1/2"],"explain":"log₂(3 + 1) = log₂ 4 = 2, so the weight is 1/2."}
     ],
     problems: [
       {
@@ -1204,6 +1368,7 @@ for n_probe in (1, 2, 4, 8, 16):
         scanned.append(len(cand) / n)
     print(f"n_probe = {n_probe:2d}: recall@10 = {np.mean(recalls):.3f}, scanning {np.mean(scanned):.1%} of the vectors")
 `, after: `Searching only the single closest list finds about half of the true neighbours — where clusters overlap, neighbours spill into adjacent lists. Each doubling of n_probe recovers more, and by 16 lists recall reaches about 96% while scanning roughly a quarter of the data. The right n_probe depends on how your own embeddings are distributed, so tune it on your data.` },
+      { type: 'chart', title: "IVF: recall against the share of vectors scanned", md: `20,000 clustered vectors in an IVF index with 100 lists, 200 queries:`, after: `Searching a single list scans about 1% of the database and finds about 80% of the true top 10: true neighbours often sit just across a list boundary. Each doubling of n_probe recovers more of them: with 4 lists recall is essentially 100% while scanning only about 4% of the vectors. That steep early rise is why ANN search is so effective: most of the recall comes from a small part of the data.`, chart: {"kind":"line","x":[1,2,4,8,16,32,64],"xLog":true,"series":[{"name":"recall@10 (versus exact search)","y":[0.801,0.95,0.999,1,1,1,1]},{"name":"share of the database scanned","y":[0.013,0.024,0.043,0.083,0.161,0.315,0.629]}],"xLabel":"n_probe: lists searched (of 100, log scale)","yLabel":"share","yMin":0,"yMax":1} },
       { type: 'text', title: 'Product quantization: compress the vectors', md: `Memory is often the real limit. **Product quantization (PQ)** splits each vector into m sub-vectors, runs k-means separately in each sub-space (typically 256 centroids, so each code fits in one byte), and stores every vector as m small codes:
 
 $$ x ≈ [ c¹_{j₁}, c²_{j₂}, …, c^m_{j_m} ]          ‖q − x‖² ≈ Σ_s ‖ q^s − c^s_{j_s} ‖² $$
@@ -1231,7 +1396,16 @@ k — a constant, usually 60, that damps the influence of the very top positions
 
 - **Updates and deletes**: graph indexes handle inserts, but heavy churn degrades them; many systems rebuild periodically.
 - **Re-embedding**: vectors from different embedding models (or versions) are not comparable — changing models means re-embedding the whole collection.
-- **Evaluate end to end**: measure recall@k of the index *and* the quality of the final answers on your own queries.` }
+- **Evaluate end to end**: measure recall@k of the index *and* the quality of the final answers on your own queries.` },
+      { type: 'text', title: "Choosing an index", md: `| Index | Memory | Speed | Recall | Good for |
+| --- | --- | --- | --- | --- |
+| flat (exact) | the full vectors | slow: scans everything | 100% | up to about a million vectors, and as the ground truth for testing |
+| IVF | the full vectors plus centroids | fast; tune n_probe | high, tunable | millions of vectors; quick to build |
+| IVF-PQ | compressed codes, 10 to 50 times smaller | fast | lower: rescore the top candidates with full vectors | hundreds of millions to billions of vectors |
+| HNSW | the full vectors plus a graph | very fast | very high | the default in most vector databases when memory allows |
+| disk-based graphs (DiskANN) | mostly on SSD | fast | high | billions of vectors on a single machine |
+
+Whatever you choose, measure recall@k against exact search on a sample of your own queries, together with the latency at your expected load: published benchmarks rarely match the distribution of your data.` }
     ],
     when: `- Retrieval for RAG, semantic and image search, recommendations, deduplication and clustering at scale.
 - Brute force (a matrix product, on GPU if needed) up to around a million vectors or when exactness matters.
@@ -1254,7 +1428,9 @@ k — a constant, usually 60, that damps the influence of the very top positions
       { type: 'fill', q: 'An ANN index returns 10 results, 8 of which are among the true 10 nearest neighbours. What is recall@10?', answer: ['0.8', '80%'], explain: '8 / 10.' },
       { type: 'mcq', q: 'What does product quantization mainly reduce?', options: ['The number of queries', 'The memory per vector, by storing small codes instead of floats', 'The embedding dimension of the model', 'The number of clusters'], answer: 1, explain: 'For example 3,072 bytes become 96 bytes.' },
       { type: 'tf', q: 'Vectors produced by two different embedding models can be mixed in one index without problems.', answer: false, explain: 'Their spaces are unrelated; similarities across models are meaningless.' },
-      { type: 'mcq', q: 'Why use reciprocal rank fusion to combine BM25 and vector search?', options: ['It needs no scores at all, only ranks, so the scales do not have to match', 'It is the only exact method', 'It removes the need for embeddings', 'It makes BM25 faster'], answer: 0, explain: 'BM25 scores and cosine similarities are not on comparable scales; ranks are.' }
+      { type: 'mcq', q: 'Why use reciprocal rank fusion to combine BM25 and vector search?', options: ['It needs no scores at all, only ranks, so the scales do not have to match', 'It is the only exact method', 'It removes the need for embeddings', 'It makes BM25 faster'], answer: 0, explain: 'BM25 scores and cosine similarities are not on comparable scales; ranks are.' },
+      {"type":"mcq","q":"An IVF index has 100 lists of similar size. Roughly what share of the database does a query scan with n_probe = 8?","options":["1%","8%","50%","100%"],"answer":1,"explain":"Each list holds about 1% of the vectors, so probing 8 lists scans about 8%."},
+      {"type":"tf","q":"For a few hundred thousand vectors, exact (flat) search can be a perfectly reasonable choice.","answer":true,"explain":"One matrix product over a few hundred thousand vectors is fast on modern hardware, and exact search needs no tuning and has perfect recall."}
     ],
     problems: [
       {

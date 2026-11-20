@@ -5,7 +5,8 @@
   "description": "Interactive mind map of machine learning, neural networks and LLMs: lessons, runnable in-browser Python, quizzes and LeetCode-style problems. Static site for GitHub Pages.",
   "scripts": {
     "start": "node serve.js",
-    "test": "node tests/graph.test.js && node tests/content.test.js && node tests/theme.test.js && node tests/views.test.js && node tests/problems.test.js",
+    "test": "node tests/graph.test.js && node tests/content.test.js && node tests/theme.test.js && node tests/views.test.js && node tests/serve.test.js && node tests/problems.test.js",
+    "test:serve": "node tests/serve.test.js",
     "test:graph": "node tests/graph.test.js",
     "test:content": "node tests/content.test.js",
     "test:theme": "node tests/theme.test.js",

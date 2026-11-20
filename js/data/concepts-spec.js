@@ -69,6 +69,7 @@ for eps in (0.0, 0.01, 0.1, 0.3):
     found = sum(best == 2 for _, best in results)
     print(f"epsilon={eps:<5} average reward {avg:.3f}   identified the best arm in {found}/20 runs")
 `, after: `Pure greed (ε = 0) often gets stuck on whichever arm looked good first. A little exploration (ε = 0.1) earns the most; too much (ε = 0.3) finds the best arm every time but wastes pulls on bad arms.` },
+      { type: 'chart', title: "How often each strategy picks the best arm", md: `The 5-armed bandit above (rewards are noisy: standard deviation 1), averaged over 2,000 independent runs:`, after: `The purely greedy agent (ε = 0) locks onto whichever arm looked good early and finds the best arm in only about 38% of runs. Exploring 10% of the time finds it far more reliably and soon picks it about 90% of the time, the most it can while still exploring 10% of the time. ε = 0.01 learns slowly but would end up higher in the long run, and ε = 0.3 explores too much. Annealing ε from high to low, or exploring by uncertainty (UCB, Thompson sampling), gets the best of both.`, chart: {"kind":"line","x":[1,11,21,31,41,51,61,71,81,91,101,111,121,131,141,151,161,171,181,191,201,211,221,231,241,251,261,271,281,291,301,311,321,331,341,351,361,371,381,391,401,411,421,431,441,451,461,471,481,491,501,511,521,531,541,551,561,571,581,591,601,611,621,631,641,651,661,671,681,691,701,711,721,731,741,751,761,771,781,791,801,811,821,831,841,851,861,871,881,891,901,911,921,931,941,951,961,971,981,991],"points":false,"series":[{"name":"ε = 0.0","y":[0.278,0.351,0.363,0.367,0.371,0.374,0.375,0.376,0.377,0.378,0.379,0.379,0.38,0.38,0.381,0.381,0.381,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382,0.382]},{"name":"ε = 0.01","y":[0.303,0.371,0.389,0.4,0.403,0.409,0.418,0.424,0.431,0.437,0.443,0.45,0.455,0.462,0.466,0.472,0.476,0.484,0.488,0.492,0.498,0.499,0.504,0.507,0.51,0.516,0.517,0.521,0.526,0.529,0.53,0.535,0.539,0.543,0.545,0.55,0.555,0.556,0.56,0.563,0.568,0.569,0.574,0.579,0.584,0.587,0.589,0.592,0.597,0.601,0.604,0.608,0.61,0.613,0.615,0.616,0.62,0.619,0.621,0.623,0.628,0.629,0.631,0.635,0.635,0.638,0.639,0.642,0.645,0.647,0.653,0.657,0.658,0.663,0.665,0.67,0.672,0.673,0.677,0.679,0.679,0.682,0.684,0.683,0.686,0.687,0.69,0.692,0.693,0.695,0.695,0.698,0.7,0.701,0.704,0.706,0.706,0.708,0.711,0.712]},{"name":"ε = 0.1","y":[0.283,0.366,0.416,0.464,0.505,0.532,0.564,0.578,0.603,0.632,0.644,0.656,0.677,0.693,0.708,0.721,0.732,0.742,0.756,0.763,0.771,0.784,0.786,0.792,0.793,0.803,0.805,0.813,0.817,0.822,0.827,0.826,0.831,0.84,0.841,0.846,0.841,0.849,0.85,0.852,0.857,0.858,0.859,0.861,0.863,0.866,0.866,0.87,0.87,0.871,0.876,0.875,0.879,0.876,0.88,0.879,0.884,0.88,0.886,0.883,0.888,0.889,0.889,0.888,0.886,0.891,0.891,0.891,0.892,0.892,0.894,0.895,0.897,0.893,0.895,0.893,0.894,0.898,0.894,0.896,0.898,0.897,0.9,0.899,0.896,0.895,0.899,0.898,0.899,0.902,0.898,0.903,0.903,0.904,0.903,0.902,0.901,0.903,0.903,0.906]},{"name":"ε = 0.3","y":[0.277,0.372,0.436,0.49,0.532,0.572,0.597,0.613,0.633,0.645,0.653,0.665,0.679,0.686,0.692,0.7,0.699,0.711,0.72,0.715,0.724,0.724,0.728,0.731,0.733,0.735,0.74,0.741,0.744,0.739,0.741,0.749,0.747,0.75,0.752,0.753,0.754,0.754,0.757,0.758,0.755,0.754,0.755,0.756,0.757,0.749,0.755,0.752,0.749,0.758,0.758,0.758,0.753,0.757,0.761,0.756,0.756,0.76,0.754,0.756,0.755,0.754,0.759,0.759,0.757,0.754,0.759,0.761,0.76,0.759,0.761,0.758,0.756,0.756,0.759,0.759,0.762,0.763,0.759,0.761,0.759,0.763,0.761,0.76,0.767,0.759,0.762,0.76,0.76,0.763,0.761,0.759,0.759,0.762,0.76,0.766,0.757,0.757,0.76,0.761]}],"xLabel":"step","yLabel":"share of 2,000 runs choosing the best arm","yMin":0,"yMax":1} },
       { type: 'check', question: { type: 'mcq', q: 'In ε-greedy with ε = 0.1, what happens on a typical step?', options: ['Always a random arm', 'With probability 0.9 the best-looking arm, with probability 0.1 a random arm', 'The arm pulled least often', 'Arms in a fixed rotation'], answer: 1, explain: 'Mostly exploit, occasionally explore.' } },
       { type: 'text', title: 'Returns and discounting', md: `In longer tasks, actions affect future rewards. The **return** from time t is the sum of all future rewards, with later rewards discounted:
 
@@ -176,7 +177,9 @@ REINFORCE uses this directly; **actor–critic** methods learn a value function 
       { type: 'fill', q: 'Rewards 0, 0, 1 arrive at steps t+1, t+2, t+3 and γ = 0.9. What is the return G_t? (2 decimals)', answer: ['0.81'], explain: '0 + 0.9·0 + 0.9²·1 = 0.81.' },
       { type: 'mcq', q: 'Why is some exploration necessary?', options: ['It makes training faster', 'Without it the agent may never discover that other actions are better than its current favourite', 'It reduces the reward', 'Exploration is not necessary'], answer: 1, explain: 'Greedy agents can get stuck with early, misleading estimates.' },
       { type: 'mcq', q: 'In Q-learning, what is the target for Q(s, a) when s′ ends the episode?', options: ['0', 'Just the reward r', 'r + γ · max Q(s′, ·)', 'The average of Q'], answer: 1, explain: 'There is no future value after a terminal state.' },
-      { type: 'mcq', q: 'Which RL algorithm is classically used in RLHF for language models?', options: ['k-means', 'PPO (a policy-gradient method)', 'Naive Bayes', 'Q-learning with a lookup table'], answer: 1, explain: 'PPO keeps policy updates small and stable.' }
+      { type: 'mcq', q: 'Which RL algorithm is classically used in RLHF for language models?', options: ['k-means', 'PPO (a policy-gradient method)', 'Naive Bayes', 'Q-learning with a lookup table'], answer: 1, explain: 'PPO keeps policy updates small and stable.' },
+      {"type":"mcq","q":"Why does a purely greedy bandit agent (ε = 0) often settle on a worse arm?","options":["It explores too much","It stops trying arms whose early estimates looked bad, so it never discovers that they are better","It forgets its rewards","Its learning rate is too high"],"answer":1,"explain":"Noisy early rewards can make the best arm look poor; without exploration that first impression is never corrected."},
+      {"type":"tf","q":"With ε = 0.1 and 5 arms, an agent can never choose the best arm more than about 92% of the time, even once it knows which arm is best.","answer":true,"explain":"It explores 10% of the time, choosing uniformly among the 5 arms, so it picks the best arm with probability at most 0.9 + 0.1 × 1/5 = 0.92."}
     ],
     problems: [
       {
@@ -472,7 +475,39 @@ xt = np.sqrt(alpha_bar[t]) * x0 + np.sqrt(1 - alpha_bar[t]) * eps
 x0_hat = (xt - np.sqrt(1 - alpha_bar[t]) * eps) / np.sqrt(alpha_bar[t])
 print("max error when the true noise is known:", float(np.abs(x0_hat - x0).max()))
 `, after: `By the last step the signal is essentially gone. Learning to predict the added noise is learning to reverse this destruction — which is all a diffusion model needs to turn random noise into new data.` },
-      { type: 'check', question: { type: 'tf', q: 'A diffusion model generates data by starting from pure noise and denoising it over many steps.', answer: true, explain: 'Each step removes a little of the noise the network predicts.' } }
+      { type: 'check', question: { type: 'tf', q: 'A diffusion model generates data by starting from pure noise and denoising it over many steps.', answer: true, explain: 'Each step removes a little of the noise the network predicts.' } },
+      { type: 'text', title: "Evaluating generative models", md: `There is no single right answer to compare a generated image with, so generative models are judged on whole sets of samples. The most common metric, the **Fréchet Inception Distance (FID)**, embeds real and generated images with a pretrained image network, fits a Gaussian to each set of embeddings, and measures the distance between the two Gaussians:
+
+$$ FID = ‖μ_r − μ_g‖² + Tr( Σ_r + Σ_g − 2 (Σ_r Σ_g)^(1/2) ) $$
+:::where
+μ_r, μ_g — the mean embeddings of the real and of the generated images
+Σ_r, Σ_g — the covariance matrices of the two sets of embeddings
+Tr — the trace: the sum of the diagonal entries
+(Σ_r Σ_g)^(1/2) — the matrix square root of their product
+:::
+
+Lower is better. The first term checks that generated images are like real ones on average; the second that they are as varied, so a model that produces one perfect image over and over still scores badly. FID needs thousands of samples to be stable and depends on the embedding network, so compare models only under identical settings. Complementary metrics separate **precision** (are the samples realistic?) from **recall** (do they cover all kinds of real data?), and text-to-image models are also checked with image–text similarity scores and human preference ratings.` },
+      { type: 'code', title: "The Fréchet distance between two sets of features", code: `import numpy as np
+rng = np.random.default_rng(0)
+
+def sqrtm_psd(M):
+    vals, vecs = np.linalg.eigh((M + M.T) / 2)
+    return (vecs * np.sqrt(np.clip(vals, 0, None))) @ vecs.T
+
+def frechet(a, b):
+    mu_a, mu_b = a.mean(0), b.mean(0)
+    Sa, Sb = np.cov(a, rowvar=False), np.cov(b, rowvar=False)
+    root_a = sqrtm_psd(Sa)
+    cross = sqrtm_psd(root_a @ Sb @ root_a)            # has the same trace as (Sa Sb)^(1/2)
+    return float(np.sum((mu_a - mu_b) ** 2) + np.trace(Sa + Sb - 2 * cross))
+
+real = rng.normal(0, 1, (5000, 16))                    # features of the "real" images
+matching = rng.normal(0, 1, (5000, 16))                # a model that matches the distribution
+shifted = rng.normal(0.5, 1, (5000, 16))               # samples that are systematically off
+collapsed = rng.normal(0, 0.2, (5000, 16))             # samples with far too little variety
+for name, fake in [("matching", matching), ("shifted", shifted), ("mode-collapsed", collapsed)]:
+    print(f"{name:<15} Fréchet distance {frechet(real, fake):6.2f}")
+print("lack of variety is penalised:", frechet(real, collapsed) > 5 * frechet(real, matching))`, after: `Samples drawn from the same distribution as the real ones score about 0.04 (not exactly 0, because both are finite samples). Shifting every feature by half a standard deviation costs about 4, all from the difference of the means. The collapsed samples have exactly the right mean but a fifth of the spread, and score worst of all, about 10: the covariance term catches the missing variety that a comparison of averages would miss.`, predict: {"type":"mcq","q":"Generated features have the right mean but only a fifth of the real spread. Will the Fréchet distance notice?","options":["No: only the means are compared","Yes: the covariance term penalises the missing variety","Only if the means differ","It becomes negative"],"answer":1,"explain":"The trace term compares the covariances, so samples that cluster too tightly are penalised even when their average is perfect.","expect":["lack of variety is penalised: True"]} }
     ],
     when: `- **Diffusion** for state-of-the-art image, audio and video generation and editing.
 - **VAEs** for smooth latent spaces, compression, anomaly detection, and as the encoder/decoder inside latent diffusion.
@@ -496,7 +531,9 @@ print("max error when the true noise is known:", float(np.abs(x0_hat - x0).max()
       { type: 'mcq', q: 'What is mode collapse in GANs?', options: ['The discriminator stops training', 'The generator produces only a few kinds of output instead of the full variety of the data', 'The latent space becomes smooth', 'The loss becomes negative'], answer: 1, explain: 'It fools the discriminator with a narrow set of samples.' },
       { type: 'fill', q: 'In a VAE, μ = 2, σ = 0.5 and the sampled noise ε = −1. What is z = μ + σ·ε?', answer: ['1.5'], explain: '2 + 0.5 × (−1) = 1.5.' },
       { type: 'mcq', q: 'What is a diffusion model\'s network trained to predict?', options: ['The class of the image', 'The noise that was added to the clean example', 'The next pixel', 'The discriminator\'s output'], answer: 1, explain: 'Predicting the noise is equivalent to learning to denoise.' },
-      { type: 'tf', q: 'Latent diffusion runs the diffusion process in a compressed latent space to save computation.', answer: true, explain: 'A VAE encodes images into small latents; diffusion happens there; the decoder produces the final image.' }
+      { type: 'tf', q: 'Latent diffusion runs the diffusion process in a compressed latent space to save computation.', answer: true, explain: 'A VAE encodes images into small latents; diffusion happens there; the decoder produces the final image.' },
+      {"type":"mcq","q":"A model generates one perfect image over and over. Why does FID still rate it badly?","options":["FID ignores realism","Its covariance term compares the variety of the generated and real images","FID only looks at colours","Repeated images crash the metric"],"answer":1,"explain":"Identical samples have zero spread, far from the spread of real images, so the trace term is large."},
+      {"type":"tf","q":"FID scores computed with different embedding networks or sample sizes can be compared directly.","answer":false,"explain":"FID depends on the feature extractor and is biased by the number of samples, so only scores computed under identical settings are comparable."}
     ],
     problems: [
       {
@@ -706,6 +743,26 @@ print("token sequence for the transformer:", tokens.shape)
 | Cost | linear in the number of pixels | attention is quadratic in the number of patches |
 
 Strong inductive biases help when data is scarce; with enough data, ViTs learn those regularities themselves and keep improving. Modern designs mix both ideas: Swin uses attention within local windows, ConvNeXt modernizes CNNs with transformer-style tricks. The patch size trades detail for compute: smaller patches mean more tokens.` },
+      { type: 'text', title: "Making ViTs practical", md: `The original ViT needed hundreds of millions of labelled images to beat CNNs, because it lacks their built-in assumptions. Later work closed the gap:
+- **DeiT** trained ViTs on ImageNet alone with strong augmentation (random crops, mixed images, colour changes), regularisation, and distillation from a CNN teacher.
+- **Self-supervised pretraining** (MAE, DINO; see [Self-Supervised Representation Learning](#/concept/self-supervised)) lets ViTs learn from unlabelled images.
+- **Swin Transformer** restores some locality: attention runs inside small windows of patches that shift from one layer to the next, and patches are merged as the network gets deeper, producing a CNN-like pyramid of resolutions that suits detection and segmentation.
+- **Modern CNNs** (ConvNeXt) showed that convolutional networks updated with transformer-era training recipes remain competitive.
+
+The patch size is the main cost knob: halving it quadruples the number of tokens and multiplies the cost of global attention by sixteen.` },
+      { type: 'code', title: "Global attention versus windowed attention", code: `def attention_pairs(image_side, patch, window=None):
+    grid = image_side // patch                     # patches per side
+    tokens = grid * grid
+    if window is None:
+        return tokens, tokens * tokens             # every patch attends to every patch
+    return tokens, tokens * window * window        # each patch attends within its window x window block
+
+for patch in (16, 8, 4):
+    tokens, pairs = attention_pairs(224, patch)
+    print(f"patch {patch:2d}: {tokens:5d} tokens, global attention {pairs:>12,} pairs")
+tokens, pairs = attention_pairs(224, 4, window=7)
+print(f"patch  4 with 7x7 windows (Swin-style): {pairs:,} pairs")
+print("windows cut the cost 64-fold:", attention_pairs(224, 4)[1] // pairs == 64)`, after: `Going from 16-pixel to 4-pixel patches multiplies the work of global attention by 256, from about 38 thousand pairs to almost 10 million. Windows of 7 × 7 patches bring it down 64-fold, so the cost grows only linearly with the image area, and the shifted windows of the next layer let information cross the window borders.`, predict: {"type":"mcq","q":"Patch size 4 on a 224 × 224 image gives 3,136 tokens. Attending only within 7 × 7 windows instead of globally cuts the number of attention pairs by what factor?","options":["7","49","64","3,136"],"answer":2,"explain":"Global: 3,136 × 3,136 pairs; windowed: 3,136 × 49. The ratio is 3,136 / 49 = 64.","expect":["windows cut the cost 64-fold: True"]} },
       { type: 'text', title: 'CLIP: learning from images and captions', md: `**CLIP** trains an image encoder (a ViT) and a text encoder (a transformer) together on hundreds of millions of image–caption pairs from the web, so that matching images and texts land close together in one shared embedding space. Within a batch of B pairs, every image is compared with every caption:
 
 $$ logits_ij = ( u_i · v_j ) / τ $$
@@ -772,7 +829,9 @@ Because an image becomes a few hundred to a few thousand tokens, images cost tok
       { type: 'mcq', q: 'Why do ViTs typically need more training data than CNNs?', options: ['They have fewer parameters', 'They lack built-in locality and translation biases and must learn them from data', 'They cannot use GPUs', 'They only work on text'], answer: 1, explain: 'Weaker inductive bias means more data to learn the same regularities.' },
       { type: 'mcq', q: 'In CLIP\'s contrastive loss, which pairs should get high similarity?', options: ['All pairs in the batch', 'Each image with its own caption (the diagonal)', 'Images with images', 'Random pairs'], answer: 1, explain: 'Matching pairs are the "correct class"; all others are negatives.' },
       { type: 'tf', q: 'Halving the patch size of a ViT quadruples the number of patches.', answer: true, explain: 'N = (H/P)(W/P): halving P doubles both factors.' },
-      { type: 'mcq', q: 'How does a vision-language model give an image to the LLM?', options: ['It converts the image to a caption first, always', 'It encodes patches with a vision encoder and projects them into the LLM\'s token-embedding space', 'It feeds raw pixels as numbers in the text', 'It cannot'], answer: 1, explain: 'The projected patch embeddings act as image tokens.' }
+      { type: 'mcq', q: 'How does a vision-language model give an image to the LLM?', options: ['It converts the image to a caption first, always', 'It encodes patches with a vision encoder and projects them into the LLM\'s token-embedding space', 'It feeds raw pixels as numbers in the text', 'It cannot'], answer: 1, explain: 'The projected patch embeddings act as image tokens.' },
+      {"type":"mcq","q":"Halving the patch size of a ViT multiplies the cost of global attention by about…","options":["2","4","16","256"],"answer":2,"explain":"Half the patch size gives four times the tokens, and global attention's cost grows with the square of the number of tokens: 4² = 16."},
+      {"type":"mcq","q":"What did DeiT show?","options":["ViTs need billions of images","With strong augmentation, regularisation and distillation, ViTs can be trained well on ImageNet alone","CNNs cannot be distilled","Patches must be 32 pixels"],"answer":1,"explain":"DeiT closed the data gap with training recipes rather than more data, making ViTs practical for ordinary datasets."}
     ],
     problems: [
       {
@@ -893,6 +952,7 @@ def clip_loss(img_emb, txt_emb, tau=0.07):
 | **Content-based** | recommend items similar to what the user liked, using item features (genre, text, image) | works for brand-new items; explainable | stays close to the user's past; needs good features |
 | **Collaborative filtering** | users who behaved like you liked X | discovers non-obvious tastes; no features needed | can't handle new users/items (cold start) |
 | **Hybrid** | combine both | best of both | more complex |` },
+      { type: 'chart', title: "The long tail of item popularity", md: `200,000 simulated interactions spread over 2,000 items with a typical power-law popularity:`, after: `The top 1% of items (20 of them) collect 54% of all interactions and the top 20% collect 86%, while the items in the long tail have only a handful each. Collaborative filtering learns little about tail items, and a recommender that ranks by learned relevance tends to push the head even harder.`, chart: {"kind":"line","x":[1,2,3,4,5,6,7,8,9,10,12,13,15,17,19,22,25,28,32,37,42,48,54,62,70,80,91,103,118,134,152,173,197,224,255,290,329,375,426,485,551,627,714,812,923,1050,1195,1359,1546,1758,2000],"xLog":true,"yLog":true,"points":false,"series":[{"name":"interactions per item","y":[34056,15519,10132,7357,5916,4629,4009,3414,3030,2921,2227,2087,1693,1433,1304,1162,979,840,788,638,525,481,429,361,310,280,235,205,181,161,140,118,100,88,76,65,58,49,44,38,33,29,25,21,18,16,14,12,10,8,1]}],"xLabel":"item rank by popularity (log scale)","yLabel":"interactions (log scale)"} },
       { type: 'text', title: 'Matrix factorization', md: `Collaborative filtering's workhorse learns a k-dimensional embedding for every user and every item (k ≈ 10–200), plus biases:
 
 $$ r̂_ui = μ + b_u + b_i + p_u · q_i $$
@@ -983,6 +1043,47 @@ recall@k — the share of the user's relevant items that you found
 :::
 
 Ranking-aware metrics such as NDCG also reward putting hits near the top, and RMSE suits explicit ratings. Online, run **A/B tests** on what actually matters — clicks, watch time, purchases, retention — because offline gains don't always survive contact with real users.` },
+      { type: 'text', title: "Beyond accuracy: popularity bias and feedback loops", md: `Interactions follow a **long tail**: a few blockbuster items collect a large share of all activity, and most of the catalogue is rarely touched (see the chart at the top). Two consequences:
+
+- **Popularity is a strong baseline.** Recommending the most popular items a user hasn't seen yet is often surprisingly hard to beat on accuracy metrics. Always report it next to your model.
+- **Recommenders amplify popularity.** Recommended items get clicked, which makes them look even more relevant in the next training run, while tail items never get the exposure they would need to prove themselves. Left alone, this **feedback loop** narrows what users see and starves new items.
+
+That is why recommender teams track more than accuracy:
+
+| Metric | Question it answers |
+| --- | --- |
+| catalogue coverage | what share of the items is ever recommended? |
+| diversity | how different are the items within one list? |
+| novelty | how far from the blockbusters are the recommendations? |
+| calibration | does a list reflect the mix of the user's interests, say 70% drama and 30% comedy? |
+
+Remedies include re-ranking for diversity, reserving slots for exploration (contextual bandits try uncertain items to learn about them), and correcting the training data for exposure with the same inverse-propensity idea used for position bias in [Learning to Rank](#/concept/learning-to-rank).` },
+      { type: 'code', title: "A popularity baseline is hard to beat", code: `import numpy as np
+rng = np.random.default_rng(0)
+n_users, n_items = 1000, 500
+popularity = 1 / np.arange(1, n_items + 1) ** 1.1             # a long tail: item 0 is the blockbuster
+popularity /= popularity.sum()
+history = [rng.choice(n_items, 21, replace=False, p=popularity) for _ in range(n_users)]
+train = [set(h[:20].tolist()) for h in history]                # each user's first 20 items
+test = [int(h[20]) for h in history]                            # the item they chose next
+
+counts = np.zeros(n_items)
+for items in train:
+    counts[list(items)] += 1
+ranked = np.argsort(-counts)                                    # items from most to least popular
+
+def most_popular_unseen(seen, k=10):
+    return [int(i) for i in ranked if i not in seen][:k]
+
+recs = [most_popular_unseen(train[u]) for u in range(n_users)]
+hit_pop = np.mean([test[u] in recs[u] for u in range(n_users)])
+hit_rand = np.mean([test[u] in rng.choice([i for i in range(n_items) if i not in train[u]], 10, replace=False)
+                    for u in range(n_users)])
+coverage = len({i for r in recs for i in r})
+print(f"hit rate@10, most popular unseen items: {hit_pop:.3f}")
+print(f"hit rate@10, random unseen items:       {hit_rand:.3f}")
+print(f"items ever recommended by the popularity baseline: {coverage} of {n_items}")
+print("popularity beats random:", bool(hit_pop > 5 * hit_rand))`, after: `Without knowing anything about the user, the popularity baseline finds their next item about 30% of the time, roughly 15 times better than random. But it only ever recommends 27 of the 500 items: about 95% of the catalogue is invisible. A personalised model has to beat the first number without collapsing the second.`, predict: {"type":"mcq","q":"Users' choices follow a long tail. How will 'recommend the 10 most popular items the user hasn't seen' compare with 10 random unseen items?","options":["About the same","Far better","Worse","It cannot be evaluated"],"answer":1,"explain":"With a long tail, a large share of every user's next choices are popular items, so popularity alone is a strong predictor, although it shows the same few items to everyone.","expect":["popularity beats random: True"]} },
       { type: 'check', question: { type: 'tf', q: 'A two-tower retrieval model embeds users and items separately so item embeddings can be precomputed and searched quickly.', answer: true, explain: 'Only the user tower runs at request time.' } }
     ],
     when: `- Any product with a large catalogue and repeated user interactions: e-commerce, media, news, jobs, dating, ads.
@@ -1005,7 +1106,9 @@ Ranking-aware metrics such as NDCG also reward putting hits near the top, and RM
       { type: 'mcq', q: 'What is the cold-start problem?', options: ['Training on a cold GPU', 'New users or items have no interaction history, so collaborative filtering cannot score them', 'Slow model start-up', 'Ratings that are too low'], answer: 1, explain: 'No data means no learned embedding.' },
       { type: 'fill', q: 'You recommended 5 items; 2 of them are among the user\'s 4 relevant items. What is precision@5?', answer: ['0.4', '0.40', '2/5'], explain: '2 / 5 = 0.4 (recall@5 would be 2/4 = 0.5).' },
       { type: 'tf', q: 'For implicit feedback, an item the user never clicked can safely be treated as disliked.', answer: false, explain: 'They may simply never have seen it.' },
-      { type: 'mcq', q: 'Why use a time-based split to evaluate a recommender?', options: ['It is faster', 'A random split leaks future behaviour into training, making offline results look better than they will be', 'Time-based splits have more data', 'It is required by law'], answer: 1, explain: 'In production you always predict the future from the past.' }
+      { type: 'mcq', q: 'Why use a time-based split to evaluate a recommender?', options: ['It is faster', 'A random split leaks future behaviour into training, making offline results look better than they will be', 'Time-based splits have more data', 'It is required by law'], answer: 1, explain: 'In production you always predict the future from the past.' },
+      {"type":"mcq","q":"What is catalogue coverage?","options":["The share of users who receive recommendations","The share of items that are ever recommended to anyone","The accuracy of the top recommendation","The number of ratings per user"],"answer":1,"explain":"Coverage measures how much of the catalogue the recommender actually exposes; a popularity baseline scores very low on it."},
+      {"type":"tf","q":"Training a recommender only on clicks from its own past recommendations can reinforce popularity bias.","answer":true,"explain":"Items it recommended collect clicks and look better in the next round, while items it never showed get no chance: a feedback loop."}
     ],
     problems: [
       {
@@ -1215,13 +1318,21 @@ for label, production in scenarios:
     level = "stable" if value < 0.1 else "moderate shift" if value < 0.25 else "significant shift"
     print(f"{label:22s} PSI = {value:.3f}  -> {level}")
 ` },
+      { type: 'chart', title: "PSI as an input distribution shifts", md: `A feature whose distribution shifts by a growing amount, compared with its training-time reference (10 quantile bins, 5,000 new values):`, after: `PSI grows roughly with the square of the shift. By the usual rules of thumb, a shift of about 0.4 standard deviations crosses the "watch" line (PSI ≈ 0.14) and one of about half a standard deviation reaches the "investigate" line (PSI ≈ 0.24). The thresholds are conventions, not laws: tune them per feature, and remember that drift in an unimportant feature may not hurt the model at all, while a small drift in a key feature might.`, chart: {"kind":"line","x":[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1],"series":[{"name":"PSI of the shifted data against the reference","y":[0.003,0.008,0.043,0.072,0.143,0.238,0.333,0.473,0.635,0.715,0.905]}],"xLabel":"shift of the mean, in standard deviations","yLabel":"population stability index","hlines":[{"y":0.1,"label":"0.1: watch"},{"y":0.25,"label":"0.25: investigate"}],"yMin":0} },
       { type: 'check', question: { type: 'mcq', q: 'Fraudsters change their tactics, so the same transaction features now mean something different. What is this?', options: ['Data drift', 'Concept drift', 'Label leakage', 'Underfitting'], answer: 1, explain: 'The relationship P(y | x) changed, not just the input distribution.' } },
       { type: 'text', title: 'Safe rollouts and retraining', md: `- **Shadow deployment** — the new model scores live traffic, but its predictions are only logged, not used. You compare it with the current model at zero risk.
 - **Canary release** — send a small share of traffic (say 5%) to the new model, watch the metrics, then ramp up.
 - **A/B test** — split users randomly and compare business metrics with proper statistics.
 - **Rollback** — always keep the previous model ready to switch back to instantly.
 
-Retrain on a schedule (e.g. weekly) or when monitoring triggers it, but **always evaluate before promoting**: a model retrained on bad or drifted data can be worse than the old one.` }
+Retrain on a schedule (e.g. weekly) or when monitoring triggers it, but **always evaluate before promoting**: a model retrained on bad or drifted data can be worse than the old one.` },
+      { type: 'text', title: "Reproducibility, lineage and feature stores", md: `Months after deployment someone will ask which data and code produced a model. Answering requires recording, for every model version:
+- the **code** version (a git commit) and the environment (library versions, container image);
+- the **data** version: a snapshot or versioned table (tools such as DVC or lakeFS), or the exact partitions used;
+- the **hyperparameters**, metrics and evaluation reports, kept in an experiment tracker (MLflow, Weights & Biases);
+- the **model artefact** itself, registered with a version and a stage (staging, production, archived) in a model registry.
+
+The most common production bug is **training–serving skew**: a feature computed one way in the training pipeline and slightly differently in the serving code (another time zone, a missing default, an outdated lookup table). The model then receives inputs it never saw in training, and nothing crashes. **Feature stores** address this by defining each feature once and serving the same computation both to training, with point-in-time correct history (see [SQL & Data Engineering for ML](#/concept/sql-data-engineering)), and to real-time inference.` }
     ],
     when: `- As soon as a model's predictions are used by people or systems — not just in a notebook.
 - Batch serving whenever predictions can be precomputed; online serving only when inputs are only known at request time.
@@ -1243,7 +1354,9 @@ Retrain on a schedule (e.g. weekly) or when monitoring triggers it, but **always
       { type: 'fill', q: 'A feature\'s PSI between training and production is 0.31. Using the common rule of thumb, is the shift stable, moderate or significant?', answer: ['significant'], explain: 'Above 0.25 counts as a significant shift.' },
       { type: 'mcq', q: 'What is a shadow deployment?', options: ['Deploying at night', 'Running the new model on live traffic while only logging its predictions, without using them', 'Deleting the old model', 'Serving only to internal users'], answer: 1, explain: 'It lets you compare models with zero user impact.' },
       { type: 'tf', q: 'If production inputs look exactly like the training data, the model cannot be degrading.', answer: false, explain: 'Concept drift changes the input–output relationship even when the inputs look the same.' },
-      { type: 'mcq', q: 'Which item is NOT needed to reproduce a trained model?', options: ['The code version', 'The data snapshot', 'The random seeds and hyperparameters', 'The colour theme of the training notebook'], answer: 3, explain: 'Everything that affects the computation must be versioned; cosmetics need not be.' }
+      { type: 'mcq', q: 'Which item is NOT needed to reproduce a trained model?', options: ['The code version', 'The data snapshot', 'The random seeds and hyperparameters', 'The colour theme of the training notebook'], answer: 3, explain: 'Everything that affects the computation must be versioned; cosmetics need not be.' },
+      {"type":"mcq","q":"A feature is computed with UTC timestamps in training but with local time in the serving code. What is this called?","options":["Concept drift","Training–serving skew","Overfitting","Label leakage"],"answer":1,"explain":"The same feature is computed differently in the two pipelines, so the model sees inputs at serving time that differ from what it was trained on."},
+      {"type":"tf","q":"A PSI below 0.1 guarantees that the model's accuracy has not changed.","answer":false,"explain":"PSI only measures how one input's distribution moved. The relationship between inputs and outcomes can change (concept drift) without any change in the inputs."}
     ],
     problems: [
       {
@@ -1402,6 +1515,7 @@ FPR_g — the false-positive rate: how often unqualified members of g are approv
 - The **disparate impact ratio** (lowest selection rate ÷ highest) is often checked against the "four-fifths rule" (below 0.8 is a red flag).
 
 These criteria can conflict: when base rates differ between groups, a classifier generally cannot satisfy calibration and equalized odds at the same time. Choosing a criterion is a value judgment about which errors cause harm — involve domain experts, affected communities and legal review. Mitigations act before training (re-weighting data), during training (fairness constraints) or after it (group-specific thresholds).` },
+      { type: 'chart', title: "Selection rates of two groups under one threshold", md: `Model scores whose distribution differs between two groups, approved whenever the score passes a single threshold:`, after: `At any single threshold the two groups are approved at different rates: at 0.5, 73% of group A against 42% of group B. Whether that gap is unfair depends on why the scores differ, which is exactly what the fairness criteria disagree about: demographic parity would demand equal approval rates (different thresholds per group), while equal opportunity looks only at people who would have repaid.`, chart: {"kind":"line","x":[0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8],"series":[{"name":"group A approved","y":[0.977,0.958,0.93,0.893,0.846,0.791,0.726,0.655,0.575,0.491,0.405,0.315,0.219]},{"name":"group B approved","y":[0.88,0.812,0.743,0.662,0.582,0.5,0.423,0.345,0.272,0.206,0.148,0.098,0.057]}],"xLabel":"approval threshold on the model's score","yLabel":"share approved","yMin":0,"yMax":1,"vlines":[{"x":0.5,"label":"a typical threshold"}]} },
       { type: 'code', title: 'Auditing a loan model for fairness', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -1423,6 +1537,17 @@ print("threshold 0.42 for group B, chosen to equalize TPR (equal opportunity):")
 audit(0.50, 0.42)
 `, after: `With one threshold, qualified people in group B are approved far less often (TPR 0.69 versus 0.85) because of the biased score. Adjusting B's threshold equalizes both TPR and FPR here. Real decisions about such adjustments also involve law and ethics, not only arithmetic.` },
       { type: 'check', question: { type: 'mcq', q: 'Equal opportunity requires equal values of which metric across groups?', options: ['Selection rate', 'True-positive rate', 'Accuracy', 'Training loss'], answer: 1, explain: 'Qualified people should be approved at the same rate in every group.' } },
+      { type: 'text', title: "Why the fairness criteria conflict", md: `It would be convenient to satisfy every fairness criterion at once. When the groups have different base rates (different shares of positive outcomes), that is mathematically impossible except for perfect or trivial classifiers. For a binary classifier, each group's error rates are tied together by its base rate:
+
+$$ FPR = p / (1 − p) · (1 − PPV) / PPV · (1 − FNR) $$
+:::where
+p — the group's base rate: the share of people in the group whose true outcome is positive
+PPV — the positive predictive value: the share of positive predictions that are correct (equal PPV across groups is one form of calibration)
+FNR — the false negative rate: the share of true positives the classifier misses
+FPR — the false positive rate: the share of true negatives that are wrongly flagged
+:::
+
+If two groups have different values of p, then equal PPV and equal FNR force different FPRs, and similarly for every other pair of criteria (results by Chouldechova, and by Kleinberg and colleagues, in 2016). Fairness therefore always involves a choice about which errors matter most in the application (a good borrower wrongly refused a loan, or an innocent customer wrongly flagged for fraud), and that choice should be made explicitly, with the people affected in mind, not left to whatever a default threshold happens to do.` },
       { type: 'text', title: 'Explainability', md: `Explanations can be **global** (which features matter overall?) or **local** (why did *this* applicant get rejected?). Simple models — linear models, small trees — are interpretable by design; complex ones need post-hoc tools.
 
 **Permutation importance** (global, model-agnostic): shuffle one feature's column in the validation data, breaking its link to the target, and measure how much the score drops:
@@ -1489,7 +1614,9 @@ for j, name in enumerate(names):
       { type: 'fill', q: 'Selection rates are 0.40 for group A and 0.28 for group B. What is the disparate impact ratio? (2 decimals)', answer: ['0.7', '0.70'], explain: '0.28 / 0.40 = 0.70, below the 0.8 "four-fifths" threshold.' },
       { type: 'mcq', q: 'How is permutation importance computed?', options: ['By removing the feature and retraining', 'By shuffling the feature\'s values in validation data and measuring how much the score drops', 'By reading the model\'s weights', 'By counting how often a feature is used'], answer: 1, explain: 'Shuffling breaks the feature\'s link with the target without retraining.' },
       { type: 'tf', q: 'SHAP values for one prediction add up to the difference between that prediction and the average prediction.', answer: true, explain: 'This additivity is a key property of Shapley values.' },
-      { type: 'mcq', q: 'What does a model card document?', options: ['The model\'s source code', 'Intended use, performance by group, limitations and ethical considerations', 'The GPU used for training', 'The training loss curve only'], answer: 1, explain: 'It helps others use the model responsibly.' }
+      { type: 'mcq', q: 'What does a model card document?', options: ['The model\'s source code', 'Intended use, performance by group, limitations and ethical considerations', 'The GPU used for training', 'The training loss curve only'], answer: 1, explain: 'It helps others use the model responsibly.' },
+      {"type":"mcq","q":"Two groups have different base rates. Which statement is true for an imperfect classifier?","options":["It can always satisfy calibration, equal false positive rates and equal false negative rates at once","It cannot satisfy all three at once, so some fairness criteria must be traded off","Fairness cannot be measured","Base rates do not affect error rates"],"answer":1,"explain":"The identity FPR = p/(1 − p) · (1 − PPV)/PPV · (1 − FNR) ties the three together through the base rate p, so different base rates force at least one of them to differ."},
+      {"type":"fill","q":"In a group with base rate p = 0.5, a classifier has PPV = 0.8 and FNR = 0.2. What is its false positive rate? (decimal)","answer":["0.2",".2"],"explain":"FPR = p/(1 − p) × (1 − PPV)/PPV × (1 − FNR) = 1 × 0.25 × 0.8 = 0.2."}
     ],
     problems: [
       {

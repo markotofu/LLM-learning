@@ -1,5 +1,73 @@
 # ML Atlas — build handoff
 
+## STATUS UPDATE (session 7, 2026-11-21): deeper lessons, 127 charts, security review
+
+The user asked for five things:
+1. Work the ideas (not the text) of their ten textbook PDFs into the matching lessons, and make every lesson more detailed and readable.
+2. Deepen every other lesson the same way, with graphs and charts rather than only text and bullet points.
+3. Review the site's security, and check whether the terms and privacy policy need changes.
+4. Re-rate the app, adding a 1–10 score for how much a learner would know about current AI after studying it.
+5. Push to `main` automatically when finished.
+
+Session 6 is committed as `d5d9d82`; this round is committed on top of it.
+
+**Deeper lessons.**
+- Every lesson except the three capstones and `advanced-agents` gained sections: worked examples, runnable samples, predictions, quick checks and quiz questions.
+- The PDF chapters fed these lessons: k-NN, supervised learning, linear models, naive Bayes, MLPs, trees, ensembles, SVMs, metrics, grid search and pipelines, pandas, text and plotting. The PDFs were read as untrusted data (Python with `-E -P`, from a scratch folder), and no text was copied.
+- New lesson `data-visualization` (Python & Data, `js/data/concepts-viz.js`), so there are 106 concepts.
+- Before → after (section text only):
+  - words 78,414 → 127,382 (+62%); median lesson 710 → 1,130 words; lessons under 800 words 70 → 5;
+  - sections 894 → 1,295;
+  - code samples 202 → 323 (185 → 306 run in the browser);
+  - predictions 24 → 104;
+  - quiz questions 532 → 754; problems 230 → 232; glossary 594 → 598.
+- Duplicate material was removed where a new section repeated another lesson. For example, the initialization part of `activation-functions` now covers dead ReLUs instead of repeating `normalization`.
+
+**Charts.**
+- New `chart` section type (`js/views/charts.js`): line, scatter and bar charts drawn as theme-aware SVG. It supports:
+  - log axes, with decade labels thinned on wide ranges;
+  - reference lines, whose labels are drawn on top of the data with a halo;
+  - series with their own x values, dashed series and dot-only series, and `null` gaps;
+  - clipping to the plot area;
+  - a "Show the numbers" table under each chart.
+- `tests/content.test.js` validates every spec.
+- 127 charts in 90 lessons. The numbers come from the scripts in `tools/charts/` (see its README).
+  - Every caption was checked against the data, and many first drafts were corrected.
+  - A chart that would give away a prediction is placed after the code sample.
+  - Every chart was checked in the browser: no overlapping labels and nothing outside the plot.
+- `tools/lesson-patch.js` applies plain-text patches (INSERT or REPLACE; text, code, check, demo, quiz and chart blocks); see CONTENT_GUIDE §2.
+
+**Security review.**
+- **Fixed (stored XSS).** The markdown renderer passed raw HTML blocks (`<div>`, `<svg>`, `<details>`…) through unescaped. It also renders learners' notes and imported progress files, so a crafted import could run script. The passthrough is gone (no lesson used it), and `tests/views.test.js` covers 12 attack strings.
+- **Fixed (`serve.js`).** It allowed path traversal (`/../`, including encoded variants) and served dotfiles and `node_modules`.
+  - It now checks containment with `path.relative` and allows only GET and HEAD.
+  - It sends nosniff, no-referrer and SAMEORIGIN headers.
+  - `tests/serve.test.js` has 26 checks; the old server failed 18 of them.
+- **Hardened (imports).** Imports drop `__proto__`, `constructor` and `prototype` keys and refuse files over 40 MB.
+- **CSP meta tag.** The two inline scripts moved to `js/core/boot-theme.js` and `js/core/boot-sw.js`.
+  - The self-test ran every problem and sample with no CSP violations, and an injected inline handler is blocked.
+  - What it still allows: `'unsafe-eval'` (Vue compiles templates in the browser), `'wasm-unsafe-eval'` and `blob:` workers (Pyodide), and `https://*.jsdelivr.net`.
+- **Known limits** (ROADMAP item 18):
+  - Pyodide's `importScripts` cannot use SRI; it runs in a worker with no access to the page.
+  - `serve.js` listens on the LAN on purpose, for phone testing.
+  - Removing `'unsafe-eval'` needs precompiled templates, which means a build step.
+
+**Terms and privacy** (`js/data/legal.js`, dated 21 November 2026):
+- Terms §3: import only files you trust.
+- Terms §6: referenced works remain their authors'.
+- Privacy §1 lists the mistakes queue and the activity log.
+- Privacy §2 says exports contain notes and code in readable form.
+- New "Security" section.
+
+**Regression results:**
+- `npm test`: graph 21, content 11,921, theme 344, views 413, serve 26, problems 1,198.
+- Browser tests: 10/10. The prediction test now finds the Bayes section by its heading, because the probability lesson has an earlier prediction.
+- In-app self-test: 232/232 problems and 306/306 samples.
+
+**Next:**
+- The capstones and `advanced-agents` were not deepened (ROADMAP item 9).
+- Open roadmap items: 5, 9 and 10–18 (10, 11 and 14 are partly done).
+
 ## STATUS UPDATE (session 6, 2026-11-20): colour scheme, section ids, browser tests, predictions, mistakes queue
 
 The user asked for roadmap items 2–6, a new colour scheme, a re-rating and a push to `main` (the site is live on GitHub Pages). Session 5 is committed as `bdce3a6`; this round is committed on top of it.

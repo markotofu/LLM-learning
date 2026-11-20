@@ -74,12 +74,39 @@ for name, y in [("AND", [0, 0, 0, 1]), ("OR", [0, 1, 1, 1]), ("XOR", [0, 1, 1, 0
     status = f"converged in {epochs} epochs" if epochs else "never converged"
     print(f"{name}: predictions {preds} target {y}  -> {status}")
 ` },
+      { type: 'chart', title: "Mistakes per epoch", after: `AND and OR are linearly separable, so the mistakes drop to zero within a few epochs and stay there: the perceptron has converged. XOR never gets there: every epoch still contains mistakes, and the weights cycle forever, exactly as the convergence theorem's condition predicts.`, chart: {"kind":"line","x":[1,2,3,4,5,6,7,8,9,10,11,12],"series":[{"name":"AND","y":[2,3,3,2,1,0,0,0,0,0,0,0]},{"name":"OR","y":[2,2,1,0,0,0,0,0,0,0,0,0]},{"name":"XOR","y":[3,3,4,4,4,4,4,4,4,4,4,4]}],"xLabel":"epoch (one pass over the 4 examples)","yLabel":"mistakes in the epoch","yMin":0,"yMax":4} },
       { type: 'check', question: { type: 'mcq', q: 'A perceptron predicts 1 for an example whose label is 0. How does the update change the weights?', options: ['Adds the input x (times the learning rate)', 'Subtracts the input x (times the learning rate)', 'Leaves them unchanged', 'Resets them to zero'], answer: 1, explain: 'y − ŷ = 0 − 1 = −1, so w ← w − η·x, lowering z for similar inputs.' } },
       { type: 'text', title: 'XOR and the need for layers', md: `XOR outputs 1 when exactly one input is 1: (0,1) and (1,0) are positive, (0,0) and (1,1) are negative. Plot those four points: no single straight line separates them. A single neuron draws exactly one line, so **no choice of weights works**.
 
 In 1969 Minsky and Papert's book *Perceptrons* highlighted this limitation, and funding for neural network research dried up for years (an "AI winter").
 
 The fix is to **combine neurons**: one hidden neuron computes OR, another computes AND, and an output neuron computes "OR and not AND" — which is XOR. A hidden layer re-represents the input so that the problem *becomes* linearly separable. The missing piece in 1969 was a way to **train** hidden layers — which arrived with backpropagation (popularised in 1986).` },
+      { type: 'text', title: "The perceptron finds a separator, not the best one", md: `The weight vector has a geometric meaning: the boundary w · x + b = 0 is a line (a hyperplane in more dimensions) **perpendicular to w**, and the signed distance of a point from it is
+
+$$ distance(x) = ( w · x + b ) / ‖w‖ $$
+:::where
+w, b — the perceptron's weights and bias
+w · x + b — the pre-activation; its sign says which side of the boundary x lies on
+‖w‖ — the length of w; dividing by it turns the score into a distance
+:::
+
+How long does learning take? **Novikoff's theorem** bounds the number of mistakes on separable data: if every point lies within a radius R of the origin, and some boundary separates the classes with a gap (a margin) of γ on each side, the perceptron makes at most (R / γ)² mistakes, however many examples there are and in whatever order they arrive. Well-separated classes are learned in a few updates; classes that almost touch take many.
+
+What the perceptron does *not* do is pick a good boundary. It stops at the first line that classifies every training point correctly, and which line that is depends on the order of the examples. Two runs on the same data can end with very different boundaries, some of them hugging one class.` },
+      { type: 'chart', title: "Three runs, three different boundaries", md: `The same separable data, presented in three different random orders:`, after: `Every run stops with zero training mistakes, yet each stops at a different line: the perceptron halts at the first separator it reaches. Some lines pass uncomfortably close to points of one class. Choosing the line with the widest gap to both classes is exactly what a [support vector machine](#/concept/svm) does.`, chart: {"kind":"line","points":false,"series":[{"name":"class 0","x":[-1.131,-0.848,-1.495,-0.483,-1.587,-1.543,-2.479,-1.885,-1.499,-0.974,-1.271,-1.566,-0.703,-1.609,-1.452,-1.755,-1.288,-1.082,-1.56,-0.769,-1.892,-0.46,-1.055,-0.398,-0.209],"y":[-1.073,-0.942,-0.801,-0.479,-1.696,-0.977,-1.12,-1.403,-1.174,-0.427,-0.248,-0.807,-0.948,-1.507,-0.879,-1.115,-0.703,-0.805,-1.071,-0.179,-0.167,-0.57,-1.173,0.078,-0.277],"scatter":true},{"name":"class 1","x":[1.397,1.198,0.491,1.436,0.549,0.96,2.157,1.381,2.071,1.548,1.229,1.752,2.202,0.836,1.227,1.304,0.992,0.497,1.52,0.785,1.042,0.962,1.337,1.289,0.462],"y":[0.335,1.361,1.217,1.383,0.636,0.357,0.727,0.858,1.726,-0.212,1.376,0.66,0.274,1.514,2.101,0.652,0.4,1.347,1.712,1.929,1.866,0.595,1.567,0.678,0.229],"scatter":true},{"name":"boundary, data order 1","x":[-3,3],"y":[5.619,-3.826]},{"name":"boundary, data order 2","x":[-3,3],"y":[7.53,-5.745]},{"name":"boundary, data order 3","x":[-3,3],"y":[5.698,-5.698]}],"xLabel":"x₁","yLabel":"x₂","xMin":-3,"xMax":3,"yMin":-3,"yMax":3} },
+      { type: 'text', title: "From the perceptron to gradient descent", md: `The perceptron rule is a special case of something general: it is **stochastic gradient descent** on the perceptron loss, which is zero for a correctly classified point and grows linearly with how far a misclassified point is on the wrong side:
+
+$$ ℓ(w, b) = max( 0, −y′ · (w · x + b) ) $$
+:::where
+y′ — the label written as −1 or +1 instead of 0 or 1
+w · x + b — the score; y′ · (w · x + b) is positive when the point is on the correct side
+max(0, …) — no loss for correct points; for a mistake, the loss grows with how far the point lies on the wrong side
+:::
+
+For a misclassified point the gradient is −y′ · x, so a gradient step adds y′ · x to the weights: exactly the perceptron update. Three small changes turn this into the models used today:
+- demand a **margin**, so that the loss is zero only when y′ · score ≥ 1: the hinge loss of the [SVM](#/concept/svm);
+- replace the step by a smooth **sigmoid** and the loss by cross-entropy: [logistic regression](#/concept/logistic-regression), which gives probabilities and learns from every example, not only from mistakes;
+- stack many such units with non-linear activations and train them all with the same gradient idea: the [multi-layer perceptron](#/concept/mlp).` },
       { type: 'check', question: { type: 'tf', q: 'A single perceptron can learn any boolean function of two inputs.', answer: false, explain: 'It can only learn linearly separable functions; XOR and XNOR are not.' } }
     ],
     when: `- Think in single neurons to understand what each unit of a network computes.
@@ -99,7 +126,9 @@ The fix is to **combine neurons**: one hidden neuron computes OR, another comput
       { type: 'mcq', q: 'A neuron with a sigmoid activation is equivalent to…', options: ['k-means', 'logistic regression', 'a decision tree', 'PCA'], answer: 1, explain: 'σ(w·x + b) is exactly logistic regression\'s prediction.' },
       { type: 'mcq', q: 'Which boolean function can a single perceptron NOT learn?', options: ['AND', 'OR', 'NAND', 'XOR'], answer: 3, explain: 'XOR is not linearly separable.' },
       { type: 'tf', q: 'The perceptron learning rule only changes the weights when the prediction is wrong.', answer: true, explain: 'When ŷ = y, the factor (y − ŷ) is zero.' },
-      { type: 'mcq', q: 'How do multi-layer networks solve XOR?', options: ['By using a larger learning rate', 'Hidden units re-represent the inputs so the output unit\'s problem becomes linearly separable', 'By memorising the four cases in the bias', 'They cannot'], answer: 1, explain: 'E.g. hidden units for OR and AND, then output = OR AND NOT AND.' }
+      { type: 'mcq', q: 'How do multi-layer networks solve XOR?', options: ['By using a larger learning rate', 'Hidden units re-represent the inputs so the output unit\'s problem becomes linearly separable', 'By memorising the four cases in the bias', 'They cannot'], answer: 1, explain: 'E.g. hidden units for OR and AND, then output = OR AND NOT AND.' },
+      {"type":"mcq","q":"Data is separable with a margin γ = 0.5, and every point lies within radius R = 2 of the origin. At most how many mistakes can the perceptron make?","options":["4","8","16","There is no bound"],"answer":2,"explain":"Novikoff's bound is (R/γ)² = (2 / 0.5)² = 16 mistakes, whatever the number or order of the examples."},
+      {"type":"tf","q":"On separable data, the perceptron always finds the boundary with the largest margin.","answer":false,"explain":"It stops at the first separating boundary it reaches, which depends on the order of the examples. Maximising the margin is what an SVM does."}
     ],
     problems: [
       {
@@ -245,7 +274,47 @@ Remedies that made deep learning work:
 - **gated architectures** (LSTMs) for recurrent nets.
 
 The opposite, **exploding gradients**, happens when the factors are larger than 1; gradient clipping is the usual fix.` },
+      { type: 'chart', title: "How the gradient's size changes on its way back through 20 layers", md: `A 20-layer network, 100 units per layer, random weights; the same gradient is sent back from the output and measured at every layer:`, after: `With sigmoid activations the gradient shrinks by a factor of about 4 at every layer (the sigmoid's slope is at most 0.25), so at layer 1 it is about 8 × 10⁻¹³ of its size at layer 20: the early layers get almost no learning signal. tanh with Xavier initialisation loses only a factor of about 5 over all 20 layers, and ReLU with He initialisation keeps the gradient at roughly the same size throughout. Better activations and initialisation are what made deep networks trainable.`, chart: {"kind":"line","x":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],"yLog":true,"points":false,"series":[{"name":"sigmoid (Xavier init)","y":[1.97e-13,9.794e-13,3.826e-12,1.806e-11,8.299e-11,3.497e-10,1.624e-9,6.711e-9,2.986e-8,1.239e-7,4.927e-7,0.000002103,0.000009547,0.00004358,0.0001968,0.0008265,0.003599,0.01518,0.06578,0.26]},{"name":"tanh (Xavier init)","y":[0.1954,0.2826,0.3487,0.4384,0.5331,0.5621,0.6684,0.6512,0.7192,0.7269,0.7035,0.7223,0.7867,0.9306,0.988,0.9737,1.021,1.057,1.121,1.06]},{"name":"ReLU (He init)","y":[3.68,3.68,3.667,3.399,3.307,3.206,3.027,3.077,3.063,2.935,2.612,2.418,2.209,2.191,1.972,1.674,1.482,1.41,1.398,1.066]}],"xLabel":"layer (1 = closest to the input; the gradient arrives from layer 20)","yLabel":"typical gradient size (log scale)"} },
+      { type: 'text', title: "Dead ReLUs and how to avoid them", md: `ReLU's gradient is exactly 0 for negative inputs. Usually that is harmless, because a unit is negative for some examples and positive for others. But if a unit's input becomes negative for **every** example, for instance after one huge update pushed its bias far below zero, it outputs 0 everywhere, receives a gradient of 0 everywhere, and never changes again: a **dead ReLU**. In a badly tuned network a large share of units can die this way, silently wasting capacity.
+
+Ways to avoid it:
+- a **sensible learning rate** (with warm-up) and **gradient clipping**, so that no single step throws the biases far away;
+- **good initialisation** and **normalisation** layers, which keep pre-activations centred around 0 (see [Initialization, Normalization & Dropout](#/concept/normalization));
+- activations with a non-zero slope for negative inputs: **Leaky ReLU** (a small slope α such as 0.01) or **ELU**, or the smooth **GELU** and **SiLU**, whose gradient is small but not exactly zero there.` },
+      { type: 'code', title: "Counting dead units", code: `import numpy as np
+rng = np.random.default_rng(0)
+X = rng.normal(size=(1000, 64))                       # 1,000 inputs
+W = rng.normal(0, np.sqrt(2 / 64), (64, 256))         # a ReLU layer with 256 units, He initialisation
+b = np.zeros(256)
+
+def dead_share(b):
+    z = X @ W + b
+    return np.mean((z <= 0).all(axis=0))               # units that are negative for every input
+
+print(f"healthy biases:       {dead_share(b):.0%} of units dead")
+b_bad = b.copy()
+b_bad[:128] -= 6.0                                     # one bad update pushes half the biases far down
+print(f"after the bad update: {dead_share(b_bad):.0%} of units dead")
+
+z = X @ W + b_bad
+relu_grad = (z > 0).mean(axis=0)                       # share of inputs that let a gradient through, per unit
+leaky_grad = np.where(z > 0, 1.0, 0.01).mean(axis=0)   # Leaky ReLU with slope 0.01 on the negative side
+r, l = relu_grad[:128].mean(), leaky_grad[:128].mean()
+print(f"gradient reaching the pushed-down units: ReLU {r:.4f}, Leaky ReLU {l:.4f}")
+print("only Leaky ReLU keeps a gradient:", bool(r < 0.001 and l > 0.005))`, after: `About half the units now output zero for every one of the 1,000 inputs, so plain ReLU passes almost no gradient back to them and they cannot recover. Leaky ReLU still passes 1% of the gradient, which is enough for later updates to pull those biases back.`, predict: {"type":"mcq","q":"Half of a ReLU layer's biases are pushed down by 6, while the pre-activations vary by only about 1.4. About what share of the layer's units is now dead?","options":["About 0%","About 10%","About 50%","100%"],"answer":2,"explain":"For the pushed-down units the input is about 4 standard deviations below zero for practically every example, so almost all of them, half the layer, are dead.","expect":["only Leaky ReLU keeps a gradient: True"]} },
       { type: 'check', question: { type: 'mcq', q: 'Why did ReLU help train deeper networks than sigmoid?', options: ['It is bounded between 0 and 1', 'Its derivative is 1 for positive inputs, so gradients don\'t shrink layer after layer', 'It is smoother', 'It outputs probabilities'], answer: 1, explain: 'Sigmoid derivatives (≤ 0.25) multiply into vanishing gradients; ReLU passes gradients through unchanged where active.' } },
+      { type: 'text', title: "Gated units: GLU and SwiGLU", md: `Modern transformers rarely use a plain activation in their feed-forward blocks. They use a **gated linear unit**: two linear projections of the same input, one passed through an activation and used as a gate that multiplies the other, element by element:
+
+$$ SwiGLU(x) = ( SiLU(x W) ⊙ (x V) ) W₂ $$
+:::where
+x — the token's input vector
+W, V — two separate weight matrices that project x up to the hidden width
+SiLU(z) — z · σ(z), a smooth ReLU-like curve (also called Swish)
+⊙ — element-wise multiplication: the SiLU branch decides how much of each hidden unit of x V passes through
+W₂ — the projection back down to the model width
+:::
+
+The gate lets the network switch features on and off depending on the input, and gated units train to a lower loss for the same compute; LLaMA, PaLM and most recent open models use SwiGLU. Because it has three weight matrices instead of two, the hidden width is usually reduced to about two thirds (for example 8/3 of the model width instead of 4 times) to keep the number of parameters the same.` },
       { type: 'text', title: 'Softmax for outputs', md: `For K-class classification the output layer produces K scores (**logits**) z₁…z_K, and **softmax** turns them into probabilities:
 
 $$ softmax(z)_k = e^(z_k) / Σⱼ e^(z_j) $$
@@ -309,7 +378,9 @@ print("stable, big logits:", softmax_stable(big).round(4))
       { type: 'fill', q: 'What is ReLU(−3.2)?', answer: ['0', '0.0'], explain: 'max(0, −3.2) = 0.' },
       { type: 'mcq', q: 'Which activation is typical in the feed-forward layers of GPT-style transformers?', options: ['Step function', 'GELU (or SwiGLU variants)', 'Sigmoid', 'Softmax'], answer: 1, explain: 'GPT-2 used GELU; LLaMA-style models use SwiGLU, built on SiLU.' },
       { type: 'tf', q: 'A network with 50 layers but no activation functions can represent the XOR function.', answer: false, explain: 'It is equivalent to a single linear layer, which cannot represent XOR.' },
-      { type: 'mcq', q: 'For multi-label classification (an image can have several tags), which output activation fits?', options: ['Softmax over all tags', 'An independent sigmoid per tag', 'ReLU', 'No activation'], answer: 1, explain: 'Softmax forces probabilities to compete and sum to 1; independent sigmoids allow several tags at once.' }
+      { type: 'mcq', q: 'For multi-label classification (an image can have several tags), which output activation fits?', options: ['Softmax over all tags', 'An independent sigmoid per tag', 'ReLU', 'No activation'], answer: 1, explain: 'Softmax forces probabilities to compete and sum to 1; independent sigmoids allow several tags at once.' },
+      {"type":"tf","q":"A ReLU unit whose input is negative for every example receives no gradient and can stay dead for the rest of training.","answer":true,"explain":"ReLU's gradient is 0 for negative inputs, so if a unit is negative for all inputs, no update can reach its weights or bias. Leaky ReLU, GELU or SiLU keep a small gradient."},
+      {"type":"mcq","q":"In a SwiGLU feed-forward block, what does the SiLU branch do?","options":["It normalises the input","It acts as a gate that scales each hidden unit of the other projection","It replaces attention","It computes the softmax over the vocabulary"],"answer":1,"explain":"SwiGLU multiplies SiLU(xW) element-wise with xV, so the first projection decides how much of each hidden unit of the second passes through."}
     ],
     problems: [
       {
@@ -548,6 +619,64 @@ d_{l−1} · d_l — the weights of layer l, one per (input, neuron) pair
 :::
 
 A transformer's feed-forward block is exactly an MLP: d_model → 4·d_model → d_model. For GPT-2 small (d_model = 768) that is about 4.7 million parameters per layer — roughly two thirds of each layer's weights.` },
+      { type: 'code', title: "Neural networks in scikit-learn: MLPClassifier", md: `\`MLPClassifier\` builds the networks of this lesson for you. \`hidden_layer_sizes=(100,)\` means one hidden layer of 100 units; \`(10, 10)\` means two hidden layers of 10 units each. The data are two interleaving half-moons, which no straight line can separate.`, code: `import warnings
+from sklearn.datasets import make_moons
+from sklearn.model_selection import train_test_split
+from sklearn.neural_network import MLPClassifier
+warnings.filterwarnings("ignore")
+
+X, y = make_moons(n_samples=200, noise=0.25, random_state=3)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
+
+for hidden in [(10,), (100,), (10, 10)]:
+    mlp = MLPClassifier(hidden_layer_sizes=hidden, max_iter=3000, random_state=0).fit(X_train, y_train)
+    print(f"hidden layers {str(hidden):<9} train {mlp.score(X_train, y_train):.3f}   test {mlp.score(X_test, y_test):.3f}")
+
+print("same network, different random starting weights:")
+for seed in range(4):
+    mlp = MLPClassifier(hidden_layer_sizes=(100,), max_iter=3000, random_state=seed).fit(X_train, y_train)
+    print(f"  random_state={seed}: test {mlp.score(X_test, y_test):.3f}")`, after: `The 100-unit network draws a curved boundary that follows the moons; the 10-unit networks are too small for this shape. Notice also that **the same architecture gives different results with different random starting weights**: training a network is a non-convex optimization, so different starting points end in different solutions. Small networks are especially sensitive. Report results over several seeds, or average several networks.` },
+      { type: 'code', title: "Scaling and regularization decide the result", md: `The breast-cancer features range from about 0.001 to 2,500. Neural networks assume inputs of similar size, typically mean 0 and standard deviation 1.`, code: `import warnings
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.neural_network import MLPClassifier
+warnings.filterwarnings("ignore")
+
+X, y = load_breast_cancer(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
+scaler = StandardScaler().fit(X_train)
+Xs_train, Xs_test = scaler.transform(X_train), scaler.transform(X_test)
+
+raw = MLPClassifier(max_iter=1000, random_state=42).fit(X_train, y_train)
+print(f"raw features      train {raw.score(X_train, y_train):.3f}   test {raw.score(X_test, y_test):.3f}")
+scaled = MLPClassifier(max_iter=1000, random_state=42).fit(Xs_train, y_train)
+print(f"scaled            train {scaled.score(Xs_train, y_train):.3f}   test {scaled.score(Xs_test, y_test):.3f}")
+reg = MLPClassifier(max_iter=1000, alpha=1, random_state=42).fit(Xs_train, y_train)
+print(f"scaled, alpha=1   train {reg.score(Xs_train, y_train):.3f}   test {reg.score(Xs_test, y_test):.3f}")
+print("scaling helped:", scaled.score(Xs_test, y_test) > raw.score(X_test, y_test))`, after: `Scaling alone lifts the test accuracy by several points. The scaled network then fits the training data almost perfectly, a hint of overfitting; increasing **alpha** (the L2 penalty on the weights, as in ridge regression) trades a little training accuracy for better test accuracy.`, predict: {"type":"mcq","q":"The same network is trained on raw features (ranging from 0.001 to 2,500) and on standardized features. Which reaches the higher test accuracy?","options":["Raw features: scaling throws information away","Standardized features","They are identical: neural networks are scale-invariant","Neither learns anything"],"answer":1,"explain":"Standardized features train much better (0.965 against 0.916 here). Gradient-based training struggles when inputs differ in size by factors of a million: the large features dominate the first layer.","expect":["scaling helped: True"]} },
+      { type: 'chart', title: "Training loss per epoch, raw versus scaled inputs", after: `With raw features the loss falls slowly and erratically: a few huge features dominate the gradients. With standardized features it falls smoothly and much lower. Watching this curve is the first thing to do when a network trains badly.`, chart: {"kind":"line","x":[1,5,9,13,17,21,25,29,33,37,41,45,49,53,57,61,65,69,73,77,81,85,89,93,97,101,105,109,113,117,121,125,129,133,137,141,145],"points":false,"yLog":true,"series":[{"name":"raw features","y":[22.5908,9.2735,2.2284,0.5973,0.5817,0.425,0.3355,0.3046,0.2881,0.3169,0.2697,0.2718,0.2478,0.2367,0.2315,0.2238,0.2238,0.225,0.2208,0.1954,0.1885,0.1905,0.179,0.1763,0.1787,0.1784,0.184,0.1682,0.23,0.1716,0.1657,0.1736,0.1608,0.1574,0.1581,0.19,0.1605]},{"name":"standardized features","y":[0.5021,0.263,0.1812,0.1423,0.1198,0.1049,0.0945,0.0866,0.08,0.0748,0.0703,0.0664,0.0628,0.0595,0.0569,0.0544,0.0518,0.0495,0.0472,0.0454,0.0436,0.0419,0.0404,0.0389,0.0376,0.0363,0.0353,0.0344,0.0327,0.0316,0.0304,0.0295,0.0286,0.0275,0.0266,0.0258,0.0249]}],"xLabel":"epoch (pass over the training data)","yLabel":"training log loss (log scale)"} },
+      { type: 'text', title: "Tuning a neural network", md: `The settings that matter most in \`MLPClassifier\`:
+
+| Setting | What it controls | Typical values |
+| --- | --- | --- |
+| \`hidden_layer_sizes\` | number of layers and units per layer: the capacity | one or two layers of 10–1000 units |
+| \`alpha\` | L2 penalty on the weights | 0.0001 (default) up to about 10 |
+| \`activation\` | the non-linearity | \`"relu"\` (default) or \`"tanh"\` |
+| \`solver\` | the optimizer | \`"adam"\` (default, needs scaled data), \`"lbfgs"\` (robust on small data) |
+| \`max_iter\`, \`early_stopping\` | how long to train | raise \`max_iter\` if you see convergence warnings |
+
+A dependable recipe: first make the network **large enough to overfit** (training accuracy near 100%), which proves it can learn the task. Then **shrink it or regularize it** (larger alpha, fewer units, early stopping) until the validation score is as high as possible.
+
+A rough measure of a network's complexity is its number of weights. With 30 inputs, one hidden layer of 100 units and 1 output, there are 30·100 + 100 = 3,100 weights in the first layer and 100 + 1 = 101 in the second: about 3,200 in all. A second layer of 100 units adds another 10,100.` },
+      { type: 'text', title: "Strengths and weaknesses", md: `| Strengths | Weaknesses |
+| --- | --- |
+| can capture very complex relationships in large amounts of data | large networks take a long time to train |
+| with enough data, time and tuning, often the most accurate model | need scaled, preprocessed inputs; best when all features mean similar things (pixels, audio samples) |
+| one framework covers images, sound, text and tables | many settings, and results vary with the random start |
+| the basis of everything in the deep-learning branches of this map | on heterogeneous tables (mixed units and categories), tree ensembles are often better |
+
+scikit-learn's \`MLPClassifier\` is fine for small problems. Real deep learning, with GPUs, convolutional layers and transformers, uses [PyTorch](#/concept/pytorch).` },
       { type: 'check', question: { type: 'mcq', q: 'What is the main role of hidden layers?', options: ['To store the training data', 'To learn intermediate representations (features) that make the final prediction easier', 'To speed up training', 'To normalize the inputs'], answer: 1, explain: 'Hidden layers transform the input into features the next layer can use — learned feature engineering.' } }
     ],
     when: `- **Tabular data**: an MLP is a reasonable alternative to boosted trees, especially with lots of data or when combined with embeddings for categorical features (trees often still win on small tables).
@@ -569,7 +698,8 @@ A transformer's feed-forward block is exactly an MLP: d_model → 4·d_model →
       { type: 'fill', q: 'How many parameters does an MLP with layer sizes [10, 20, 3] have?', answer: ['283'], explain: '(10·20 + 20) + (20·3 + 3) = 220 + 63 = 283.' },
       { type: 'tf', q: 'The universal approximation theorem guarantees that gradient descent will find a good network.', answer: false, explain: 'It only says such a network exists; it says nothing about finding it or how large it must be.' },
       { type: 'mcq', q: 'For a 10-class image classifier, the final layer usually has…', options: ['1 output with ReLU', '10 outputs followed by softmax', '10 outputs with ReLU', '2 outputs with sigmoid'], answer: 1, explain: 'One logit per class, softmax to probabilities, cross-entropy loss.' },
-      { type: 'mcq', q: 'Inside a transformer layer, the feed-forward block is…', options: ['a convolution', 'an MLP applied to each token\'s vector', 'a decision tree', 'an RNN'], answer: 1, explain: 'Typically d_model → 4·d_model → d_model with a GELU/SwiGLU non-linearity.' }
+      { type: 'mcq', q: 'Inside a transformer layer, the feed-forward block is…', options: ['a convolution', 'an MLP applied to each token\'s vector', 'a decision tree', 'an RNN'], answer: 1, explain: 'Typically d_model → 4·d_model → d_model with a GELU/SwiGLU non-linearity.' },
+      {"type":"mcq","q":"A network reaches 100% training accuracy but only 85% on validation data. Which change is most likely to help?","options":["Increase alpha (stronger L2 regularization)","Remove the feature scaling","Use more hidden units","Train for even longer"],"answer":0,"explain":"The gap shows overfitting. A stronger penalty on the weights, a smaller network or early stopping reduce it; more units or longer training make it worse."}
     ],
     problems: [
       {
@@ -729,6 +859,52 @@ n — the batch size
 The softmax + cross-entropy result is famously simple: the gradient of the logits is just **predicted probabilities minus the one-hot truth** (divided by the batch size for a mean loss).
 
 **Shape rule of thumb:** a gradient always has the same shape as the thing it is the gradient of. If dW must be (d_in, d_out) and you have X (n, d_in) and δZ (n, d_out), the only product that fits is Xᵀ δZ. When in doubt, let the shapes tell you the formula.` },
+      { type: 'text', title: "A worked example by hand", md: `One neuron, one example, every number visible. The input is x = 1.5 with target y = 0; the parameters are w = 0.8 and b = −0.2; the neuron applies a sigmoid and the loss is the squared error.
+
+| Step | Forward value | Local derivative | Gradient arriving from above |
+| --- | --- | --- | --- |
+| L = (p − y)² | L = 0.534 | ∂L/∂p = 2(p − y) = 1.462 | ∂L/∂L = 1 |
+| p = σ(z) | p = 0.731 | ∂p/∂z = p(1 − p) = 0.197 | ∂L/∂p = 1.462 |
+| z = w·x + b | z = 1.0 | ∂z/∂w = x = 1.5, ∂z/∂b = 1, ∂z/∂x = w = 0.8 | ∂L/∂z = 1.462 × 0.197 = 0.287 |
+
+The parameter gradients multiply the chain together:
+
+$$ ∂L/∂w = ∂L/∂p · ∂p/∂z · ∂z/∂w = 1.462 × 0.197 × 1.5 = 0.431 $$
+:::where
+∂L/∂p — how the loss changes with the prediction (the error signal)
+∂p/∂z — the sigmoid's slope at z = 1
+∂z/∂w — how the pre-activation changes with the weight: the input x
+∂L/∂w — the product of the three: the gradient used to update w
+:::
+
+Likewise ∂L/∂b = 0.287 × 1 = 0.287, and ∂L/∂x = 0.287 × 0.8 = 0.230 (needed only when x comes from an earlier layer). The prediction is too high and both gradients are positive, so a gradient step lowers w and b; w moves more, because its effect on z is amplified by x = 1.5.` },
+      { type: 'code', title: "The worked example in code", code: `import math
+x, y = 1.5, 0.0                  # one training example
+w, b = 0.8, -0.2                 # the current parameters
+
+def forward(w, b):
+    z = w * x + b
+    p = 1 / (1 + math.exp(-z))
+    return z, p, (p - y) ** 2
+
+z, p, L = forward(w, b)
+print(f"forward:  z = {z:.4f}   p = {p:.4f}   L = {L:.4f}")
+
+dL_dp = 2 * (p - y)              # backward, one local derivative at a time
+dp_dz = p * (1 - p)
+dL_dz = dL_dp * dp_dz
+dL_dw, dL_db = dL_dz * x, dL_dz * 1.0
+print(f"backward: dL/dp = {dL_dp:.4f}   dp/dz = {dp_dz:.4f}   dL/dz = {dL_dz:.4f}   dL/dw = {dL_dw:.4f}   dL/db = {dL_db:.4f}")
+
+h = 1e-6                         # check dL/dw numerically
+numeric = (forward(w + h, b)[2] - forward(w - h, b)[2]) / (2 * h)
+print(f"numerical dL/dw = {numeric:.4f}")
+
+lr = 0.5
+w_new, b_new = w - lr * dL_dw, b - lr * dL_db
+L_new = forward(w_new, b_new)[2]
+print(f"after one step: w = {w_new:.4f}, b = {b_new:.4f}, loss {L_new:.4f} (was {L:.4f})")
+print("w decreases and the loss falls:", w_new < w and L_new < L)`, after: `The hand-computed gradient matches the numerical check. One step with learning rate 0.5 moves w from 0.8 to 0.584 and b from −0.2 to −0.344, and the loss falls from 0.534 to 0.397. A real network does exactly this, for millions of parameters at once.`, predict: {"type":"mcq","q":"The prediction (0.73) is above the target (0) and the input x = 1.5 is positive. After one gradient-descent step, will w go up or down?","options":["Up","Down","It stays the same","It depends on the learning rate's sign"],"answer":1,"explain":"∂L/∂w = (positive error signal) × (positive sigmoid slope) × (positive x) > 0, and gradient descent moves against the gradient, so w decreases.","expect":["w decreases and the loss falls: True"]} },
       { type: 'demo', title: 'Interactive: backpropagation, one step at a time', demo: 'backprop' },
       { type: 'code', title: 'Manual backprop for a 2-layer network, with a gradient check', code: `
 import numpy as np
@@ -770,6 +946,7 @@ for name in P:                                                     # numerical c
 **Vanishing and exploding gradients.** The backward pass multiplies by each layer's local derivatives and weight matrices. Many factors below 1 shrink the gradient towards zero (early layers stop learning); factors above 1 blow it up. Good activations, initialization, normalization, residual connections and gradient clipping keep it in range.
 
 **Gradient checking.** When you write backward passes by hand, compare them with central-difference numerical gradients on a tiny network; relative errors around 1e-7 or below mean you got it right.` },
+      { type: 'chart', title: "Gradient size by layer, with and without residual connections", after: `Without shortcuts, every layer multiplies the gradient by a weight matrix and a tanh derivative, here shrinking it about 4-fold per layer, so the signal reaching the first layer is about 7 × 10⁻³¹ of the original: those layers cannot learn. With the very same weights plus residual connections, each layer computes h + f(h), whose local derivative is the identity plus a small term. The gradient keeps a direct path back and arrives at the first layer at roughly its original size (3.1 times the output gradient). This is why ResNets and transformers can be hundreds of layers deep.`, chart: {"kind":"line","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50],"yLog":true,"points":false,"series":[{"name":"plain 50-layer tanh network","y":[7.172e-31,2.793e-30,1.087e-29,4.271e-29,1.783e-28,6.911e-28,2.619e-27,1.044e-26,4.079e-26,1.747e-25,7.55e-25,3.057e-24,1.202e-23,5.437e-23,2.131e-22,7.958e-22,3.345e-21,1.261e-20,5.32e-20,1.988e-19,7.603e-19,3.103e-18,1.222e-17,4.93e-17,1.989e-16,7.81e-16,3.121e-15,1.271e-14,5.084e-14,1.981e-13,8.431e-13,3.4e-12,1.37e-11,5.256e-11,2.038e-10,8.022e-10,3.461e-9,1.412e-8,5.474e-8,2.278e-7,9.33e-7,0.000003739,0.00001514,0.00005864,0.0002322,0.0009146,0.003727,0.01501,0.06112,0.2517,1]},{"name":"same network with residual connections (h + f(h))","y":[3.078,2.98,2.913,2.831,2.762,2.715,2.648,2.581,2.491,2.43,2.357,2.28,2.214,2.17,2.136,2.064,2.011,1.979,1.966,1.924,1.873,1.824,1.772,1.727,1.708,1.684,1.645,1.608,1.567,1.537,1.494,1.457,1.419,1.386,1.359,1.329,1.316,1.295,1.268,1.241,1.211,1.186,1.158,1.148,1.126,1.104,1.085,1.065,1.038,1.018,1]}],"xLabel":"layer (0 = input; the gradient starts at layer 50)","yLabel":"gradient norm relative to the output (log scale)"} },
       { type: 'check', question: { type: 'tf', q: 'With softmax + cross-entropy (mean over a batch of n), the gradient of the logits is (P − Y_onehot)/n.', answer: true, explain: 'The softmax Jacobian and the log combine into this simple form.' } }
     ],
     when: `- You use backprop every time you train a neural network — automatically, through autograd.
@@ -792,7 +969,9 @@ for name in P:                                                     # numerical c
       { type: 'mcq', q: 'A value feeds into two different later operations. Its gradient is…', options: ['the gradient from the first path only', 'the product of the two path gradients', 'the sum of the gradients from both paths', 'zero'], answer: 2, explain: 'The multivariable chain rule sums contributions from every path.' },
       { type: 'fill', q: 'In the ReLU backward pass, the upstream gradient is multiplied by 1 where z > 0 and by what value elsewhere?', answer: ['0', '0.0', 'zero'], explain: 'ReLU\'s derivative is 0 for z < 0, blocking the gradient.' },
       { type: 'mcq', q: 'Why is backprop vastly faster than computing each gradient numerically?', options: ['It uses a GPU', 'It reuses intermediate results to get every gradient in one backward pass instead of two forward passes per parameter', 'It skips half the parameters', 'It approximates the gradients'], answer: 1, explain: 'Reverse-mode differentiation shares work across all parameters.' },
-      { type: 'tf', q: 'A relative error of about 1e-2 between analytic and numerical gradients means the backward pass is correct.', answer: false, explain: 'Correct implementations typically reach 1e-7 or better in double precision; 1e-2 indicates a bug.' }
+      { type: 'tf', q: 'A relative error of about 1e-2 between analytic and numerical gradients means the backward pass is correct.', answer: false, explain: 'Correct implementations typically reach 1e-7 or better in double precision; 1e-2 indicates a bug.' },
+      {"type":"fill","q":"For p = σ(z) with p = 0.8, what is the local derivative ∂p/∂z? (decimal)","answer":["0.16",".16"],"explain":"∂p/∂z = p(1 − p) = 0.8 × 0.2 = 0.16."},
+      {"type":"mcq","q":"Why do residual connections help gradients reach the early layers?","options":["They remove the non-linearity","Each block computes h + f(h), so its local derivative includes the identity and the gradient has a direct path back","They normalise the gradients","They reduce the number of parameters"],"answer":1,"explain":"The derivative of h + f(h) is I + ∂f/∂h: even if the second term is small, the identity carries the gradient through unchanged."}
     ],
     problems: [
       {
@@ -1034,7 +1213,73 @@ The only thing PyTorch adds conceptually is **tensors**: each node holds a whole
 - **Reverse versus forward mode**: reverse mode (backpropagation) gives the gradient of one output with respect to every input in a single backward pass — ideal for a scalar loss. Forward mode carries derivatives along with the values and is efficient when there are few inputs.
 - **Memory**: reverse mode must keep the forward activations until the backward pass, which is why long sequences and big batches run out of memory, and why activation checkpointing exists (see *Training at Scale*).
 - **Dynamic and traced graphs**: PyTorch records the graph as the code runs; JAX traces a function once and transforms it (grad, jit, vmap).
-- **Higher-order derivatives**: differentiating the backward pass again gives Hessian–vector products, used by some optimizers and in meta-learning.` }
+- **Higher-order derivatives**: differentiating the backward pass again gives Hessian–vector products, used by some optimizers and in meta-learning.` },
+      { type: 'text', title: "Memory: what the backward pass needs", md: `Every \`_backward\` closure refers to values computed in the forward pass: a multiplication needs both inputs, tanh needs its output, ReLU needs to know which inputs were positive. So the whole graph, with its intermediate values, stays in memory until backward has run. For a network those are the **activations** of every layer for every example in the batch, and in large models they take far more memory than the weights themselves.
+
+Two standard ways to cut that memory:
+- **Gradient checkpointing**: keep the activations of only some layers, and during the backward pass recompute each missing segment from the nearest checkpoint. Memory drops sharply, for the price of roughly one extra forward pass.
+- **Not building a graph at all** when no gradients are needed, during evaluation and inference: \`torch.no_grad()\` (or \`torch.inference_mode()\`) tells the engine not to record operations, which saves both memory and time.` },
+      { type: 'chart', title: "Activation memory: store everything or checkpoint", after: `Storing everything costs memory proportional to the depth. Keeping only every √L-th layer's activations and recomputing each segment during the backward pass needs about 2√L layers' worth: 63 instead of 1,000 for a 1,000-layer stack, for roughly one extra forward pass (about 30% more compute). Large-model training uses this trade constantly.`, chart: {"kind":"line","x":[10,20,50,100,200,500,1000],"xLog":true,"yLog":true,"series":[{"name":"store every layer's activations","y":[10,20,50,100,200,500,1000]},{"name":"checkpoint every √L layers","y":[6.3,8.9,14.1,20,28.3,44.7,63.2]}],"xLabel":"number of layers L (log scale)","yLabel":"activations held in memory (in layers, log scale)"} },
+      { type: 'text', title: "Practical autograd: accumulation, no_grad and detach", md: `Three behaviours of real engines follow directly from the design you just built:
+
+| Behaviour | Why it exists | The trap |
+| --- | --- | --- |
+| \`.grad\` **accumulates** (+=) | a value used in several places must add up its gradients | forgetting \`optimizer.zero_grad()\` adds this step's gradients to the previous step's |
+| \`torch.no_grad()\` | evaluation needs no graph | forgetting it during validation wastes memory and can exhaust it |
+| \`.detach()\` | treat a value as a constant: gradients stop there | detaching by accident (for example by converting to NumPy and back) silently cuts part of a model out of training |
+
+Accumulation is also a feature. To train with batches of 256 on hardware that fits only 64, run four forward and backward passes of 64 and call the optimiser once: the gradients add up exactly as for a batch of 256 (see [Training Neural Networks](#/concept/training-loop)).` },
+      { type: 'code', title: "Accumulation and detach in a tiny engine", code: `class Value:
+    def __init__(self, data, _prev=()):
+        self.data, self.grad, self._prev, self._backward = float(data), 0.0, _prev, lambda: None
+
+    def __add__(self, other):
+        out = Value(self.data + other.data, (self, other))
+        def _backward():
+            self.grad += out.grad
+            other.grad += out.grad
+        out._backward = _backward
+        return out
+
+    def __mul__(self, other):
+        out = Value(self.data * other.data, (self, other))
+        def _backward():
+            self.grad += other.data * out.grad
+            other.grad += self.data * out.grad
+        out._backward = _backward
+        return out
+
+    def detach(self):
+        return Value(self.data)                     # the same number, with no link to the graph
+
+    def backward(self):
+        order, seen = [], set()
+        def build(v):
+            if v not in seen:
+                seen.add(v)
+                for p in v._prev:
+                    build(p)
+                order.append(v)
+        build(self)
+        for v in order:
+            if v._prev:
+                v.grad = 0.0                        # intermediate results start fresh; leaves keep accumulating
+        self.grad = 1.0
+        for v in reversed(order):
+            v._backward()
+
+w, x = Value(3.0), Value(2.0)
+loss = w * x + w                                    # dloss/dw = x + 1 = 3
+loss.backward()
+print("w.grad after one backward:", w.grad)
+loss.backward()                                     # forgot to zero the gradient
+print("w.grad after a second backward:", w.grad)
+print("accumulated twice:", w.grad == 2 * 3.0)
+
+w.grad = 0.0                                        # this is what zero_grad() does
+loss2 = w.detach() * x + w                          # the first term no longer depends on w
+loss2.backward()
+print("w.grad with the first term detached:", w.grad)`, after: `Leaf gradients add up across backward calls, which is exactly what accumulation over micro-batches relies on, and exactly why training loops zero them before every step. After detaching, the first term is a constant as far as the engine knows, so only the "+ w" term still sends a gradient to w.`, predict: {"type":"mcq","q":"loss = w·x + w with w = 3 and x = 2, so dloss/dw = 3. You call loss.backward() twice without zeroing the gradient. What is w.grad?","options":["3","6","9","0"],"answer":1,"explain":"Leaf gradients are added (+=), so the second backward adds another 3 to the first.","expect":["accumulated twice: True"]} }
     ],
     when: `- Build this once to understand frameworks deeply; then use PyTorch/JAX autograd for real work.
 - Knowing the mechanics helps when you implement custom layers, debug "None" gradients, or reason about memory (the graph keeps references to intermediate values).`,
@@ -1054,7 +1299,9 @@ The only thing PyTorch adds conceptually is **tensors**: each node holds a whole
       { type: 'mcq', q: 'Why does backward process nodes in reverse topological order?', options: ['It is faster in Python', 'So each node\'s gradient is complete before it is pushed further back', 'To save memory', 'Any order works'], answer: 1, explain: 'All users of a value must contribute their gradients first.' },
       { type: 'fill', q: 'a = Value(2), b = Value(5), c = a * b. After c.backward(), what is a.grad?', answer: ['5', '5.0'], explain: '∂(ab)/∂a = b = 5.' },
       { type: 'tf', q: 'PyTorch accumulates gradients into .grad across backward calls unless you reset them.', answer: true, explain: 'That is why optimizer.zero_grad() is called each iteration.' },
-      { type: 'mcq', q: 'out = tanh(a) with out.data = 0.5. If out.grad = 2, what does a.grad receive?', options: ['2', '1.5', '0.75', '0.5'], answer: 1, explain: '(1 − 0.5²)·2 = 0.75·2 = 1.5.' }
+      { type: 'mcq', q: 'out = tanh(a) with out.data = 0.5. If out.grad = 2, what does a.grad receive?', options: ['2', '1.5', '0.75', '0.5'], answer: 1, explain: '(1 − 0.5²)·2 = 0.75·2 = 1.5.' },
+      {"type":"mcq","q":"Why does training need more memory than inference with the same model?","options":["The weights are copied","The forward pass must keep intermediate activations for the backward pass","Gradients are stored as text","Inference always uses a smaller batch"],"answer":1,"explain":"Every local backward rule needs values from the forward pass, so the activations of every layer stay in memory until backward has run."},
+      {"type":"tf","q":"Wrapping validation in torch.no_grad() changes the model's predictions.","answer":false,"explain":"It only stops the engine from recording a graph, which saves memory and time; the forward computation is identical."}
     ],
     problems: [
       {
@@ -1352,6 +1599,7 @@ for epoch in range(1, 151):
 | Train ↓, val ↓ then ↑ | overfitting | early stopping, regularization, more data |
 | Val loss very noisy | tiny validation set or batch | bigger validation set; smoothing |
 | Loss jumps periodically | data not shuffled, or LR schedule restarts | shuffle; check scheduler |` },
+      { type: 'chart', title: "Training and validation loss of a small network that overfits", md: `A 64-unit network trained with full-batch gradient descent on only 60 noisy examples of the two-moons data:`, after: `Both losses fall together at first. Around epoch 22 the validation loss bottoms out at 0.38; after that the training loss keeps falling (to 0.05) while the validation loss climbs back to 1.01: the network is memorising the noise of its 60 examples. Early stopping would keep the weights from the marked epoch.`, chart: {"kind":"line","x":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,50,75,100,125,150,175,200,225,250,275,300,325,350,375,400,425,450,475,500,525,550,575,600,625,650,675,700,725,750,775,800,825,850,875,900,925,950,975,1000,1025,1050,1075,1100,1125,1150,1175,1200,1225,1250,1275,1300,1325,1350,1375,1400,1425,1450,1475,1500,1525,1550,1575,1600,1625,1650,1675,1700,1725,1750,1775,1800,1825,1850,1875,1900,1925,1950,1975,2000,2025,2050,2075,2100,2125,2150,2175,2200,2225,2250,2275,2300,2325,2350,2375,2400,2425,2450,2475,2500,2525,2550,2575,2600,2625,2650,2675,2700,2725,2750,2775,2800,2825,2850,2875,2900,2925,2950,2975,3000],"xLog":true,"points":false,"series":[{"name":"training loss (60 examples)","y":[0.5291,0.3444,0.3161,0.3085,0.3054,0.3033,0.3015,0.2999,0.2983,0.2969,0.2955,0.2942,0.2929,0.2918,0.2906,0.2895,0.2885,0.2875,0.2865,0.2856,0.2814,0.2668,0.2569,0.2483,0.2406,0.2335,0.2271,0.222,0.2174,0.2131,0.209,0.2049,0.201,0.1972,0.1933,0.1895,0.1856,0.1818,0.1785,0.1751,0.1719,0.1688,0.1659,0.1631,0.1603,0.1576,0.1551,0.1526,0.1501,0.1477,0.1454,0.1432,0.1411,0.1389,0.1369,0.135,0.1329,0.13,0.1273,0.125,0.123,0.1213,0.1196,0.1179,0.1161,0.1146,0.1131,0.1116,0.1102,0.1089,0.1075,0.1062,0.1049,0.1036,0.1024,0.1014,0.1001,0.099,0.0978,0.0966,0.0955,0.0944,0.0933,0.0922,0.0913,0.0904,0.0894,0.0884,0.0873,0.0864,0.0855,0.0843,0.0835,0.0827,0.0821,0.0811,0.0803,0.0793,0.0785,0.0778,0.0771,0.0763,0.0757,0.075,0.074,0.073,0.0722,0.0717,0.0711,0.0704,0.07,0.0693,0.0687,0.0681,0.0676,0.0668,0.066,0.0656,0.0648,0.0643,0.0636,0.0632,0.0626,0.0621,0.0617,0.0612,0.0609,0.0602,0.0595,0.0589,0.0585,0.0581,0.0575,0.0572,0.0569,0.0563,0.0561,0.0557,0.0552,0.0547]},{"name":"validation loss (1,000 examples)","y":[0.7927,0.4953,0.4245,0.3997,0.3905,0.3868,0.3851,0.384,0.3833,0.3827,0.3822,0.3817,0.3813,0.381,0.3807,0.3805,0.3803,0.3802,0.38,0.38,0.38,0.3851,0.3909,0.3962,0.4003,0.4047,0.4088,0.4136,0.4176,0.4214,0.4249,0.4279,0.4306,0.4329,0.4351,0.4372,0.4392,0.4412,0.4444,0.448,0.452,0.456,0.4609,0.4664,0.4719,0.4769,0.4826,0.4887,0.4956,0.5022,0.5096,0.5158,0.5229,0.5296,0.538,0.5447,0.5523,0.5571,0.5628,0.5694,0.5766,0.5848,0.5918,0.5992,0.6066,0.6143,0.62,0.6264,0.6334,0.64,0.6471,0.6538,0.6601,0.6667,0.6746,0.6842,0.6887,0.696,0.7031,0.7088,0.7156,0.7225,0.7286,0.7332,0.7414,0.7482,0.7562,0.7621,0.768,0.7733,0.7786,0.7829,0.7904,0.7961,0.8048,0.8065,0.8144,0.8176,0.8225,0.8294,0.8352,0.8392,0.8479,0.8496,0.8519,0.8586,0.8621,0.8693,0.8771,0.8798,0.8844,0.8937,0.8944,0.9001,0.9026,0.9104,0.9144,0.9196,0.9233,0.9232,0.9298,0.9329,0.9362,0.9445,0.948,0.9512,0.955,0.9656,0.9659,0.9737,0.9716,0.9825,0.985,0.9872,0.9992,0.9952,1.009,1.0025,1.0155,1.0148]}],"xLabel":"epoch (log scale)","yLabel":"cross-entropy loss","vlines":[{"x":22,"label":"best validation: epoch 22"}]} },
       { type: 'check', question: { type: 'mcq', q: 'A 10-class classifier starts training with a loss around 2.30. Is that suspicious?', options: ['Yes — it should start near 0', 'No — ln(10) ≈ 2.30 is exactly the loss of uniform random guessing', 'Yes — it should be negative', 'No — the starting loss is meaningless'], answer: 1, explain: 'With small random weights the model predicts ~1/10 for each class: −ln(0.1) ≈ 2.30. A much higher initial loss suggests a bug or bad initialization.' } },
       { type: 'text', title: 'Sanity checks before long runs', md: `1. **Check the initial loss** — for K balanced classes it should be about ln K.
 2. **Overfit one small batch** — train on, say, 20 examples. A correct pipeline drives the loss to ~0 quickly. If it can't, there is a bug (wrong labels, broken gradients, frozen parameters).
@@ -1364,6 +1612,37 @@ for epoch in range(1, 151):
 - otherwise increment the counter; when it reaches the **patience** (e.g. 5–10 epochs), stop and restore the best checkpoint.
 
 Early stopping is free regularization: training as long as it helps, and not a step longer. Checkpoints also protect long runs against crashes — large-model training saves them regularly and resumes from the latest one.` },
+      { type: 'text', title: "Batch size, gradient accumulation and the learning rate", md: `The batch size trades noise against throughput. Larger batches give smoother gradient estimates and use the hardware better, but each epoch contains fewer updates, and beyond some size bigger batches stop paying off. Smaller batches give noisier steps, which often generalise slightly better.
+
+Batch size and learning rate interact. A common rule of thumb scales the learning rate with the batch size (the **linear scaling rule**: double the batch, double the rate), usually together with a warm-up period at the start of training. It holds only up to a point, and adaptive optimizers such as Adam are less sensitive to it.
+
+When the batch you want does not fit in memory, use **gradient accumulation**: split it into micro-batches, run forward and backward on each, add up their gradients, and update once:
+
+$$ effective batch = micro-batch size × accumulation steps × number of devices $$
+:::where
+micro-batch size — the examples processed in one forward and backward pass on one device
+accumulation steps — how many micro-batches are added up before each optimiser step
+number of devices — with data parallelism, each GPU processes its own micro-batches and the gradients are averaged across GPUs
+:::
+
+Because the gradient of an average is the average of the gradients, the accumulated update equals one big batch, provided each micro-batch's loss is divided by the number of accumulation steps. Layers that compute statistics over the batch, such as batch normalisation, are the exception: they only ever see a micro-batch.` },
+      { type: 'code', title: "Gradient accumulation gives the same update", code: `import numpy as np
+rng = np.random.default_rng(0)
+X = rng.normal(size=(32, 5))
+y = X @ np.array([1.0, -2.0, 0.5, 0.0, 3.0]) + rng.normal(0, 0.1, 32)
+w = rng.normal(size=5)
+
+def grad_mse(Xb, yb, w):                             # gradient of the mean squared error
+    return 2 * Xb.T @ (Xb @ w - yb) / len(yb)
+
+full = grad_mse(X, y, w)                             # one batch of 32
+accumulated = np.zeros(5)
+for k in range(4):                                   # four micro-batches of 8
+    part = slice(8 * k, 8 * (k + 1))
+    accumulated += grad_mse(X[part], y[part], w) / 4  # divide by the number of accumulation steps
+print("full batch: ", full.round(4))
+print("accumulated:", accumulated.round(4))
+print("same as one batch of 32:", np.allclose(full, accumulated))`, predict: {"type":"mcq","q":"The gradients of 4 micro-batches of 8 examples are each divided by 4 and added up. They match the gradient of one batch of how many examples?","options":["8","4","32","They never match exactly"],"answer":2,"explain":"The mean over 32 examples equals the average of the four means over 8, so accumulation reproduces the full-batch gradient (up to floating-point rounding).","expect":["same as one batch of 32: True"]} },
       { type: 'check', question: { type: 'tf', q: 'If a model cannot overfit a single small batch of 20 examples, the pipeline probably has a bug.', answer: true, explain: 'Any reasonable network can memorise 20 examples; failing to do so points to broken data, labels or gradients.' } },
       { type: 'text', title: 'Going further: a debugging checklist', md: `1. **Check the loss at initialization**: with k balanced classes it should be close to ln k. Much higher means the initialization or the loss is wrong.
 2. **Overfit one small batch** to nearly zero loss. If the model cannot memorize a handful of examples, there is a bug.
@@ -1371,7 +1650,8 @@ Early stopping is free regularization: training as long as it helps, and not a s
 4. **Watch gradient norms and update sizes**: NaNs, exploding norms, or updates that are tiny relative to the weights all signal problems.
 5. **Look at the data right before the model**: decode a batch back into images or text and check the labels — data bugs are the most common bugs.
 6. **Change one thing at a time** and log every run (seed, configuration, metrics); always compare with a simple baseline.
-7. **Unstable training?** Lower the learning rate, add warmup, clip gradients, and check normalization and mixed-precision settings.` }
+7. **Unstable training?** Lower the learning rate, add warmup, clip gradients, and check normalization and mixed-precision settings.` },
+      { type: 'chart', title: "A learning-rate range test", md: `The same network trained for just 40 steps at each of 24 learning rates:`, after: `Too small a rate barely moves the loss; it then falls faster and faster as the rate grows, until the steps start to overshoot and the loss turns back up. A good choice is somewhat below the bottom of the valley (often a few times smaller than the rate where the loss starts to rise), which leaves a safety margin for the rest of training.`, chart: {"kind":"line","x":[0.001,0.00158,0.00251,0.00398,0.00631,0.01,0.0158,0.0251,0.0398,0.0631,0.1,0.158,0.251,0.398,0.631,1,1.58,2.51,3.98,6.31,10,15.8,25.1,39.8],"xLog":true,"series":[{"name":"training loss after 40 steps","y":[0.6343,0.585,0.5311,0.4795,0.4344,0.3963,0.3651,0.3412,0.3242,0.3125,0.3035,0.2953,0.2866,0.2771,0.2656,0.2491,0.2266,0.1937,0.2011,0.236,0.3249,0.3758,1.3439,0.558]}],"xLabel":"learning rate (log scale)","yLabel":"loss after 40 steps"} }
     ],
     when: `- Use this loop (or the framework equivalent) for every neural network.
 - Validate every epoch (or every N steps for long epochs); use early stopping by default.
@@ -1393,7 +1673,9 @@ Early stopping is free regularization: training as long as it helps, and not a s
       { type: 'mcq', q: 'Training loss keeps decreasing while validation loss started increasing 5 epochs ago. What should you do?', options: ['Train much longer', 'Stop and keep the checkpoint with the best validation loss', 'Increase the learning rate', 'Remove the validation set'], answer: 1, explain: 'That is overfitting; early stopping restores the best point.' },
       { type: 'fill', q: 'What initial cross-entropy loss (natural log) do you expect for a 4-class problem with random predictions? (2 decimals)', answer: ['1.39', '1.386', 'ln4', 'ln 4', 'ln(4)'], display: 'ln 4 ≈ 1.39', explain: '−ln(1/4) = ln 4 ≈ 1.386.' },
       { type: 'mcq', q: 'The loss becomes NaN after a few hundred steps. The first thing to try is…', options: ['a bigger model', 'a lower learning rate (and check for log(0) / bad inputs)', 'more epochs', 'removing the bias terms'], answer: 1, explain: 'Divergence from too-large steps is the most common cause.' },
-      { type: 'tf', q: 'You should apply gradient updates while evaluating on the validation set.', answer: false, explain: 'Validation must never change the parameters.' }
+      { type: 'tf', q: 'You should apply gradient updates while evaluating on the validation set.', answer: false, explain: 'Validation must never change the parameters.' },
+      {"type":"fill","q":"Each GPU processes micro-batches of 16, gradients are accumulated over 8 steps, and there are 4 GPUs. What is the effective batch size?","answer":["512"],"explain":"16 × 8 × 4 = 512 examples contribute to each optimiser step."},
+      {"type":"mcq","q":"In a learning-rate range test, where should you pick the learning rate?","options":["At the largest rate tried","Somewhat below the rate where the loss is lowest, well before it starts to rise","At the smallest rate tried","Exactly where the loss explodes"],"answer":1,"explain":"The bottom of the curve is already close to instability; a rate a few times smaller leaves a safety margin for the rest of training."}
     ],
     problems: [
       {

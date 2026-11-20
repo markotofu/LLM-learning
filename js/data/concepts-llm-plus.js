@@ -111,7 +111,55 @@ def seq2seq_loss(enc, dec, src, tgt):                         # tgt starts with 
         loss = loss + F.cross_entropy(logits, tgt[:, t + 1])
     return loss / (tgt.shape[1] - 1)
 ` },
-      { type: 'check', question: { type: 'tf', q: 'With teacher forcing, the decoder is fed its own previous prediction during training.', answer: false, explain: 'It is fed the true previous token; at inference time it must use its own predictions.' } }
+      { type: 'check', question: { type: 'tf', q: 'With teacher forcing, the decoder is fed its own previous prediction during training.', answer: false, explain: 'It is fed the true previous token; at inference time it must use its own predictions.' } },
+      { type: 'text', title: "Teacher forcing, exposure bias and decoding", md: `Teacher forcing makes training fast and stable: every decoder step is trained from the correct previous word, so all the steps can be computed in parallel and errors never pile up. But it creates a mismatch called **exposure bias**: during training the decoder only ever sees perfect prefixes, while at inference it must continue from its own, sometimes wrong, outputs, a situation it never practised. One early mistake can push it into unfamiliar territory, and the errors compound.
+
+Remedies include **scheduled sampling** (gradually feeding the model its own predictions during training), sequence-level training objectives and, above all, better decoding:
+- **greedy decoding** takes the most probable word at each step: fast but short-sighted;
+- **beam search** keeps the b most probable partial outputs (b = 4 to 10 is typical) and returns the best complete one, finding higher-probability outputs at a modest cost;
+- a **length penalty** stops beam search from favouring short outputs, whose few word probabilities multiply to a larger number.
+
+Modern LLMs inherit all of this; see [Decoding: Greedy, Sampling, Temperature, Top-k & Top-p](#/concept/decoding).` },
+      { type: 'text', title: "Measuring translations: BLEU", md: `How do you score a translation automatically? **BLEU** compares the candidate with one or more human reference translations by counting overlapping n-grams (single words, pairs, triples and quadruples):
+
+$$ BLEU = BP · exp( (1/4) Σ_{n=1..4} log pₙ )          BP = min( 1, exp(1 − r / c) ) $$
+:::where
+pₙ — the modified n-gram precision: the share of the candidate's n-grams that also appear in the reference, each counted at most as often as it appears there (so "the the the" cannot score by repetition)
+exp((1/4) Σ log pₙ) — the geometric mean of the four precisions
+BP — the brevity penalty, which punishes candidates shorter than the reference
+c — the length of the candidate; r — the length of the reference
+:::
+
+BLEU is cheap and agrees reasonably with human judgement when averaged over a whole test set, but it is blind to meaning: a correct paraphrase in different words scores badly, and the BLEU of a single sentence is very noisy. Newer metrics compare embeddings (BERTScore) or use trained models (COMET), and open-ended generation is usually judged by people or by LLM judges (see [Evaluating LLM Applications](#/concept/llm-evaluation)).` },
+      { type: 'code', title: "BLEU from scratch", code: `import math
+from collections import Counter
+
+def ngrams(tokens, n):
+    return Counter(tuple(tokens[i:i + n]) for i in range(len(tokens) - n + 1))
+
+def bleu(candidate, reference, max_n=4):
+    c, r = candidate.split(), reference.split()
+    precisions = []
+    for n in range(1, max_n + 1):
+        cand, ref = ngrams(c, n), ngrams(r, n)
+        overlap = sum(min(count, ref[g]) for g, count in cand.items())   # clipped counts
+        precisions.append(overlap / max(sum(cand.values()), 1))
+    bp = 1.0 if len(c) > len(r) else math.exp(1 - len(r) / len(c))
+    if min(precisions) == 0:
+        return 0.0, precisions, bp
+    return bp * math.exp(sum(math.log(p) for p in precisions) / max_n), precisions, bp
+
+reference = "the black cat sat quietly on the old mat"
+candidates = ["the black cat sat quietly on the old mat",
+              "the black cat sat on the old mat",
+              "the black cat sat quietly",
+              "a dark cat was sitting on the mat",
+              "the the the the the the the the the"]
+for cand in candidates:
+    score, p, bp = bleu(cand, reference)
+    print(f"BLEU {score:.3f}  precisions {[round(x, 2) for x in p]}  brevity penalty {bp:.3f}  | {cand}")
+score, p, bp = bleu("the black cat sat quietly", reference)
+print("short candidate penalised only by brevity:", min(p) == 1.0 and bp < 1)`, after: `A perfect copy scores 1. Dropping one word costs some n-gram matches and a little brevity penalty. The five-word prefix has perfect precision at every n, yet scores only about 0.45, because the brevity penalty catches the missing words. The paraphrase, which a person would accept, scores 0 because it shares no 3-gram with the reference. And clipping stops the repeated "the" from earning credit beyond its two occurrences in the reference.`, predict: {"type":"mcq","q":"The candidate 'the black cat sat quietly' matches the first five words of the reference exactly. What keeps its BLEU score well below 1?","options":["Its n-gram precisions","The brevity penalty","Clipping","Nothing: it scores 1"],"answer":1,"explain":"Every n-gram of the candidate appears in the reference, so all precisions are 1; BLEU punishes the missing words only through the brevity penalty exp(1 − 9/5) ≈ 0.45.","expect":["short candidate penalised only by brevity: True"]} }
     ],
     when: `- Encoder–decoder models when input and output are different sequences: translation, summarization, speech-to-text (Whisper), data-to-text.
 - RNN seq2seq is mostly historical now, but it is still useful on tiny devices and for teaching.
@@ -132,7 +180,9 @@ def seq2seq_loss(enc, dec, src, tgt):                         # tgt starts with 
       { type: 'mcq', q: 'In transformer terms, the encoder states in seq2seq attention play the role of…', options: ['queries', 'keys and values', 'positional encodings', 'the loss'], answer: 1, explain: 'The decoder state is the query.' },
       { type: 'tf', q: 'Seq2seq models can produce outputs of a different length than their inputs.', answer: true, explain: 'The decoder runs until it emits an end token.' },
       { type: 'mcq', q: 'Which modern model keeps the encoder–decoder layout with cross-attention?', options: ['GPT-2', 'Whisper', 'BERT', 'Word2vec'], answer: 1, explain: 'Whisper encodes audio and decodes text with cross-attention.' },
-      { type: 'order', q: 'Order one decoder step with attention.', items: ['Score every encoder state against the decoder state', 'Softmax the scores into weights', 'Take the weighted sum of encoder states (context)', 'Combine the context with the decoder state to predict the next word'], explain: 'Score → weights → context → prediction.' }
+      { type: 'order', q: 'Order one decoder step with attention.', items: ['Score every encoder state against the decoder state', 'Softmax the scores into weights', 'Take the weighted sum of encoder states (context)', 'Combine the context with the decoder state to predict the next word'], explain: 'Score → weights → context → prediction.' },
+      {"type":"mcq","q":"What is exposure bias?","options":["Bias in the training data","The decoder is trained only on correct prefixes but must continue from its own, possibly wrong, outputs at inference","Attention focusing on a single word","Overfitting to long sentences"],"answer":1,"explain":"Teacher forcing never shows the decoder its own mistakes, so it has not learned to recover from them."},
+      {"type":"mcq","q":"Why does BLEU clip each n-gram's count by its count in the reference?","options":["To make it faster","So that a candidate cannot score by repeating a correct word many times","To reward long sentences","To ignore punctuation"],"answer":1,"explain":"Without clipping, 'the the the the' would get perfect unigram precision against any reference containing 'the'."}
     ],
     problems: [
       {
@@ -325,6 +375,24 @@ model.eval()
 with torch.no_grad():
     print(model(**tok(["Works great"], return_tensors="pt")).logits.softmax(-1))
 ` },
+      { type: 'text', title: "The encoder family since BERT", md: `BERT's recipe was quickly refined:
+
+| Model | Year | What changed |
+| --- | --- | --- |
+| RoBERTa | 2019 | trained longer on ten times more data, with fresh masks every epoch and no next-sentence prediction: the same architecture, much better results |
+| ALBERT | 2019 | shared weights across layers and a factorised embedding to cut parameters |
+| ELECTRA | 2020 | a small generator replaces some tokens and the encoder learns to spot which ones were replaced, getting a training signal from every position instead of only the 15% that are masked |
+| DeBERTa | 2020 | attention that keeps content and relative position separate; strong results on understanding benchmarks |
+| ModernBERT | 2024 | modern components (RoPE, gated feed-forward layers, efficient attention) and an 8,192-token context |
+
+Encoders remain the workhorse for classification, extraction, embeddings and reranking: they are small, fast and cheap to fine-tune, and many text-embedding and reranking models are encoders underneath (see [Text Embedding Models & Semantic Search](#/concept/text-embeddings)).` },
+      { type: 'code', title: "How many positions give a training signal?", code: `seq_len, batch = 512, 32
+mlm_positions = round(0.15 * seq_len)                 # BERT computes the loss only on the selected 15%
+causal_positions = seq_len                            # a GPT-style model is trained on every position
+print(f"masked LM:  {mlm_positions} of {seq_len} positions per sequence, {mlm_positions * batch:,} per batch")
+print(f"causal LM:  {causal_positions} of {seq_len} positions per sequence, {causal_positions * batch:,} per batch")
+print(f"ELECTRA:    {seq_len} of {seq_len} positions per sequence (every token is classified as original or replaced)")
+print("MLM learns from about 15% of the tokens it processes:", mlm_positions == 77)`, after: `Masked language modelling pays for a full forward pass over all 512 positions but learns from only 77 of them, one reason ELECTRA, which gets a signal from every token, trains more efficiently. Causal models also learn from every position, at the price of seeing only the context to the left.`, predict: {"type":"mcq","q":"In a 512-token sequence, on roughly how many positions does BERT's masked-language-modelling loss operate?","options":["About 8","About 77","About 256","All 512"],"answer":1,"explain":"15% of 512 positions are selected for prediction: about 77.","expect":["MLM learns from about 15% of the tokens it processes: True"]} },
       { type: 'text', title: 'Encoder, decoder or encoder–decoder?', md: `| Need | Typical choice | Why |
 | --- | --- | --- |
 | Classify, tag, extract, embed, rerank | **encoder** (BERT family) | bidirectional context, small, fast, cheap to fine-tune |
@@ -355,7 +423,9 @@ Large decoders can do classification too (by prompting), and are the right tool 
       { type: 'mcq', q: 'Which task suits a BERT-style encoder best?', options: ['Writing a short story', 'Tagging every person and company name in a document', 'Holding a long conversation', 'Translating speech to text'], answer: 1, explain: 'Token classification needs per-token, bidirectional understanding.' },
       { type: 'tf', q: 'BERT is trained with a causal mask, like GPT.', answer: false, explain: 'It attends in both directions and is trained with masking instead.' },
       { type: 'mcq', q: 'Why does BERT sometimes leave a selected token unchanged?', options: ['To save compute', 'So the model learns useful representations for real tokens, which is what it sees after fine-tuning', 'It is a bug', 'To mark sentence boundaries'], answer: 1, explain: 'The [MASK] token never appears at fine-tuning time.' },
-      { type: 'mcq', q: 'What is ELECTRA\'s pretraining task?', options: ['Next-sentence prediction', 'Detecting which tokens were replaced by a small generator', 'Translation', 'Image captioning'], answer: 1, explain: 'Every position gets a training signal, which makes it sample-efficient.' }
+      { type: 'mcq', q: 'What is ELECTRA\'s pretraining task?', options: ['Next-sentence prediction', 'Detecting which tokens were replaced by a small generator', 'Translation', 'Image captioning'], answer: 1, explain: 'Every position gets a training signal, which makes it sample-efficient.' },
+      {"type":"mcq","q":"What was the main lesson of RoBERTa?","options":["Encoders need causal masks","BERT was under-trained: more data, longer training and dynamic masking improve it substantially without changing the architecture","Next-sentence prediction is essential","Smaller vocabularies are better"],"answer":1,"explain":"RoBERTa kept BERT's architecture and showed that training choices, not architecture, limited it."},
+      {"type":"tf","q":"Many text-embedding and reranking models are encoder (BERT-style) models underneath.","answer":true,"explain":"Bidirectional encoders produce strong representations of a whole text cheaply, which is what embedding and reranking need."}
     ],
     problems: [
       {
@@ -536,6 +606,30 @@ Late-interaction models such as ColBERT keep one vector per token and sit in bet
 - **Tricks**: some models expect prefixes such as "query: " and "passage: "; normalize vectors; *Matryoshka* models let you truncate vectors to fewer dimensions with little loss; int8 or binary quantization cuts storage dramatically.
 - **Fine-tune** when your domain differs: a few thousand in-domain pairs plus mined hard negatives often give large gains.
 - Always embed queries and documents with the **same** model — and re-embed everything when you change models.` },
+      { type: 'text', title: "Vector size, precision and the cost of an index", md: `An index of embeddings costs memory in proportion to the number of vectors, their dimension and the bytes per number:
+
+$$ index size = N · d · b $$
+:::where
+N — the number of stored vectors (documents or chunks)
+d — the embedding dimension, typically 384 to 3,072
+b — bytes per number: 4 for float32, 2 for float16, 1 for int8, 1/8 for binary (one bit per dimension)
+:::
+
+Ten million chunks of 1,024-dimensional float32 vectors take 41 GB, more than fits comfortably in one machine's memory. Three standard ways to shrink an index:
+- **lower precision**: int8 quantization (4 times smaller) loses little; binary quantization (32 times smaller) loses more, so it is usually followed by rescoring a short list with the full vectors;
+- **fewer dimensions**: models trained with Matryoshka-style objectives pack the most important information into the first dimensions, so their vectors can be truncated (say from 1,024 to 256) with a modest loss;
+- **compression inside the index**: product quantization in approximate-nearest-neighbour indexes (see [Vector Search](#/concept/vector-search)).
+
+The chart below shows the dimension trade-off on a small real example.` },
+      { type: 'chart', title: "Finding the right lesson from its one-line summary", md: `A real retrieval test on this app: each lesson's one-sentence summary is the query, and the system must rank that lesson's full text first among all 106 lessons:`, after: `Sparse word-count vectors find the right lesson for 98% of the summaries, using 4,080 dimensions. Compressing them into dense vectors with an SVD costs a lot at 8 dimensions (70%) but reaches the sparse vectors' accuracy by 64: a few dozen directions capture most of what distinguishes the lessons. Modern embedding models work the same way in spirit, with learned instead of SVD directions, and models trained with nested (Matryoshka) objectives let you truncate their vectors to trade accuracy for index size.`, chart: {"kind":"line","x":[8,16,32,64,96],"xLog":true,"series":[{"name":"dense vectors from a truncated SVD of TF-IDF (LSA)","y":[0.698,0.906,0.972,0.981,0.981]}],"xLabel":"vector dimension (log scale)","yLabel":"top-1 accuracy (106 lessons)","yMin":0,"yMax":1,"hlines":[{"y":0.981,"label":"sparse TF-IDF, 4,080 dimensions"}]} },
+      { type: 'code', title: "Sizing an embedding index", code: `def index_gb(n_vectors, dim, bytes_per_number):
+    return n_vectors * dim * bytes_per_number / 1e9
+
+n = 10_000_000                                   # ten million chunks
+for dim in (1024, 256):
+    for name, b in [("float32", 4), ("int8", 1), ("binary", 1 / 8)]:
+        print(f"d = {dim:5d}, {name:<7}: {index_gb(n, dim, b):7.2f} GB")
+print("binary is 32 times smaller than float32:", index_gb(n, 1024, 4) / index_gb(n, 1024, 1 / 8) == 32)`, after: `The 41 GB of float32 vectors shrink to about 10 GB in int8 and 1.3 GB in binary, and truncating to 256 dimensions divides each figure by four again: binary vectors of 256 dimensions hold ten million chunks in about 320 MB.`, predict: {"type":"mcq","q":"How large is an index of 10 million 1,024-dimensional float32 vectors?","options":["About 4 GB","About 41 GB","About 410 GB","About 0.4 GB"],"answer":1,"explain":"10,000,000 × 1,024 × 4 bytes ≈ 41 billion bytes = 41 GB.","expect":["binary is 32 times smaller than float32: True"]} },
       { type: 'code', title: 'Search and rerank with sentence-transformers', run: false, md: `Run locally after \`pip install sentence-transformers\`. The bi-encoder retrieves candidates; the cross-encoder reranks them.`, code: `
 from sentence_transformers import SentenceTransformer, CrossEncoder
 
@@ -577,7 +671,9 @@ for i, s in sorted(zip(candidates, scores), key=lambda t: -t[1]):
       { type: 'fill', q: 'A contrastive batch has 64 (query, passage) pairs. How many in-batch negatives does each query get?', answer: ['63'], explain: 'All other passages in the batch: 64 − 1.' },
       { type: 'mcq', q: 'What is a hard negative?', options: ['A passage with many tokens', 'A passage that looks relevant to the query but does not answer it', 'A negative number in an embedding', 'A query with no answer'], answer: 1, explain: 'It forces the model to learn fine distinctions.' },
       { type: 'tf', q: 'Bi-encoders are typically used for fast first-stage retrieval and cross-encoders for reranking.', answer: true, explain: 'Speed first, accuracy second.' },
-      { type: 'mcq', q: 'You switch to a new embedding model. What must you do with the existing vector index?', options: ['Nothing', 'Re-embed all documents with the new model', 'Only re-embed new documents', 'Normalize the old vectors again'], answer: 1, explain: 'Vectors from different models live in different spaces.' }
+      { type: 'mcq', q: 'You switch to a new embedding model. What must you do with the existing vector index?', options: ['Nothing', 'Re-embed all documents with the new model', 'Only re-embed new documents', 'Normalize the old vectors again'], answer: 1, explain: 'Vectors from different models live in different spaces.' },
+      {"type":"mcq","q":"What does Matryoshka-style training allow?","options":["Larger vectors","Truncating vectors to fewer dimensions with only a modest loss in quality","Training without negatives","Searching without an index"],"answer":1,"explain":"The training objective makes every prefix of the vector a usable embedding, so you can trade accuracy for index size by keeping fewer dimensions."},
+      {"type":"fill","q":"How many gigabytes do 1 million 768-dimensional float32 vectors take?","answer":["3.072","3.07","3.1"],"explain":"1,000,000 × 768 × 4 bytes = 3.072 GB."}
     ],
     problems: [
       {
@@ -758,6 +854,28 @@ G — the number of GPUs sharing the state
 :::
 
 The price is more communication — which fast interconnects (NVLink, InfiniBand) make affordable.` },
+      { type: 'chart', title: "Memory per GPU for a 7B model on 8 GPUs", md: `Mixed-precision Adam: 2 bytes of bf16 weights, 2 of gradients and 12 of fp32 optimizer state (master weights and two moments) per parameter:`, after: `Plain data parallelism keeps a full copy of all 16 bytes per parameter on every GPU: about 108 GB, more than an 80 GB GPU holds. Sharding the optimizer states across the 8 GPUs (ZeRO-1) brings that to 37 GB, sharding the gradients too (ZeRO-2) to 25 GB, and sharding the weights as well (ZeRO-3, PyTorch's FSDP) to 13.5 GB, at the price of gathering each layer's weights over the network just before it runs.`, chart: {"kind":"bar","x":["data parallel","ZeRO-1","ZeRO-2","ZeRO-3 / FSDP"],"series":[{"name":"weights + gradients + Adam states per GPU (GB, before activations)","y":[107.8,37.1,25.3,13.5]}],"xLabel":"strategy","yLabel":"GB per GPU","yMin":0} },
+      { type: 'text', title: "Communication: the hidden cost", md: `Every data-parallel step ends with an **all-reduce**: each GPU contributes its gradients and receives the average. With the standard ring algorithm, each GPU sends and receives about twice the size of the gradients, whatever the number of GPUs:
+
+$$ all-reduce time ≈ 2 · (G − 1) / G · gradient bytes / bandwidth $$
+:::where
+G — the number of GPUs taking part
+gradient bytes — the size of all the gradients, for example 2 bytes per parameter in bf16
+bandwidth — each GPU's network bandwidth in bytes per second: hundreds of GB/s over NVLink inside a server, around 50 GB/s (400 Gb/s) per GPU over InfiniBand between servers
+:::
+
+For a 7B model that means 14 GB of gradients every step: a fraction of a second inside one server, noticeably longer between servers. Training systems hide the cost by **overlapping**: the gradients of the last layers are sent while the backward pass is still computing the earlier ones, and small tensors are grouped into larger messages. Tensor parallelism communicates inside every layer, which is why it is kept within a server, while data and pipeline parallelism span servers.` },
+      { type: 'code', title: "How long does an all-reduce take?", code: `def allreduce_seconds(n_params, gpus, bandwidth_gb_s, bytes_per_grad=2):
+    grad_bytes = n_params * bytes_per_grad
+    return 2 * (gpus - 1) / gpus * grad_bytes / (bandwidth_gb_s * 1e9)
+
+n = 7e9                                          # a 7B model with bf16 gradients (14 GB)
+inside = allreduce_seconds(n, 8, 450)            # 8 GPUs in one server, NVLink
+across = allreduce_seconds(n, 64, 50)            # 64 GPUs in 8 servers, InfiniBand
+print(f"8 GPUs over NVLink (~450 GB/s each):      {inside * 1000:6.0f} ms per step")
+print(f"64 GPUs over InfiniBand (~50 GB/s each):  {across * 1000:6.0f} ms per step")
+print(f"ratio: {across / inside:.1f}")
+print("crossing servers is about 10 times slower:", 8 < across / inside < 12)`, after: `Inside one server the all-reduce takes about 55 milliseconds; across 64 GPUs on InfiniBand about half a second, ten times longer, because the network is about nine times slower while each GPU still moves roughly twice the gradient size. When a training step takes about a second, that is a heavy tax unless it is overlapped with the backward pass, which is exactly what training frameworks do.`, predict: {"type":"mcq","q":"Roughly how long does an all-reduce of 14 GB of bf16 gradients take across 64 GPUs connected at about 50 GB/s each?","options":["About 5 ms","About 0.5 s","About 5 s","About 50 s"],"answer":1,"explain":"Each GPU moves about 2 × 63/64 × 14 GB ≈ 27.6 GB at 50 GB/s: a little over half a second.","expect":["crossing servers is about 10 times slower: True"]} },
       { type: 'text', title: 'Model parallelism: tensor and pipeline', md: `When a single layer is too big, or to reduce communication at very large scale, the model itself is split:
 
 | Strategy | What is split | Main cost | Typical use |
@@ -827,7 +945,9 @@ def train(model, loader, steps, accum_steps=8, lr=3e-4):
       { type: 'mcq', q: 'Why keep an fp32 master copy of the weights in mixed-precision training?', options: ['GPUs require it', 'Small updates would be rounded away in 16-bit weights', 'It doubles the speed', 'For checkpointing only'], answer: 1, explain: 'lr × gradient can be smaller than bf16 can represent relative to the weight.' },
       { type: 'mcq', q: 'What does ZeRO stage 3 / FSDP shard across GPUs?', options: ['Only the data', 'Optimizer states, gradients and parameters', 'Only the activations', 'Nothing — it replicates everything'], answer: 1, explain: 'Each GPU holds roughly 1/G of the state.' },
       { type: 'tf', q: 'Activation checkpointing reduces memory by recomputing some activations during the backward pass.', answer: true, explain: 'About 30% more compute for much less memory.' },
-      { type: 'mcq', q: 'Which parallelism strategy needs very fast communication inside every layer?', options: ['Data parallelism', 'Tensor parallelism', 'Gradient accumulation', 'Pipeline parallelism'], answer: 1, explain: 'Each matrix multiply is split, so GPUs exchange partial results constantly.' }
+      { type: 'mcq', q: 'Which parallelism strategy needs very fast communication inside every layer?', options: ['Data parallelism', 'Tensor parallelism', 'Gradient accumulation', 'Pipeline parallelism'], answer: 1, explain: 'Each matrix multiply is split, so GPUs exchange partial results constantly.' },
+      {"type":"mcq","q":"Which ZeRO stage also shards the model weights across GPUs?","options":["ZeRO-1","ZeRO-2","ZeRO-3 (FSDP)","None of them"],"answer":2,"explain":"ZeRO-1 shards optimizer states, ZeRO-2 adds gradients, and ZeRO-3 (PyTorch's FSDP) shards the weights as well, gathering each layer just before it runs."},
+      {"type":"tf","q":"With a ring all-reduce, the data each GPU sends grows roughly in proportion to the number of GPUs.","answer":false,"explain":"Each GPU sends about 2·(G − 1)/G times the gradient size, which approaches twice the gradient size however many GPUs take part."}
     ],
     problems: [
       {
@@ -1002,6 +1122,7 @@ for k in (1, 3, 5, 11, 21):
     best_of_k = np.mean((answers == 0).any(axis=1))                          # a perfect verifier picks a right one
     print(f"k = {k:2d}   majority vote {vote_acc:.3f}   best-of-{k} with a verifier {best_of_k:.3f}   (1 - (1 - p)^k = {1 - (1 - p_correct) ** k:.3f})")
 `, after: `A single sample is right 40% of the time. Because each wrong answer is less common than the right one, majority voting climbs well above 40%, and a verifier that can recognize a correct answer does even better.` },
+      { type: 'chart', title: "Spending more samples: majority vote versus a verifier", md: `The simulation above, extended: each sample is right with probability 0.4, otherwise one of 5 wrong answers:`, after: `Both methods turn extra samples into accuracy, with diminishing returns on a log scale. Majority voting works because the right answer is more common than any single wrong one; it levels off near 100% here only because the wrong answers are spread out. With a verifier the curve climbs much faster, since one correct sample is enough, which is why reasoning systems invest in checkers: unit tests, proof checkers and trained verifiers.`, chart: {"kind":"line","x":[1,2,3,5,8,11,16,21,32,48,64],"xLog":true,"series":[{"name":"best-of-k with a perfect verifier (pass@k)","y":[0.407,0.625,0.774,0.921,0.98,0.997,1,1,1,1,1]},{"name":"majority vote over k samples","y":[0.407,0.396,0.456,0.584,0.667,0.751,0.843,0.906,0.961,0.989,0.998]},{"name":"a single sample","y":[0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4],"dash":true}],"xLabel":"number of sampled answers k (log scale)","yLabel":"accuracy","yMin":0,"yMax":1} },
       { type: 'check', question: { type: 'fill', q: 'Each sample is correct with probability 0.5. With a perfect verifier, what is the chance that best-of-3 succeeds? (3 decimals)', answer: ['0.875', '.875', '7/8'], explain: '1 − 0.5³ = 0.875.' } },
       { type: 'text', title: 'Training reasoning with reinforcement learning', md: `**Reinforcement learning with verifiable rewards (RLVR)** trains on problems whose answers can be checked automatically: math with known results, code with unit tests, logic puzzles. For each prompt, sample a **group** of G responses, give each a reward (1 if the final answer is correct, often plus a small format reward), and increase the probability of the better-than-average responses.
 
@@ -1028,6 +1149,13 @@ def group_advantages(rewards, eps=1e-8):
 for rewards in ([1, 0, 0, 1, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0, 0, 0]):
     print(rewards, "->", group_advantages(rewards).round(2))
 `, after: `A rare success earns a large positive advantage. When every response in a group gets the same reward — all right or all wrong — every advantage is zero and the prompt teaches nothing, which is why training data must be neither too easy nor too hard for the current model.` },
+      { type: 'text', title: "How far does thinking go?", md: `Reasoning models show a second kind of scaling: accuracy on hard problems rises roughly with the logarithm of the compute spent *at inference*, by thinking longer or sampling more. Doubling the thinking budget gives a steady gain, but each doubling buys less, and some problems stay out of reach at any budget the model can use well.
+
+Limits worth knowing:
+- **Overthinking**: on easy questions long reasoning adds cost and delay, and can even talk the model out of a correct first answer.
+- **Faithfulness**: the written chain of thought is not guaranteed to be the computation that produced the answer. Models sometimes reach answers through shortcuts their reasoning text does not mention, so a plausible explanation is not proof of correct reasoning.
+- **Verification is the bottleneck**: test-time compute pays off most where answers can be checked (tests, proofs, exact results); for open-ended questions, more samples mainly need a better judge.
+- **Distillation**: reasoning traces from a large model can teach a small one to reason far better than its size suggests, which is how many small reasoning models are made.` },
       { type: 'text', title: 'Using reasoning models in practice', md: `- **Good fit**: math, code, data analysis, planning, multi-step agentic tasks, careful reading of long documents.
 - **Poor fit**: simple lookups, classification, chit-chat, latency-critical steps — the extra thinking only adds cost and delay.
 - **Control the budget**: most APIs expose an effort level or a thinking-token budget; tune it per task rather than globally.
@@ -1058,7 +1186,9 @@ for rewards in ([1, 0, 0, 1, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1,
       { type: 'mcq', q: 'When does majority voting improve accuracy over a single sample?', options: ['Always, by any amount', 'When the correct answer is more likely than any single wrong answer', 'Only at temperature 0', 'Never'], answer: 1, explain: 'Voting amplifies the most common answer.' },
       { type: 'fill', q: 'A group of 4 responses gets rewards [1, 0, 0, 0]. What is the group mean reward used as the GRPO baseline?', answer: ['0.25', '1/4'], explain: '(1 + 0 + 0 + 0) / 4 = 0.25.' },
       { type: 'tf', q: 'A process reward model scores intermediate reasoning steps, not just the final answer.', answer: true, explain: 'Denser signal, but harder to build and easier to game.' },
-      { type: 'mcq', q: 'Which task benefits least from a long thinking budget?', options: ['Proving a geometry theorem', 'Debugging a race condition', 'Classifying a tweet as positive or negative', 'Planning a multi-step data migration'], answer: 2, explain: 'Simple classification gains little from long reasoning.' }
+      { type: 'mcq', q: 'Which task benefits least from a long thinking budget?', options: ['Proving a geometry theorem', 'Debugging a race condition', 'Classifying a tweet as positive or negative', 'Planning a multi-step data migration'], answer: 2, explain: 'Simple classification gains little from long reasoning.' },
+      {"type":"mcq","q":"Each sample is right with probability 0.4. Roughly how many samples does a perfect verifier need to succeed about 98% of the time?","options":["2","8","32","100"],"answer":1,"explain":"1 − 0.6⁸ ≈ 0.983: with 8 samples the chance that none is right drops below 2%."},
+      {"type":"tf","q":"A model's written chain of thought always faithfully shows how it reached its answer.","answer":false,"explain":"Studies find cases where the stated reasoning omits what actually drove the answer, so reasoning text should be treated as evidence, not proof."}
     ],
     problems: [
       {
@@ -1256,6 +1386,7 @@ The final output is o / ℓ.
 :::
 
 The result is **exactly** standard attention, with memory that grows linearly in T and typically 2–4× higher speed. It is now the default in PyTorch (\`scaled_dot_product_attention\`) and every serious training stack.` },
+      { type: 'chart', title: "Extra memory for attention in one layer", md: `One layer with 32 heads of width 128, for a single sequence:`, after: `Writing out the full score matrix needs T² numbers per head: about 17 GB per layer at 16k tokens and over a terabyte at 128k, impossible on any GPU. FlashAttention never stores it: it streams tiles of keys and values through fast on-chip memory and keeps only running softmax statistics, so its memory grows linearly with T. The arithmetic is the same; what changes is how much data moves.`, chart: {"kind":"line","x":[1024,4096,16384,65536,131072],"xLog":true,"yLog":true,"series":[{"name":"materialise the T × T score matrix (32 heads)","y":[0.06711,1.074,17.18,274.9,1100]},{"name":"FlashAttention: Q, K, V and output only","y":[0.02517,0.1007,0.4027,1.611,3.221]}],"xLabel":"context length T (log scale)","yLabel":"GB per layer, 16-bit (log scale)"} },
       { type: 'code', title: 'Online softmax: attention one block at a time', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -1300,6 +1431,16 @@ pos′ — the rescaled position fed into RoPE, which stays within the trained r
 :::
 
 Refinements such as NTK-aware scaling and YaRN rescale different RoPE frequencies by different amounts, preserving fine local detail. A short fine-tune on long documents then adapts the model. Test long-context ability with realistic tasks, not only "needle in a haystack" retrieval — models often use the middle of long contexts less reliably than the beginning and end.` },
+      { type: 'text', title: "Local, global and sparse attention patterns", md: `Not every token needs to see every other token. Restricting which keys each query attends to cuts both the compute and the KV cache:
+
+| Pattern | Each token attends to | Used in |
+| --- | --- | --- |
+| sliding window (local) | the previous W tokens | Mistral 7B, and the local layers of many recent models |
+| global tokens | a few special tokens that attend to, and are attended by, everything | Longformer, BigBird |
+| interleaved local and global layers | a window in most layers, the full context every few layers | Gemma 2 and 3, several recent long-context models |
+| attention sinks | the first few tokens plus a recent window | streaming generation without a growing cache |
+
+Stacked windowed layers still let information travel far, just as stacked convolutions grow their receptive field: after L layers with window W, a token can be influenced by roughly L × W earlier tokens. Interleaving a few full-attention layers restores direct long-range lookups, which pure windows handle poorly, while keeping most layers cheap.` },
       { type: 'text', title: 'Beyond softmax attention', md: `- **Linear attention** replaces the softmax with kernel feature maps so the cost becomes linear in T, at some cost in quality.
 - **State-space models** (S4, Mamba) process sequences like a recurrent network with a cleverly parameterized state: linear time and constant memory per generated token.
 - **Hybrids** combine a few attention layers with many state-space or sliding-window layers.
@@ -1328,7 +1469,9 @@ The trade-off: full attention can retrieve any earlier token exactly; compressed
       { type: 'mcq', q: 'What does the online softmax keep while streaming over blocks of keys?', options: ['The full score matrix', 'A running maximum, a running sum of exponentials and a running weighted output', 'Only the last block', 'The gradients'], answer: 1, explain: 'Rescaling by e^(m − m′) keeps the result exact.' },
       { type: 'fill', q: 'A model trained on 4,096 tokens is extended to 16,384 with position interpolation. By what factor are positions multiplied?', answer: ['0.25', '1/4'], explain: 'L_train / L_new = 4096 / 16384 = 0.25.' },
       { type: 'tf', q: 'Prefix caching lets many requests that share the same long system prompt reuse its KV cache.', answer: true, explain: 'The shared prefix is computed once.' },
-      { type: 'mcq', q: 'What is a known weakness of compressed-state models (e.g. state-space models) compared with full attention?', options: ['They cannot generate text', 'Exact recall of arbitrary earlier tokens over very long inputs', 'They need a causal mask', 'They are quadratic in length'], answer: 1, explain: 'A fixed-size state must decide what to forget.' }
+      { type: 'mcq', q: 'What is a known weakness of compressed-state models (e.g. state-space models) compared with full attention?', options: ['They cannot generate text', 'Exact recall of arbitrary earlier tokens over very long inputs', 'They need a causal mask', 'They are quadratic in length'], answer: 1, explain: 'A fixed-size state must decide what to forget.' },
+      {"type":"fill","q":"A model has 24 layers, all with sliding-window attention over 4,096 tokens. Roughly how far back can information reach, in tokens?","answer":["98304","98,304","98k","about 98000"],"explain":"Information can hop one window per layer: about 24 × 4,096 = 98,304 tokens."},
+      {"type":"mcq","q":"Why does materialising the full attention score matrix become impossible for long contexts?","options":["The softmax becomes unstable","Its size grows with the square of the context length","It needs more heads","The keys and values get longer"],"answer":1,"explain":"T tokens give T² scores per head; at 128k tokens that is over a terabyte per layer in 16-bit numbers."}
     ],
     problems: [
       {
@@ -1476,6 +1619,7 @@ E — the total number of routed experts
 :::
 
 **Compute** per token ≈ 2 × active parameters, like a dense model of that size. **Memory**, however, must hold *all* parameters: a 47B MoE needs the memory of a 47B dense model while running at roughly the speed of a 13B one.` },
+      { type: 'chart', title: "Parameters stored versus parameters used per token", after: `A dense model uses every parameter for every token. Mixtral stores 47 billion parameters but runs only about 13 billion per token, and DeepSeek-V3 stores 671 billion but runs 37 billion: about as much compute per token as a mid-sized dense model, with the knowledge capacity of a much larger one. The catch is memory: all experts must be loaded, because any token may need any of them.`, chart: {"kind":"bar","x":["dense 70B","Mixtral 8x7B","DeepSeek-V3"],"yLog":true,"series":[{"name":"total (must be in memory)","y":[70,47,671]},{"name":"active per token (sets the compute)","y":[70,13,37]}],"xLabel":"model","yLabel":"billions of parameters (log scale)","yMin":1} },
       { type: 'code', title: 'An MoE layer in NumPy', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -1513,6 +1657,25 @@ The loss reaches its minimum of 1 when both are uniform (1/E for every expert).
 :::
 
 Experts also have a **capacity**: each can process at most C × (tokens × k / E) tokens per batch (C is the capacity factor, e.g. 1.25). Overflowing tokens are dropped from that layer and simply pass through the residual connection. Newer models balance load without an auxiliary loss — for example by adjusting a per-expert bias in the router (DeepSeek-V3).` },
+      { type: 'code', title: "Measuring load balance", code: `import numpy as np
+rng = np.random.default_rng(0)
+E, tokens = 8, 10_000
+
+def balance_loss(router_probs):
+    chosen = router_probs.argmax(axis=1)                       # top-1 routing, for simplicity
+    f = np.bincount(chosen, minlength=E) / len(chosen)         # share of tokens sent to each expert
+    P = router_probs.mean(axis=0)                              # average router probability per expert
+    return E * np.sum(f * P), f
+
+logits_ok = rng.normal(0, 1, (tokens, E))                      # a healthy router: no favourites
+logits_bad = logits_ok + np.array([3.0, 2.0, 0, 0, 0, 0, 0, 0])  # a router that has started to favour two experts
+losses = {}
+for name, logits in [("healthy", logits_ok), ("collapsing", logits_bad)]:
+    p = np.exp(logits - logits.max(axis=1, keepdims=True))
+    p /= p.sum(axis=1, keepdims=True)
+    losses[name], f = balance_loss(p)
+    print(f"{name:<10} token shares {np.round(f, 2)}   balance loss {losses[name]:.2f}")
+print("the loss rises as routing collapses:", losses["collapsing"] > 2 * losses["healthy"])`, after: `The healthy router spreads tokens almost exactly evenly (about 12.5% each) and the loss is 1.0, its minimum. Once two experts are favoured, they receive 97% of the tokens between them, six experts sit almost idle, and the loss rises to about 3.5. Adding this term to the training loss pushes the router back towards balance before the idle experts are wasted.`, predict: {"type":"mcq","q":"A router sends most tokens to two of its 8 experts. Compared with a balanced router (loss about 1), the balance loss will be…","options":["Lower","About the same","Clearly higher","Exactly zero"],"answer":2,"explain":"The loss multiplies each expert's token share by its average router probability; concentrating both on the same experts makes the sum, and the loss, large.","expect":["the loss rises as routing collapses: True"]} },
       { type: 'text', title: 'Trade-offs', md: `**Advantages**
 - More parameters (knowledge) for the same compute per token; reaches a given loss with less training compute than a dense model.
 - Fast inference relative to total size.
@@ -1546,7 +1709,9 @@ For local use the rule of thumb: an MoE needs the *memory* of its total size but
       { type: 'mcq', q: 'Why is a load-balancing loss needed?', options: ['To speed up the softmax', 'Without it, routing tends to collapse onto a few experts', 'To reduce memory', 'To make experts identical'], answer: 1, explain: 'Popular experts improve and attract even more tokens.' },
       { type: 'fill', q: 'With a perfectly uniform router over E experts, what value does the load-balancing loss E·Σ f_e·P_e take?', answer: ['1', '1.0'], explain: 'E · E · (1/E)(1/E) = 1.' },
       { type: 'tf', q: 'In an MoE transformer, attention layers are usually shared by all tokens while the feed-forward layers are split into experts.', answer: true, explain: 'The experts replace the FFNs.' },
-      { type: 'mcq', q: 'What happens to a token that exceeds its expert\'s capacity?', options: ['The batch fails', 'It is dropped from that expert and passes through the residual connection', 'It is sent to every expert', 'It is deleted from the sequence'], answer: 1, explain: 'The residual path carries it to the next layer unchanged.' }
+      { type: 'mcq', q: 'What happens to a token that exceeds its expert\'s capacity?', options: ['The batch fails', 'It is dropped from that expert and passes through the residual connection', 'It is sent to every expert', 'It is deleted from the sequence'], answer: 1, explain: 'The residual path carries it to the next layer unchanged.' },
+      {"type":"mcq","q":"DeepSeek-V3 has 671B total and 37B active parameters. What does its compute per token resemble?","options":["A 671B dense model","A dense model of roughly 37B parameters","A 7B model","It has no fixed compute"],"answer":1,"explain":"Compute per token depends on the active parameters, so it is comparable to a dense model of about 37B; memory, however, must hold all 671B."},
+      {"type":"tf","q":"In an MoE model, every expert must be held in memory even though each token uses only a few of them.","answer":true,"explain":"Any token may be routed to any expert, so all experts have to be loaded (or quickly reachable) at all times."}
     ],
     problems: [
       {
