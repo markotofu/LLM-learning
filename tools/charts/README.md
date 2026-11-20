@@ -1,6 +1,6 @@
 # Chart data scripts
 
-These scripts computed the numbers behind the 127 lesson charts: every curve, point and bar comes from a real
+These scripts computed the numbers behind the 138 lesson charts: every curve, point and bar comes from a real
 computation (a simulation, a fitted model or a formula), never from invented values. Each script covers one batch of
 lessons and writes a lesson patch with one `### INSERT … @@ chart` block per chart:
 
@@ -16,6 +16,10 @@ python tools/charts/charts_n2.py out.txt      # needs numpy, pandas and scikit-l
 | `charts_l1.py`–`charts_l5.py` | transformers and LLMs |
 | `charts_a1.py` | building with LLMs (prompting, RAG, vector search, evaluation, agents) |
 | `charts_s1.py`, `charts_s2.py` | specializations, reinforcement learning, MLOps, responsible AI and ML security |
+| `charts_x1.py`–`charts_x4.py` | Advanced Agents and the three capstones (tabular, RAG, LoRA) |
+
+`charts_x3.py` and `charts_x4.py` read the code of the samples they chart straight from the lesson (through Node, so run
+them from a checkout with Node installed) and execute it, so their charts always match what the samples print.
 
 The lesson files in `js/data/` are the source of truth. The charts are already in them, and some captions were reworded
 after they were generated, so do not apply these patches again (each chart would be inserted twice). Use a script to

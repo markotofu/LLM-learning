@@ -2,11 +2,11 @@
 
 Possible improvements, ranked by how much they help a learner per unit of effort. Status as of 21 November 2026:
 
-- 106 concepts, including 3 capstones; a typical (median) lesson has about 1,100 words;
-- 232 practice problems and 754 quiz questions;
+- 106 concepts, including 3 capstones; a typical (median) lesson has about 1,200 words;
+- 232 practice problems and 775 quiz questions;
 - 598 glossary terms;
-- 28 interactive demos, 12 diagrams and 127 charts of computed data;
-- 306 code samples that run in the browser, 104 of them with a "predict first" question, and a spaced-repetition queue of mistakes to revisit;
+- 28 interactive demos, 12 diagrams and 138 charts of computed data;
+- 316 code samples that run in the browser, 118 of them with a "predict first" question, and a spaced-repetition queue of mistakes to revisit;
 - Terms of Use and Privacy Policy pages, a Content-Security-Policy and a hardened local server.
 
 **Effort:**
@@ -16,6 +16,10 @@ Possible improvements, ranked by how much they help a learner per unit of effort
 - **L** — a week or more.
 
 **Impact** is the expected gain in learning, reach or safety.
+
+## Done in the fourth round (also 21 November 2026)
+
+- **Advanced Agents and the three capstones deepened**, the lessons the third round had left out. Advanced Agents gained the cost of long runs (with prompt caching and compaction), tool design, truncating tool results, a permission gate against prompt injection, and a pass@k against pass^k chart. The tabular capstone gained calibration and cost charts, a break-even threshold, permutation importance, a learning curve, and data drift against concept drift. The RAG capstone gained a fusion chart, evaluation-set sizing, offline answer grading and an error-analysis table. The LoRA capstone gained forgetting curves, a rank sweep and the hyperparameters that matter. Together: 11 more charts, 14 more predictions and 21 more quiz questions. Item 9's per-step checks are still open.
 
 ## Done in the third round (21 November 2026)
 
@@ -114,7 +118,7 @@ Items 1–4, 6, 7, 8 and part of 10–11 below are done:
    - *Cons:* each prediction must be authored and kept in sync with the sample output. The CPython test can verify this automatically.
 8. **Spaced review of missed quiz questions and problems.** Flashcards already use SM-2 for the glossary. Extend the same queue to quiz questions answered wrongly and problems that needed hints.
    - *Cons:* a busier review queue; needs per-item caps.
-9. **Guided capstones.** Today each capstone is a long lesson plus problems. Split each one into checkpoints that each have their own tests (for example "your leak detector must flag `refund_issued`"), with progress per step.
+9. **Guided capstones.** Today each capstone is a long lesson plus problems (deepened in the fourth round, but still without per-step checks). Split each one into checkpoints that each have their own tests (for example "your leak detector must flag `refund_issued`"), with progress per step.
    - *Pros:* closest to real project work.
    - *Cons:* the largest authoring effort on this list.
 10. **More demos where a picture teaches best.** Candidates, in rough order of value:
@@ -184,7 +188,7 @@ Items 1–4, 6, 7, 8 and part of 10–11 below are done:
 ## Suggested order
 
 1. Items 5 and 12: a quick fix and the demo accessibility pass.
-2. Item 9: guided capstones, together with deepening Advanced Agents, the one regular lesson that the third round did not deepen.
+2. Item 9: per-step checks for the capstones.
 3. Items 10–11: in small batches, alongside the content they illustrate.
 4. Item 17 before promoting the site widely; item 18 if a build step becomes acceptable.
 5. Everything else as time allows.

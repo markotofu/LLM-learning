@@ -144,7 +144,7 @@
 
   // Highlighted code sample inside a lesson. Runnable samples can be edited and run in place.
   MLA.components['code-sample'] = {
-    props: { code: String, lang: { default: 'python' }, runnable: Boolean, title: String },
+    props: { code: String, lang: { default: 'python' }, runnable: Boolean, title: String, timeoutSec: Number },
     data() { return { running: false, stdout: '', result: null, failure: null, ran: false, editing: false, edited: null, copied: false }; },
     computed: {
       src() { return this.edited != null ? this.edited : this.code; },
@@ -156,7 +156,12 @@
       async run() {
         if (this.running) return;
         this.running = true; this.ran = true; this.stdout = ''; this.result = null; this.failure = null;
-        const r = await MLA.python.exec(this.src, { onStdout: t => { this.stdout += t; } });
+        const opts = { onStdout: t => { this.stdout += t; } };
+        if (this.timeoutSec) {   // a heavy lesson sample may declare a longer limit; the learner's own setting wins if it is longer
+          const own = Number(MLA.store.state.profile.timeoutSec) || 20;
+          opts.timeoutMs = Math.max(own, this.timeoutSec) * 1000;
+        }
+        const r = await MLA.python.exec(this.src, opts);
         this.running = false;
         if (!r.ok) { this.failure = { message: r.message, kind: r.kind }; return; }
         this.result = r.result;

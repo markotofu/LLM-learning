@@ -31,6 +31,7 @@ function sectionSrc(s) {
   if (s.demo) p.push("demo: '" + s.demo + "'");
   if (s.lang) p.push("lang: '" + s.lang + "'");
   if (s.run === false) p.push('run: false');
+  if (s.timeoutSec) p.push('timeoutSec: ' + Number(s.timeoutSec));
   if (s.md) p.push('md: ' + tl(s.md));
   if (s.code) p.push('code: ' + tl(s.code));
   if (s.after) p.push('after: ' + tl(s.after));
@@ -97,8 +98,9 @@ function parse(text) {
       if (m[1] === 'check' || m[1] === 'quiz') { sec._json = ''; field = '_json'; } else field = 'md';
       continue;
     }
-    if (sec && (m = /^%% (code|after|predict|lang|norun|spec)\s*(.*)$/.exec(line))) {
+    if (sec && (m = /^%% (code|after|predict|lang|norun|spec|timeout)\s*(.*)$/.exec(line))) {
       if (m[1] === 'lang') { sec.lang = m[2].trim(); continue; }
+      if (m[1] === 'timeout') { sec.timeoutSec = Number(m[2].trim()); continue; }
       if (m[1] === 'norun') { sec.run = false; continue; }
       field = m[1] === 'predict' ? '_predict' : m[1] === 'spec' ? '_spec' : m[1]; sec[field] = ''; continue;
     }

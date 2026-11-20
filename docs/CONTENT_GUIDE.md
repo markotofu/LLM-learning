@@ -106,7 +106,7 @@ Afterwards run `node --check` on the changed content files, `node tools/legacy-s
 
 **Section ids and saved progress.** Every section gets an id from its title (quick checks: from a hash of the question). Progress (sections read, answered checks and predictions, the mistakes queue) is stored by these ids, so you can insert or reorder sections freely. Keep section titles unique within a lesson, and do not rename a section without a reason: a renamed section starts again as unread. Old saved data that used positions is migrated through `js/data/legacy-sections.js`; if `tests/content.test.js` reports that a lesson's legacy layout no longer matches (because you changed its first sections), run `node tools/legacy-sections.js` and commit the result.
 
-Runnable code samples execute in the in-browser Python (Pyodide 0.27, Python 3.12, NumPy; pandas, scikit-learn and matplotlib load automatically when imported). Keep them fast (a few seconds at most in the browser) and print something meaningful.
+Runnable code samples execute in the in-browser Python (Pyodide 0.27, Python 3.12, NumPy; pandas, scikit-learn and matplotlib load automatically when imported). Keep them fast (a few seconds at most in the browser) and print something meaningful. A run stops after the learner's time limit (20 s by default, set under Progress & Sync). A sample that genuinely needs longer, such as the LoRA capstone's training runs, can declare `timeoutSec: 120` (20 to 300; in a patch file, `%% timeout 120`), and the in-app self-test allows it twice that. Say in the text that the sample is slow, and expect the browser to be about three times slower than desktop Python.
 
 Available demos (28):
 

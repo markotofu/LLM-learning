@@ -169,7 +169,7 @@
         this.done = 0; this.total = list.length;
         for (const it of list) {
           let out = '';
-          const r = await MLA.python.exec(it.s.code, { timeoutMs: 90000, onStdout: t => { out += t; } });
+          const r = await MLA.python.exec(it.s.code, { timeoutMs: Math.max(90, 2 * (it.s.timeoutSec || 0)) * 1000, onStdout: t => { out += t; } });
           if (r.ok && r.result && r.result.value) out += String.fromCharCode(10) + r.result.value;
           // A "predict first" question names output text that confirms its answer: check it in this runtime too.
           const missing = r.ok && !r.result.error && it.s.predict ? [].concat(it.s.predict.expect || []).filter(e => !out.includes(e)) : [];

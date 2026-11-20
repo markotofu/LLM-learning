@@ -1,5 +1,54 @@
 # ML Atlas — build handoff
 
+## STATUS UPDATE (session 8, 2026-11-21): Advanced Agents and the three capstones deepened
+
+The user asked to deepen the four lessons that session 7 left out. Session 7 is committed as `f07dc59` and `987198f`.
+
+| Lesson | Sections | Words (section text) | Charts | Predictions | Quiz |
+| --- | --- | --- | --- | --- | --- |
+| `advanced-agents` | 11 → 19 | 1,191 → 2,466 | 0 → 2 | 0 → 5 | 5 → 11 |
+| `capstone-tabular` | 10 → 18 | 829 → 1,763 | 0 → 4 | 0 → 4 | 5 → 10 |
+| `capstone-rag` | 7 → 13 | 569 → 1,499 | 0 → 2 | 0 → 3 | 5 → 10 |
+| `capstone-lora` | 6 → 13 | 563 → 1,346 | 0 → 3 | 0 → 3 | 5 → 10 |
+
+**What was added:**
+- **Advanced Agents.** It now avoids repeating the basic `agents` lesson, which already covers compounding errors and checks with retries. New material:
+  - the cost of long runs: quadratic token growth, compaction, prompt caching, and cost per solved task;
+  - tool design for agents;
+  - truncating tool results so that failures survive;
+  - a permission gate against the "lethal trifecta" (taint tracking in the harness);
+  - a chart of pass@k against pass^k;
+  - predictions on the reliability sample and on the evaluation harness, which now prints whether the two agents' intervals overlap.
+- **Tabular capstone:**
+  - a reliability diagram and a chart of cost against the threshold;
+  - the break-even threshold t* = c_offer / (s · c_lost);
+  - permutation importance;
+  - a learning curve;
+  - a drift step with two cases. Under data drift (the contract mix shifts) the model stays calibrated. Under concept drift (calls hurt more) PSI on the inputs sees nothing.
+- **RAG capstone:**
+  - a recall@k chart for BM25, embeddings and reciprocal rank fusion over matched candidates;
+  - evaluation-set sizing (confidence-interval half-width, paired comparisons);
+  - offline answer grading (token F1, citations, numbers, abstention). It shows a correct answer failing on F1.
+  - an error-analysis table.
+- **LoRA capstone:**
+  - a chart of each method on the two skills;
+  - forgetting curves: 59% of full fine-tuning's forgetting happens in the first 60 of 300 steps;
+  - a rank sweep from rank 2 to 32. Rank 1 diverges at lr 0.5, so the sweep leaves it out.
+  - hyperparameters that matter.
+
+**Chart scripts:**
+- `tools/charts/charts_x1.py`–`charts_x4.py` produced the 11 new charts.
+- `charts_x3.py` and `charts_x4.py` read the sample code straight from the lesson through Node, so the charts always match the samples.
+
+**Gotcha: timing on this laptop.** The CPU throttles about 7× after a few seconds of sustained load: a plain NumPy benchmark goes from 0.6 s to 4.5 s per run. Slow sample timings measured here (for example 40 s for the LoRA lesson in `problems.test.js`) are therefore mostly the machine, not the code. At full speed each new LoRA sample takes about 2 s in CPython.
+
+**Regression results:**
+- `npm test`: graph 21, content 12,071, theme 344, views 423, serve 26, problems 1,232.
+- All 11 new charts have no overlapping or clipped labels at desktop width and at 375 px.
+- Every sample in the four lessons runs in Pyodide, and every prediction's `expect` is present.
+
+**Totals:** 138 charts in 94 lessons, 118 predictions, 775 quiz questions, 316 browser-run samples, median lesson 1,173 words.
+
 ## STATUS UPDATE (session 7, 2026-11-21): deeper lessons, 127 charts, security review
 
 The user asked for five things:

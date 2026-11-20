@@ -129,7 +129,7 @@
                   <div v-if="checkDone['p' + i]" class="feedback" :class="checkDone['p' + i].correct ? 'ok' : 'bad'"><strong>{{ checkDone['p' + i].correct ? 'Good prediction!' : 'Not what happens.' }}</strong> <mla-md :src="checkDone['p' + i].explanation" inline /> Run the code below to see it for yourself.</div>
                   <div v-else-if="cs.checks && cs.checks['predict-' + s.id] != null" class="small muted mt-sm">You made this prediction before{{ cs.checks['predict-' + s.id] ? ', correctly ✓' : '' }}.</div>
                 </div>
-                <code-sample :code="s.code" :lang="s.lang || 'python'" :runnable="isRunnable(s)" :title="c.title + ' – ' + (s.title || 'example')" />
+                <code-sample :code="s.code" :lang="s.lang || 'python'" :runnable="isRunnable(s)" :title="c.title + ' – ' + (s.title || 'example')" :timeout-sec="s.timeoutSec" />
                 <div v-if="s.lang==='pytorch'" class="tiny dim mt-sm"><mla-icon name="info" :size="12"/> PyTorch is not available in the in-browser Python, so this example is for reading (run it locally or in Google Colab). The practice problems implement the same ideas in NumPy.</div>
                 <mla-md v-if="s.after" :src="s.after" />
               </template>

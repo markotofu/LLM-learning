@@ -68,6 +68,7 @@ for (const c of concepts) {
     }
     if (s.type === 'text') T.ok(sw + ': text has md', !!s.md && s.md.length > 40);
     if (s.type === 'code') { T.ok(sw + ': code present', !!s.code); T.ok(sw + ': known lang', !s.lang || ['python', 'pytorch', 'bash', 'output', 'text', 'json'].includes(s.lang), s.lang); }
+    if (s.timeoutSec != null) T.ok(sw + ': timeoutSec is a whole number of seconds (20 to 300) on a runnable Python sample', s.type === 'code' && (!s.lang || s.lang === 'python') && s.run !== false && Number.isInteger(s.timeoutSec) && s.timeoutSec >= 20 && s.timeoutSec <= 300, s.timeoutSec);
     if (s.type === 'demo') T.ok(sw + ': demo "' + s.demo + '" exists', !!MLA.components['demo-' + s.demo]);
     if (s.predict) {
       T.ok(sw + ': prediction is a valid question with an explanation', MLA.quiz.validQuestion(s.predict) && s.predict.type !== 'match' && !!s.predict.explain);
