@@ -19,7 +19,7 @@ const problems = MLA.data.problems.filter(pick).map(p => ({ id: p.id, concept: p
 const samples = [];
 for (const c of MLA.data.concepts) {
   if (only.length && !only.includes(c.id)) continue;
-  c.sections.forEach((s, i) => { if (s.type === 'code' && (!s.lang || s.lang === 'python' || s.lang === 'pytorch')) samples.push({ id: c.id + '#' + (i + 1), code: s.code, run: s.lang !== 'pytorch' && s.run !== false, compileOnly: s.lang === 'pytorch' }); });
+  c.sections.forEach((s, i) => { if (s.type === 'code' && (!s.lang || s.lang === 'python' || s.lang === 'pytorch')) samples.push({ id: c.id + '#' + (i + 1), code: s.code, run: s.lang !== 'pytorch' && s.run !== false, compileOnly: s.lang === 'pytorch', expect: s.predict ? [].concat(s.predict.expect || []) : null }); });
 }
 const tmp = path.join(root, 'tests', '.tmp'); fs.mkdirSync(tmp, { recursive: true });
 const payloadFile = path.join(tmp, 'payload.json');
@@ -33,6 +33,7 @@ const r = spawnSync(py, ['-X', 'utf8', path.join(__dirname, 'run_problems.py'), 
 if (r.status !== 0 || !r.stdout) { console.log(r.stderr || r.error || 'python runner failed'); process.exit(1); }
 const out = JSON.parse(r.stdout.slice(r.stdout.indexOf('{')));
 let skipped = 0;
+const dump = {};
 for (const p of out.problems) {
   if (p.skipped) { skipped++; console.log('  skip ' + p.id + ' (' + p.skipped + ')'); continue; }
   T.ok(p.id + ': reference solution passes all ' + p.total + ' tests', p.solOk, p.solDetail);
@@ -42,6 +43,9 @@ for (const s of out.samples) {
   if (s.skipped) { skipped++; continue; }
   T.ok('sample ' + s.id + ' compiles', s.compiles, s.detail);
   if (s.ran != null) T.ok('sample ' + s.id + ' runs', s.ran, s.detail);
+  if (s.expectMissing) T.ok('sample ' + s.id + ': output confirms the prediction answer', s.expectMissing.length === 0, 'missing from output: ' + JSON.stringify(s.expectMissing));
+  if (process.env.MLA_SAMPLE_OUTPUT && s.output != null) dump[s.id] = s.output;
 }
+if (process.env.MLA_SAMPLE_OUTPUT) fs.writeFileSync(process.env.MLA_SAMPLE_OUTPUT, JSON.stringify(dump, null, 1));
 console.log(out.problems.length + ' problems and ' + out.samples.length + ' code samples checked with ' + out.python + (skipped ? ' (' + skipped + ' skipped: missing packages)' : '') + ' in ' + out.seconds + ' s');
 T.done();

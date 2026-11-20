@@ -71,4 +71,85 @@ S.importJSON(exported, 'merge');
 T.ok('merge import', S.state.xp === 900 && S.state.problems[p0.id].solved === true);
 let threw = false; try { S.importJSON('{"hello":1}'); } catch (e) { threw = true; }
 T.ok('rejects foreign JSON', threw);
+
+// Section progress: stored by section id; positions saved by version 6badf8c and earlier are migrated through that
+// version's layout. transformer-block gained a diagram after its first section, so position 1 there used to mean
+// "The residual stream" (now the third section) and position 3 the first quick check.
+{
+  const P = MLA.progress;
+  const tb = MLA.content.byId['transformer-block'];
+  const ids = tb.sections.map(s => s.id);
+  const legacy = P.legacyLayout('transformer-block');
+  T.ok('sections have string ids', ids.every(x => typeof x === 'string' && x && !/^\d+$/.test(x)));
+  T.ok('legacy layout of transformer-block skips the inserted diagram', legacy[1] === 'the-residual-stream' && ids[1] !== 'the-residual-stream', legacy.slice(0, 3).join(','));
+  const old = S.defaultState(); old.version = 1; old.xp = 10;
+  old.concepts['transformer-block'] = { read: [0, 1, 2], checks: { 3: true }, quizBest: 0, quizAttempts: 0, quizPassed: false };
+  old.concepts.attention = { read: [0], checks: {}, quizBest: 0, quizAttempts: 0, quizPassed: false };
+  const migrated = JSON.parse(JSON.stringify(old)); P.migrateSections(migrated);
+  const m = migrated.concepts['transformer-block'];
+  T.ok('migration maps old positions through the old layout', JSON.stringify(m.read) === JSON.stringify([legacy[0], legacy[1], legacy[2]]) && legacy[1] === 'the-residual-stream', JSON.stringify(m.read));
+  T.ok('migration maps answered checks', m.checks[legacy[3]] === true && legacy[3].startsWith('check-') && Object.keys(m.checks).length === 1, JSON.stringify(m.checks));
+  T.ok('unchanged lessons map positions to the same sections', migrated.concepts.attention.read[0] === MLA.content.byId.attention.sections[0].id);
+  T.ok('migration is idempotent', P.migrateSections(migrated) === 0 && JSON.stringify(migrated.concepts['transformer-block'].read) === JSON.stringify(m.read));
+  T.ok('migration marks the data version', migrated.version === 2);
+  // Importing an old export (positions) into new data (ids) merges cleanly, without numbers left behind.
+  S.reset();
+  P.markRead('transformer-block', ids[1]);
+  S.importJSON(JSON.stringify(old), 'merge');
+  const r = S.state.concepts['transformer-block'].read;
+  T.ok('merge import of old data converts positions to ids', r.every(x => typeof x === 'string') && r.includes(ids[1]) && r.includes('the-residual-stream') && r.length === 4, JSON.stringify(r));
+  T.ok('progress counts migrated sections', P.conceptProgress('transformer-block').sectionsRead === 4);
+  P.recordCheck('attention', MLA.content.byId.attention.sections.find(s => s.type === 'check').id, true);
+  T.ok('checks are recorded by id', Object.keys(S.state.concepts.attention.checks).every(k => !/^\d+$/.test(k)));
+  S.reset();
+}
+
+// Mistakes to revisit: missed questions and helped-with problems come back on a spaced schedule.
+{
+  const P = MLA.progress, M = MLA.mistakes, U = MLA.util;
+  const realToday = U.todayKey;
+  let day = '2026-03-01';
+  U.todayKey = () => day;
+  try {
+    S.reset();
+    const c = MLA.content.byId.attention;
+    const check = c.sections.find(s => s.type === 'check');
+    P.recordCheck('attention', check.id, false);
+    const id = 'check:attention:' + check.id;
+    T.ok('a wrong quick check is saved for review', !!S.state.mistakes[id] && S.state.mistakes[id].card.due === '2026-03-02');
+    T.ok('it is not due the same day', M.dueItems().length === 0 && M.stats().waiting === 1);
+    day = '2026-03-02';
+    T.ok('it is due the next day, with its question', M.dueItems().length === 1 && M.dueItems()[0].question === check.question);
+    M.grade(id, true); T.ok('first correct review: back in 1 day', S.state.mistakes[id].card.due === '2026-03-03' && !S.state.mistakes[id].graduated);
+    day = '2026-03-03'; M.grade(id, true); T.ok('second correct review: back in 6 days', S.state.mistakes[id].card.due === '2026-03-09');
+    day = '2026-03-09'; M.grade(id, false); T.ok('a miss keeps it due', S.state.mistakes[id].card.due === '2026-03-09' && !S.state.mistakes[id].graduated);
+    M.grade(id, true); day = '2026-03-10'; M.grade(id, true); day = '2026-03-16'; M.grade(id, true);
+    T.ok('after a miss, the ease drops and three recalls are not yet enough', !S.state.mistakes[id].graduated && S.state.mistakes[id].card.due === '2026-03-28');
+    day = '2026-03-28'; M.grade(id, true);
+    T.ok('correct recalls spaced out over weeks retire it', !!S.state.mistakes[id].graduated && M.stats().graduated === 1 && M.dueItems('2027-01-01').length === 0);
+    // quiz questions, by the hash of their text (options may be shuffled)
+    day = '2026-04-01';
+    const q = c.quiz.find(x => x.type === 'mcq');
+    P.recordQuiz('attention', { score: 50, results: [{ question: MLA.quiz.shuffled(q, U.seededRng(1)), correct: false }] });
+    T.ok('a missed quiz question is saved', !!S.state.mistakes['quiz:attention:' + M.qkey(q)]);
+    day = '2026-04-02';
+    T.ok('the review shows the original question', M.dueItems().some(x => x.item.kind === 'quiz' && x.question === q));
+    // problems solved with the solution come back after 3 days and retire after one unaided re-solve
+    const pr = MLA.data.problems.find(p => p.concept === 'attention');
+    P.viewSolution(pr.id);
+    P.recordSubmit(pr.id, 'x', { tests: [{ passed: true }] });
+    const pid = 'problem:attention:' + pr.id;
+    T.ok('a problem solved after viewing the solution is saved', !!S.state.mistakes[pid] && S.state.mistakes[pid].card.due === '2026-04-05' && S.state.mistakes[pid].why === 'solution');
+    P.recordSubmit(pr.id, 'x', { tests: [{ passed: true }] });
+    T.ok('re-solving before it is due does not count', !S.state.mistakes[pid].graduated);
+    day = '2026-04-05';
+    P.recordSubmit(pr.id, 'x', { tests: [{ passed: true }] });
+    T.ok('re-solving on the due date retires it', !!S.state.mistakes[pid].graduated);
+    // merging two devices keeps the more-reviewed copy
+    const other = S.defaultState(); other.mistakes[id] = { kind: 'check', concept: 'attention', ref: check.id, card: { reps: 0, lapses: 0, due: '2026-03-02', interval: 0, ease: 2.5 }, graduated: null };
+    const mm = S.mergeStates(JSON.parse(S.exportJSON()), other);
+    T.ok('merge keeps the retired, more-reviewed copy', !!mm.mistakes[id].graduated);
+    T.ok('items whose content is gone are ignored', (() => { S.state.mistakes['quiz:attention:nope'] = { kind: 'quiz', concept: 'attention', ref: 'nope', card: { due: '2026-01-01' } }; return !M.all().some(x => x.id === 'quiz:attention:nope'); })());
+  } finally { U.todayKey = realToday; S.reset(); }
+}
 T.done();

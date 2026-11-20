@@ -97,7 +97,7 @@ logp = logp - np.log(np.exp(logp).sum(-1, keepdims=True))                 # log-
 loss = -np.take_along_axis(logp, y[..., None], axis=-1).mean()
 print("logits shape:", logits.shape)
 print(f"loss at init: {loss:.3f}    ln(V) = {np.log(V):.3f}")
-`, after: `The untrained model's loss is almost exactly ln V: it spreads probability evenly over the vocabulary. Training pushes it down.` },
+`, after: `The untrained model's loss is almost exactly ln V: it spreads probability evenly over the vocabulary. Training pushes it down.`, predict: {"type":"mcq","q":"This untrained GPT has a vocabulary of V = 20 tokens and tiny random weights. Roughly what cross-entropy loss does it report before any training?","options":["About 0","About 1","About 3 (that is, ln 20)","About 20"],"answer":2,"explain":"3.000, almost exactly ln 20 = 2.996. Tiny weights give nearly uniform predictions, and a uniform guess over V tokens has a loss of ln V. A first loss far from ln V usually means a bug.","expect":["loss at init: 3.000"]} },
       { type: 'check', question: { type: 'mcq', q: 'One training sequence has T = 1,024 input tokens (targets shifted by one). How many next-token predictions are trained in one forward pass?', options: ['1', '1,024 — one per position', '1,024²', '50,257'], answer: 1, explain: 'Every position predicts its own next token; the causal mask makes all of them valid examples simultaneously.' } },
       { type: 'text', title: 'Weight tying, the context window and the KV cache', md: `- **Weight tying.** The LM head reuses the token-embedding matrix: logits = x · wteᵀ. That saves V·d parameters (38.6M in GPT-2 small) and often helps quality, because "which token is this?" and "which token comes next?" use the same vector space. Many large models untie them.
 - **Context window.** The maximum T the model was trained with (GPT-2: 1,024; GPT-3: 2,048; recent models: 128k or more). Learned position embeddings literally have no row beyond it. Longer inputs must be truncated, chunked or summarized.
@@ -804,14 +804,7 @@ def dedup(docs, threshold=0.5, n=3):
       'Decide between prompting, RAG and fine-tuning; avoid catastrophic forgetting and overfitting'
     ],
     sections: [
-      { type: 'text', title: 'From base model to assistant', md: `\`\`\`text
-pretraining        trillions of tokens of raw text        -> knowledge, language, skills
-SFT                thousands to millions of               -> format and behaviour: answer the question,
-                   (instruction, response) examples          follow instructions, use tools
-preference tuning  comparisons "A is better than B"       -> helpfulness, honesty, harmlessness, style
-\`\`\`
-
-Fine-tuning is **transfer learning**: the model reuses everything it learned, the same idea as fine-tuning an ImageNet CNN on X-ray images. Typical SFT settings: a low learning rate (≈ 1e-5 to 2e-5 for full fine-tuning, ≈ 1e-4 for LoRA), 1–3 epochs, and small but high-quality data. The LIMA paper showed that about 1,000 carefully curated examples can already produce a strong assistant from a good base model: **quality beats quantity**.` },
+      { type: 'demo', title: 'From base model to assistant', demo: 'dg-pipeline', after: `Fine-tuning is **transfer learning**: the model reuses everything it learned, the same idea as fine-tuning an ImageNet CNN on X-ray images. Typical SFT settings: a low learning rate (≈ 1e-5 to 2e-5 for full fine-tuning, ≈ 1e-4 for LoRA), 1–3 epochs, and small but high-quality data. The LIMA paper showed that about 1,000 carefully curated examples can already produce a strong assistant from a good base model: **quality beats quantity**.` },
       { type: 'text', title: 'Chat templates and special tokens', md: `The model only ever sees one token sequence, so a conversation is serialized with special tokens that mark who is speaking:
 
 \`\`\`text
@@ -1636,7 +1629,7 @@ print("Llama 3 8B weights:  bf16 %.1f GB | int8 %.1f GB | 4-bit %.1f GB" % (weig
 # Llama 3 8B has 32 layers and 8 KV heads (grouped-query attention) of 128 dims
 for ctx in (8_192, 32_768, 131_072):
     print(f"KV cache, {ctx:>7,} tokens: {kv_cache_gb(32, 8, 128, ctx):6.2f} GB per sequence   (with 32 KV heads: {kv_cache_gb(32, 32, 128, ctx):6.2f} GB)")
-` },
+`, predict: {"type":"mcq","q":"How much memory do the weights of an 8-billion-parameter model take in bf16 (16 bits per weight)?","options":["8 GB","16 GB","32 GB","128 GB"],"answer":1,"explain":"8 × 10⁹ weights × 2 bytes = 16 GB. Halve it for int8 (8 GB) and again for 4-bit (4 GB). Rule of thumb: billions of parameters × 2 = gigabytes in bf16.","expect":["Llama 3 8B weights:  bf16 16.0 GB"]} },
       { type: 'text', title: 'Other inference optimizations', md: `- **Batching / continuous batching** — serve many requests together so each weight read is shared; the main lever for throughput.
 - **Speculative decoding** — a small draft model proposes several tokens; the large model checks them all in one forward pass and keeps the accepted prefix. Often 2–3× faster, with the large model's output distribution preserved exactly.
 - **Distillation** — train a small "student" to imitate a large "teacher's" output probabilities (DistilBERT, many small chat models).

@@ -6,7 +6,7 @@
 
   MLA.data.branches = [
     { id: 'start', name: 'Start Here', short: 'Start', color: '#cbd5e1', icon: 'flag', desc: 'What machine learning is, and how this map is organised.' },
-    { id: 'math', name: 'Math Foundations', short: 'Math', color: '#60a5fa', icon: 'graph', desc: 'Vectors, derivatives, probability, statistics and information theory — the language machine learning is written in. Only the parts you actually need, explained from scratch.' },
+    { id: 'math', name: 'Math Foundations', short: 'Math', color: '#818cf8', icon: 'graph', desc: 'Vectors, derivatives, probability, statistics and information theory — the language machine learning is written in. Only the parts you actually need, explained from scratch.' },
     { id: 'code', name: 'Python & Data', short: 'Python & Data', color: '#22d3ee', icon: 'code', desc: 'Python, NumPy and the craft of turning messy real-world data into something a model can learn from.' },
     { id: 'ml', name: 'Classical Machine Learning', short: 'Classical ML', color: '#4ade80', icon: 'target', desc: 'Regression, classification, trees, clustering and dimensionality reduction — plus how to train, tune and evaluate models honestly.' },
     { id: 'dl', name: 'Neural Networks & Deep Learning', short: 'Neural Networks', color: '#fbbf24', icon: 'brain', desc: 'From a single neuron to deep networks: backpropagation, training, optimizers, CNNs, RNNs and embeddings.' },
@@ -40,6 +40,18 @@
     });
     return p;
   }
+  // Stable section ids. Saved progress (sections read, answered checks) is keyed by these ids, so lessons can
+  // gain or reorder sections without shifting anyone's progress. Ids come from the title (checks: the question).
+  function slugify(s) { return String(s || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 64).replace(/-+$/, ''); }
+  function sectionIds(sections) {
+    const seen = {};
+    return (sections || []).map(s => {
+      let base = s.id || slugify(s.title) || (s.type === 'check' && s.question ? 'check-' + MLA.util.hashString(String(s.question.q || '')).toString(36) : s.type || 'section');
+      if (/^\d+$/.test(base)) base = 's-' + base;
+      seen[base] = (seen[base] || 0) + 1;
+      return seen[base] > 1 ? base + '-' + seen[base] : base;
+    });
+  }
   function normalize(c, i) {
     if (c._normalized) return c;
     c._order = i;
@@ -54,6 +66,7 @@
       if (o.after) o.after = d(o.after);
       return o;
     });
+    sectionIds(c.sections).forEach((id, k) => { c.sections[k].id = id; });
     c.quiz = c.quiz || [];
     c.objectives = c.objectives || [];
     c.takeaways = c.takeaways || [];
@@ -64,6 +77,7 @@
 
   MLA.content = {
     add(list) { for (const c of list) MLA.data.concepts.push(c); },
+    sectionIds,
     ready: false,
     init() {
       const concepts = MLA.data.concepts;

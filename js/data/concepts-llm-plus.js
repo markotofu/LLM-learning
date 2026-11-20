@@ -769,6 +769,7 @@ The price is more communication — which fast interconnects (NVLink, InfiniBand
 | **Sequence / context parallel** | the sequence dimension | attention communication | very long contexts |
 
 Frontier runs combine them ("3D parallelism" in Megatron-LM: tensor within a node, pipeline across nodes, data parallel across replicas) and add **expert parallelism** for mixture-of-experts models.` },
+      { type: 'demo', title: 'Diagram: data, tensor and pipeline parallelism', demo: 'dg-parallel' },
       { type: 'text', title: 'Throughput and MFU', md: `Speed is measured in tokens per second, and efficiency as **model FLOPs utilization**:
 
 $$ MFU = 6 · N · tokens_per_second / ( n_gpus · peak_flops ) $$
@@ -1458,6 +1459,7 @@ y — the layer's output for this token
 :::
 
 Different tokens choose different experts. In practice experts specialize less by human topic and more by token types and syntax. Many recent designs also add one or two **shared experts** that every token uses.` },
+      { type: 'demo', title: 'Diagram: routing one token', demo: 'dg-moe' },
       { type: 'text', title: 'Total versus active parameters', md: `| Model | Total parameters | Active per token | Experts |
 | --- | --- | --- | --- |
 | Mixtral 8x7B | ≈ 47B | ≈ 13B | 2 of 8 per layer |

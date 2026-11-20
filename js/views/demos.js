@@ -277,9 +277,10 @@
   function scoreData() { const rng = MLA.util.seededRng(21); const pos = [], neg = []; for (let i = 0; i < 120; i++) pos.push(Math.min(0.999, Math.max(0.001, 0.66 + gauss(rng) * 0.15))); for (let i = 0; i < 280; i++) neg.push(Math.min(0.999, Math.max(0.001, 0.36 + gauss(rng) * 0.15))); return { pos, neg }; }
   C['demo-threshold'] = {
     mixins: [redrawOnChange],
-    data() { return { t: 0.5 }; },
+    data() { return { t: 0.5, curve: 'roc' }; },
     computed: {
       d() { return scoreData(); },
+      pr() { const P = this.d.pos.length, pts = []; let ap = 0, prevR = 0; for (let i = 0; i <= 100; i++) { const t = 1 - i / 100; const tp = this.d.pos.filter(s => s >= t).length, fp = this.d.neg.filter(s => s >= t).length; const r = tp / P, p = tp + fp ? tp / (tp + fp) : 1; pts.push([r, p]); ap += (r - prevR) * p; prevR = r; } return { pts, ap, base: P / (P + this.d.neg.length) }; },
       m() { const tp = this.d.pos.filter(s => s >= this.t).length, fn = this.d.pos.length - tp, fp = this.d.neg.filter(s => s >= this.t).length, tn = this.d.neg.length - fp; const prec = tp + fp ? tp / (tp + fp) : 1, rec = tp / (tp + fn), f1 = prec + rec ? 2 * prec * rec / (prec + rec) : 0; return { tp, fn, fp, tn, prec, rec, f1, acc: (tp + tn) / (tp + tn + fp + fn), fpr: fp / (fp + tn) }; },
       roc() { const pts = []; for (let i = 0; i <= 100; i++) { const t = 1 - i / 100; pts.push([this.d.neg.filter(s => s >= t).length / this.d.neg.length, this.d.pos.filter(s => s >= t).length / this.d.pos.length]); } let auc = 0; for (let i = 1; i < pts.length; i++) auc += (pts[i][0] - pts[i - 1][0]) * (pts[i][1] + pts[i - 1][1]) / 2; return { pts, auc }; }
     },
@@ -295,23 +296,24 @@
         hp.forEach((v, i) => { ctx.fillStyle = P.pink; ctx.globalAlpha = 0.55; ctx.fillRect(T.X(i / bins), T.Y(v), bw - 1, T.Y(0) - T.Y(v)); });
         ctx.globalAlpha = 1; ctx.strokeStyle = P.text; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(T.X(this.t), T.Y(0)); ctx.lineTo(T.X(this.t), T.Y(mx * 1.1)); ctx.stroke();
         const cv2 = this.$refs.cv2; if (!cv2) return; const c2 = setup(cv2, 220, 220); const T2 = frame(c2, 220, 220, [0, 1], [0, 1], P, { xt: 2, yt: 2 });
-        c2.strokeStyle = P.dim; c2.setLineDash([4, 4]); c2.beginPath(); c2.moveTo(T2.X(0), T2.Y(0)); c2.lineTo(T2.X(1), T2.Y(1)); c2.stroke(); c2.setLineDash([]);
-        c2.strokeStyle = P.accent; c2.lineWidth = 2; c2.beginPath(); this.roc.pts.forEach((p, i) => i ? c2.lineTo(T2.X(p[0]), T2.Y(p[1])) : c2.moveTo(T2.X(p[0]), T2.Y(p[1]))); c2.stroke();
-        dot(c2, T2.X(this.m.fpr), T2.Y(this.m.rec), 5, P.amber, P.text);
+        const pr = this.curve === 'pr', pts = pr ? this.pr.pts : this.roc.pts;
+        c2.strokeStyle = P.dim; c2.setLineDash([4, 4]); c2.beginPath(); if (pr) { c2.moveTo(T2.X(0), T2.Y(this.pr.base)); c2.lineTo(T2.X(1), T2.Y(this.pr.base)); } else { c2.moveTo(T2.X(0), T2.Y(0)); c2.lineTo(T2.X(1), T2.Y(1)); } c2.stroke(); c2.setLineDash([]);
+        c2.strokeStyle = P.accent; c2.lineWidth = 2; c2.beginPath(); pts.forEach((p, i) => i ? c2.lineTo(T2.X(p[0]), T2.Y(p[1])) : c2.moveTo(T2.X(p[0]), T2.Y(p[1]))); c2.stroke();
+        if (pr) dot(c2, T2.X(this.m.rec), T2.Y(this.m.prec), 5, P.amber, P.text); else dot(c2, T2.X(this.m.fpr), T2.Y(this.m.rec), 5, P.amber, P.text);
       }
     },
     template: `
     <div class="card demo-card">
       <div class="grid cols-2" style="align-items:start;gap:12px">
         <div><div class="tiny muted">Model scores for <span style="color:var(--pink)">actual positives</span> and <span style="color:var(--cyan)">actual negatives</span></div><canvas ref="cv" class="demo-canvas"></canvas></div>
-        <div><div class="tiny muted">ROC curve (AUC = {{ roc.auc.toFixed(3) }}) — dot = current threshold</div><canvas ref="cv2" class="demo-canvas square"></canvas></div>
+        <div><div class="pills" style="margin-bottom:4px"><button :class="{active: curve==='roc'}" @click="curve='roc'">ROC</button><button :class="{active: curve==='pr'}" @click="curve='pr'">Precision–recall</button></div><div class="tiny muted">{{ curve === 'roc' ? 'ROC curve: recall (true positive rate) against false positive rate. AUC = ' + roc.auc.toFixed(3) : 'Precision against recall. Average precision = ' + pr.ap.toFixed(3) + '; dashed = share of positives (' + pr.base.toFixed(2) + ')' }} · dot = current threshold</div><canvas ref="cv2" class="demo-canvas square"></canvas></div>
       </div>
       <label class="demo-controls">Decision threshold <b>{{ t.toFixed(2) }}</b> — predict “positive” when score ≥ threshold<input type="range" min="0.01" max="0.99" step="0.01" v-model.number="t"></label>
       <div class="grid cols-2" style="gap:12px;align-items:start">
         <table class="mini-table confusion"><thead><tr><th></th><th>predicted +</th><th>predicted −</th></tr></thead><tbody><tr><th>actual +</th><td class="good">TP {{ m.tp }}</td><td class="bad">FN {{ m.fn }}</td></tr><tr><th>actual −</th><td class="bad">FP {{ m.fp }}</td><td class="good">TN {{ m.tn }}</td></tr></tbody></table>
         <table class="mini-table"><tbody><tr><td>Accuracy</td><td class="mono">{{ m.acc.toFixed(3) }}</td></tr><tr><td>Precision = TP/(TP+FP)</td><td class="mono">{{ m.prec.toFixed(3) }}</td></tr><tr><td>Recall = TP/(TP+FN)</td><td class="mono">{{ m.rec.toFixed(3) }}</td></tr><tr><td>F1</td><td class="mono">{{ m.f1.toFixed(3) }}</td></tr><tr><td>False positive rate</td><td class="mono">{{ m.fpr.toFixed(3) }}</td></tr></tbody></table>
       </div>
-      <p class="small muted">Raise the threshold: fewer false alarms (precision ↑) but more misses (recall ↓). There is no free lunch — you choose the trade-off your application needs.</p>
+      <p class="small muted">Raise the threshold: fewer false alarms (precision ↑) but more misses (recall ↓). There is no free lunch — you choose the trade-off your application needs. The ROC curve ignores how rare positives are; the precision–recall curve does not, which is why it is the better picture when positives are rare: a random model's precision sits at the share of positives (the dashed line), not at 0.5.</p>
     </div>`
   };
 

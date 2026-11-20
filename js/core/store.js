@@ -2,7 +2,7 @@
 (function (global) {
   const MLA = global.MLA;
   const KEY = 'mla.state.v1';
-  const VERSION = 1;
+  const VERSION = 2; // 2: section progress is keyed by section id (see MLA.progress.migrateSections)
   const APP_ID = 'ml-atlas';
 
   function defaultState() {
@@ -17,10 +17,11 @@
       notes: {},      // conceptId -> text
       playground: { files: [], active: null },
       flashcards: {}, // cardId -> SRS state
+      mistakes: {},   // 'kind:concept:ref' -> { kind, concept, ref, why, added, misses, card, graduated } (see js/core/mistakes.js)
       achievements: {},
       daily: {},      // dateKey -> { problemId, done }
       activity: [],
-      stats: { runs: 0, submissions: 0, accepted: 0, playgroundRuns: 0, sampleRuns: 0, quizzesTaken: 0, quizzesPassed: 0, perfectQuizzes: 0, checksCorrect: 0, flashReviews: 0, exports: 0, imports: 0 },
+      stats: { runs: 0, submissions: 0, accepted: 0, playgroundRuns: 0, sampleRuns: 0, quizzesTaken: 0, quizzesPassed: 0, perfectQuizzes: 0, checksCorrect: 0, flashReviews: 0, mistakesReviewed: 0, exports: 0, imports: 0 },
       quizHistory: []
     };
   }
@@ -30,7 +31,7 @@
     if (!saved || typeof saved !== 'object') return base;
     const merged = Object.assign({}, base, saved);
     for (const k of ['profile', 'streak', 'stats', 'playground']) merged[k] = Object.assign({}, base[k], saved[k] || {});
-    for (const k of ['concepts', 'problems', 'notes', 'flashcards', 'achievements', 'daily']) if (!merged[k] || typeof merged[k] !== 'object' || Array.isArray(merged[k])) merged[k] = {};
+    for (const k of ['concepts', 'problems', 'notes', 'flashcards', 'mistakes', 'achievements', 'daily']) if (!merged[k] || typeof merged[k] !== 'object' || Array.isArray(merged[k])) merged[k] = {};
     for (const k of ['activity', 'quizHistory']) if (!Array.isArray(merged[k])) merged[k] = [];
     if (!Array.isArray(merged.playground.files)) merged.playground.files = [];
     merged.app = APP_ID; merged.version = VERSION;
@@ -130,6 +131,9 @@
     out.playground.files = Object.values(files).sort((x, y) => (y.updatedAt || '').localeCompare(x.updatedAt || ''));
     // flashcards: keep the card with more reviews
     for (const id of Object.keys(inc.flashcards)) { const a = out.flashcards[id], b = inc.flashcards[id]; if (!a || (b.reps || 0) + (b.lapses || 0) > (a.reps || 0) + (a.lapses || 0)) out.flashcards[id] = b; }
+    // mistakes to revisit: keep the copy that has been reviewed more (a retired item stays retired)
+    const reviews = x => (x && x.card ? (x.card.reps || 0) + (x.card.lapses || 0) : 0) + (x && x.graduated ? 1000 : 0);
+    for (const id of Object.keys(inc.mistakes)) { const a = out.mistakes[id], b = inc.mistakes[id]; if (!a || reviews(b) > reviews(a)) out.mistakes[id] = b; }
     for (const id of Object.keys(inc.achievements)) out.achievements[id] = minDate(out.achievements[id], inc.achievements[id]);
     for (const k of Object.keys(inc.daily)) { const a = out.daily[k], b = inc.daily[k]; if (!a || (b && b.done && !a.done)) out.daily[k] = b; }
     for (const k of Object.keys(inc.stats)) if (typeof inc.stats[k] === 'number') out.stats[k] = Math.max(out.stats[k] || 0, inc.stats[k]);
@@ -149,6 +153,7 @@
     try { data = JSON.parse(text); } catch (e) { throw new Error('Could not read the file: it is not valid JSON.'); }
     validate(data);
     delete data.exportedAt;
+    if (MLA.progress && MLA.progress.migrateSections) MLA.progress.migrateSections(data);
     const next = mode === 'replace' ? mergeDefaults(data) : mergeStates(state, data);
     next.stats.imports = (next.stats.imports || 0) + 1;
     replaceState(next);

@@ -766,7 +766,7 @@ double = target[np.arange(n_states), online.argmax(axis=1)]     # Double DQN: on
 print("true value of the best action:          0.000")
 print(f"DQN target (max of noisy estimates):   {dqn.mean():+.3f}")
 print(f"Double DQN target (decoupled):         {double.mean():+.3f}")
-`, after: `Although every action is worth 0, the maximum of ten noisy estimates averages about +1.5, and bootstrapping feeds that optimism back into the next targets. Choosing with one estimate and evaluating with an independent one removes the bias.` },
+`, after: `Although every action is worth 0, the maximum of ten noisy estimates averages about +1.5, and bootstrapping feeds that optimism back into the next targets. Choosing with one estimate and evaluating with an independent one removes the bias.`, predict: {"type":"mcq","q":"Every action is truly worth 0, and you have unbiased but noisy estimates of each. On average, what is the largest of 10 such estimates?","options":["0, because the noise averages out","Clearly positive","Clearly negative","It depends only on the true values"],"answer":1,"explain":"+1.545: taking the maximum of noisy estimates selects the luckiest noise, so it is biased upwards. That is DQN’s overestimation; Double DQN decouples choosing from evaluating and gets −0.006.","expect":["DQN target (max of noisy estimates):   +1.545"]} },
       { type: 'text', title: 'Policy gradients: REINFORCE with a baseline', md: `Instead of learning values and acting greedily, **policy-gradient** methods parameterize the policy π_θ(a | s) directly (useful for continuous or stochastic actions) and climb the gradient of the expected return:
 
 $$ ∇_θ J = E[ ∇_θ log π_θ(a_t | s_t) · ( G_t − b(s_t) ) ] $$

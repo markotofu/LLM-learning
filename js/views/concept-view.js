@@ -16,7 +16,7 @@
       prereqs() { return this.c.prereqs.map(this.P.concept).filter(Boolean); },
       missing() { return this.P.missingPrereqs(this.c.id); },
       next() { return MLA.content.graph.children[this.c.id].map(this.P.concept); },
-      toc() { return this.c.sections.map((s, i) => ({ i, title: s.title || (s.type === 'check' ? 'Quick check' : 'Section ' + (i + 1)), type: s.type, read: (this.cs.read || []).includes(i) })); },
+      toc() { return this.c.sections.map((s, i) => ({ i, title: s.title || (s.type === 'check' ? 'Quick check' : 'Section ' + (i + 1)), type: s.type, read: (this.cs.read || []).includes(s.id) })); },
       reqText() { return this.P.requirementsText(this.c.id); },
       problems() { return this.c.problems.map(p => ({ p, status: this.P.problemStatus(p.id), preview: (p.prompt || '').split('\n').find(l => l.trim() && !/^[#|>`]/.test(l.trim())) || '' })); },
       note: { get() { return this.state.notes[this.c.id] || ''; }, set(v) { this.state.notes[this.c.id] = v; } },
@@ -31,7 +31,7 @@
     unmounted() { if (this._io) this._io.disconnect(); },
     methods: {
       go(p) { MLA.router.navigate(p); },
-      isRead(i) { return (this.cs.read || []).includes(i); },
+      isRead(sid) { return (this.cs.read || []).includes(sid); },
       isRunnable(s) { return s.run !== false && (!s.lang || s.lang === 'python'); },
       secIcon(s) { if (s.type === 'demo' && String(s.demo).startsWith('dg-')) return 'layers'; return { text: 'book', code: 'code', demo: 'play', check: 'hint' }[s.type] || 'book'; },
       // Sections count as read once you reach their end (a sentinel scrolls into view).
@@ -41,13 +41,13 @@
           this._timers = {};
           this._io = new IntersectionObserver(entries => {
             for (const e of entries) {
-              const i = Number(e.target.getAttribute('data-i'));
-              if (e.isIntersecting) { this._timers[i] = setTimeout(() => { this.P.markRead(this.c.id, i); if (this._io) this._io.unobserve(e.target); }, 600); }
-              else clearTimeout(this._timers[i]);
+              const sid = e.target.getAttribute('data-sid');
+              if (e.isIntersecting) { this._timers[sid] = setTimeout(() => { this.P.markRead(this.c.id, sid); if (this._io) this._io.unobserve(e.target); }, 600); }
+              else clearTimeout(this._timers[sid]);
             }
           }, { threshold: 0 });
         }
-        this.$el.querySelectorAll('.sec-end').forEach(el => { if (!this.isRead(Number(el.getAttribute('data-i')))) this._io.observe(el); });
+        this.$el.querySelectorAll('.sec-end').forEach(el => { if (!this.isRead(el.getAttribute('data-sid'))) this._io.observe(el); });
       },
       markAll() { this.P.markAllRead(this.c.id); MLA.ui.toast('All sections marked as read.', 'info'); },
       scrollTo(i) { const el = document.getElementById('sec-' + i); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); },
@@ -55,7 +55,13 @@
         if (this.checkDone[i]) return;
         const g = MLA.quiz.grade(q, val);
         this.checkDone[i] = { correct: g.correct, explanation: g.explanation, expected: g.expected };
-        this.P.recordCheck(this.c.id, i, g.correct);
+        this.P.recordCheck(this.c.id, this.c.sections[i].id, g.correct);
+      },
+      answerPredict(i, s, val) {
+        const key = 'p' + i; if (this.checkDone[key]) return;
+        const g = MLA.quiz.grade(s.predict, val);
+        this.checkDone[key] = { correct: g.correct, explanation: g.explanation, expected: g.expected };
+        this.P.recordCheck(this.c.id, 'predict-' + s.id, g.correct);
       },
       startQuiz() { const att = (this.P.peekC(this.c.id) || {}).quizAttempts || 0; this.quizQs = MLA.quiz.prepare(this.c.quiz, MLA.util.seededRng(MLA.util.hashString(this.c.id) + att * 7919)); },
       onQuiz(result) {
@@ -106,16 +112,23 @@
               <ul class="objectives"><li v-for="(o,i) in c.objectives" :key="i"><mla-md :src="o" inline /></li></ul>
             </div>
 
-            <section v-for="(s,i) in c.sections" :key="i" :id="'sec-'+i" class="lesson-section" :class="['sec-'+s.type, {read: isRead(i)}]">
+            <section v-for="(s,i) in c.sections" :key="i" :id="'sec-'+i" class="lesson-section" :class="['sec-'+s.type, {read: isRead(s.id)}]">
               <div class="sec-head">
                 <mla-icon :name="secIcon(s)" :size="17"/>
                 <h3>{{ s.title || (s.type==='check' ? 'Quick check' : 'Section ' + (i+1)) }}</h3>
                 <span class="spacer"></span>
-                <span v-if="isRead(i)" class="chip green tiny"><mla-icon name="check" :size="11"/> read</span>
+                <span v-if="isRead(s.id)" class="chip green tiny"><mla-icon name="check" :size="11"/> read</span>
               </div>
               <template v-if="s.type==='text'"><mla-md :src="s.md" /></template>
               <template v-else-if="s.type==='code'">
                 <mla-md v-if="s.md" :src="s.md" />
+                <div v-if="s.predict" class="predict-box">
+                  <div class="predict-head"><mla-icon name="target" :size="15"/> <b>Predict first</b> <span class="small muted">commit to an answer, then run the code to check it</span></div>
+                  <div class="q-text"><mla-md :src="s.predict.q" /></div>
+                  <check-q :q="s.predict" :done="checkDone['p' + i]" @answer="answerPredict(i, s, $event)" />
+                  <div v-if="checkDone['p' + i]" class="feedback" :class="checkDone['p' + i].correct ? 'ok' : 'bad'"><strong>{{ checkDone['p' + i].correct ? 'Good prediction!' : 'Not what happens.' }}</strong> <mla-md :src="checkDone['p' + i].explanation" inline /> Run the code below to see it for yourself.</div>
+                  <div v-else-if="cs.checks && cs.checks['predict-' + s.id] != null" class="small muted mt-sm">You made this prediction before{{ cs.checks['predict-' + s.id] ? ', correctly ✓' : '' }}.</div>
+                </div>
                 <code-sample :code="s.code" :lang="s.lang || 'python'" :runnable="isRunnable(s)" :title="c.title + ' – ' + (s.title || 'example')" />
                 <div v-if="s.lang==='pytorch'" class="tiny dim mt-sm"><mla-icon name="info" :size="12"/> PyTorch is not available in the in-browser Python, so this example is for reading (run it locally or in Google Colab). The practice problems implement the same ideas in NumPy.</div>
                 <mla-md v-if="s.after" :src="s.after" />
@@ -129,9 +142,9 @@
                 <div class="q-text"><mla-md :src="s.question.q" /></div>
                 <check-q :q="s.question" :done="checkDone[i]" @answer="answerCheck(i, s.question, $event)" />
                 <div v-if="checkDone[i]" class="feedback" :class="checkDone[i].correct ? 'ok' : 'bad'"><strong>{{ checkDone[i].correct ? 'Correct!' : 'Not quite.' }}</strong> <mla-md :src="checkDone[i].explanation" inline /><span v-if="!checkDone[i].correct && checkDone[i].expected"> Answer: <b>{{ checkDone[i].expected }}</b></span></div>
-                <div v-else-if="cs.checks && cs.checks[i] != null" class="tiny dim mt-sm">You answered this before{{ cs.checks[i] ? ' correctly ✓' : '' }}.</div>
+                <div v-else-if="cs.checks && cs.checks[s.id] != null" class="tiny dim mt-sm">You answered this before{{ cs.checks[s.id] ? ' correctly ✓' : '' }}.</div>
               </template>
-              <div v-if="s.type!=='check'" class="sec-end" :data-i="i"></div>
+              <div v-if="s.type!=='check'" class="sec-end" :data-sid="s.id"></div>
             </section>
 
             <div v-if="c.when" class="lesson-section when-card">

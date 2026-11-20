@@ -7,7 +7,7 @@ const path = require('path');
 const zlib = require('zlib');
 
 const OUT = path.join(__dirname, '..', 'icons');
-const C1 = [99, 102, 241], C2 = [34, 211, 238]; // indigo → cyan
+const C1 = [14, 165, 233], C2 = [20, 184, 166]; // sky → teal
 const NODES = [[0.5, 0.29, 0.075], [0.29, 0.5, 0.066], [0.71, 0.5, 0.066], [0.5, 0.71, 0.075]];
 const EDGES = [[0, 1], [0, 2], [1, 3], [2, 3], [1, 2]];
 const LINE = 0.034;

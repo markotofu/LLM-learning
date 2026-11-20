@@ -58,6 +58,11 @@ def main(path):
                 item["ran"] = err is None
                 if err:
                     item["detail"] = err["message"] + (" | " + err["trace"] if err.get("trace") else "")
+                out = buf.getvalue() + (chr(10) + res["value"] if res.get("value") else "")
+                if s.get("expect"):
+                    item["expectMissing"] = [e for e in s["expect"] if e not in out]
+                if os.environ.get("MLA_SAMPLE_OUTPUT"):
+                    item["output"] = out[:3000]
         report["samples"].append(item)
 
     report["seconds"] = round(time.time() - t0, 1)

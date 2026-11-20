@@ -20,6 +20,7 @@
       activity() { return (this.state.activity || []).slice(0, 7); },
       days() { const out = []; for (let i = 13; i >= 0; i--) { const k = MLA.util.addDays(MLA.util.todayKey(), -i); out.push({ on: !!this.streak.days[k], today: i === 0, k }); } return out; },
       due() { const cards = MLA.data.flashcards || []; return MLA.srs.stats(cards, this.state.flashcards); },
+      mistakes() { return MLA.mistakes.stats(); },
       py() { return MLA.python.status; },
       fresh() { return this.overall.conceptsDone === 0 && this.overall.solved === 0; }
     },
@@ -104,6 +105,9 @@
           <hr>
           <div class="row between"><span class="small"><mla-icon name="cards" :size="15"/> Flashcards due</span><b>{{ due.due }}</b></div>
           <button class="btn sm block mt-sm" @click="go('/review')">{{ due.due ? 'Review now' : 'Learn new cards' }}</button>
+          <div class="row between mt"><span class="small"><mla-icon name="refresh" :size="15"/> Mistakes to revisit</span><b>{{ mistakes.due }}</b></div>
+          <button v-if="mistakes.due || mistakes.waiting" class="btn sm block mt-sm" @click="go('/review?tab=mistakes')">{{ mistakes.due ? 'Revisit now' : 'Next ones come back soon' }}</button>
+          <p v-else class="tiny muted mt-sm">Questions you miss and problems you need help with will come back here.</p>
         </div>
       </div>
 

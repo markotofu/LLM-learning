@@ -224,7 +224,7 @@ print("two linear layers == one linear layer:", np.allclose(two_linear_layers, o
 
 with_relu = np.maximum(0, X @ W1) @ W2      # a non-linearity in between breaks the collapse
 print("with ReLU in between, still equal?   ", np.allclose(with_relu, one_linear_layer))
-` },
+`, predict: {"type":"mcq","q":"Is applying two linear layers in a row, (X @ W1) @ W2, equivalent to a single linear layer?","options":["Yes, always","No, two layers are always more expressive","Only if W1 and W2 are square","Only if the layers have biases"],"answer":0,"explain":"Yes: (X W1) W2 = X (W1 W2), and W1 W2 is just another matrix. Without a non-linearity between them, extra linear layers add nothing; with a ReLU in between, the equality breaks.","expect":["two linear layers == one linear layer: True"]} },
       { type: 'demo', title: 'Interactive: activation functions and their gradients', md: `Toggle functions and show their derivatives. Watch where each derivative becomes (nearly) zero.`, demo: 'activations' },
       { type: 'text', title: 'The main activation functions', md: `| Function | Formula | Range | Derivative | Used in |
 | --- | --- | --- | --- | --- |
@@ -287,7 +287,7 @@ big = np.array([1000.0, 999.0, 998.0])
 with np.errstate(over="ignore", invalid="ignore"):
     print("naive, big logits: ", softmax_naive(big))       # inf / inf = nan
 print("stable, big logits:", softmax_stable(big).round(4))
-` },
+`, predict: {"type":"mcq","q":"What does the naive softmax, exp(z) / sum(exp(z)), return for the logits [1000, 999, 998]?","options":["About [0.67, 0.24, 0.09]","[1, 0, 0]","[nan, nan, nan]","[0.33, 0.33, 0.33]"],"answer":2,"explain":"exp(1000) overflows to infinity, and inf / inf is nan. Subtracting the largest logit first gives the same mathematical result without overflow: [0.665, 0.245, 0.09].","expect":["naive, big logits:  [nan nan nan]"]} },
       { type: 'check', question: { type: 'tf', q: 'Adding the same constant to every logit does not change the softmax output.', answer: true, explain: 'e^(z+c) = e^c·e^z; the e^c cancels between numerator and denominator — that is why subtracting the max is safe.' } }
     ],
     when: `- **Hidden layers**: ReLU by default for MLPs and CNNs; GELU/SiLU (or SwiGLU) in transformers; tanh inside classic RNNs.
@@ -729,6 +729,7 @@ n — the batch size
 The softmax + cross-entropy result is famously simple: the gradient of the logits is just **predicted probabilities minus the one-hot truth** (divided by the batch size for a mean loss).
 
 **Shape rule of thumb:** a gradient always has the same shape as the thing it is the gradient of. If dW must be (d_in, d_out) and you have X (n, d_in) and δZ (n, d_out), the only product that fits is Xᵀ δZ. When in doubt, let the shapes tell you the formula.` },
+      { type: 'demo', title: 'Interactive: backpropagation, one step at a time', demo: 'backprop' },
       { type: 'code', title: 'Manual backprop for a 2-layer network, with a gradient check', code: `
 import numpy as np
 rng = np.random.default_rng(0)

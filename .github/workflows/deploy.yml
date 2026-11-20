@@ -1,7 +1,10 @@
 name: Test and deploy to GitHub Pages
 
-# Runs every test (including executing every problem's reference solution in Python)
-# on pushes and pull requests, then publishes the site to GitHub Pages from `main`.
+# On pushes and pull requests:
+#   - Tests: content, theme contrast, views, and every problem's reference solution executed in Python;
+#   - Browser tests: the app in a real browser (Playwright + Chromium), including the in-browser Python;
+#   - Visual changes: screenshots of every demo and diagram compared with the previous commit (report only).
+# Then the site is published to GitHub Pages from `main`, if the tests and browser tests passed.
 # One-time setup: repository Settings → Pages → Build and deployment → Source: "GitHub Actions".
 on:
   push:
@@ -31,13 +34,54 @@ jobs:
         with:
           python-version: '3.12'   # same Python version as the in-browser Pyodide runtime
       - name: Install Python packages used by the exercises
-        run: pip install numpy pandas scikit-learn
-      - name: Graph, content, views and problem-solution tests
+        run: pip install numpy pandas scikit-learn matplotlib
+      - name: Graph, content, theme, views and problem-solution tests
         run: npm test
+
+  browser:
+    name: Browser tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: End-to-end tests
+        run: npx playwright test --project=e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-test-report
+          path: playwright-report/
+          retention-days: 14
+
+  visual:
+    name: Visual changes (report only)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Compare demos and diagrams with the previous version
+        run: node tools/visual-diff.js ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || 'HEAD~1' }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visual-changes
+          path: playwright-report/
+          retention-days: 14
 
   deploy:
     name: Deploy
-    needs: test
+    needs: [test, browser]
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:

@@ -311,7 +311,7 @@ p, steps = 0.95, 50
 for retries in (0, 1, 2):
     step_ok = 1 - (1 - p) ** (retries + 1)       # a reliable check lets a failed step be retried
     print(f"with {retries} verified retries per step: a {steps}-step task succeeds {step_ok ** steps:.1%} of the time")
-`, after: `Without checks, even 95%-reliable steps make a 50-step task fail more than nine times in ten. A single verified retry per step lifts it to almost 90%. This is why good agents run tests, validate outputs and re-check requirements — verification is worth more than a slightly better model.` },
+`, after: `Without checks, even 95%-reliable steps make a 50-step task fail more than nine times in ten. A single verified retry per step lifts it to almost 90%. This is why good agents run tests, validate outputs and re-check requirements — verification is worth more than a slightly better model.`, predict: {"type":"mcq","q":"Each step of an agent succeeds 90% of the time, independently. What is the chance that a 10-step task succeeds from start to finish?","options":["About 90%","About 65%","About 35%","About 10%"],"answer":2,"explain":"0.9¹⁰ ≈ 34.9%. Small per-step error rates compound: at 50 steps it is 0.5%. Checking each step and retrying failures is what makes long tasks reliable.","expect":["10 steps:  34.9%"]} },
       { type: 'text', title: 'Context engineering', md: `The context window is the agent's working memory, and everything in it costs tokens, latency and attention. Typical contents, from most to least stable:
 
 1. **System prompt and tool definitions** — keep them stable and first, so prompt caching can reuse them (see *LLM Inference & Serving*).

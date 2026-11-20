@@ -277,7 +277,7 @@ best_mse = cs[np.argmin([mse(y_out, np.full(5, c)) for c in cs])]
 best_mae = cs[np.argmin([mae(y_out, np.full(5, c)) for c in cs])]
 print("best constant under MSE:", round(best_mse, 2), " (the mean is", y_out.mean(), ")")
 print("best constant under MAE:", round(best_mae, 2), " (the median is", np.median(y_out), ")")
-` },
+`, predict: {"type":"mcq","q":"One of five labels is corrupted from 10 to 100. Which loss jumps the most compared with the clean data?","options":["MSE","MAE","Huber","All three jump by about the same factor"],"answer":0,"explain":"MSE goes from 0.028 to about 1,613 because the error of 90 is squared; MAE and Huber grow only linearly (to about 18). That is why models trained with MSE chase outliers.","expect":["with an outlier MSE 1612.828"]} },
       { type: 'check', question: { type: 'mcq', q: 'Your house-price data contains a few wildly mistyped prices you cannot remove. Which loss is the most robust choice?', options: ['Mean squared error', 'Mean absolute error or Huber loss', 'Squared error with a larger learning rate', 'Cubic error'], answer: 1, explain: 'Squared error amplifies large errors; absolute/Huber losses grow only linearly, so outliers have bounded influence.' } },
       { type: 'text', title: 'Classification losses', md: `The obvious classification loss is the **0-1 loss**: 1 for a wrong prediction, 0 for a right one — that is just (1 − accuracy). We don't train on it because it is **flat almost everywhere**: nudging a weight slightly rarely flips a prediction, so its gradient is zero and gives no direction.
 
@@ -1270,6 +1270,7 @@ Simple models: high bias, low variance. Flexible models: low bias, high variance
 :::analogy Darts
 High bias: every dart lands in a tight cluster — but off-centre. High variance: darts are centred on average but scattered all over the board. You want a tight cluster on the bullseye.
 :::` },
+      { type: 'demo', title: 'Interactive: bias and variance across many training sets', demo: 'bias-variance' },
       { type: 'code', title: 'Train vs validation error as complexity grows', code: `
 import numpy as np, warnings
 warnings.simplefilter("ignore")                    # polyfit warns about ill-conditioning at high degrees

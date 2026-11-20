@@ -96,7 +96,8 @@
 
   // ---------- Flashcards ----------
   MLA.components['view-review'] = {
-    data() { return { state: MLA.store.state, deck: 'all', queue: [], idx: 0, flipped: false, done: 0, started: false }; },
+    props: { route: Object },
+    data() { return { state: MLA.store.state, tab: (this.route && this.route.query && this.route.query.tab === 'mistakes') ? 'mistakes' : 'cards', deck: 'all', queue: [], idx: 0, flipped: false, done: 0, started: false }; },
     computed: {
       P() { return MLA.progress; },
       cards() { return MLA.data.flashcards || []; },
@@ -104,7 +105,8 @@
       deckCards() { return this.deck === 'all' ? this.cards : this.cards.filter(c => c.deck === this.deck); },
       stats() { return MLA.srs.stats(this.deckCards, this.state.flashcards); },
       card() { return this.queue[this.idx] || null; },
-      ivals() { return this.card ? MLA.srs.nextIntervals(this.state.flashcards[this.card.id]) : null; }
+      ivals() { return this.card ? MLA.srs.nextIntervals(this.state.flashcards[this.card.id]) : null; },
+      mstats() { return MLA.mistakes.stats(); }
     },
     watch: { deck() { this.started = false; } },
     methods: {
@@ -125,13 +127,16 @@
         if (this.done % 10 === 0) MLA.gamification.checkAchievements();
       },
       fmt(d) { return d === 0 ? 'now' : d === 1 ? '1 day' : d + ' days'; },
-      key(e) { if (!this.started || !this.card) return; if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); this.flipped = !this.flipped; } else if (this.flipped && ['1', '2', '3', '4'].includes(e.key)) this.grade(['again', 'hard', 'good', 'easy'][Number(e.key) - 1]); }
+      key(e) { if (this.tab !== 'cards' || !this.started || !this.card) return; if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); this.flipped = !this.flipped; } else if (this.flipped && ['1', '2', '3', '4'].includes(e.key)) this.grade(['again', 'hard', 'good', 'easy'][Number(e.key) - 1]); }
     },
     mounted() { this._k = e => this.key(e); document.addEventListener('keydown', this._k); },
     unmounted() { document.removeEventListener('keydown', this._k); },
     template: `
     <div class="stack">
-      <section-head title="Flashcards" sub="Spaced repetition: cards you find easy come back rarely, cards you miss come back soon. Ten minutes a day locks in the vocabulary." />
+      <section-head title="Review" :sub="tab === 'cards' ? 'Spaced repetition: cards you find easy come back rarely, cards you miss come back soon. Ten minutes a day locks in the vocabulary.' : 'Every question you got wrong and every problem you needed help with comes back here, spaced out over days and weeks, until you have got it right several times in a row.'" />
+      <div class="pills"><button :class="{active: tab==='cards'}" @click="tab='cards'"><mla-icon name="cards" :size="14"/> Flashcards</button><button :class="{active: tab==='mistakes'}" @click="tab='mistakes'"><mla-icon name="refresh" :size="14"/> Mistakes to revisit<span v-if="mstats.due" class="chip tiny accent" style="margin-left:6px">{{ mstats.due }}</span></button></div>
+      <review-mistakes v-if="tab==='mistakes'" />
+      <template v-else>
       <div class="pills"><button v-for="d in decks" :key="d.id" :class="{active:deck===d.id}" @click="deck=d.id">{{ d.name }}</button></div>
       <div class="grid cols-4">
         <div class="stat"><div class="label">Due now</div><div class="value">{{ stats.due }}</div></div>
@@ -159,6 +164,76 @@
           <button class="btn success" @click="grade('easy')">Easy<span class="tiny">{{ fmt(ivals.easy) }}</span></button>
         </div>
       </template>
+      </template>
+    </div>`
+  };
+
+  // ---------- Mistakes to revisit (a tab of the Review page) ----------
+  const KIND_LABEL = { quiz: 'Quiz question', check: 'Quick check', predict: 'Predict the output', problem: 'Practice problem' };
+  MLA.components['review-mistakes'] = {
+    data() { return { state: MLA.store.state, queue: [], idx: 0, started: false, done: 0, fixed: 0, result: null, shown: null }; },
+    computed: {
+      stats() { return MLA.mistakes.stats(); },
+      cur() { return this.queue[this.idx] || null; },
+      waitingList() { return MLA.mistakes.all().filter(x => !x.item.graduated).sort((a, b) => a.item.card.due.localeCompare(b.item.card.due)).slice(0, 8); }
+    },
+    methods: {
+      label(x) { return KIND_LABEL[x.item.kind] || x.item.kind; },
+      when(d) { const t = MLA.util.todayKey(); if (d <= t) return 'due now'; const n = Math.round((new Date(d) - new Date(t)) / 86400000); return n === 1 ? 'tomorrow' : 'in ' + n + ' days'; },
+      start() {
+        const items = MLA.util.shuffle(MLA.mistakes.dueItems()).slice(0, 25);
+        // Shuffle the options so the position of the right answer is not what gets remembered.
+        this.queue = items.map(x => x.question ? Object.assign({}, x, { shown: MLA.quiz.shuffled(x.question, MLA.util.seededRng((Date.now() + Math.random() * 1e9) >>> 0)) }) : x);
+        this.idx = 0; this.done = 0; this.fixed = 0; this.result = null; this.started = true;
+      },
+      answer(val) {
+        if (this.result || !this.cur) return;
+        const g = MLA.quiz.grade(this.cur.shown, val);
+        this.result = { correct: g.correct, explanation: g.explanation, expected: g.expected };
+        const it = MLA.mistakes.grade(this.cur.id, g.correct);
+        if (it && it.graduated) this.fixed++;
+        if (!g.correct) this.queue.push(this.cur);   // again later in this session
+      },
+      next() { this.idx++; this.done++; this.result = null; },
+      later() { MLA.mistakes.snooze(this.cur.id, 1); this.next(); },
+      go(p) { MLA.router.navigate(p); },
+      lesson(x) { this.go('/concept/' + x.concept.id); }
+    },
+    template: `
+    <div class="stack">
+      <div class="grid cols-4">
+        <div class="stat"><div class="label">Due now</div><div class="value">{{ stats.due }}</div></div>
+        <div class="stat"><div class="label">Coming back later</div><div class="value">{{ stats.waiting }}</div></div>
+        <div class="stat"><div class="label">Fixed for good</div><div class="value">{{ stats.graduated }}</div></div>
+        <div class="stat"><div class="label">Collected so far</div><div class="value">{{ stats.total }}</div></div>
+      </div>
+      <div v-if="!started || !cur" class="card center">
+        <p v-if="started && !cur" style="font-size:1.1rem">Session complete: {{ done }} revisited{{ fixed ? ', ' + fixed + ' fixed for good' : '' }}. 🎉</p>
+        <template v-if="stats.due">
+          <p class="muted small">{{ stats.due }} item{{ stats.due === 1 ? '' : 's' }} to revisit. Answer each one again: right answers come back after longer and longer gaps (1 day, 6 days, about 2 weeks) until they retire; a miss starts the gaps again.</p>
+          <button class="btn primary" @click="start"><mla-icon name="play" :size="16"/> {{ started ? 'Start another session' : 'Start revisiting' }}</button>
+        </template>
+        <p v-else-if="stats.waiting" class="muted small">Nothing is due today. The next item comes back {{ when(waitingList[0].item.card.due) }}: a gap of a day or more is what makes the second attempt stick.</p>
+        <p v-else class="muted small">Nothing here yet. When you miss a quiz question, a quick check or a "predict first" question, or need the solution to solve a problem, it is saved here and comes back a day or more later.</p>
+      </div>
+      <div v-else class="card">
+        <div class="row between small muted"><span>{{ label(cur) }} · <a @click="lesson(cur)">{{ cur.concept.title }}</a></span><span>{{ idx + 1 }} of {{ queue.length }}</span></div>
+        <template v-if="cur.problem">
+          <h3 class="mt-sm">{{ cur.problem.title }}</h3>
+          <p class="small muted">{{ cur.item.why === 'solution' ? 'You solved this one after viewing the solution.' : 'This one took several attempts.' }} Solve it again without help: open it, press <b>Reset to starter code</b>, and write the solution from memory. An accepted submission counts.</p>
+          <div class="btn-row"><button class="btn primary" @click="go('/problem/' + cur.problem.id)"><mla-icon name="code" :size="15"/> Open the problem</button><button class="btn ghost" @click="later">Tomorrow</button></div>
+        </template>
+        <template v-else>
+          <div class="q-text mt-sm"><mla-md :src="cur.shown.q" /></div>
+          <check-q :key="cur.id + ':' + idx" :q="cur.shown" :done="result" @answer="answer" />
+          <div v-if="result" class="feedback" :class="result.correct ? 'ok' : 'bad'"><strong>{{ result.correct ? 'Right this time!' : 'Not yet.' }}</strong> <mla-md :src="result.explanation" inline /><span v-if="!result.correct && result.expected"> Answer: <b>{{ result.expected }}</b></span></div>
+          <div class="btn-row mt"><button v-if="result" class="btn primary" @click="next">Next</button><button v-if="!result" class="btn ghost" @click="later">Skip until tomorrow</button><button class="btn ghost" @click="lesson(cur)">Re-read the lesson</button></div>
+        </template>
+      </div>
+      <div v-if="waitingList.length && (!started || !cur)" class="card">
+        <h4>In the queue</h4>
+        <div v-for="x in waitingList" :key="x.id" class="row between small" style="padding:4px 0"><span>{{ label(x) }} · {{ x.concept.title }}<span v-if="x.problem"> · {{ x.problem.title }}</span></span><span class="muted">{{ when(x.item.card.due) }}</span></div>
+      </div>
     </div>`
   };
 

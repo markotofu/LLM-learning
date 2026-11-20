@@ -1435,7 +1435,7 @@ print(f"randomized experiment difference:  {y_rct[t_rct == 1].mean() - y_rct[t_r
 
 coef = np.linalg.lstsq(np.c_[np.ones(n), t_obs, age], y_obs, rcond=None)[0]
 print(f"observational, adjusted for age:   {coef[1]:+.2f}")
-`, after: `The treated group is older, and age lowers the outcome, so the naive comparison makes a helpful treatment look slightly harmful. Randomization, or adjusting for the confounder, recovers the true effect.` },
+`, after: `The treated group is older, and age lowers the outcome, so the naive comparison makes a helpful treatment look slightly harmful. Randomization, or adjusting for the confounder, recovers the true effect.`, predict: {"type":"mcq","q":"The treatment truly raises the outcome by +2. Older people take it more often, and age lowers the outcome. What does the naive comparison of treated versus untreated people show?","options":["About +2, the true effect","More than +2","Close to 0, or even negative","Exactly −2"],"answer":2,"explain":"−0.38: confounding by age hides, and here even reverses, the real benefit. A randomized experiment (+1.97) or adjusting for age (+2.05) recovers it.","expect":["observational, naive difference:   -0.38"]} },
       { type: 'check', question: { type: 'mcq', q: 'Why does randomly assigning treatment remove confounding?', options: ['It increases the sample size', 'Treatment becomes independent of every other characteristic, so the groups are comparable on average', 'It removes noise from the outcome', 'It makes the effect larger'], answer: 1, explain: 'Nothing about a unit can influence the coin flip.' } },
       { type: 'text', title: 'Simpson\'s paradox', md: `A famous study of kidney-stone treatments:
 

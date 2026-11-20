@@ -62,6 +62,11 @@ for (const c of concepts) {
     if (s.type === 'text') T.ok(sw + ': text has md', !!s.md && s.md.length > 40);
     if (s.type === 'code') { T.ok(sw + ': code present', !!s.code); T.ok(sw + ': known lang', !s.lang || ['python', 'pytorch', 'bash', 'output', 'text', 'json'].includes(s.lang), s.lang); }
     if (s.type === 'demo') T.ok(sw + ': demo "' + s.demo + '" exists', !!MLA.components['demo-' + s.demo]);
+    if (s.predict) {
+      T.ok(sw + ': prediction is a valid question with an explanation', MLA.quiz.validQuestion(s.predict) && s.predict.type !== 'match' && !!s.predict.explain);
+      T.ok(sw + ': prediction names the output text that confirms it', Array.isArray(s.predict.expect) && s.predict.expect.length > 0 && s.predict.expect.every(e => typeof e === 'string' && e.length > 2));
+      T.ok(sw + ': prediction sits on a runnable Python sample', s.type === 'code' && (!s.lang || s.lang === 'python') && s.run !== false);
+    }
     if (s.type === 'check') T.ok(sw + ': check question valid', MLA.quiz.validQuestion(s.question) && s.question.type !== 'match' && !!s.question.explain);
     if (s.md) { const fences = (s.md.match(/^\s*```/gm) || []).length; T.ok(sw + ': balanced code fences', fences % 2 === 0); }
   });
@@ -71,6 +76,18 @@ for (const c of concepts) {
   T.ok(where + ': every formula defines its symbols (:::where)', legendIssues.length === 0, legendIssues.join(' | '));
   for (const p of c.prereqs) T.ok(where + ': prereq ' + p + ' exists', !!MLA.content.byId[p]);
   T.ok(where + ': no "undefined" leaked into text', !JSON.stringify([c.why, c.when, c.pitfalls, c.sections.map(s => s.md)]).includes('undefined'));
+  const sids = c.sections.map(s => s.id);
+  T.ok(where + ': section ids are unique, non-numeric strings', sids.every(x => typeof x === 'string' && /^[a-z0-9-]+$/.test(x) && !/^\d+$/.test(x)) && new Set(sids).size === sids.length, sids.join(','));
+}
+
+// ---- saved progress from version 6badf8c (positions) must still translate to the right sections ----
+{
+  const fs = require('fs'), path = require('path');
+  const fixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/legacy-sections.json'), 'utf8'));
+  for (const [id, old] of Object.entries(fixture.layouts)) {
+    const L = MLA.progress.legacyLayout(id).slice(0, old.length);
+    T.ok('legacy layout of ' + id + ' matches version ' + fixture.commit + ' (if a lesson\'s first sections changed, run node tools/legacy-sections.js)', JSON.stringify(L) === JSON.stringify(old), JSON.stringify(L) + ' vs ' + JSON.stringify(old));
+  }
 }
 const g = MLA.content.graph;
 const cycle = MLA.graph.findCycle(g);

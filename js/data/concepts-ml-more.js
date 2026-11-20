@@ -511,7 +511,7 @@ def knn_predict(Xtr, ytr, Xte, k):
 print("accuracy, raw features:   ", np.mean(knn_predict(Xtr, ytr, Xte, 5) == yte))
 mu, sd = Xtr.mean(axis=0), Xtr.std(axis=0)
 print("accuracy, standardized:   ", np.mean(knn_predict((Xtr - mu) / sd, ytr, (Xte - mu) / sd, 5) == yte))
-` },
+`, predict: {"type":"mcq","q":"The label depends only on the signal feature (standard deviation 1), but each point also has an income feature (standard deviation 15,000). What accuracy does 5-nearest-neighbours reach on the raw features?","options":["About 95%, the same as after scaling","About 50%: no better than guessing","About 75%","Exactly 100%"],"answer":1,"explain":"0.47, a coin flip. Distances are dominated by income, which is pure noise here, so the neighbours are effectively random. After standardizing, accuracy jumps to 0.95.","expect":["accuracy, raw features:    0.47","accuracy, standardized:    0.95"]} },
       { type: 'check', question: { type: 'mcq', q: 'In kNN, what happens as k becomes very large (close to the number of training examples)?', options: ['The model overfits more', 'Predictions approach the overall majority class / mean (underfitting)', 'Training becomes slower', 'Distances become more accurate'], answer: 1, explain: 'With k ≈ n every prediction averages almost the whole dataset, ignoring the local structure: high bias.' } },
       { type: 'text', title: 'The curse of dimensionality and the cost of prediction', md: `In high dimensions, intuition about "nearby" breaks down. With hundreds of features, data points become sparse and **distances concentrate**: the nearest and farthest neighbours are almost equally far away, so "nearest" carries little information. To keep the same density of points, the data needed grows exponentially with the number of dimensions. Remedies: feature selection, dimensionality reduction (PCA), or learned representations (embeddings) where distances are meaningful.
 
@@ -692,6 +692,7 @@ Entropy — the average surprise in bits; 0 for a pure node and 1 for a 50/50 tw
 A split's quality is the **weighted average impurity** of its children (weighted by how many examples go each way). The decrease from the parent's impurity is the **information gain** (for entropy) or Gini gain. Both measures usually pick very similar splits; Gini is slightly cheaper and is scikit-learn's default.
 
 For **regression trees** impurity is the variance (MSE) of the targets in the node, and leaves predict the mean.` },
+      { type: 'demo', title: 'Interactive: find the best split', demo: 'tree-split' },
       { type: 'code', title: 'Finding the best split by hand', code: `
 import numpy as np
 

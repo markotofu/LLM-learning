@@ -162,4 +162,64 @@
     label(410, 240, 'Only A and B are trained: r · (d_in + d_out) numbers instead of d_out · d_in.') +
     label(410, 258, 'After training, merge for free inference: W ← W + (α/r) · B A.'),
     'LoRA keeps the pretrained weight W frozen and learns a low-rank update B·A beside it. Because B starts at zero, training begins exactly at the base model; the rank r controls how much the adapter can change.');
+  // 9. From base model to assistant: the LLM training pipeline
+  diagram('pipeline', '0 0 820 245', 'Diagram of the LLM training pipeline from random weights to an assistant',
+    box(59, 14, 170, 60, 'dg-box', ['Raw text'], 'trillions of tokens') +
+    box(254, 14, 170, 60, 'dg-box', ['Demonstrations'], '(instruction, response) pairs') +
+    box(474, 14, 170, 60, 'dg-box', ['Comparisons'], 'A is better than B') +
+    box(10, 104, 100, 64, 'dg-box', ['Random', 'weights']) + arrow('M110 136 H178') +
+    box(180, 104, 120, 64, 'dg-acc', ['Base model'], 'continues text') + arrow('M300 136 H378') +
+    box(380, 104, 140, 64, 'dg-acc', ['Instruction', 'model']) + arrow('M520 136 H598') +
+    box(600, 104, 210, 64, 'dg-grn', ['Assistant'], 'the chat model you talk to') +
+    arrow('M144 74 V126', 'dash') + arrow('M339 74 V126', 'dash') + arrow('M559 74 V126', 'dash') +
+    label(144, 196, 'PRETRAINING', 'dg-s dg-b') + label(144, 212, 'predict the next token') + label(144, 228, '→ knowledge, language, skills') +
+    label(339, 196, 'SUPERVISED FINE-TUNING', 'dg-s dg-b') + label(339, 212, 'imitate good answers') + label(339, 228, '→ format and behaviour') +
+    label(559, 196, 'PREFERENCE TUNING', 'dg-s dg-b') + label(559, 212, 'RLHF or DPO') + label(559, 228, '→ helpful, honest, harmless'),
+    'Each stage reuses everything the previous one learned. Pretraining on raw text costs by far the most and gives the model its knowledge; supervised fine-tuning teaches it to answer in the right format; preference tuning shapes which of its possible answers it prefers. Reasoning models add a further reinforcement-learning stage with checkable rewards.');
+
+  // 10. The LSTM cell
+  diagram('lstm', '0 0 820 300', 'Diagram of an LSTM cell with forget, input and output gates',
+    box(10, 40, 100, 40, 'dg-box', ['c_{t−1}']) + arrow('M110 60 H236') + plus(250, 60).replace('>+<', '>×<') + arrow('M264 60 H401') + plus(415, 60) + arrow('M429 60 H718') +
+    box(720, 40, 90, 40, 'dg-grn', ['c_t']) +
+    label(250, 32, 'forget: keep f ⊙ c_{t−1}') + label(415, 32, 'write: add i ⊙ g') + label(575, 50, 'CELL STATE (long-term memory)', 'dg-s dg-b') +
+    box(205, 180, 90, 40, 'dg-amb', ['σ'], 'forget gate f') + box(315, 180, 90, 40, 'dg-amb', ['σ'], 'input gate i') +
+    box(425, 180, 90, 40, 'dg-pur', ['tanh'], 'candidate g') + box(575, 180, 90, 40, 'dg-amb', ['σ'], 'output gate o') +
+    arrow('M250 180 V76') + arrow('M360 180 V130 H399') + arrow('M470 180 V130 H431') + plus(415, 130).replace('>+<', '>×<') + arrow('M415 116 V76') +
+    arrow('M680 60 V96') + box(650, 96, 60, 28, 'dg-pur', ['tanh']) + arrow('M680 124 V134') + plus(680, 150).replace('>+<', '>×<') + arrow('M620 180 V150 H664') +
+    arrow('M694 150 H765 V233') + box(720, 235, 90, 40, 'dg-acc', ['h_t']) +
+    box(10, 235, 120, 40, 'dg-box', ['[h_{t−1}, x_t]']) + '<path d="M130 255 H620" class="dg-line"/>' +
+    arrow('M250 255 V222') + arrow('M360 255 V222') + arrow('M470 255 V222') + arrow('M620 255 V222') +
+    label(375, 288, 'every gate reads the previous hidden state and the new input') + label(652, 272, 'h_t = o ⊙ tanh(c_t)'),
+    'An LSTM cell. The cell state (top line) is the long-term memory: the forget gate scales the old memory, the input gate adds new candidate values, and because the update is mostly addition, gradients can flow back through many steps. The output gate decides how much of the memory to expose as the hidden state h_t. Each gate is a sigmoid between 0 (closed) and 1 (open).');
+
+  // 11. Mixture of experts
+  diagram('moe', '0 0 820 290', 'Diagram of a mixture-of-experts layer routing a token to two of four experts',
+    box(10, 110, 100, 60, 'dg-box', ['token x'], 'one vector') + arrow('M110 140 H148') +
+    box(150, 110, 120, 60, 'dg-pur', ['Router'], 'scores each expert') +
+    box(380, 20, 120, 40, 'dg-box', ['Expert 1'], 'not run') + box(380, 80, 120, 40, 'dg-acc', ['Expert 2'], 'runs') +
+    box(380, 140, 120, 40, 'dg-box', ['Expert 3'], 'not run') + box(380, 200, 120, 40, 'dg-acc', ['Expert 4'], 'runs') +
+    arrow('M270 132 L378 42', 'dash') + arrow('M270 138 L378 100', 'acc') + arrow('M270 144 L378 160', 'dash') + arrow('M270 150 L378 218', 'acc') +
+    label(350, 141, 'g = 0.7', 'dg-t') + label(300, 206, 'g = 0.3', 'dg-t') +
+    arrow('M500 100 L577 134') + arrow('M500 220 L578 147') + plus(590, 140) + arrow('M604 140 H648') +
+    box(650, 110, 160, 60, 'dg-grn', ['output y'], '0.7·FFN₂(x) + 0.3·FFN₄(x)') +
+    label(410, 270, 'Only the top-k experts (here k = 2 of 4) run for each token: total parameters grow with the number of experts, compute per token does not.'),
+    'A mixture-of-experts layer replaces one feed-forward network with several experts and a small router. The router scores the experts for each token, only the best k run, and their outputs are mixed with the router’s gate weights. Different tokens pick different experts.');
+
+  // 12. Parallelism for large-scale training
+  diagram('parallel', '0 0 820 300', 'Diagram comparing data, tensor and pipeline parallelism',
+    label(140, 24, 'DATA PARALLEL', 'dg-s dg-b') + label(410, 24, 'TENSOR PARALLEL', 'dg-s dg-b') + label(680, 24, 'PIPELINE PARALLEL', 'dg-s dg-b') +
+    '<path d="M275 40 V250" class="dg-line dash"/><path d="M545 40 V250" class="dg-line dash"/>' +
+    box(20, 44, 110, 76, 'dg-acc', ['GPU 0', 'full model'], 'batch slice 1') + box(150, 44, 110, 76, 'dg-acc', ['GPU 1', 'full model'], 'batch slice 2') +
+    arrow('M75 120 V158') + arrow('M205 120 V158') + box(30, 160, 220, 44, 'dg-amb', ['all-reduce'], 'average the gradients') +
+    box(420, 36, 40, 30, 'dg-box', ['x']) + arrow('M432 66 L414 88') + arrow('M448 66 L496 88') +
+    box(370, 90, 80, 60, 'dg-acc', ['GPU 0'], 'W[:, :n/2]') + box(460, 90, 80, 60, 'dg-pur', ['GPU 1'], 'W[:, n/2:]') +
+    arrow('M410 150 V173') + arrow('M500 150 V173') + box(370, 175, 170, 32, 'dg-box', ['combine the halves']) +
+    box(580, 40, 200, 40, 'dg-acc', ['layers 1–8'], 'GPU 0') + arrow('M680 80 V103') +
+    box(580, 105, 200, 40, 'dg-acc', ['layers 9–16'], 'GPU 1') + arrow('M680 145 V168') +
+    box(580, 170, 200, 40, 'dg-acc', ['layers 17–24'], 'GPU 2') +
+    label(140, 228, 'split the batch; every GPU') + label(140, 244, 'holds the whole model') +
+    label(410, 228, 'split each matrix; GPUs talk') + label(410, 244, 'inside every layer (fast links)') +
+    label(680, 228, 'split the layers; micro-batches') + label(680, 244, 'flow through, with idle bubbles') +
+    label(410, 286, 'Large runs combine all three, plus sharding of the optimizer state (ZeRO / FSDP).'),
+    'Three ways to spread training over many GPUs. Data parallelism copies the model and splits the batch; tensor parallelism splits each weight matrix, so it needs very fast connections; pipeline parallelism places consecutive layers on different GPUs and keeps them busy by streaming micro-batches.');
 })(typeof globalThis !== 'undefined' ? globalThis : window);

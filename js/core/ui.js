@@ -113,7 +113,7 @@
     const root = document.documentElement;
     if (t === 'light' || t === 'darker') root.setAttribute('data-theme', t); else root.removeAttribute('data-theme');
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta && meta.setAttribute) meta.setAttribute('content', t === 'light' ? '#f6f7fb' : t === 'darker' ? '#05070d' : '#0b1020');
+    if (meta && meta.setAttribute) meta.setAttribute('content', t === 'light' ? '#f6f7f9' : t === 'darker' ? '#000000' : '#0f1012');
   }
 
   MLA.ui = { toasts, toast, modal, openModal, closeModal, confirm, alert, icons, iconSvg, applyTheme };

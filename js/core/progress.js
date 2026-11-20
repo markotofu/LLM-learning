@@ -22,7 +22,7 @@
   function pstate(id) { const s = st(); if (!s.problems[id]) s.problems[id] = { draft: null, draftAt: null, solved: false, solvedAt: null, attempts: 0, runs: 0, assisted: false, solutionViewed: false, hintsShown: 0, lastStatus: null, accepted: null }; return s.problems[id]; }
   const peekP = id => st().problems[id] || null;
 
-  const readable = c => c.sections.map((s, i) => i).filter(i => c.sections[i].type !== 'check');
+  const readable = c => c.sections.filter(s => s.type !== 'check').map(s => s.id);
   const isSolved = pid => { const p = peekP(pid); return !!(p && p.solved); };
   const isCompleted = id => { const p = peekC(id); return !!(p && p.completedAt); };
   const isMastered = id => { const p = peekC(id); return !!(p && p.masteredAt); };
@@ -32,7 +32,7 @@
     const c = concept(id); if (!c) return null;
     const p = peekC(id) || {};
     const secs = readable(c);
-    const read = (p.read || []).filter(i => secs.includes(i)).length;
+    const read = (p.read || []).filter(sid => secs.includes(sid)).length;
     const solved = c.problems.filter(x => isSolved(x.id)).length;
     const hasQuiz = c.quiz.length > 0;
     const total = secs.length + (hasQuiz ? 2 : 0) + c.problems.length * 2;
@@ -67,16 +67,17 @@
 
   // ---- concept events ----
   function visit(id) { const p = cstate(id); p.visitedAt = new Date().toISOString(); G().touchStreak(); }
-  function markRead(id, idx) {
-    const c = concept(id); if (!c) return;
+  function markRead(id, sid) {
+    const c = concept(id); if (!c || !c.sections.some(s => s.id === sid)) return;
     const p = cstate(id);
-    if (!p.read.includes(idx)) { p.read.push(idx); G().touchStreak(); finalize(id); }
+    if (!p.read.includes(sid)) { p.read.push(sid); G().touchStreak(); finalize(id); }
   }
-  function markAllRead(id) { const c = concept(id); if (!c) return; const p = cstate(id); for (const i of readable(c)) if (!p.read.includes(i)) p.read.push(i); G().touchStreak(); finalize(id); }
-  function recordCheck(id, idx, correct) {
+  function markAllRead(id) { const c = concept(id); if (!c) return; const p = cstate(id); for (const sid of readable(c)) if (!p.read.includes(sid)) p.read.push(sid); G().touchStreak(); finalize(id); }
+  function recordCheck(id, sid, correct) {
     const p = cstate(id);
-    if (p.checks[idx] != null) return;
-    p.checks[idx] = !!correct;
+    if (p.checks[sid] != null) return;
+    p.checks[sid] = !!correct;
+    if (!correct && MLA.mistakes) { const pred = String(sid).startsWith('predict-'); MLA.mistakes.note(pred ? 'predict' : 'check', id, pred ? String(sid).slice(8) : sid); }
     if (correct) { st().stats.checksCorrect++; G().addXP(XP.check, 'Knowledge check', 'check'); }
   }
   function recordQuiz(id, result) {
@@ -84,6 +85,7 @@
     p.quizAttempts++; p.quizBest = Math.max(p.quizBest || 0, result.score);
     s.stats.quizzesTaken++;
     s.quizHistory.unshift({ conceptId: id, score: result.score, at: new Date().toISOString() });
+    if (MLA.mistakes) for (const r of (result.results || [])) if (!r.correct && r.question && r.question.type !== 'match') MLA.mistakes.note('quiz', id, MLA.mistakes.qkey(r.question));
     if (s.quizHistory.length > 150) s.quizHistory.length = 150;
     const pass = result.score >= PASS;
     if (result.score === 100) s.stats.perfectQuizzes = (s.stats.perfectQuizzes || 0) + 1;
@@ -108,6 +110,31 @@
     }
   }
 
+  // ---- saved data from older versions ----
+  // Versions up to 6badf8c stored sections read and answered checks by position. Positions are translated
+  // through the layout that version had: js/data/legacy-sections.js lists it for the lessons that changed since,
+  // and every other lesson still starts with the same sections. Ids are never purely numeric, so the format is
+  // self-describing and this is safe to run on any state, including imported files and merged data.
+  const isPos = x => typeof x === 'number' || (typeof x === 'string' && /^\d+$/.test(x));
+  function legacyLayout(id) { const L = (MLA.data.legacySections || {})[id]; if (L) return L; const c = concept(id); return c ? c.sections.map(s => s.id) : []; }
+  function migrateSections(state) {
+    let changed = 0;
+    for (const id of Object.keys((state && state.concepts) || {})) {
+      const cs = state.concepts[id]; if (!cs || typeof cs !== 'object') continue;
+      const L = legacyLayout(id);
+      if (Array.isArray(cs.read) && cs.read.some(isPos)) { cs.read = Array.from(new Set(cs.read.map(x => isPos(x) ? L[+x] : x).filter(Boolean))); changed++; }
+      if (cs.checks && typeof cs.checks === 'object' && Object.keys(cs.checks).some(isPos)) {
+        const out = {};
+        for (const k of Object.keys(cs.checks)) { if (!isPos(k)) out[k] = cs.checks[k]; }
+        for (const k of Object.keys(cs.checks)) { const key = isPos(k) ? L[+k] : null; if (key && out[key] == null) out[key] = cs.checks[k]; }
+        cs.checks = out; changed++;
+      }
+    }
+    if (state) state.version = Math.max(state.version || 1, 2);
+    return changed;
+  }
+  migrateSections(st());
+
   // ---- problem events ----
   function saveDraft(pid, code) { const p = pstate(pid); p.draft = code; p.draftAt = new Date().toISOString(); }
   function recordRun(pid) { const p = pstate(pid); p.runs = (p.runs || 0) + 1; st().stats.runs++; G().touchStreak(); }
@@ -123,6 +150,10 @@
     s.stats.accepted++;
     p.accepted = { code, at: new Date().toISOString() };
     const first = !p.solved;
+    if (MLA.mistakes) {
+      MLA.mistakes.problemSolved(pid);
+      if (first && (p.solutionViewed || p.attempts >= 4)) MLA.mistakes.note('problem', pr.concept, pid, p.solutionViewed ? 'solution' : 'attempts');
+    }
     if (first) {
       p.solved = true; p.solvedAt = new Date().toISOString();
       p.assisted = !!p.solutionViewed;
@@ -186,5 +217,5 @@
     return { conceptsDone: done, concepts: cs.length, solved, problems: ps.length, pct: MLA.util.pct(done + solved, cs.length + ps.length) };
   }
 
-  MLA.progress = { LEVELS, XP, PASS, concepts, problems, concept, problem, branch, graph, cstate, pstate, peekC, peekP, conceptProgress, prereqsMet, missingPrereqs, status, requirementsText, isCompleted, isMastered, isSolved, visit, markRead, markAllRead, recordCheck, recordQuiz, finalize, saveDraft, recordRun, viewSolution, showHint, recordSubmit, problemStatus, problemOfTheDay, tracks, track, trackConcepts, trackProgress, recommendNext, readyList, branchStats, overall };
+  MLA.progress = { LEVELS, XP, PASS, concepts, problems, concept, problem, branch, graph, cstate, pstate, peekC, peekP, conceptProgress, prereqsMet, missingPrereqs, status, requirementsText, isCompleted, isMastered, isSolved, visit, markRead, markAllRead, recordCheck, migrateSections, legacyLayout, recordQuiz, finalize, saveDraft, recordRun, viewSolution, showHint, recordSubmit, problemStatus, problemOfTheDay, tracks, track, trackConcepts, trackProgress, recommendNext, readyList, branchStats, overall };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

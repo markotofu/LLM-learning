@@ -1206,7 +1206,7 @@ P = sinusoidal(T, d)
 print("with positions added: still just a shuffle?         ", np.allclose(self_attention(X + P)[perm], self_attention(X[perm] + P)))
 print("the first 4 positional vectors:")
 print(P.round(3))
-` },
+`, predict: {"type":"mcq","q":"Without positional information, you shuffle the input tokens and run self-attention again. What do you get?","options":["Completely different outputs","The same output vectors, in the same shuffled order","The same output vectors, in the original order","An error"],"answer":1,"explain":"Self-attention is permutation-equivariant: shuffling the input just shuffles the output, so it has no notion of order. That is why positional encodings are added; with them the check prints False.","expect":["no positions: shuffled input -> just shuffled output: True"]} },
       { type: 'text', title: 'Sinusoidal encodings', md: `The original Transformer added a fixed vector to each position:
 
 $$ PE(pos, 2i) = sin( pos / 10000^(2i/d) )          PE(pos, 2i+1) = cos( pos / 10000^(2i/d) ) $$
@@ -1421,7 +1421,7 @@ for _ in range(4):            # stacking (real models use different weights in e
     y = block(y)
 print("shape in:", x.shape, " shape out:", y.shape)
 print("parameters in one block (attention 4d^2 + FFN 2*d*4d):", 4 * d * d + 2 * d * d_ff)
-` },
+`, predict: {"type":"mcq","q":"A block with d_model = 16 has four d × d attention matrices and a feed-forward network 16 → 64 → 16, without biases. How many parameters does it have?","options":["256","1,024","3,072","12,288"],"answer":2,"explain":"4·d² + 2·d·4d = 12·d² = 12 × 256 = 3,072. The 12·d² rule is a handy estimate for any transformer: GPT-2 small has 12 × 768² ≈ 7 million parameters per block.","expect":["parameters in one block (attention 4d^2 + FFN 2*d*4d): 3072"]} },
       { type: 'check', question: { type: 'mcq', q: 'In a transformer block, where does information move between different token positions?', options: ['In the feed-forward network', 'Only in the attention sub-layer', 'In the LayerNorm', 'In the residual addition'], answer: 1, explain: 'The FFN and normalization act on each position independently; attention mixes across positions.' } },
       { type: 'text', title: 'Encoders, decoders and encoder-decoders', md: `| Type | Attention | Trained to | Examples | Good for |
 | --- | --- | --- | --- | --- |

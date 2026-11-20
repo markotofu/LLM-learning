@@ -167,7 +167,15 @@
         const list = [];
         for (const c of MLA.data.concepts) c.sections.forEach((s, i) => { if (s.type === 'code' && s.run !== false && (!s.lang || s.lang === 'python')) list.push({ c, s, i }); });
         this.done = 0; this.total = list.length;
-        for (const it of list) { const r = await MLA.python.exec(it.s.code, { timeoutMs: 90000 }); this.samples.push({ key: it.c.id + '#' + it.i, title: it.c.title + ' — ' + (it.s.title || 'sample'), ok: r.ok && !r.result.error, detail: r.ok ? (r.result.error ? r.result.error.message : '') : r.message }); this.done++; }
+        for (const it of list) {
+          let out = '';
+          const r = await MLA.python.exec(it.s.code, { timeoutMs: 90000, onStdout: t => { out += t; } });
+          if (r.ok && r.result && r.result.value) out += String.fromCharCode(10) + r.result.value;
+          // A "predict first" question names output text that confirms its answer: check it in this runtime too.
+          const missing = r.ok && !r.result.error && it.s.predict ? [].concat(it.s.predict.expect || []).filter(e => !out.includes(e)) : [];
+          this.samples.push({ key: it.c.id + '#' + it.i, title: it.c.title + ' — ' + (it.s.title || 'sample'), ok: r.ok && !r.result.error && !missing.length, detail: r.ok ? (r.result.error ? r.result.error.message : missing.length ? 'the output no longer confirms the prediction answer: ' + missing.join(' | ') : '') : r.message });
+          this.done++;
+        }
         this.running = false;
       }
     },

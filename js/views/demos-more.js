@@ -438,4 +438,206 @@
       <p class="small muted mt">The vertical axis is the learning rate as a fraction of its peak, lr_max, over a 10,000-step run (horizontal axis: thousands of steps); the shaded strip is the warmup. Warmup ramps the rate up linearly, protecting the start of training while Adam's running statistics are still unreliable. Step decay divides the rate by 10 at fixed points; cosine decay glides smoothly from lr_max down to lr_min. Warmup followed by cosine decay is the standard recipe for transformers and LLMs. Set the warmup to 0 to switch it off.</p>
     </div>`
   };
+  // 27 ---------- Bias and variance: many training sets, one model family ----------
+  // Least-squares polynomial fit on x in [0, 1] (scaled to [-1, 1] for conditioning), with a tiny ridge for stability.
+  function fitPoly(xs, ys, deg) {
+    const n = deg + 1, A = Array.from({ length: n }, () => new Array(n + 1).fill(0));
+    for (let i = 0; i < xs.length; i++) { const x = 2 * xs[i] - 1; const pw = []; for (let j = 0; j < n; j++) pw.push(Math.pow(x, j)); for (let r = 0; r < n; r++) { for (let c = 0; c < n; c++) A[r][c] += pw[r] * pw[c]; A[r][n] += pw[r] * ys[i]; } }
+    for (let r = 0; r < n; r++) A[r][r] += 1e-8;
+    for (let c = 0; c < n; c++) { let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r; [A[c], A[p]] = [A[p], A[c]]; const piv = A[c][c] || 1e-12; for (let r = 0; r < n; r++) { if (r === c) continue; const k = A[r][c] / piv; for (let k2 = c; k2 <= n; k2++) A[r][k2] -= k * A[c][k2]; } }
+    const coef = A.map((row, i) => row[n] / (row[i] || 1e-12));
+    return x0 => { const x = 2 * x0 - 1; let y = 0; for (let j = n - 1; j >= 0; j--) y = y * x + coef[j]; return y; };
+  }
+  const BV_TRUE = x => Math.sin(2 * Math.PI * x), BV_NOISE = 0.3, BV_SETS = 60, BV_MAXDEG = 9;
+  const BV_GRID = Array.from({ length: 61 }, (_, i) => i / 60);
+  function bvStudy(n) {
+    const rng = MLA.util.seededRng(1000 + n);
+    const sets = Array.from({ length: BV_SETS }, () => { const xs = Array.from({ length: n }, () => rng()); return { xs, ys: xs.map(x => BV_TRUE(x) + gauss(rng) * BV_NOISE) }; });
+    const byDeg = [];
+    for (let d = 0; d <= BV_MAXDEG; d++) {
+      const preds = sets.map(s => { const f = fitPoly(s.xs, s.ys, Math.min(d, n - 1)); return BV_GRID.map(f); });
+      const mean = BV_GRID.map((_, j) => preds.reduce((a, p) => a + p[j], 0) / preds.length);
+      const varAt = BV_GRID.map((_, j) => preds.reduce((b, p) => b + (p[j] - mean[j]) ** 2, 0) / (preds.length - 1));
+      // The average of S fits still carries variance / S of noise, so subtract it to estimate the true bias².
+      const bias2 = BV_GRID.reduce((a, x, j) => a + Math.max(0, (mean[j] - BV_TRUE(x)) ** 2 - varAt[j] / preds.length), 0) / BV_GRID.length;
+      const variance = varAt.reduce((a, v) => a + v, 0) / BV_GRID.length;
+      byDeg.push({ preds, mean, bias2, variance, total: bias2 + variance + BV_NOISE * BV_NOISE });
+    }
+    return { sets, byDeg };
+  }
+  C['demo-bias-variance'] = {
+    mixins: [redrawOnChange],
+    data() { return { deg: 1, n: 15 }; },
+    computed: {
+      study() { return bvStudy(this.n); },
+      cur() { return this.study.byDeg[this.deg]; },
+      best() { let b = 0; this.study.byDeg.forEach((r, d) => { if (r.total < this.study.byDeg[b].total) b = d; }); return b; }
+    },
+    methods: {
+      draw() {
+        const P = palette(), cv = this.$refs.cv, cv2 = this.$refs.cv2;
+        if (cv) {
+          const W = 560, H = 300, ctx = setup(cv, W, H), T = frame(ctx, W, H, [0, 1], [-2, 2], P, { xt: 5, yt: 4 });
+          ctx.save(); ctx.beginPath(); ctx.rect(T.pad.l, T.pad.t, W - T.pad.l - T.pad.r, H - T.pad.t - T.pad.b); ctx.clip();
+          ctx.globalAlpha = 0.28; for (const p of this.cur.preds.slice(0, 20)) { ctx.strokeStyle = P.accent; ctx.lineWidth = 1.2; ctx.beginPath(); BV_GRID.forEach((x, j) => { const y = T.Y(Math.max(-3, Math.min(3, p[j]))); j ? ctx.lineTo(T.X(x), y) : ctx.moveTo(T.X(x), y); }); ctx.stroke(); }
+          ctx.globalAlpha = 1;
+          curve(ctx, BV_TRUE, [0, 1], T, P.green, 2, [6, 4]);
+          ctx.strokeStyle = P.amber; ctx.lineWidth = 3; ctx.beginPath(); BV_GRID.forEach((x, j) => { const y = T.Y(Math.max(-3, Math.min(3, this.cur.mean[j]))); j ? ctx.lineTo(T.X(x), y) : ctx.moveTo(T.X(x), y); }); ctx.stroke();
+          const s0 = this.study.sets[0]; s0.xs.forEach((x, i) => dot(ctx, T.X(x), T.Y(s0.ys[i]), 3.5, P.panel, P.text));
+          ctx.restore();
+        }
+        if (cv2) {
+          const W = 560, H = 150, ctx = setup(cv2, W, H), rows = this.study.byDeg, top = 0.8;
+          const T = frame(ctx, W, H, [0, BV_MAXDEG], [0, top], P, { axes: false, xt: 9, yt: 2 });
+          const line = (key, color, width, dash) => { ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash || []); ctx.beginPath(); rows.forEach((r, d) => { const y = T.Y(Math.min(top, key === 'total' ? r.total : r[key])); d ? ctx.lineTo(T.X(d), y) : ctx.moveTo(T.X(d), y); }); ctx.stroke(); ctx.setLineDash([]); };
+          line('bias2', P.amber, 2); line('variance', P.accent, 2); line('total', P.text, 2.5, [5, 3]);
+          ctx.strokeStyle = P.muted; ctx.setLineDash([2, 3]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(T.X(0), T.Y(BV_NOISE * BV_NOISE)); ctx.lineTo(T.X(BV_MAXDEG), T.Y(BV_NOISE * BV_NOISE)); ctx.stroke(); ctx.setLineDash([]);
+          dot(ctx, T.X(this.deg), T.Y(Math.min(top, this.cur.total)), 5.5, P.pink);
+        }
+      }
+    },
+    template: `
+    <div class="card demo-card">
+      <div class="small muted">degree <b>{{ deg }}</b> with {{ n }} training points: bias² <b>{{ cur.bias2.toFixed(3) }}</b> · variance <b>{{ cur.variance.toFixed(3) }}</b> · noise σ² {{ (0.09).toFixed(2) }} · expected test error <b>{{ cur.total.toFixed(3) }}</b> (lowest at degree {{ best }})</div>
+      <canvas ref="cv" class="demo-canvas"></canvas>
+      <canvas ref="cv2" class="demo-canvas short"></canvas>
+      <div class="demo-controls">
+        <label>Polynomial degree (model flexibility) <b>{{ deg }}</b><input type="range" min="0" max="9" step="1" v-model.number="deg"></label>
+        <label>Training points per set <b>{{ n }}</b><input type="range" min="10" max="60" step="5" v-model.number="n"></label>
+      </div>
+      <p class="small muted mt">Top: the same polynomial model fitted to 20 different training sets (thin blue), each drawn from the same source: the green dashed curve plus noise (one set is shown as dots). Amber: the average of all the fits. Bias is the gap between amber and green; variance is how much the blue curves scatter around amber. Bottom: bias² (amber), variance (blue) and their sum plus the noise floor (dashed) for every degree. Low degrees miss the shape (high bias); high degrees chase each set's noise (high variance); more training points shrink the variance and move the best degree up.</p>
+    </div>`
+  };
+
+  // 28 ---------- Decision trees: find the best split ----------
+  function treeData() {
+    const rng = MLA.util.seededRng(17), pts = [];
+    for (let i = 0; i < 32; i++) pts.push([Math.min(9.8, Math.max(0.2, 3.2 + gauss(rng) * 1.5)), Math.min(4.8, Math.max(0.2, 1.8 + gauss(rng) * 0.85)), 0]);
+    for (let i = 0; i < 28; i++) pts.push([Math.min(9.8, Math.max(0.2, 6.6 + gauss(rng) * 1.5)), Math.min(4.8, Math.max(0.2, 3.1 + gauss(rng) * 0.85)), 1]);
+    return pts;
+  }
+  const TREE_PTS = treeData();
+  const impurity = (counts, kind) => { const n = counts[0] + counts[1]; if (!n) return 0; const p = counts.map(c => c / n); return kind === 'gini' ? 1 - p[0] * p[0] - p[1] * p[1] : -p.reduce((a, q) => a + (q > 0 ? q * Math.log2(q) : 0), 0); };
+  function evalSplit(f, t, kind) {
+    const L = [0, 0], R = [0, 0];
+    for (const p of TREE_PTS) (p[f] <= t ? L : R)[p[2]]++;
+    const nL = L[0] + L[1], nR = R[0] + R[1], n = nL + nR;
+    const parent = impurity([L[0] + R[0], L[1] + R[1]], kind), iL = impurity(L, kind), iR = impurity(R, kind);
+    const weighted = (nL * iL + nR * iR) / n;
+    return { L, R, nL, nR, parent, iL, iR, weighted, gain: parent - weighted };
+  }
+  C['demo-tree-split'] = {
+    mixins: [redrawOnChange],
+    data() { return { f: 0, t: 2.5, kind: 'gini' }; },
+    computed: {
+      s() { return evalSplit(this.f, this.t, this.kind); },
+      name() { return this.kind === 'gini' ? 'Gini' : 'entropy'; }
+    },
+    methods: {
+      best() {
+        let bestS = null;
+        for (const f of [0, 1]) {
+          const vals = Array.from(new Set(TREE_PTS.map(p => p[f]))).sort((a, b) => a - b);
+          for (let i = 1; i < vals.length; i++) { const t = (vals[i - 1] + vals[i]) / 2; const r = evalSplit(f, t, this.kind); if (!bestS || r.weighted < bestS.weighted - 1e-12) bestS = { f, t, weighted: r.weighted }; }
+        }
+        this.f = bestS.f; this.t = +bestS.t.toFixed(2);
+      },
+      majority(c) { return c[0] === c[1] ? null : c[0] > c[1] ? 0 : 1; },
+      draw() {
+        const cv = this.$refs.cv; if (!cv) return; const W = 560, H = 300; const ctx = setup(cv, W, H); const P = palette();
+        const T = frame(ctx, W, H, [0, 10], [0, 5], P, { xt: 10, yt: 5, axes: false });
+        const cols = [P.cyan, P.pink], s = this.s;
+        const shade = (x0, x1, y0, y1, cls) => { if (cls == null) return; ctx.fillStyle = cols[cls]; ctx.globalAlpha = 0.1; ctx.fillRect(T.X(x0), T.Y(y1), T.X(x1) - T.X(x0), T.Y(y0) - T.Y(y1)); ctx.globalAlpha = 1; };
+        if (this.f === 0) { shade(0, this.t, 0, 5, this.majority(s.L)); shade(this.t, 10, 0, 5, this.majority(s.R)); }
+        else { shade(0, 10, 0, this.t, this.majority(s.L)); shade(0, 10, this.t, 5, this.majority(s.R)); }
+        for (const p of TREE_PTS) dot(ctx, T.X(p[0]), T.Y(p[1]), 4.5, cols[p[2]], P.panel);
+        ctx.strokeStyle = P.amber; ctx.lineWidth = 2.5; ctx.beginPath();
+        if (this.f === 0) { ctx.moveTo(T.X(this.t), T.Y(0)); ctx.lineTo(T.X(this.t), T.Y(5)); } else { ctx.moveTo(T.X(0), T.Y(this.t)); ctx.lineTo(T.X(10), T.Y(this.t)); }
+        ctx.stroke();
+      }
+    },
+    template: `
+    <div class="card demo-card">
+      <div class="row between"><div class="pills"><button :class="{active: f===0}" @click="f=0; t=Math.min(t, 9.9)">Split on x₁</button><button :class="{active: f===1}" @click="f=1; t=Math.min(t, 4.9)">Split on x₂</button></div>
+      <div class="pills"><button :class="{active: kind==='gini'}" @click="kind='gini'">Gini</button><button :class="{active: kind==='entropy'}" @click="kind='entropy'">Entropy</button></div></div>
+      <canvas ref="cv" class="demo-canvas"></canvas>
+      <div class="demo-controls"><label>Threshold: points with {{ f === 0 ? 'x₁' : 'x₂' }} at or below it go left <b>{{ t.toFixed(2) }}</b><input type="range" min="0.1" :max="f === 0 ? 9.9 : 4.9" step="0.05" v-model.number="t"></label></div>
+      <table class="mini-table"><thead><tr><th></th><th>class A (cyan)</th><th>class B (pink)</th><th>{{ name }}</th></tr></thead><tbody>
+        <tr><td>parent</td><td class="mono">{{ s.L[0] + s.R[0] }}</td><td class="mono">{{ s.L[1] + s.R[1] }}</td><td class="mono">{{ s.parent.toFixed(3) }}</td></tr>
+        <tr><td>left ({{ f === 0 ? 'x₁' : 'x₂' }} ≤ {{ t.toFixed(2) }})</td><td class="mono">{{ s.L[0] }}</td><td class="mono">{{ s.L[1] }}</td><td class="mono">{{ s.iL.toFixed(3) }}</td></tr>
+        <tr><td>right</td><td class="mono">{{ s.R[0] }}</td><td class="mono">{{ s.R[1] }}</td><td class="mono">{{ s.iR.toFixed(3) }}</td></tr>
+        <tr><td><b>weighted average of the children</b></td><td colspan="2" class="small muted">({{ s.nL }} × {{ s.iL.toFixed(3) }} + {{ s.nR }} × {{ s.iR.toFixed(3) }}) / {{ s.nL + s.nR }}</td><td class="mono"><b>{{ s.weighted.toFixed(3) }}</b></td></tr>
+        <tr><td>gain (parent − weighted)</td><td colspan="2"></td><td class="mono">{{ s.gain.toFixed(3) }}</td></tr>
+      </tbody></table>
+      <div class="btn-row"><button class="btn sm primary" @click="best">Find the best split</button></div>
+      <p class="small muted mt">A decision tree tries every feature and every threshold between neighbouring values, and keeps the split whose children have the lowest weighted impurity (the biggest gain). Drag the threshold and watch the numbers, then let the button search for you. Shaded regions show which class each side would predict. Gini and entropy usually agree on the best split.</p>
+    </div>`
+  };
+
+  // 29 ---------- Backpropagation, one step at a time ----------
+  const sig = z => 1 / (1 + Math.exp(-z));
+  const BP_STEPS = [
+    { phase: 'f', text: 'Forward 1: multiply. m = w · x.' },
+    { phase: 'f', text: 'Forward 2: add the bias. z = m + b.' },
+    { phase: 'f', text: 'Forward 3: activation. a = σ(z), the sigmoid.' },
+    { phase: 'f', text: 'Forward 4: loss. L = (a − y)². The forward pass is done; every intermediate value is remembered for the way back.' },
+    { phase: 'b', text: 'Backward 1: start from ∂L/∂L = 1. The local derivative of (a − y)² with respect to a is 2(a − y), so ∂L/∂a = 2(a − y).' },
+    { phase: 'b', text: 'Backward 2: through the sigmoid. Its local derivative is σ(z)(1 − σ(z)) = a(1 − a), so ∂L/∂z = ∂L/∂a · a(1 − a).' },
+    { phase: 'b', text: 'Backward 3: through the addition. The local derivative of a sum is 1 for both inputs, so the gradient is copied unchanged: ∂L/∂b = ∂L/∂m = ∂L/∂z.' },
+    { phase: 'b', text: 'Backward 4: through the multiplication. Each input’s local derivative is the other input: ∂L/∂w = ∂L/∂m · x and ∂L/∂x = ∂L/∂m · w. Done: every gradient came from one upstream value times one local derivative.' }
+  ];
+  C['demo-backprop'] = {
+    data() { return { x: 1.5, w: 0.8, b: -0.3, y: 1, step: 0, lr: 0.5, history: [] }; },
+    computed: {
+      v() {
+        const m = this.w * this.x, z = m + this.b, a = sig(z), L = (a - this.y) ** 2;
+        const dA = 2 * (a - this.y), dZ = dA * a * (1 - a), dB = dZ, dM = dZ, dW = dM * this.x, dX = dM * this.w;
+        const h = 1e-5, Lw = w => (sig(w * this.x + this.b) - this.y) ** 2;
+        return { m, z, a, L, dA, dZ, dB, dM, dW, dX, numW: (Lw(this.w + h) - Lw(this.w - h)) / (2 * h) };
+      },
+      info() { return this.step ? BP_STEPS[this.step - 1].text : 'Press "Next step" to run the forward pass, then the backward pass, one operation at a time.'; },
+      done() { return this.step >= BP_STEPS.length; }
+    },
+    watch: { x() { this.step = 0; }, w() { this.step = Math.min(this.step, 0); }, b() { this.step = Math.min(this.step, 0); }, y() { this.step = 0; } },
+    methods: {
+      f(n) { return (Math.abs(n) < 0.0005 ? 0 : n).toFixed(3); },
+      shown(k) { return this.step >= k; },
+      next() { if (!this.done) this.step++; },
+      all() { this.step = BP_STEPS.length; },
+      reset() { this.step = 0; },
+      descend() {
+        if (!this.done) return;
+        this.history.push(this.v.L);
+        this.w = +(this.w - this.lr * this.v.dW).toFixed(4); this.b = +(this.b - this.lr * this.v.dB).toFixed(4);
+        this.$nextTick(() => { this.step = 4; });
+      }
+    },
+    template: `
+    <div class="card demo-card">
+      <div class="diagram-wrap"><svg class="diagram" viewBox="0 0 820 250" role="img" aria-label="Computation graph of one neuron with a squared loss, showing forward values and backward gradients">
+        <defs><marker id="bp-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-head"/></marker></defs>
+        <rect x="10" y="30" width="90" height="50" rx="8" class="dg-box"/><text x="55" y="52" text-anchor="middle" class="dg-t">x = {{ f(x) }}</text><text x="55" y="70" text-anchor="middle" class="dg-s" v-if="shown(8)">∂L/∂x = {{ f(v.dX) }}</text>
+        <rect x="10" y="150" width="90" height="50" rx="8" class="dg-box"/><text x="55" y="172" text-anchor="middle" class="dg-t">w = {{ f(w) }}</text><text x="55" y="190" text-anchor="middle" class="dg-s" v-if="shown(8)">∂L/∂w = {{ f(v.dW) }}</text>
+        <path d="M100 55 L158 98" class="dg-line" marker-end="url(#bp-arr)"/><path d="M100 175 L158 132" class="dg-line" marker-end="url(#bp-arr)"/>
+        <rect x="160" y="85" width="110" height="60" rx="8" :class="shown(1) ? 'dg-acc' : 'dg-box'"/><text x="215" y="108" text-anchor="middle" class="dg-t">m = w · x</text><text x="215" y="126" text-anchor="middle" class="dg-s">{{ shown(1) ? f(v.m) : '?' }}</text><text x="215" y="140" text-anchor="middle" class="dg-s" v-if="shown(7)">∂L/∂m = {{ f(v.dM) }}</text>
+        <path d="M270 115 L318 115" class="dg-line" marker-end="url(#bp-arr)"/>
+        <rect x="320" y="85" width="110" height="60" rx="8" :class="shown(2) ? 'dg-acc' : 'dg-box'"/><text x="375" y="108" text-anchor="middle" class="dg-t">z = m + b</text><text x="375" y="126" text-anchor="middle" class="dg-s">{{ shown(2) ? f(v.z) : '?' }}</text><text x="375" y="140" text-anchor="middle" class="dg-s" v-if="shown(6)">∂L/∂z = {{ f(v.dZ) }}</text>
+        <rect x="320" y="185" width="110" height="44" rx="8" class="dg-box"/><text x="375" y="204" text-anchor="middle" class="dg-t">b = {{ f(b) }}</text><text x="375" y="221" text-anchor="middle" class="dg-s" v-if="shown(7)">∂L/∂b = {{ f(v.dB) }}</text>
+        <path d="M375 185 L375 147" class="dg-line" marker-end="url(#bp-arr)"/>
+        <path d="M430 115 L478 115" class="dg-line" marker-end="url(#bp-arr)"/>
+        <rect x="480" y="85" width="110" height="60" rx="8" :class="shown(3) ? 'dg-acc' : 'dg-box'"/><text x="535" y="108" text-anchor="middle" class="dg-t">a = σ(z)</text><text x="535" y="126" text-anchor="middle" class="dg-s">{{ shown(3) ? f(v.a) : '?' }}</text><text x="535" y="140" text-anchor="middle" class="dg-s" v-if="shown(5)">∂L/∂a = {{ f(v.dA) }}</text>
+        <path d="M590 115 L638 115" class="dg-line" marker-end="url(#bp-arr)"/>
+        <rect x="640" y="85" width="170" height="60" rx="8" :class="shown(4) ? 'dg-amb' : 'dg-box'"/><text x="725" y="108" text-anchor="middle" class="dg-t">L = (a − y)²</text><text x="725" y="126" text-anchor="middle" class="dg-s">{{ shown(4) ? f(v.L) : '?' }}  (y = {{ f(y) }})</text><text x="725" y="140" text-anchor="middle" class="dg-s" v-if="shown(5)">∂L/∂L = 1</text>
+        <text x="410" y="24" text-anchor="middle" class="dg-s dg-b">{{ step === 0 ? 'NOT STARTED' : step <= 4 ? 'FORWARD PASS: values flow left to right' : 'BACKWARD PASS: gradients flow right to left' }}</text>
+      </svg></div>
+      <p class="small" :class="step > 4 ? 'feedback ok' : 'muted'">{{ info }}</p>
+      <div class="btn-row"><button class="btn sm primary" :disabled="done" @click="next">Next step</button><button class="btn sm" :disabled="done" @click="all">Run all</button><button class="btn sm ghost" @click="reset">Reset</button><button class="btn sm" :disabled="!done" @click="descend">Gradient-descent step (η = {{ lr }})</button></div>
+      <div v-if="done" class="small muted">Gradient check for w: backprop gives <b>{{ v.dW.toFixed(6) }}</b>, a numerical estimate (L(w + h) − L(w − h)) / 2h gives <b>{{ v.numW.toFixed(6) }}</b>.<span v-if="history.length"> Loss so far: {{ history.map(x => x.toFixed(3)).join(' → ') }} → <b>{{ v.L.toFixed(3) }}</b>.</span></div>
+      <div class="demo-controls">
+        <label>Input x <b>{{ f(x) }}</b><input type="range" min="-2" max="2" step="0.1" v-model.number="x"></label>
+        <label>Target y <b>{{ f(y) }}</b><input type="range" min="0" max="1" step="0.05" v-model.number="y"></label>
+      </div>
+      <p class="small muted mt">One neuron with a squared loss, as a computation graph. Each backward step multiplies the gradient arriving from the right (upstream) by the node's local derivative, exactly the chain rule. After the backward pass, a gradient-descent step moves w and b against their gradients (w ← w − η·∂L/∂w); repeat it and watch the loss fall.</p>
+    </div>`
+  };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

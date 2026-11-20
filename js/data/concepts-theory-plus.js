@@ -650,7 +650,7 @@ for name, pts in [("3 points", three), ("4 points", four)]:
     print(f"{name}: a line can produce {len(ok)} of the {2 ** len(pts)} labellings")
 fails = [lab for lab in product([0, 1], repeat=4) if not linearly_separable(four, lab)]
 print("labellings of the square that no line can produce:", fails)
-`, after: `Three points in general position can be split every possible way, but the two XOR labellings of the four corners cannot — lines in the plane have VC dimension 3 = d + 1.` },
+`, after: `Three points in general position can be split every possible way, but the two XOR labellings of the four corners cannot — lines in the plane have VC dimension 3 = d + 1.`, predict: {"type":"mcq","q":"Four points sit at the corners of a square. Of the 16 ways to label them positive or negative, how many can a straight line separate?","options":["All 16","14","8","4"],"answer":1,"explain":"14: the two diagonal (XOR-style) labellings are impossible. A line can shatter 3 points but no set of 4, so its VC dimension is 3.","expect":["4 points: a line can produce 14 of the 16 labellings"]} },
       { type: 'check', question: { type: 'mcq', q: 'What is the VC dimension of intervals on the real line (predict 1 inside [a, b])?', options: ['1', '2', '3', 'Infinite'], answer: 1, explain: 'Any 2 points can be labelled every way, but the labelling 1, 0, 1 of three points cannot.' } },
       { type: 'text', title: 'What classical theory misses', md: `Modern networks have far more parameters than training examples. They can even memorize completely **random** labels (Zhang et al., 2017), so their capacity is enormous and the classical bounds above say nothing — yet the same networks generalize well on real labels. Several ideas help explain this:
 

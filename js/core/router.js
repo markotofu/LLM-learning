@@ -12,7 +12,7 @@
     { name: 'playground', pattern: '/playground', title: 'Python Playground', full: true },
     { name: 'tracks', pattern: '/tracks', title: 'Learning Tracks' },
     { name: 'track', pattern: '/track/:id', title: 'Learning Track' },
-    { name: 'review', pattern: '/review', title: 'Flashcards' },
+    { name: 'review', pattern: '/review', title: 'Review' },
     { name: 'glossary', pattern: '/glossary', title: 'Glossary' },
     { name: 'achievements', pattern: '/achievements', title: 'Achievements' },
     { name: 'profile', pattern: '/profile', title: 'Progress & Sync' },

@@ -346,7 +346,7 @@ w_map = np.linalg.solve(X.T @ X + 2.0 * np.eye(5), X.T @ y)
 print("true weights:         ", w_true)
 print("MLE (least squares):  ", w_mle.round(2), "  length", round(float(np.linalg.norm(w_mle)), 2))
 print("MAP (ridge, lambda=2):", w_map.round(2), "  length", round(float(np.linalg.norm(w_map)), 2))
-`, after: `With 3 flips the prior pulls the estimate away from the extreme; with 300 flips it barely matters. With only 8 examples for 5 weights, the MAP (ridge) weights are shrunk towards zero — a smaller, more cautious model.` },
+`, after: `With 3 flips the prior pulls the estimate away from the extreme; with 300 flips it barely matters. With only 8 examples for 5 weights, the MAP (ridge) weights are shrunk towards zero — a smaller, more cautious model.`, predict: {"type":"mcq","q":"A coin lands heads 3 times in 3 flips, so the maximum-likelihood estimate of P(heads) is 1.0. What is the MAP estimate with a Beta(2, 2) prior?","options":["1.0","0.8","0.6","0.5"],"answer":1,"explain":"(h + a − 1) / (n + a + b − 2) = (3 + 1) / (3 + 2) = 0.8. The prior acts like one extra head and one extra tail, pulling the estimate away from the extreme; with 300 heads in 300 flips it barely matters (0.997).","expect":["MAP, Beta(2,2) prior 0.800"]} },
       { type: 'check', question: { type: 'tf', q: 'With more and more data, the MAP estimate approaches the maximum-likelihood estimate.', answer: true, explain: 'The likelihood term grows with n while the prior stays fixed.' } }
     ],
     when: `- Designing a loss for a new kind of target: counts → Poisson NLL, heavy-tailed noise → Laplace or Student-t, probabilities → cross-entropy.

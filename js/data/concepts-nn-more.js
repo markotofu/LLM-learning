@@ -323,7 +323,7 @@ for name, std in [("too small (0.01)", 0.01), ("too large (0.2)", 0.2), ("He: sq
         W = rng.normal(0, std, size=(256, 256))
         h = np.maximum(0, h @ W)                    # ReLU layer
     print(f"{name:<22} activation std after 30 layers: {h.std():.3e}")
-` },
+`, predict: {"type":"mcq","q":"Weights are drawn with a standard deviation of 0.01 in each of 30 ReLU layers of width 256. What happens to the standard deviation of the activations by the last layer?","options":["It stays about the same","It shrinks to almost exactly zero","It grows to billions","It becomes nan"],"answer":1,"explain":"About 5e-29: each layer multiplies the scale by roughly 0.01 × √(256 / 2) ≈ 0.11, and thirty such factors vanish. With 0.2 it explodes (3e10); He initialization, √(2 / fan_in), keeps it near 1.","expect":["too small (0.01)       activation std after 30 layers: 4.916e-29"]} },
       { type: 'text', title: 'Batch normalization', md: `**BatchNorm** (2015) normalizes each feature using statistics of the current mini-batch:
 
 $$ x̂ = (x − μ_batch) / √(σ²_batch + ε)          y = γ · x̂ + β $$
@@ -1209,6 +1209,7 @@ h_t — the new hidden state, a gated view of the cell state
 :::
 
 Because c_t is updated additively and the forget gate can stay near 1, gradients flow back through many steps — the same "highway" idea as residual connections. The **GRU** is a simpler two-gate variant with similar performance.` },
+      { type: 'demo', title: 'Diagram: inside an LSTM cell', demo: 'dg-lstm' },
       { type: 'text', title: 'Why transformers took over', md: `RNNs (even LSTMs) have two structural limits:
 1. **Sequential computation** — step t needs step t−1, so you can't parallelise across the sequence. Training on huge datasets with GPUs is slow.
 2. **A fixed-size memory bottleneck** — everything the model knows about the past must squeeze into one hidden vector; long-range information still degrades.

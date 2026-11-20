@@ -51,6 +51,20 @@ A **new content file** must be added to `index.html` with the other `concepts-*.
 { type: 'check', question: { /* a quiz question, any type except match */ } }
 ```
 
+**Predict first.** A runnable Python code section can carry a `predict` question, shown above the code. The learner commits to an answer, reads the explanation, then runs the code to see it happen:
+
+```js
+{ type: 'code', title: 'Bayes by counting', code: `…`, predict: {
+    type: 'mcq', q: 'If you test positive, how likely is it that you have the condition?',
+    options: ['About 99%', 'About 95%', 'About 50%', 'Under 20%'], answer: 3,
+    explain: 'Only about 17%: …',
+    expect: ['P(condition | positive) ~ 0.167'] } }   // text that must appear in the sample's real output
+```
+
+`expect` is checked by `tests/problems.test.js` (CPython) and by the in-app self-test (Pyodide), so a prediction cannot silently drift away from what the code prints. Keep each expected string short and robust: avoid digits that depend on a library version.
+
+**Section ids and saved progress.** Every section gets an id from its title (quick checks: from a hash of the question). Progress (sections read, answered checks and predictions, the mistakes queue) is stored by these ids, so you can insert or reorder sections freely. Keep section titles unique within a lesson, and do not rename a section without a reason: a renamed section starts again as unread. Old saved data that used positions is migrated through `js/data/legacy-sections.js`; if `tests/content.test.js` reports that a lesson's legacy layout no longer matches (because you changed its first sections), run `node tools/legacy-sections.js` and commit the result.
+
 Runnable code samples execute in the in-browser Python (Pyodide 0.27, Python 3.12, NumPy; pandas, scikit-learn and matplotlib load automatically when imported). Keep them fast (a few seconds at most in the browser) and print something meaningful.
 
 Available demos (25):

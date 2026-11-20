@@ -10,7 +10,7 @@
     { name: 'tracks', label: 'Learning Tracks', icon: 'route', path: '/tracks' },
     { name: 'problems', label: 'Practice Problems', icon: 'code', path: '/problems' },
     { name: 'playground', label: 'Python Playground', icon: 'terminal', path: '/playground' },
-    { name: 'review', label: 'Flashcards', icon: 'cards', path: '/review' },
+    { name: 'review', label: 'Review', icon: 'cards', path: '/review' },
     { name: 'glossary', label: 'Glossary', icon: 'book', path: '/glossary' },
     { name: 'achievements', label: 'Achievements', icon: 'trophy', path: '/achievements' },
     { name: 'profile', label: 'Progress & Sync', icon: 'sync', path: '/profile' }
@@ -74,7 +74,7 @@
       <a class="skip-link" href="#main">Skip to content</a>
       <aside class="sidebar" :class="{open: sidebarOpen}">
         <div class="brand" @click="go('/home')">
-          <span class="brand-logo" aria-hidden="true"><svg viewBox="0 0 32 32" width="34" height="34"><rect width="32" height="32" rx="9" fill="url(#bg-g)"/><defs><linearGradient id="bg-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs><g stroke="#fff" stroke-width="1.6" stroke-opacity=".9" fill="none"><path d="M16 9 9 16M16 9l7 7M9 16l7 7M23 16l-7 7M9 16h14"/></g><g fill="#fff"><circle cx="16" cy="9" r="2.6"/><circle cx="9" cy="16" r="2.3"/><circle cx="23" cy="16" r="2.3"/><circle cx="16" cy="23" r="2.6"/></g></svg></span>
+          <span class="brand-logo" aria-hidden="true"><svg viewBox="0 0 32 32" width="34" height="34"><rect width="32" height="32" rx="9" fill="url(#bg-g)"/><defs><linearGradient id="bg-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0ea5e9"/><stop offset="1" stop-color="#14b8a6"/></linearGradient></defs><g stroke="#fff" stroke-width="1.6" stroke-opacity=".9" fill="none"><path d="M16 9 9 16M16 9l7 7M9 16l7 7M23 16l-7 7M9 16h14"/></g><g fill="#fff"><circle cx="16" cy="9" r="2.6"/><circle cx="9" cy="16" r="2.3"/><circle cx="23" cy="16" r="2.3"/><circle cx="16" cy="23" r="2.6"/></g></svg></span>
           <div><div class="brand-name">ML Atlas</div><div class="brand-sub">Machine learning → LLMs</div></div>
           <button class="icon-btn sidebar-close" aria-label="Close menu" @click.stop="sidebarOpen=false">&times;</button>
         </div>

@@ -448,7 +448,7 @@ try:
     X @ X                         # (4, 3) @ (4, 3): inner dimensions 3 and 4 differ
 except ValueError as err:
     print("shape error:", err)
-` },
+`, predict: {"type":"mcq","q":"X has shape (4, 3) and W has shape (3, 2). What is the shape of H = X @ W?","options":["(4, 2)","(3, 3)","(4, 3)","It raises a shape error"],"answer":0,"explain":"(4, 3) @ (3, 2) → (4, 2): the inner dimensions (3 and 3) must match and disappear, the outer ones remain. One row per example, one column per output.","expect":["H shape: (4, 2)"]} },
       { type: 'check', question: { type: 'fill', q: 'A batch of 32 flattened images has shape (32, 784) and a weight matrix has shape (784, 128). What is the shape of their product? (write it like (a, b))', answer: ['(32, 128)', '(32,128)', '32, 128', '32x128', '32 x 128', '32×128'], display: '(32, 128)', explain: 'Inner dimensions 784 and 784 match and cancel; the outer dimensions give (32, 128).' } },
       { type: 'text', title: 'Element-wise versus matrix products', md: `A frequent confusion in NumPy:
 
@@ -696,7 +696,7 @@ x = 3.0
 print("exact derivative 2x =", 2 * x)
 for h in [0.1, 0.01, 0.001]:
     print(f"h={h:<6} forward={forward_diff(f, x, h):.6f}   central={central_diff(f, x, h):.6f}")
-`, after: `The forward difference has an error proportional to h; the central difference's error shrinks like h² — for a parabola it is exact. Don't make h *too* small, though (like 1e-15): floating-point rounding then dominates.` },
+`, after: `The forward difference has an error proportional to h; the central difference's error shrinks like h² — for a parabola it is exact. Don't make h *too* small, though (like 1e-15): floating-point rounding then dominates.`, predict: {"type":"mcq","q":"Both formulas estimate the derivative of x² at x = 3 (exactly 6) with the same step h = 0.1. Which one prints the more accurate value?","options":["The forward difference (f(x+h) − f(x)) / h","The central difference (f(x+h) − f(x−h)) / 2h","Both give exactly the same number","Neither: h = 0.1 is far too large for either to be close"],"answer":1,"explain":"For x² the central difference is exact (6.000000) at every h, while the forward difference is off by h (6.1 at h = 0.1). In general the central error shrinks like h², the forward error only like h.","expect":["h=0.1    forward=6.100000   central=6.000000"]} },
       { type: 'check', question: { type: 'fill', q: 'f(x) = x³. What is f′(2)?', answer: ['12', '12.0'], explain: 'f′(x) = 3x², so f′(2) = 3·4 = 12.' } },
       { type: 'text', title: 'Partial derivatives and the gradient', md: `Models have many parameters, so the loss is a function of many variables. Take a one-feature linear model with weight w and bias b, and a single training example x = 2, y = 7:
 
@@ -1048,7 +1048,7 @@ print("P(condition | positive) ~", round((positive & has_it).sum() / positive.su
 # Bayes' rule: P(c | +) = P(+ | c) P(c) / [ P(+ | c) P(c) + P(+ | not c) P(not c) ]
 p = 0.99 * 0.01 / (0.99 * 0.01 + 0.05 * 0.99)
 print("Bayes' rule:             ", round(p, 4))
-` },
+`, predict: {"type":"mcq","q":"1% of people have a condition. The test catches 99% of real cases but also flags 5% of healthy people. If you test positive, roughly how likely is it that you really have the condition?","options":["About 99%","About 95%","About 50%","Under 20%"],"answer":3,"explain":"Only about 17%. Healthy people vastly outnumber sick ones, so the 5% false alarms (about 49,500 per million people) swamp the 9,900 true positives. This is the base-rate fallacy; Bayes’ rule gives exactly 0.1667.","expect":["P(condition | positive) ~ 0.167"]} },
       { type: 'check', question: { type: 'mcq', q: 'A test for a very rare condition (1 in 10,000) is 99.9% accurate in both directions. Someone tests positive. The probability they have the condition is…', options: ['About 99.9%', 'About 50%', 'About 9%', 'Exactly 0.01%'], answer: 2, explain: 'In 10,000,000 people: 1,000 have it (999 test positive) and 9,999,000 don\'t (about 9,999 false positives). 999 / (999 + 9,999) ≈ 9%. The tiny base rate dominates.' } },
       { type: 'text', title: 'Independence, products and log-probabilities', md: `When events are independent, the probability of all of them is the product of their probabilities. Models often *assume* independence to keep things tractable — Naive Bayes assumes the words of an email are independent given its class; an LLM writes the probability of a whole sentence as a product of next-token probabilities:
 
@@ -1243,7 +1243,7 @@ print("25th / 75th percentiles :", np.percentile(salaries, [25, 75]))
 
 z = (salaries - salaries.mean()) / salaries.std()
 print("z-scores:", z.round(2))              # the CEO sits 3 std above the mean
-` },
+`, predict: {"type":"mcq","q":"Ten salaries in k€: nine between 38 and 58, plus one CEO at 950. How do the mean and the median compare?","options":["They are almost equal, around 50","The median is much larger than the mean","The mean is much larger than the median","Both are pulled up to about 140"],"answer":2,"explain":"The mean is 137.8, nearly three times the median of 48.5: one extreme value drags the mean but barely moves the middle value. For skewed data, report the median (or both).","expect":["mean  : 137.8","median: 48.5"]} },
       { type: 'check', question: { type: 'mcq', q: 'Website response times are mostly 100–200 ms with occasional 30-second timeouts. Which single number best describes a typical response?', options: ['The mean', 'The median', 'The maximum', 'The variance'], answer: 1, explain: 'The rare huge timeouts inflate the mean. The median reflects the typical experience (and percentiles like p95 describe the slow tail).' } },
       { type: 'text', title: 'Covariance and correlation', md: `Do two variables move together? **Covariance** averages the product of their deviations from their means:
 
@@ -1286,7 +1286,7 @@ for name, y in [("linear", linear), ("quadratic", quadratic), ("noise", noise)]:
     r = np.corrcoef(x, y)[0, 1]
     print(f"{name:<9} r = {r:+.3f}")
 # 'quadratic' depends strongly on x, yet r is near 0: correlation only sees straight-line patterns
-` },
+`, predict: {"type":"mcq","q":"x is spread evenly between −3 and 3, and y = x² plus a little noise, so y depends strongly on x. What correlation r will NumPy report?","options":["Close to +1","Close to −1","Close to 0","Exactly +0.5"],"answer":2,"explain":"r is about 0 (+0.000 here). Pearson correlation only measures straight-line association: the left half of the parabola goes down, the right half goes up, and the two cancel.","expect":["quadratic r = +0.000"]} },
       { type: 'check', question: { type: 'tf', q: 'If two variables have a correlation of 0, they are unrelated.', answer: false, explain: 'r = 0 only rules out a *linear* relationship. y = x² on symmetric x has r ≈ 0 but is completely determined by x.' } },
       { type: 'text', title: 'Samples, noise and the standard error', md: `Every statistic computed from a sample is itself noisy: a different sample gives a slightly different answer. The **standard error** of a mean tells you how noisy:
 
@@ -1494,7 +1494,7 @@ print("90/10 coin      :", round(entropy_bits([0.9, 0.1]), 3))
 print("fair die        :", round(entropy_bits([1/6] * 6), 3))
 print("certain outcome :", entropy_bits([1.0]))
 print("uniform over 1024 tokens:", entropy_bits(np.ones(1024) / 1024), "bits")
-` },
+`, predict: {"type":"mcq","q":"A fair coin has an entropy of 1 bit. What is the entropy of a fair six-sided die, in bits?","options":["1","About 2.6","3","6"],"answer":1,"explain":"log₂ 6 ≈ 2.585 bits. Six equally likely outcomes need more than 2 bits (enough for 4 outcomes) but less than 3 bits (enough for 8).","expect":["fair die        : 2.585"]} },
       { type: 'text', title: 'Cross-entropy: the classification loss', md: `Now suppose the true distribution is **p** but our model predicts **q**. The **cross-entropy** is the average surprise we experience when outcomes come from p but we judge them with q:
 
 $$ H(p, q) = − Σ pᵢ log qᵢ $$
@@ -1560,7 +1560,7 @@ print("KL(p || q)            =", round(H_pq - H_p, 4))
 
 loss = 2.0                                              # average loss per token, in nats
 print("perplexity of a loss of 2.0 nats:", round(float(np.exp(loss)), 2))
-` },
+`, predict: {"type":"mcq","q":"The correct class is index 1, but the model gives it a probability of only 0.01. What cross-entropy loss (natural log) will be printed for that prediction?","options":["About 0.01","About 0.99","About 4.6","About 100"],"answer":2,"explain":"−ln(0.01) ≈ 4.605. Cross-entropy only looks at the probability of the correct class, and it punishes confident mistakes hard: compare 0.105 for a confident correct prediction.","expect":["[0.8, 0.01, 0.19] -> loss 4.605"]} },
       { type: 'text', title: 'Perplexity: the LLM connection', md: `Language models report **perplexity** alongside the loss:
 
 $$ perplexity = exp( average cross-entropy per token ) $$

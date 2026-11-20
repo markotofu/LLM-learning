@@ -78,7 +78,7 @@ X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=0)
 for kernel in ["linear", "rbf"]:
     clf = SVC(kernel=kernel, C=1.0).fit(X_tr, y_tr)
     print(f"{kernel:>6} kernel: test accuracy {clf.score(X_te, y_te):.3f}, support vectors {len(clf.support_)}")
-` },
+`, predict: {"type":"mcq","q":"The two classes form concentric rings. Roughly what test accuracy does a linear-kernel SVM reach?","options":["About 50%","About 75%","About 90%","100%"],"answer":0,"explain":"0.525: no straight line separates an inner ring from an outer one. The RBF kernel works in a space where they are separable and scores 1.000, with far fewer support vectors.","expect":["linear kernel: test accuracy 0.5"]} },
       { type: 'check', question: { type: 'tf', q: 'Increasing C in scikit-learn\'s SVC makes margin violations more expensive, which tends to narrow the margin and fit the training data more tightly.', answer: true, explain: 'C acts like 1/λ: less regularization, more risk of overfitting.' } }
     ],
     when: `- Small/medium datasets with many features (text classification with TF-IDF features is a classic fit for linear SVMs).
