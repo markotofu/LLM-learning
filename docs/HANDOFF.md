@@ -1,5 +1,54 @@
 # ML Atlas — build handoff
 
+## STATUS UPDATE (session 8, later on 2026-11-21): seven new lessons, roadmap.sh coverage, slow samples
+
+The user asked for three things after the capstone round (committed as `23df452`):
+- longer time limits for the slow samples;
+- lessons for the topics missing from the "full mastery" rating;
+- a check against the roadmap.sh [AI Engineer](https://roadmap.sh/ai-engineer) and [Machine Learning](https://roadmap.sh/machine-learning) roadmaps, adding whatever was missing.
+
+**Coverage check.**
+- Both roadmaps' topic lists (about 400 entries) were read from the pages in the browser and matched to lesson text with `scratchpad/coverage.js`, a keyword search. Keyword hits include false positives, such as "permutation importance" for discrete maths, so every gap was judged by hand.
+- The real gaps were:
+  - MCP;
+  - the AI-engineering stack: model choice, APIs, open models, frameworks, agent SDKs and coding assistants;
+  - production observability and safety practices;
+  - discrete maths;
+  - NoSQL and other data sources, and file formats;
+  - TensorFlow and Keras;
+  - video recognition;
+  - context failure modes.
+- Product names from the roadmaps (vector databases, LangChain and LlamaIndex, LangSmith and Langfuse, DeepEval and RAGAS, Cursor and Claude Code) are introduced inside the relevant lessons.
+
+**New lessons:**
+- In `js/data/concepts-frontier-more.js`: `video-generation`, `world-models`, `robotics-vla`.
+- In `js/data/concepts-roadmap.js`: `ai-engineering`, `llm-observability`, `mcp`, `discrete-math`.
+- Each lesson was built as a skeleton (metadata, two practice problems, a placeholder section), then filled by REPLACEing the placeholder with the patch tool. `lesson-patch.js` can now add quiz questions to an empty `quiz: []`.
+- Each has 10–11 sections, 2–4 runnable samples with predictions, 1–2 charts (MCP has none), 6 quiz questions, 2 practice problems with hidden tests, and glossary terms.
+- They were added to the `frontier-dl` and `llm-apps` tracks.
+
+**New sections in existing lessons:**
+- SQL & Data Engineering: "Beyond SQL tables" and "File formats", with a CSV round-trip sample.
+- PyTorch: "TensorFlow, Keras and JAX", with a Keras snippet that runs only locally.
+- Advanced Agents: "When context goes wrong, and memory that lasts".
+- A hierarchical-clustering and DBSCAN section was drafted for k-means but removed, because `gmm-em` already covers it.
+
+**Slow samples.**
+- A new optional field, `timeoutSec` (20–300; `%% timeout N` in patch files), applies to these samples:
+  - `code-sample` uses the larger of it and the learner's limit;
+  - the in-app self-test allows twice the value;
+  - `tests/content.test.js` validates it.
+- 16 samples use it: the LoRA experiments (120 s) and 13 scikit-learn-heavy or loop-heavy samples (90 s).
+
+**Charts.** `tools/charts/charts_y1.py` computes 8 charts; it runs the lessons' own sample code through Node, as `charts_x3.py` and `charts_x4.py` do.
+
+**Regression results:**
+- `npm test`: graph 21, content 12,881, theme 344, views 443, serve 26, problems 1,316.
+- Every new chart is free of overlapping or clipped labels at desktop width and at 375 px, and no page overflows sideways.
+- The new samples all run in Pyodide, with their predictions confirmed.
+
+**Totals:** 113 concepts, 246 problems, 817 quiz questions, 634 glossary terms, 146 charts in 100 lessons, 136 predictions, 334 browser-run samples.
+
 ## STATUS UPDATE (session 8, 2026-11-21): Advanced Agents and the three capstones deepened
 
 The user asked to deepen the four lessons that session 7 left out. Session 7 is committed as `f07dc59` and `987198f`.

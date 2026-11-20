@@ -495,7 +495,7 @@ search = GridSearchCV(SVC(), param_grid, cv=5)
 \`\`\`
 
 When the grid would be huge, sample it instead: \`RandomizedSearchCV\` tries a fixed number of random combinations, drawn from lists or from distributions such as \`scipy.stats.loguniform(1e-3, 1e3)\`. For very expensive models, \`HalvingGridSearchCV\` (successive halving) gives every candidate a little data, keeps the best fraction, and repeats with more data.` },
-      { type: 'code', title: "Nested cross-validation: evaluating the tuning procedure itself", md: `A single train/test split gives one noisy number for "a tuned SVM". **Nested cross-validation** wraps the whole grid search in an outer cross-validation: each outer fold runs a complete inner search on its training part and is scored on its held-out part.`, code: `from sklearn.datasets import load_iris
+      { type: 'code', title: "Nested cross-validation: evaluating the tuning procedure itself", timeoutSec: 90, md: `A single train/test split gives one noisy number for "a tuned SVM". **Nested cross-validation** wraps the whole grid search in an outer cross-validation: each outer fold runs a complete inner search on its training part and is scored on its held-out part.`, code: `from sklearn.datasets import load_iris
 from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.svm import SVC
 
@@ -1261,7 +1261,7 @@ Why "gradient"? The residuals are exactly the negative gradient of the squared-e
 
 Key hyperparameters: number of trees M, learning rate η (smaller needs more trees but generalizes better), tree depth, subsampling of rows/columns, and **early stopping** on validation loss. Modern libraries (XGBoost, LightGBM, CatBoost) add regularization, clever split finding and native categorical handling.` },
       { type: 'check', question: { type: 'mcq', q: 'In gradient boosting with squared-error loss, what does each new tree try to predict?', options: ['The original targets y', 'The residuals of the current ensemble', 'A random subset of labels', 'The feature importances'], answer: 1, explain: 'Each tree fits what the ensemble still gets wrong — the residuals, i.e. the negative gradient.' } },
-      { type: 'code', title: 'Random forest vs gradient boosting in scikit-learn', code: `
+      { type: 'code', title: 'Random forest vs gradient boosting in scikit-learn', timeoutSec: 90, code: `
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import cross_val_score
 from sklearn.tree import DecisionTreeClassifier
@@ -1307,7 +1307,7 @@ for i in top:
 | \`random_state\` | seeds the randomness | fix it for reproducible results |
 
 **Strengths:** among the most widely used models; very accurate with default settings; no scaling needed; robust to irrelevant features; parallel. **Weaknesses:** slower and larger than a linear model; hard to inspect a hundred trees; weaker on very high-dimensional sparse data such as text, where linear models shine.` },
-      { type: 'code', title: "Gradient boosting: depth, learning rate and number of trees", md: `Gradient boosting builds **shallow trees one after another**, each correcting the errors of the ensemble so far. Its main settings interact: \`learning_rate\` scales how much each tree corrects, \`n_estimators\` sets how many trees are added, and \`max_depth\` (often 1 to 5) limits each tree.`, code: `from sklearn.datasets import load_breast_cancer
+      { type: 'code', title: "Gradient boosting: depth, learning rate and number of trees", timeoutSec: 90, md: `Gradient boosting builds **shallow trees one after another**, each correcting the errors of the ensemble so far. Its main settings interact: \`learning_rate\` scales how much each tree corrects, \`n_estimators\` sets how many trees are added, and \`max_depth\` (often 1 to 5) limits each tree.`, code: `from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingClassifier
 

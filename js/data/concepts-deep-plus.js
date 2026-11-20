@@ -87,7 +87,7 @@ Data quality matters as much as quantity: filter generated data for correctness 
 - **N:M sparsity** keeps N non-zero weights in every group of M (for example 2:4), a compromise that NVIDIA GPUs since the Ampere generation accelerate in hardware.
 - **Iterative pruning**: prune a little, fine-tune, repeat — much better than one big cut.
 - **The lottery ticket hypothesis** (Frankle & Carbin, 2019): dense networks contain sparse subnetworks that, trained in isolation from their original initialization, reach the full network's accuracy — suggesting that much of a big network's value lies in giving training many "tickets" to find a good one.` },
-      { type: 'code', title: 'Magnitude pruning a trained network', code: `
+      { type: 'code', title: 'Magnitude pruning a trained network', timeoutSec: 90, code: `
 import numpy as np, warnings
 from sklearn.datasets import load_digits
 from sklearn.neural_network import MLPClassifier

@@ -510,7 +510,7 @@ print("most flagged labels are real errors:", bool(is_wrong[suspects].mean() > 0
 - **Active learning**: let the model choose which examples a human should label next — typically the ones it is most uncertain about (least confident, smallest margin between the top two classes, or highest entropy).
 - **Weak supervision**: write several noisy labelling functions (keyword rules, heuristics, existing databases) and combine their votes into training labels.
 - **Synthetic data**: generate examples with simulators or LLMs (paraphrases, new instructions, rare cases). Filter for quality and diversity, and keep real data in the mix — models trained repeatedly on their own outputs degrade ("model collapse").` },
-      { type: 'code', title: 'Active learning: ask for the labels that teach the most', code: `
+      { type: 'code', title: 'Active learning: ask for the labels that teach the most', timeoutSec: 90, code: `
 import numpy as np
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
@@ -845,6 +845,33 @@ test = {u for (u,) in con.execute("SELECT DISTINCT user_id FROM events WHERE buc
 print("users in train:", len(train), "  users in test:", len(test))
 print("users in both splits:", len(train & test))
 print("user 42 is always in bucket", bucket(42), "-> stable:", bucket(42) == bucket(42))`, after: `About 80% of the 200 users land in training (165 here), and each user's 5 rows stay together, so no user appears on both sides. Because the bucket depends only on the id, rerunning the query next month puts every existing user on the same side, and new users are assigned without disturbing anyone else.`, predict: {"type":"mcq","q":"Rows are assigned to train or test by hashing the user id. How many users can appear in both splits?","options":["About 20%","About half","None","It changes on every run"],"answer":2,"explain":"The bucket depends only on the user id, so all of a user's rows land on the same side, every time.","expect":["users in both splits: 0"]} },
+      { type: 'text', title: "Beyond SQL tables: other sources of data", md: `Relational databases are only one of the places training data comes from:
+
+- **NoSQL databases** trade the strict schemas and joins of relational databases for flexibility or scale. *Document stores* such as MongoDB keep JSON-like records with nested fields; *key-value stores* such as Redis give very fast lookups (caches, online feature serving); *wide-column stores* such as Cassandra handle huge, write-heavy tables; *graph databases* such as Neo4j store relationships; and *search engines* such as Elasticsearch index text. For training you usually export them into flat tables, flattening nested documents into columns.
+- **APIs** (REST or GraphQL) return JSON. Handle pagination, rate limits, authentication and retries, and keep the raw responses so that you can reprocess them when your parsing improves.
+- **The web.** Scraping must respect robots.txt, terms of service, copyright and privacy law. Prefer official datasets and APIs, and expect heavy cleaning: boilerplate, duplicates, encodings.
+- **Apps and devices.** Web and mobile apps emit event logs (views, clicks, purchases, sessions), and IoT devices stream sensor readings with irregular timing, clock drift and gaps. Both usually arrive through a streaming system such as Kafka and land in a data lake.
+- **Warehouses and lakes.** Analytical databases (BigQuery, Snowflake, Redshift) and data lakes (Parquet files on cloud storage) are where training tables are usually assembled, with SQL as above.` },
+      { type: 'code', title: "File formats: what a CSV round trip loses", md: `**CSV** is universal but stores only text: every type has to be guessed again when the file is read. **JSON** and **JSON Lines** (one JSON object per line, the usual format for logs and for LLM fine-tuning and evaluation data) keep nesting and basic types. **Parquet** is a typed, compressed, columnar format that reads only the columns you ask for, the standard for large tables (\`df.to_parquet\` needs the pyarrow library, which this in-browser Python does not include). **Excel** files are common in business data (\`pd.read_excel\` needs openpyxl); watch for merged cells, several sheets, formulas and dates stored as numbers. A small table with leading zeros and dates, through CSV and through JSON Lines:`, code: `import io
+import pandas as pd
+
+df = pd.DataFrame({"user_id": ["00042", "00107"], "zip": ["02139", "94105"],
+                   "signup": pd.to_datetime(["2026-01-05", "2026-03-17"]), "active": [True, False]})
+csv_text = df.to_csv(index=False)
+back = pd.read_csv(io.StringIO(csv_text))
+print(csv_text)
+print("types before:   ", {c: str(t) for c, t in df.dtypes.items()})
+print("types after CSV:", {c: str(t) for c, t in back.dtypes.items()})
+print("zip codes after CSV:", back["zip"].tolist())
+
+jsonl = df.to_json(orient="records", lines=True, date_format="iso")
+print(jsonl)
+back_json = pd.read_json(io.StringIO(jsonl), lines=True, dtype={"user_id": str, "zip": str})
+print("zip codes after JSON Lines:", back_json["zip"].tolist())
+print("CSV lost the leading zeros:", back["zip"].tolist() == [2139, 94105])
+
+fixed = pd.read_csv(io.StringIO(csv_text), dtype={"user_id": str, "zip": str}, parse_dates=["signup"])
+print("fixed by declaring the types:", fixed["zip"].tolist(), str(fixed["signup"].dtype))`, after: `Read back with the default settings, the CSV's ids and zip codes become integers, losing their leading zeros (02139 becomes 2139, which is a different zip code), and the dates come back as plain text. JSON Lines keeps the strings as strings. Whatever the format, declare the types when you read data (\`dtype=\`, \`parse_dates=\`), and prefer typed formats such as Parquet for anything you will read many times.`, predict: {"type":"mcq","q":"A table with the zip code \"02139\" is saved to CSV and read back with pandas' default settings. What happens to the zip code?","options":["It stays \"02139\"","It becomes the number 2139, losing its leading zero","It becomes NaN","pandas refuses to read the file"],"answer":1,"explain":"CSV stores only text, and read_csv guesses that a column of digits is an integer column, so the leading zero disappears. Declaring dtype={\"zip\": str} keeps it.","expect":["CSV lost the leading zeros: True"]} },
       { type: 'text', title: 'Pipelines and data quality', md: `- **ETL vs ELT**: extract, transform, load (transform before the warehouse) or load raw data first and transform inside the warehouse with SQL (dbt is a popular tool) — the modern default.
 - **Batch vs streaming**: nightly jobs for most training data; streams (Kafka, Flink) for real-time features.
 - **Storage**: columnar formats such as **Parquet** are typed, compressed and let queries read only the needed columns — far better than CSV for analytics. Warehouses (BigQuery, Snowflake, Redshift) and lakehouse tables (Delta Lake, Iceberg) hold the data; engines such as DuckDB and Polars bring the same ideas to a laptop.

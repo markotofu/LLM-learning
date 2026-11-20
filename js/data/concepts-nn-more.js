@@ -753,6 +753,25 @@ model.eval()                                             # before evaluating or 
 \`\`\`
 
 For reproducible runs, seed every source of randomness (\`random.seed\`, NumPy's generator, \`torch.manual_seed\`), seed the data loader's workers, and record the library versions. Bit-for-bit reproducibility on GPUs also needs \`torch.use_deterministic_algorithms(True)\`, at some cost in speed. Even then, results can differ across hardware and versions, so compare runs by their metrics over several seeds rather than by identical numbers.` },
+      { type: 'text', title: "TensorFlow, Keras and JAX", md: `PyTorch is the most widely used framework in research and in most new LLM work, but it is not the only one:
+
+- **TensorFlow** (Google, 2015) is still common in production systems, on phones and microcontrollers (TensorFlow Lite, now called LiteRT) and in the browser (TensorFlow.js).
+- **Keras** is a high-level API for defining and training models. Since Keras 3 it runs on top of TensorFlow, JAX or PyTorch.
+- **JAX** (Google) combines NumPy-style code with automatic differentiation and compilation, and is popular for research at very large scale.
+
+The concepts carry over unchanged: tensors, automatic differentiation, layers, losses, optimizers and training loops. Mostly the style differs. Keras hides the training loop behind \`model.fit\`, while PyTorch makes you write it, which is more code but makes every step visible and easy to change.` },
+      { type: 'code', title: "The same regression model in Keras", run: false, code: `# pip install tensorflow      (run on your own computer)
+import numpy as np
+import keras
+from keras import layers
+
+X = np.random.rand(1000, 3).astype("float32")
+y = X @ np.array([2.0, -1.0, 0.5], dtype="float32") + 0.3
+
+model = keras.Sequential([keras.Input(shape=(3,)), layers.Dense(16, activation="relu"), layers.Dense(1)])
+model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.01), loss="mse")
+model.fit(X, y, epochs=20, batch_size=32, validation_split=0.2, verbose=0)    # the whole training loop
+print("loss on the last 200 examples:", model.evaluate(X[-200:], y[-200:], verbose=0))`, after: `\`compile\` chooses the optimizer and the loss, and \`fit\` runs the loop that the PyTorch version above writes out: batching, the forward pass, the loss, the backward pass and the optimizer step. Moving between frameworks is mostly a matter of learning their vocabulary.` },
       { type: 'text', title: 'Going further: data loading, devices and debugging', md: `- **Datasets and DataLoaders**: a Dataset defines \`__len__\` and \`__getitem__\`; a DataLoader shuffles, batches and can load in parallel worker processes.
 - **Devices and precision**: model and batch must live on the same device (\`.to("cuda")\`); \`torch.autocast\` runs most operations in 16-bit for speed (see *Training at Scale*).
 - **Modes**: \`model.train()\` and \`model.eval()\` switch dropout and batch normalization between training and inference behaviour; wrap evaluation in \`torch.no_grad()\` to save memory.

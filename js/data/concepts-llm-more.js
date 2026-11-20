@@ -2041,7 +2041,7 @@ x, y = ids[0:block_size], ids[1:block_size + 1]       # one window = 8 training 
 for t in range(block_size):
     print(f"context {decode(x[:t + 1])!r:12} -> next {decode([y[t]])!r}")
 ` },
-      { type: 'code', title: 'Step 2 — train a neural language model in your browser', code: `
+      { type: 'code', title: 'Step 2 — train a neural language model in your browser', timeoutSec: 90, code: `
 import numpy as np
 text = ("the model reads the text one character at a time. it learns which letters tend to follow which, "
         "then which words follow which. with more data and more layers it learns grammar, facts and style. "

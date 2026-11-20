@@ -416,6 +416,23 @@ print("after: ", sum(tokens(m) for m in small), "tokens in", len(small), "messag
 print(small[1]["content"])
 `, after: `The newest turns survive verbatim; everything older collapses into one short summary that preserves what matters — here, which files were touched. In real agents the quality of that summary (decisions made, open problems, file paths, next steps) decides whether the agent can continue seamlessly.` },
       { type: 'check', question: { type: 'mcq', q: 'Why put the system prompt and tool definitions first and keep them unchanged?', options: ['Models ignore the end of the context', 'A stable prefix can be served from the prompt cache, saving cost and latency on every step', 'Tools must be defined last', 'It improves tokenization'], answer: 1, explain: 'Changing anything early in the context invalidates the cache for everything after it.' } },
+      { type: 'text', title: "When context goes wrong, and memory that lasts", md: `Long-running agents fail in characteristic ways that come from their context rather than from the model:
+
+- **Poisoning:** a hallucination, a wrong tool result or injected text enters the context and is treated as fact from then on.
+- **Distraction:** a long history drowns the actual task, and the agent starts repeating earlier actions instead of making progress.
+- **Confusion:** irrelevant tools or documents in the context lead to wrong choices.
+- **Clash:** information gathered at different steps contradicts itself, and the agent cannot tell which part is current.
+- **Rot:** quality degrades gradually as the context grows, well before the window is full.
+
+The remedies are the context-engineering tools above, used deliberately: validate results before relying on them, compact and prune, give subtasks to **subagents** that start with a fresh, minimal context and return a short summary (which also isolates any poisoned content), and keep the plan and key facts in structured notes.
+
+**Memory that lasts across sessions** comes in three kinds:
+
+- **semantic** memory: facts and preferences ("the user's project uses PostgreSQL");
+- **episodic** memory: past runs and their outcomes ("the last deployment failed because of a missing migration");
+- **procedural** memory: instructions and skills, often files the agent reads at the start of a task.
+
+Memory needs policies: what is worth writing (and with what source and date), what to retrieve (relevant and recent, and only a little of it), when entries expire, and who can inspect and delete them. Treat memory as untrusted input too: a poisoned memory persists across sessions and users.` },
       { type: 'text', title: 'Planning, memory and self-correction', md: `- **Plan, then execute**: have the agent write an explicit plan or to-do list, execute step by step, and update the plan when reality differs. Plans make progress visible and give compaction something to preserve.
 - **Decomposition**: split big tasks into sub-tasks with clear completion criteria; a sub-task should be checkable on its own.
 - **Verification and reflection**: before declaring success, check against the original requirements — run the tests, validate the output's schema, re-read the question. Critique-and-revise loops help most when the critique is grounded in an external signal (a test result, an error message) rather than the model's own opinion.

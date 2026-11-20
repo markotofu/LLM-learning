@@ -986,7 +986,7 @@ Both embedding updates use the values from before this step.
 :::
 
 Nobody tells the model what the dimensions mean, yet they often line up with recognizable tastes (action versus romance, mainstream versus niche). This approach won much of the Netflix Prize.` },
-      { type: 'code', title: 'Matrix factorization from scratch', code: `
+      { type: 'code', title: 'Matrix factorization from scratch', timeoutSec: 90, code: `
 import numpy as np
 rng = np.random.default_rng(0)
 n_users, n_items, k = 120, 80, 3

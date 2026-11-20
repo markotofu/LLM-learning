@@ -131,8 +131,13 @@ function apply(op) {
   if (quiz.length) {
     const c2 = { open: c.open, close: match(src, c.open) };
     const [qo, qc] = arrayIn(src, c2.open, c2.close, 'quiz'); const list = items(src, qo, qc); const last = list[list.length - 1];
-    const ind = (() => { const ls = src.lastIndexOf('\n', last.start); return src.slice(ls + 1, last.start); })();
-    src = src.slice(0, last.end + 1) + ',\n' + ind + quiz.map(q => JSON.stringify(q.question)).join(',\n' + ind) + src.slice(last.end + 1);
+    if (!last) {   // an empty quiz array: put the questions on their own lines inside the brackets
+      const base = src.slice(src.lastIndexOf('\n', qo) + 1, qo).replace(/\S.*$/, ''), ind = base + '  ';
+      src = src.slice(0, qo + 1) + '\n' + ind + quiz.map(q => JSON.stringify(q.question)).join(',\n' + ind) + '\n' + base + src.slice(qc);
+    } else {
+      const ind = (() => { const ls = src.lastIndexOf('\n', last.start); return src.slice(ls + 1, last.start); })();
+      src = src.slice(0, last.end + 1) + ',\n' + ind + quiz.map(q => JSON.stringify(q.question)).join(',\n' + ind) + src.slice(last.end + 1);
+    }
   }
   fs.writeFileSync(c.file, src);
   return id + ': ' + op.kind.toLowerCase() + ' ' + secs.length + ' section(s)' + (quiz.length ? ', ' + quiz.length + ' quiz question(s)' : '') + ' in ' + path.basename(c.file);

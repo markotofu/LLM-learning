@@ -1284,7 +1284,7 @@ print("mean cross-validation R2 (rows: degree, columns: alpha)")
 print(table.round(2).to_string())
 print("best:", search.best_params_)
 print(f"test R2: {search.score(X_test, y_test):.3f}")`, after: `The interaction is the point. Degree-3 features (285 of them) with weak regularization are a disaster (a negative R²: far worse than predicting the mean), but with strong regularization they become usable. Searching the two settings separately would miss that. On this small, noisy dataset the plain linear model still wins, which is a useful result in itself.` },
-      { type: 'code', title: "Letting the search choose the model", md: `The steps of a pipeline are parameters too, so a grid search can choose **which** preprocessing and **which** model to use. Each dictionary in the list is one family of candidates; \`None\` skips a step.`, code: `from sklearn.datasets import load_breast_cancer
+      { type: 'code', title: "Letting the search choose the model", timeoutSec: 90, md: `The steps of a pipeline are parameters too, so a grid search can choose **which** preprocessing and **which** model to use. Each dictionary in the list is one family of candidates; \`None\` skips a step.`, code: `from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler

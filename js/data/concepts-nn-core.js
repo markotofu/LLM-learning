@@ -619,7 +619,7 @@ d_{l−1} · d_l — the weights of layer l, one per (input, neuron) pair
 :::
 
 A transformer's feed-forward block is exactly an MLP: d_model → 4·d_model → d_model. For GPT-2 small (d_model = 768) that is about 4.7 million parameters per layer — roughly two thirds of each layer's weights.` },
-      { type: 'code', title: "Neural networks in scikit-learn: MLPClassifier", md: `\`MLPClassifier\` builds the networks of this lesson for you. \`hidden_layer_sizes=(100,)\` means one hidden layer of 100 units; \`(10, 10)\` means two hidden layers of 10 units each. The data are two interleaving half-moons, which no straight line can separate.`, code: `import warnings
+      { type: 'code', title: "Neural networks in scikit-learn: MLPClassifier", timeoutSec: 90, md: `\`MLPClassifier\` builds the networks of this lesson for you. \`hidden_layer_sizes=(100,)\` means one hidden layer of 100 units; \`(10, 10)\` means two hidden layers of 10 units each. The data are two interleaving half-moons, which no straight line can separate.`, code: `import warnings
 from sklearn.datasets import make_moons
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
@@ -636,7 +636,7 @@ print("same network, different random starting weights:")
 for seed in range(4):
     mlp = MLPClassifier(hidden_layer_sizes=(100,), max_iter=3000, random_state=seed).fit(X_train, y_train)
     print(f"  random_state={seed}: test {mlp.score(X_test, y_test):.3f}")`, after: `The 100-unit network draws a curved boundary that follows the moons; the 10-unit networks are too small for this shape. Notice also that **the same architecture gives different results with different random starting weights**: training a network is a non-convex optimization, so different starting points end in different solutions. Small networks are especially sensitive. Report results over several seeds, or average several networks.` },
-      { type: 'code', title: "Scaling and regularization decide the result", md: `The breast-cancer features range from about 0.001 to 2,500. Neural networks assume inputs of similar size, typically mean 0 and standard deviation 1.`, code: `import warnings
+      { type: 'code', title: "Scaling and regularization decide the result", timeoutSec: 90, md: `The breast-cancer features range from about 0.001 to 2,500. Neural networks assume inputs of similar size, typically mean 0 and standard deviation 1.`, code: `import warnings
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler

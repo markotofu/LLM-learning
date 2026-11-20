@@ -2,11 +2,11 @@
 
 Possible improvements, ranked by how much they help a learner per unit of effort. Status as of 21 November 2026:
 
-- 106 concepts, including 3 capstones; a typical (median) lesson has about 1,200 words;
-- 232 practice problems and 775 quiz questions;
-- 598 glossary terms;
-- 28 interactive demos, 12 diagrams and 138 charts of computed data;
-- 316 code samples that run in the browser, 118 of them with a "predict first" question, and a spaced-repetition queue of mistakes to revisit;
+- 113 concepts, including 3 capstones; a typical (median) lesson has about 1,200 words;
+- 246 practice problems and 817 quiz questions;
+- 634 glossary terms;
+- 28 interactive demos, 12 diagrams and 146 charts of computed data;
+- 334 code samples that run in the browser, 136 of them with a "predict first" question, and a spaced-repetition queue of mistakes to revisit;
 - Terms of Use and Privacy Policy pages, a Content-Security-Policy and a hardened local server.
 
 **Effort:**
@@ -16,6 +16,20 @@ Possible improvements, ranked by how much they help a learner per unit of effort
 - **L** — a week or more.
 
 **Impact** is the expected gain in learning, reach or safety.
+
+## Done in the fifth round (also 21 November 2026)
+
+- **Coverage checked against the roadmap.sh [AI Engineer](https://roadmap.sh/ai-engineer) and [Machine Learning](https://roadmap.sh/machine-learning) roadmaps.** Every topic on both is now taught. Product names on the roadmaps (vector databases, frameworks, observability tools, coding assistants) are introduced inside the lessons they belong to.
+- **Seven new lessons:**
+  - Video Models: Understanding and Generation;
+  - World Models;
+  - Robot Learning & Vision-Language-Action Models;
+  - AI Engineering: Models, APIs and the LLM Stack;
+  - LLMs in Production: Observability, Monitoring and Safety;
+  - The Model Context Protocol (MCP);
+  - Discrete Math for ML.
+- **New sections in existing lessons:** NoSQL, APIs and other data sources, and file formats (SQL & Data Engineering); TensorFlow, Keras and JAX (PyTorch); context failure modes and long-term memory (Advanced Agents).
+- **Slow samples** can declare `timeoutSec`. The 16 heaviest samples now have 90–120 seconds instead of the default 20.
 
 ## Done in the fourth round (also 21 November 2026)
 
@@ -163,11 +177,11 @@ Items 1–4, 6, 7, 8 and part of 10–11 below are done:
     - survival analysis;
     - generalized linear models;
     - equivariant networks;
-    - robotics and vision-language-action models;
+    - robotics and vision-language-action models — done;
     - text-generation metrics (BLEU, ROUGE, BERTScore);
     - data visualization — done;
     - "open in Colab" links for the PyTorch examples that need a GPU.
-15. **Map at scale.** With 106 nodes:
+15. **Map at scale.** With 113 nodes:
     - mark *recommended* prerequisites separately from *required* ones;
     - add a "zoom to branch" view and a progress heat map;
     - let a learner hide finished branches.
