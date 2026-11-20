@@ -249,7 +249,8 @@ def roc_auc(y_true, scores):
       }
     ],
     refs: [
-      { title: 'Google ML Crash Course — Classification: accuracy, precision, recall, ROC/AUC', url: 'https://developers.google.com/machine-learning/crash-course/classification' }
+      { title: 'Google ML Crash Course — Classification: accuracy, precision, recall, ROC/AUC', url: 'https://developers.google.com/machine-learning/crash-course/classification' },
+      { title: "scikit-learn — Metrics and scoring", url: "https://scikit-learn.org/stable/modules/model_evaluation.html" }
     ]
   },
 
@@ -323,7 +324,13 @@ Search on a **log scale** for things like learning rates and λ (1e-4 … 1).
 4. Evaluate **once** on the test set and report that number.
 
 If you also need an unbiased estimate of the tuning procedure itself, use **nested cross-validation** (an outer CV around the inner search).` },
-      { type: 'check', question: { type: 'tf', q: 'It is fine to try 50 hyperparameter settings, pick the one with the best test-set score, and report that score.', answer: false, explain: 'Choosing by test score makes that score optimistically biased — the test set has effectively been used for training decisions.' } }
+      { type: 'check', question: { type: 'tf', q: 'It is fine to try 50 hyperparameter settings, pick the one with the best test-set score, and report that score.', answer: false, explain: 'Choosing by test score makes that score optimistically biased — the test set has effectively been used for training decisions.' } },
+      { type: 'text', title: 'Going further: choosing the right split', md: `- **Stratified k-fold** keeps the class proportions in every fold — the default for classification.
+- **Group k-fold**: when examples come in groups — several scans of one patient, many sessions of one user — keep each group inside a single fold, or the model is tested on people it has already seen.
+- **Time-ordered splits**: train on the past and validate on the future (see *Time Series & Forecasting*).
+- **Nested cross-validation**: an inner loop tunes the hyperparameters, an outer loop measures how well the whole tuning procedure generalizes.
+- **Repeated k-fold** averages several random splits to steady the estimate on small datasets; leave-one-out (k = n) is costly and noisy, so 5 or 10 folds are the usual compromise.
+- **Report the spread**: give the mean and the standard deviation across folds — two models whose difference is smaller than that spread are not reliably different.` }
     ],
     when: `- **k-fold CV** for small to medium datasets and fast models; **single validation split** for large datasets or expensive models (deep learning).
 - **Stratified** folds for classification, **group** folds for related examples, **time-series** splits for temporal data.
@@ -515,7 +522,12 @@ print("accuracy, standardized:   ", np.mean(knn_predict((Xtr - mu) / sd, ytr, (X
       { type: 'text', title: 'The curse of dimensionality and the cost of prediction', md: `In high dimensions, intuition about "nearby" breaks down. With hundreds of features, data points become sparse and **distances concentrate**: the nearest and farthest neighbours are almost equally far away, so "nearest" carries little information. To keep the same density of points, the data needed grows exponentially with the number of dimensions. Remedies: feature selection, dimensionality reduction (PCA), or learned representations (embeddings) where distances are meaningful.
 
 **Cost:** prediction compares the query with every training example — O(n·d) per query. For millions of examples, systems use **approximate nearest-neighbour** indexes (HNSW graphs, IVF, product quantization) that trade a little accuracy for enormous speed. Those indexes are what "vector databases" are made of, and they are a core part of RAG systems.` },
-      { type: 'check', question: { type: 'tf', q: 'kNN has an expensive training phase and a cheap prediction phase.', answer: false, explain: 'The reverse: training just stores the data; prediction must search it.' } }
+      { type: 'check', question: { type: 'tf', q: 'kNN has an expensive training phase and a cheap prediction phase.', answer: false, explain: 'The reverse: training just stores the data; prediction must search it.' } },
+      { type: 'text', title: 'Going further: weights, regression and speed', md: `- **Distance-weighted votes**: closer neighbours count more (for example with weight 1/distance), which makes the result less sensitive to the exact choice of k.
+- **kNN regression**: predict the average — or the distance-weighted average — of the neighbours' target values.
+- **Choosing k and the distance** by cross-validation: a small k gives jagged, high-variance boundaries; a large k smooths them but blurs real structure. An odd k avoids ties in two-class problems. Euclidean distance suits scaled numeric features, cosine similarity suits text and embeddings.
+- **Speed**: brute force costs about n · d operations per query. KD-trees and ball trees speed this up in low dimensions; for embeddings with hundreds of dimensions, approximate nearest-neighbour indexes take over (see *Vector Search*).
+- **The idea lives on**: retrieval in RAG, "customers like you" recommendations and few-shot classification on embeddings are all nearest-neighbour methods.` }
     ],
     when: `- **Good for**: small to medium datasets with a meaningful distance (after scaling), low-to-moderate dimensionality, quick baselines, and problems where similar inputs truly have similar outputs.
 - **Similarity search** over learned embeddings (images, text, products) — kNN is the retrieval step of RAG and recommendations.
@@ -631,7 +643,8 @@ def knn_regress(X_train, y_train, X_test, k):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Nearest Neighbors', url: 'https://scikit-learn.org/stable/modules/neighbors.html' }
+      { title: 'scikit-learn — Nearest Neighbors', url: 'https://scikit-learn.org/stable/modules/neighbors.html' },
+      { title: "Stanford CS231n — Image classification and nearest neighbours", url: "https://cs231n.github.io/classification/" }
     ]
   },
 

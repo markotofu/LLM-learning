@@ -557,4 +557,138 @@
       <p class="tiny dim mt">A toy 2-D space (real embeddings have hundreds of dimensions and are learned, not hand-placed). Similar meanings sit close together, and directions can encode relationships: the arrow man → woman is roughly the same as king → queen.</p>
     </div>`
   };
+
+  // 17 ---------- Calibration: a reliability diagram and temperature scaling ----------
+  function calibrationData() {
+    const rng = MLA.util.seededRng(21); const rows = [];
+    for (let i = 0; i < 3000; i++) {
+      const z = [0, 1, 2, 3].map(() => gauss(rng) * 1.5);                 // true logits of a 4-class problem
+      const p = softmax(z); let u = rng(), y = 0;
+      while (y < 3 && u > p[y]) { u -= p[y]; y++; }                          // draw the true label
+      rows.push({ z: z.map(v => v * 2.5), y });                              // an overconfident model: logits 2.5x too large
+    }
+    return rows;
+  }
+  C['demo-calibration'] = {
+    mixins: [redrawOnChange],
+    data() { return { T: 1, rows: calibrationData() }; },
+    computed: {
+      stats() {
+        const bins = Array.from({ length: 10 }, () => ({ n: 0, conf: 0, acc: 0 })); let correct = 0;
+        for (const r of this.rows) {
+          const p = softmax(r.z.map(v => v / this.T)); const conf = Math.max(...p); const pred = p.indexOf(conf);
+          const b = bins[Math.min(9, Math.floor(conf * 10))]; b.n++; b.conf += conf; b.acc += pred === r.y ? 1 : 0; correct += pred === r.y ? 1 : 0;
+        }
+        let ece = 0; bins.forEach(b => { if (b.n) { b.conf /= b.n; b.acc /= b.n; ece += b.n / this.rows.length * Math.abs(b.acc - b.conf); } });
+        return { bins, ece, accuracy: correct / this.rows.length };
+      }
+    },
+    methods: {
+      draw() {
+        const cv = this.$refs.cv; if (!cv) return; const W = 560, H = 300; const ctx = setup(cv, W, H); const P = palette();
+        const T = frame(ctx, W, H, [0, 1], [0, 1], P, { axes: false, xt: 5, yt: 5 });
+        this.stats.bins.forEach((b, i) => {
+          if (!b.n) return; const x0 = T.X(i / 10) + 2, x1 = T.X((i + 1) / 10) - 2;
+          ctx.fillStyle = P.accent; ctx.globalAlpha = 0.75; ctx.fillRect(x0, T.Y(b.acc), x1 - x0, T.Y(0) - T.Y(b.acc)); ctx.globalAlpha = 1;
+          ctx.strokeStyle = P.red; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0, T.Y(b.conf)); ctx.lineTo(x1, T.Y(b.conf)); ctx.stroke();
+        });
+        curve(ctx, x => x, [0, 1], T, P.muted, 1.5, [5, 4]);
+      }
+    },
+    template: `
+    <div class="card demo-card">
+      <div class="small muted">accuracy <b>{{ (stats.accuracy * 100).toFixed(1) }}%</b> · expected calibration error <b>{{ stats.ece.toFixed(3) }}</b> · temperature T = <b>{{ T.toFixed(2) }}</b></div>
+      <canvas ref="cv" class="demo-canvas"></canvas>
+      <div class="demo-controls"><label>Temperature T (logits are divided by T) <b>{{ T.toFixed(2) }}</b><input type="range" min="0.5" max="5" step="0.05" v-model.number="T"></label></div>
+      <p class="tiny dim mt">Blue bars: accuracy of the predictions in each confidence bin (0–10%, …, 90–100%). Red ticks: their average confidence. Dashed line: perfect calibration. This model is overconfident (red above blue). Raise T until the ticks meet the bars — the error is smallest near T ≈ 2.5 — and notice that accuracy never changes, because dividing all logits by T keeps their order.</p>
+    </div>`
+  };
+
+  // 18 ---------- Diffusion: the forward (noising) process ----------
+  function diffusionData() {
+    const rng = MLA.util.seededRng(4); const pts = [];
+    for (let i = 0; i < 300; i++) { const c = i % 3; const ang = 2 * Math.PI * c / 3; pts.push({ x: [2 * Math.cos(ang) + gauss(rng) * 0.25, 2 * Math.sin(ang) + gauss(rng) * 0.25], e: [gauss(rng), gauss(rng)], c }); }
+    return pts;
+  }
+  const DIFF_BETAS = Array.from({ length: 1000 }, (_, i) => 1e-4 + (0.02 - 1e-4) * i / 999);
+  const DIFF_ABAR = (() => { let a = 1; return DIFF_BETAS.map(b => (a *= 1 - b)); })();
+  C['demo-diffusion'] = {
+    mixins: [redrawOnChange],
+    data() { return { t: 0, pts: diffusionData() }; },
+    computed: { abar() { return DIFF_ABAR[this.t]; } },
+    methods: {
+      draw() {
+        const cv = this.$refs.cv; if (!cv) return; const W = 300, H = 300; const ctx = setup(cv, W, H); const P = palette();
+        const T = frame(ctx, W, H, [-4, 4], [-4, 4], P, { xt: 4, yt: 4 });
+        const s = Math.sqrt(this.abar), n = Math.sqrt(1 - this.abar); const cols = [P.accent, P.amber, P.green];
+        for (const p of this.pts) dot(ctx, T.X(s * p.x[0] + n * p.e[0]), T.Y(s * p.x[1] + n * p.e[1]), 2.6, cols[p.c]);
+      }
+    },
+    template: `
+    <div class="card demo-card">
+      <div class="small muted">step t = <b>{{ t }}</b> · signal weight √ᾱ = <b>{{ Math.sqrt(abar).toFixed(3) }}</b> · noise weight √(1 − ᾱ) = <b>{{ Math.sqrt(1 - abar).toFixed(3) }}</b></div>
+      <canvas ref="cv" class="demo-canvas square"></canvas>
+      <div class="demo-controls"><label>Diffusion step t <b>{{ t }}</b><input type="range" min="0" max="999" step="1" v-model.number="t"></label></div>
+      <p class="tiny dim mt">Three clusters of 2-D data, noised with the linear schedule of the original DDPM paper (β from 0.0001 to 0.02 over 1,000 steps). Each point keeps its own noise sample, so you can watch the clusters dissolve into one Gaussian cloud. A diffusion model learns to run this film backwards.</p>
+    </div>`
+  };
+
+  // 19 ---------- LLM serving: batching on the roofline ----------
+  C['demo-roofline'] = {
+    mixins: [redrawOnChange],
+    data() { return { batch: 16, ctxK: 4, paramsB: 8 }; },
+    computed: {
+      model() {
+        const peak = 990e12, bw = 3.35e12, kvTok = 2 * 32 * 8 * 128 * 2; const params = this.paramsB * 1e9;
+        const step = b => Math.max(2 * params * b / peak, (params * 2 + b * this.ctxK * 1000 * kvTok) / bw);
+        const memBound = b => (params * 2 + b * this.ctxK * 1000 * kvTok) / bw > 2 * params * b / peak;
+        return { step, memBound };
+      },
+      now() { const t = this.model.step(this.batch); return { ms: t * 1000, user: 1 / t, total: this.batch / t, mem: this.model.memBound(this.batch) }; }
+    },
+    methods: {
+      draw() {
+        const cv = this.$refs.cv; if (!cv) return; const W = 560, H = 300; const ctx = setup(cv, W, H); const P = palette();
+        const bs = Array.from({ length: 10 }, (_, i) => 2 ** i); const tot = bs.map(b => b / this.model.step(b)); const ymax = Math.max(...tot) * 1.1;
+        const T = frame(ctx, W, H, [0, 9], [0, ymax], P, { xt: 9 });
+        ctx.strokeStyle = P.accent; ctx.lineWidth = 2.5; ctx.beginPath(); bs.forEach((b, i) => { const x = T.X(i), y = T.Y(tot[i]); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
+        bs.forEach((b, i) => { dot(ctx, T.X(i), T.Y(tot[i]), b === this.batch ? 7 : 3.5, b === this.batch ? P.amber : (this.model.memBound(b) ? P.accent : P.red)); });
+      }
+    },
+    template: `
+    <div class="card demo-card">
+      <div class="small muted">batch <b>{{ batch }}</b>: one decode step takes <b>{{ now.ms.toFixed(2) }} ms</b> ({{ now.mem ? 'memory-bound' : 'compute-bound' }}) · each user gets <b>{{ now.user.toFixed(0) }}</b> tokens/s · total <b>{{ now.total.toFixed(0) }}</b> tokens/s</div>
+      <canvas ref="cv" class="demo-canvas"></canvas>
+      <div class="demo-controls">
+        <label>Batch size (concurrent requests) <b>{{ batch }}</b><input type="range" min="0" max="9" step="1" :value="Math.log2(batch)" @input="batch = 2 ** Number($event.target.value)"></label>
+        <label>Context already in each sequence <b>{{ ctxK }}k tokens</b><input type="range" min="1" max="32" step="1" v-model.number="ctxK"></label>
+        <label>Model size <b>{{ paramsB }}B parameters</b><input type="range" min="1" max="70" step="1" v-model.number="paramsB"></label>
+      </div>
+      <p class="tiny dim mt">Total throughput (tokens per second, vertical axis) against log₂ of the batch size (horizontal: 0 = 1 request, 9 = 512) for decoding on a GPU like an H100 (≈ 990 TFLOP/s, 3.35 TB/s), with bf16 weights and a grouped-query-attention KV cache of 128 KiB per token. Blue points are memory-bound, red ones compute-bound. Batching shares each read of the weights across many users — until the growing KV cache or the compute limit catches up. A simplified model: real servers add scheduling, prefill and kernel overheads.</p>
+    </div>`
+  };
+
+  // 20 ---------- Deep RL: PPO's clipped objective ----------
+  C['demo-ppo-clip'] = {
+    mixins: [redrawOnChange],
+    data() { return { eps: 0.2, adv: 1 }; },
+    methods: {
+      draw() {
+        const cv = this.$refs.cv; if (!cv) return; const W = 560, H = 300; const ctx = setup(cv, W, H); const P = palette();
+        const A = this.adv, e = this.eps; const yr = A > 0 ? [-0.2, 2.2] : [-2.2, 0.2];
+        const T = frame(ctx, W, H, [0, 2.2], yr, P);
+        curve(ctx, r => r * A, [0, 2.2], T, P.muted, 1.5, [5, 4]);
+        curve(ctx, r => Math.min(r * A, Math.min(Math.max(r, 1 - e), 1 + e) * A), [0, 2.2], T, P.accent, 3);
+        ctx.strokeStyle = P.amber; ctx.setLineDash([3, 3]); [1 - e, 1 + e].forEach(r => { ctx.beginPath(); ctx.moveTo(T.X(r), T.Y(yr[0])); ctx.lineTo(T.X(r), T.Y(yr[1])); ctx.stroke(); }); ctx.setLineDash([]);
+      }
+    },
+    template: `
+    <div class="card demo-card">
+      <div class="row between"><div class="pills"><button :class="{active:adv>0}" @click="adv=1">Good action (A = +1)</button><button :class="{active:adv<0}" @click="adv=-1">Bad action (A = −1)</button></div>
+      <div class="small muted">clip range: ratio between <b>{{ (1 - eps).toFixed(2) }}</b> and <b>{{ (1 + eps).toFixed(2) }}</b></div></div>
+      <canvas ref="cv" class="demo-canvas"></canvas>
+      <div class="demo-controls"><label>Clip parameter ε <b>{{ eps.toFixed(2) }}</b><input type="range" min="0.05" max="0.5" step="0.01" v-model.number="eps"></label></div>
+      <p class="tiny dim mt">Horizontal axis: the ratio r = π_new(a|s) / π_old(a|s) for the action taken. Dashed grey: the unclipped objective r·A. Blue: PPO's min(r·A, clip(r, 1 − ε, 1 + ε)·A). Where the blue line is flat, the gradient is zero — the update has no reason to move the policy further. For a bad action the objective still falls as r grows: PPO never ignores a change that makes a bad action more likely.</p>
+    </div>`
+  };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

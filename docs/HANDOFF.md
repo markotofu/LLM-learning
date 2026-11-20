@@ -1,5 +1,80 @@
 # ML Atlas — build handoff
 
+## STATUS UPDATE (session 4, end of 2026-11-20): frontier lessons, capstones, legal pages, review pass (105 concepts)
+- New lessons in `concepts-frontier-plus.js`: multimodal-models, advanced-agents, ssm-architectures.
+- Capstones in `concepts-capstones.js` (each code cell is self-contained, since samples run in isolation):
+  capstone-tabular (churn: leakage, pipeline, CV, calibration, cost threshold, bootstrap and slices),
+  capstone-rag (eval-driven iteration: BM25 → + toy embeddings → overlapping chunks; context recall per question
+  type; a run:false Claude API cited-answer step), capstone-lora (NumPy char-level model: full FT vs LoRA r2/r8,
+  forgetting and replay, merge, int8, generation; plus a PEFT script marked "run locally").
+- Legal: Terms of Use and Privacy Policy pages (`#/terms`, `#/privacy`; texts and owner/contact in
+  `js/data/legal.js`, views in `js/views/legal.js`), copyright notice in the sidebar footer and on Progress & Sync,
+  `LICENSE` (code MIT; educational content all rights reserved; third-party excluded), `THIRD_PARTY_NOTICES.md`,
+  package.json license "SEE LICENSE IN LICENSE". Owner is the GitHub handle "markotofu" (change in legal.js/LICENSE).
+- Review pass: 4 new demos (calibration, diffusion, roofline, ppo-clip; demos.js), a second problem for what-is-ml,
+  naive-bayes, sklearn-workflow and autograd, "Going further" sections for the 8 shortest core lessons, and a second
+  reference for 17 single-reference lessons.
+- Totals: 105 concepts, 230 problems, 532 quiz questions, 594 glossary terms, 19 interactive demos.
+- Tests: views.test.js now checks the legal pages (placeholders filled, localStorage keys named in the policy).
+
+## STATUS UPDATE (session 4, later on 2026-11-20): 16 MORE CONCEPTS (99 total) — "full mastery" pass
+- The user asked to add anything else needed for full mastery of modern ML plus the four lower-priority topics.
+  16 new concepts in three new files (index.html, after concepts-spec-plus.js, before glossary.js):
+  - `concepts-theory-plus.js`: matrix-calculus, optimization-theory, learning-theory, bayesian-methods,
+    gaussian-processes (10 problems)
+  - `concepts-practice-plus.js`: calibration-uncertainty, data-centric, sql-data-engineering (problems use
+    sqlite3 through a `prelude` with `make_db()`; sqlite3 3.39 works in Pyodide, window functions included),
+    learning-to-rank, vector-search (10 problems)
+  - `concepts-deep-plus.js`: distillation-pruning, self-supervised, diffusion-models, deep-rl, ml-security,
+    llm-serving (12 problems)
+- Considered but not added (already covered): LLM data curation (pretraining), t-SNE/UMAP (pca), basic
+  hyperparameter search (cross-validation).
+- Prereqs: backpropagation ← matrix-calculus; alignment ← deep-rl (instead of reinforcement-learning);
+  mlops ← sql-data-engineering.
+- Tracks: new `theory` (ML Theory & Probabilistic Methods) and `frontier-dl` (Frontier Deep Learning);
+  classical += data-centric; data-science += sql-data-engineering; llm-apps += vector-search; fine-tuning
+  (renamed "Fine-tuning, Alignment & Serving") += distillation-pruning, llm-serving.
+- Glossary: +153 terms (565 total); "Distillation" now links to distillation-pruning and "Speculative decoding"
+  to llm-serving.
+- Totals: 99 concepts, 214 problems, 502 quiz questions, 565 glossary terms. `npm test` passes with 0 failures
+  (content 9240, views 222, problems 780 with 184 samples).
+- Authoring gotcha: when writing content files with the Write tool, check escapes afterwards — an apostrophe
+  inside a single-quoted JS string sometimes lost its backslash, and a doubled backslash sometimes appeared.
+  `node --check` catches both; repair scripts lived in the session scratchpad (fix_quotes.js / fix_double.js).
+- Not committed yet.
+
+## STATUS UPDATE (session 4, 2026-11-20): 19 MORE CONCEPTS (83 total)
+- Session 3's work is committed (`570e053`) and pushed to `origin/main` (the repo is private, so GitHub Pages
+  needs a public repo or a paid plan). The additions below are NOT committed yet.
+- The user asked which concepts were missing, then "add all of them": 19 new concepts in three new files
+  (all in index.html after concepts-spec.js and before glossary.js):
+  - `concepts-foundations-plus.js`: eigen-svd, mle-map, stat-inference, pandas-eda, gmm-em (10 problems)
+  - `concepts-llm-plus.js`: seq2seq, bert-encoders, text-embeddings, training-at-scale, reasoning-models,
+    efficient-attention, mixture-of-experts (15 problems)
+  - `concepts-spec-plus.js`: interpretability, time-series, anomaly-detection, detection-segmentation, gnn,
+    speech-audio, causal-inference (14 problems)
+- Wired in as prerequisites: language-models ← mle-map, pca ← eigen-svd, lora ← eigen-svd,
+  data-preparation ← pandas-eda, llm-evaluation ← stat-inference, attention ← seq2seq,
+  rag ← text-embeddings (instead of embeddings).
+- Tracks: new `data-science` track (pandas-eda, stat-inference, causal-inference, time-series,
+  anomaly-detection); classical += gmm-em; deep-learning += seq2seq; build-llm += training-at-scale,
+  efficient-attention, mixture-of-experts; fine-tuning += reasoning-models; descriptions updated.
+- Glossary: 153 new terms (412 total); the existing "Mixture of Experts (MoE)" term now links to the new
+  mixture-of-experts concept.
+- Totals: 83 concepts, 182 problems, 422 quiz questions, 412 glossary terms. `npm test` passes with 0 failures
+  (content 7619 checks, views 180, problems 632 with 142 samples). In-browser self-test (`#/selftest`):
+  182/182 problems and 127/127 runnable samples pass in Pyodide. One earlier sample run reported
+  "No module named 'matplotlib'" for the pandas-eda plotting sample; two reruns (one fresh, one after the
+  problem run in the same worker) passed, so it was a one-off package download failure. Note: the worker
+  swallows package-download errors, so a network failure surfaces as ModuleNotFoundError and the app's hint
+  wrongly says the package is unavailable.
+- Every code sample's printed output was checked against its lesson text (scratch script that runs each
+  sample in CPython). Avoid `np.bincount` on `rng.integers` output (fails in 32-bit Pyodide) and prefer
+  building correlated data by hand over `rng.multivariate_normal` (it goes through an SVD whose signs may
+  differ between LAPACK builds, so printed numbers could differ from CPython).
+- Not added, offered as possible next steps: Bayesian methods, learning-to-rank, SQL & data engineering,
+  matrix calculus.
+
 ## STATUS UPDATE (session 3, 2026-11-20): BUILD COMPLETE
 - All 64 planned concepts are written: 143 problems, 327 quiz questions, 259 glossary terms (every concept has
   at least one). Content files: concepts-start-math, -python-data, -ml-core, -ml-more, -ml-unsup, -nn-core,

@@ -16,7 +16,9 @@
     { name: 'glossary', pattern: '/glossary', title: 'Glossary' },
     { name: 'achievements', pattern: '/achievements', title: 'Achievements' },
     { name: 'profile', pattern: '/profile', title: 'Progress & Sync' },
-    { name: 'selftest', pattern: '/selftest', title: 'Self-test' }
+    { name: 'selftest', pattern: '/selftest', title: 'Self-test' },
+    { name: 'terms', pattern: '/terms', title: 'Terms of Use' },
+    { name: 'privacy', pattern: '/privacy', title: 'Privacy Policy' }
   ];
 
   function parseHash(hash) {

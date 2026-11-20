@@ -7,8 +7,9 @@ How to add or edit lessons, quizzes and practice problems in ML Atlas. All conte
 | File | Contents |
 | --- | --- |
 | `js/data/branches.js` | the 8 branches (id, name, colour, icon) and the content registry `MLA.content.add([...])` |
-| `js/data/concepts-*.js` | the concepts, grouped by branch: `start-math`, `python-data`, `ml-core`, `ml-more`, `ml-unsup`, `nn-core`, `nn-more`, `llm-core`, `llm-more`, `apps`, `spec` |
+| `js/data/concepts-*.js` | the concepts, in topic files: `start-math`, `python-data`, `ml-core`, `ml-more`, `ml-unsup`, `nn-core`, `nn-more`, `llm-core`, `llm-more`, `apps`, `spec`, plus the later additions `foundations-plus` (eigenvectors & SVD, MLE & MAP, statistical inference, pandas & EDA, mixtures & EM), `llm-plus` (seq2seq, BERT, text embeddings, training at scale, reasoning models, efficient attention, mixture of experts), `spec-plus` (interpretability, time series, anomaly detection, detection & segmentation, GNNs, speech & audio, causal inference), `theory-plus` (matrix calculus, optimization theory, generalization theory, Bayesian inference, Gaussian processes), `practice-plus` (calibration & uncertainty, data-centric ML, SQL & data engineering, learning to rank, vector search) and `deep-plus` (distillation & pruning, self-supervised learning, diffusion models, deep RL, ML security & privacy, LLM serving), `frontier-plus` (multimodal models, advanced agents, state-space models) and `capstones` (end-to-end tabular project, RAG system with evaluation, LoRA fine-tuning). A concept's `branch` field, not its file, decides where it appears on the map. |
 | `js/data/glossary.js` | glossary terms (also the flashcard deck) |
+| `js/data/legal.js` | Terms of Use, Privacy Policy and the copyright notice (owner, year, contact, last-updated date) |
 | `js/data/tracks.js` | learning tracks (goal concepts; the path is computed from prerequisites) |
 | `js/data/achievements.js` | achievements |
 

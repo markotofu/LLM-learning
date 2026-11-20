@@ -29,7 +29,9 @@
     glossary: { comp: 'view-glossary', nav: 'glossary' },
     achievements: { comp: 'view-achievements', nav: 'achievements' },
     profile: { comp: 'view-profile', nav: 'profile' },
-    selftest: { comp: 'view-selftest', nav: 'profile' }
+    selftest: { comp: 'view-selftest', nav: 'profile' },
+    terms: { comp: 'view-terms', nav: '' },
+    privacy: { comp: 'view-privacy', nav: '' }
   };
 
   const Root = {
@@ -48,7 +50,8 @@
       level() { return MLA.gamification.levelInfo(); },
       streak() { return MLA.gamification.streakStatus(); },
       py() { return MLA.python.status; },
-      overall() { return MLA.progress.overall(); }
+      overall() { return MLA.progress.overall(); },
+      copyright() { return MLA.data.legal ? MLA.data.legal.copyright() : ''; }
     },
     watch: {
       'route.path'() { this.sidebarOpen = false; },
@@ -82,6 +85,7 @@
           <div class="row between"><span>Level {{ level.level }}</span><span class="tiny dim">{{ MLA.gamification.title(level.level) }}</span></div>
           <mla-progress :value="level.pct" thin style="margin-top:6px" />
           <div class="row between tiny dim" style="margin-top:6px"><span>{{ state.xp.toLocaleString() }} XP</span><span>{{ overall.conceptsDone }}/{{ overall.concepts }} concepts</span></div>
+          <div class="legal-links tiny dim">{{ copyright }} · <a href="#/terms" @click.prevent="go('/terms')">Terms</a> · <a href="#/privacy" @click.prevent="go('/privacy')">Privacy</a></div>
         </div>
       </aside>
       <div class="backdrop" :class="{show: sidebarOpen}" @click="sidebarOpen=false"></div>

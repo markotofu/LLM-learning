@@ -1122,7 +1122,7 @@ def mean_at_k(metric, all_recommended, all_relevant, k):
 
   // =====================================================================================
   {
-    id: 'mlops', branch: 'spec', title: 'MLOps: Deploying & Monitoring Models', short: 'MLOps', level: 2, minutes: 40, prereqs: ['evaluation-metrics', 'sklearn-workflow'],
+    id: 'mlops', branch: 'spec', title: 'MLOps: Deploying & Monitoring Models', short: 'MLOps', level: 2, minutes: 40, prereqs: ['evaluation-metrics', 'sklearn-workflow', 'sql-data-engineering'],
     tags: ['mlops', 'deployment', 'serving', 'monitoring', 'data drift', 'concept drift', 'psi', 'model registry', 'reproducibility', 'data validation', 'a/b testing'],
     summary: 'Getting models into production and keeping them healthy: the ML lifecycle, reproducibility and experiment tracking, batch versus online serving, testing and validating data, monitoring for data and concept drift with PSI, and safe rollouts with shadow, canary and A/B tests.',
     why: `Most ML projects fail not in the notebook but on the way to production — or quietly afterwards. Data changes, pipelines break, latency matters, and a model that scored 95% in testing slowly degrades without anyone noticing. **MLOps** applies software-engineering discipline — versioning, testing, automation, monitoring — to machine learning so that models stay correct and useful over time.`,

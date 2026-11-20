@@ -287,7 +287,7 @@ def parse_reply(reply, schema):
 
   // =====================================================================================
   {
-    id: 'rag', branch: 'apps', title: 'Retrieval-Augmented Generation (RAG)', short: 'RAG', level: 3, minutes: 50, prereqs: ['prompting', 'embeddings'],
+    id: 'rag', branch: 'apps', title: 'Retrieval-Augmented Generation (RAG)', short: 'RAG', level: 3, minutes: 50, prereqs: ['prompting', 'text-embeddings'],
     tags: ['rag', 'retrieval', 'vector database', 'embeddings', 'chunking', 'semantic search', 'hybrid search', 'reranking', 'grounding', 'citations', 'recall@k'],
     summary: 'Letting an LLM answer from your own documents: chunking, embedding and indexing text, retrieving the most relevant chunks by cosine similarity (plus hybrid search and reranking), building a grounded prompt with citations, and evaluating retrieval.',
     why: `LLMs don't know your private documents, and their knowledge stops at a training cutoff. **Retrieval-augmented generation** fixes both without retraining anything: at question time, search your documents for relevant passages and put them in the prompt, so the model answers from evidence it can cite. It is the most common pattern behind company chatbots, documentation assistants and AI search — and grounding answers in retrieved text reduces hallucination.`,
@@ -952,7 +952,7 @@ def run_agent(task, llm, tools, max_steps=5):
 
   // =====================================================================================
   {
-    id: 'llm-evaluation', branch: 'apps', title: 'Evaluating LLM Applications', short: 'LLM Evaluation', level: 3, minutes: 45, prereqs: ['prompting', 'evaluation-metrics'],
+    id: 'llm-evaluation', branch: 'apps', title: 'Evaluating LLM Applications', short: 'LLM Evaluation', level: 3, minutes: 45, prereqs: ['prompting', 'evaluation-metrics', 'stat-inference'],
     tags: ['evaluation', 'evals', 'benchmarks', 'llm-as-judge', 'exact match', 'f1', 'win rate', 'confidence interval', 'regression testing', 'red teaming'],
     summary: 'How to know whether an LLM feature works and whether a change made it better: building eval sets, exact-match and token-F1 metrics, programmatic checks, LLM-as-judge with rubrics, pairwise win rates with confidence intervals, benchmarks and their pitfalls, and red teaming.',
     why: `LLM outputs are open-ended and vary from run to run, so "it looked good on three examples" is not evidence. Every prompt tweak, model upgrade or retrieval change can quietly break something else. Teams that ship reliable LLM products treat evaluation like testing: a fixed set of realistic cases, automatic scoring, and numbers that must not go down. It is the single most important habit in applied LLM work.`,

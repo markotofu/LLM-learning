@@ -211,7 +211,8 @@ def majority_baseline_accuracy(y_train, y_test):
       }
     ],
     refs: [
-      { title: 'Google ML Crash Course — Framing', url: 'https://developers.google.com/machine-learning/crash-course' }
+      { title: 'Google ML Crash Course — Framing', url: 'https://developers.google.com/machine-learning/crash-course' },
+      { title: "Stanford CS229 — Machine Learning lecture notes", url: "https://cs229.stanford.edu/main_notes.pdf" }
     ]
   },
 
@@ -450,7 +451,8 @@ def binary_cross_entropy(y, p, eps=1e-12):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Metrics and scoring', url: 'https://scikit-learn.org/stable/modules/model_evaluation.html' }
+      { title: 'scikit-learn — Metrics and scoring', url: 'https://scikit-learn.org/stable/modules/model_evaluation.html' },
+      { title: "PyTorch — Loss functions reference", url: "https://pytorch.org/docs/stable/nn.html#loss-functions" }
     ]
   },
 
@@ -967,7 +969,8 @@ def r2_score(y, y_hat):
       }
     ],
     refs: [
-      { title: 'Google ML Crash Course — Linear regression', url: 'https://developers.google.com/machine-learning/crash-course/linear-regression' }
+      { title: 'Google ML Crash Course — Linear regression', url: 'https://developers.google.com/machine-learning/crash-course/linear-regression' },
+      { title: "scikit-learn — Linear models", url: "https://scikit-learn.org/stable/modules/linear_model.html" }
     ]
   },
 
@@ -1216,7 +1219,8 @@ def predict(X, w, b, threshold=0.5):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Logistic regression', url: 'https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression' }
+      { title: 'scikit-learn — Logistic regression', url: 'https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression' },
+      { title: "Stanford CS229 — Machine Learning lecture notes", url: "https://cs229.stanford.edu/main_notes.pdf" }
     ]
   },
 
@@ -1408,7 +1412,8 @@ def choose_degree(x_train, y_train, x_val, y_val, max_degree):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Underfitting vs. overfitting example', url: 'https://scikit-learn.org/stable/auto_examples/model_selection/plot_underfitting_overfitting.html' }
+      { title: 'scikit-learn — Underfitting vs. overfitting example', url: 'https://scikit-learn.org/stable/auto_examples/model_selection/plot_underfitting_overfitting.html' },
+      { title: "Hastie, Tibshirani & Friedman — The Elements of Statistical Learning (free book)", url: "https://hastie.su.domains/ElemStatLearn/" }
     ]
   },
 
@@ -1616,7 +1621,8 @@ def ridge_step(X, y, w, b, lr, lam):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Ridge, Lasso and Elastic-Net', url: 'https://scikit-learn.org/stable/modules/linear_model.html' }
+      { title: 'scikit-learn — Ridge, Lasso and Elastic-Net', url: 'https://scikit-learn.org/stable/modules/linear_model.html' },
+      { title: "Hastie, Tibshirani & Friedman — The Elements of Statistical Learning (free book)", url: "https://hastie.su.domains/ElemStatLearn/" }
     ]
   }
   ]);

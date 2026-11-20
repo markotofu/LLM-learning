@@ -1023,7 +1023,7 @@ def masked_mean_loss(token_losses, labels):
 
   // =====================================================================================
   {
-    id: 'lora', branch: 'llm', title: 'LoRA & Parameter-Efficient Fine-Tuning', short: 'LoRA', level: 3, minutes: 40, prereqs: ['fine-tuning'],
+    id: 'lora', branch: 'llm', title: 'LoRA & Parameter-Efficient Fine-Tuning', short: 'LoRA', level: 3, minutes: 40, prereqs: ['fine-tuning', 'eigen-svd'],
     tags: ['lora', 'qlora', 'peft', 'adapters', 'low-rank', 'fine-tuning', 'memory'],
     summary: 'Fine-tuning huge models cheaply: freeze the pretrained weights and learn a small low-rank update. How LoRA works, its hyperparameters (rank, alpha, target modules), merging, QLoRA, and other parameter-efficient methods.',
     why: `Full fine-tuning of a 7B model needs memory for the weights, gradients and Adam states of all 7 billion parameters — roughly 16 bytes each, over 100 GB. **LoRA** trains well under 1% of the parameters while matching full fine-tuning on most tasks, so a single consumer GPU can fine-tune a 7B model (and with QLoRA, much larger ones). It is the most common way open models are customized, and the resulting adapters are tiny files that can be swapped per task or per customer.`,
@@ -1280,7 +1280,7 @@ def train_lora(X, Y, W, r, alpha, steps, lr, seed=0):
 
   // =====================================================================================
   {
-    id: 'alignment', branch: 'llm', title: 'RLHF, DPO & Alignment', short: 'RLHF & DPO', level: 3, minutes: 45, prereqs: ['fine-tuning', 'reinforcement-learning'],
+    id: 'alignment', branch: 'llm', title: 'RLHF, DPO & Alignment', short: 'RLHF & DPO', level: 3, minutes: 45, prereqs: ['fine-tuning', 'deep-rl'],
     tags: ['alignment', 'rlhf', 'dpo', 'reward model', 'ppo', 'preference data', 'constitutional ai', 'bradley-terry', 'kl penalty', 'reward hacking'],
     summary: 'Teaching models to be helpful, honest and harmless from preferences: preference data, reward models (Bradley-Terry), RLHF with PPO and a KL penalty, Direct Preference Optimization, AI feedback and verifiable rewards — and failure modes like reward hacking.',
     why: `SFT teaches the *format* of good answers, but many qualities — helpfulness, honesty, tone, declining harmful requests, not making things up — are much easier to **judge** than to **demonstrate**. Preference-based training (RLHF, DPO) uses comparisons ("answer A is better than B") to optimize directly for what people prefer. It is what turned GPT-3 into ChatGPT, it underpins every modern assistant, and it is where a lot of AI safety work happens.`,

@@ -274,7 +274,8 @@ def moving_average(xs, window):
       }
     ],
     refs: [
-      { title: 'The official Python tutorial', url: 'https://docs.python.org/3/tutorial/' }
+      { title: 'The official Python tutorial', url: 'https://docs.python.org/3/tutorial/' },
+      { title: "Python documentation — Built-in types", url: "https://docs.python.org/3/library/stdtypes.html" }
     ]
   },
 
@@ -516,7 +517,7 @@ def pairwise_distances(A, B):
 
   // =====================================================================================
   {
-    id: 'data-preparation', branch: 'code', title: 'Data Preparation: Cleaning, Splitting & Leakage', short: 'Data Preparation', level: 1, minutes: 40, prereqs: ['numpy', 'statistics'],
+    id: 'data-preparation', branch: 'code', title: 'Data Preparation: Cleaning, Splitting & Leakage', short: 'Data Preparation', level: 1, minutes: 40, prereqs: ['numpy', 'statistics', 'pandas-eda'],
     tags: ['pandas', 'missing values', 'train test split', 'data leakage', 'cleaning'],
     summary: 'Turning raw data into trustworthy training data: inspecting it, handling missing values and duplicates, splitting into train/validation/test, and avoiding data leakage.',
     why: `Practitioners routinely say that most of machine learning is data work — and that the quality of the data matters more than the choice of model. A brilliant model trained on messy data learns the mess. Worse, a subtle mistake in how you **split** or **preprocess** data — *data leakage* — can make a useless model look excellent in your notebook and then fail in production. This lesson is about getting the boring parts exactly right, because everything downstream depends on them.`,
@@ -959,7 +960,8 @@ def one_hot(values, categories):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Preprocessing data', url: 'https://scikit-learn.org/stable/modules/preprocessing.html' }
+      { title: 'scikit-learn — Preprocessing data', url: 'https://scikit-learn.org/stable/modules/preprocessing.html' },
+      { title: "Kuhn & Johnson — Feature Engineering and Selection (free book)", url: "https://bookdown.org/max/FES/" }
     ]
   }
   ]);

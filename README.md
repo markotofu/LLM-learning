@@ -8,14 +8,14 @@ It is a static site: it runs on GitHub Pages, from any web server, or straight f
 
 | | |
 | --- | --- |
-| **Concept map** | 64 concepts in 8 branches, connected by their prerequisites. Three views: mind map, prerequisite lanes, and outline. Search, highlight the chain of prerequisites for any concept, and set a learning goal. |
+| **Concept map** | 105 concepts in 8 branches, including three capstone projects, connected by their prerequisites. Three views: mind map, prerequisite lanes, and outline. Search, highlight the chain of prerequisites for any concept, and set a learning goal. |
 | **Lessons** | Each concept explains *why* it matters, how it works, when to use it, common pitfalls and key takeaways. Every formula comes with a "where" legend that defines each symbol. |
 | **Runnable code** | Code samples run in the browser with real Python 3.12 + NumPy (via [Pyodide](https://pyodide.org)). PyTorch and API examples are marked "run locally". |
-| **Interactive demos** | 15 visual demos: gradient descent, activation functions, line fitting, overfitting, k-NN, k-means, classification thresholds, softmax/temperature/top-p, attention, BPE tokenization, convolution, a single neuron, positional encodings, quantization, embeddings. |
-| **Practice problems** | 143 problems (easy / medium / hard) with a LeetCode-style editor: **Run** checks the visible examples, **Submit** runs hidden tests too. Hints, worked solutions and explanations. Drafts are saved automatically. |
-| **Quizzes** | 327 questions (multiple choice, multi-select, true/false, fill-in, ordering, matching) with explanations. Passing a quiz and solving a problem completes a concept. |
-| **Learning tracks** | Guided paths: ML Foundations, Classical ML Practitioner, Deep Learning from Scratch, Build an LLM from Scratch, LLM Application Engineer, Fine-tuning & Alignment, the Complete Atlas — or set any concept as a custom goal. |
-| **Flashcards** | 259 glossary terms, reviewed with spaced repetition. |
+| **Interactive demos** | 19 visual demos: gradient descent, activation functions, line fitting, overfitting, k-NN, k-means, classification thresholds, softmax/temperature/top-p, attention, BPE tokenization, convolution, a single neuron, positional encodings, quantization, embeddings, calibration and temperature scaling, the diffusion forward process, LLM batching on the roofline, and PPO's clipped objective. |
+| **Practice problems** | 230 problems (easy / medium / hard) with a LeetCode-style editor: **Run** checks the visible examples, **Submit** runs hidden tests too. Hints, worked solutions and explanations. Drafts are saved automatically. |
+| **Quizzes** | 532 questions (multiple choice, multi-select, true/false, fill-in, ordering, matching) with explanations. Passing a quiz and solving a problem completes a concept. |
+| **Learning tracks** | Guided paths: ML Foundations, Classical ML Practitioner, Data Science & Experiments, ML Theory & Probabilistic Methods, Deep Learning from Scratch, Build an LLM from Scratch, LLM Application Engineer, Fine-tuning, Alignment & Serving, Frontier Deep Learning, the Complete Atlas — or set any concept as a custom goal. |
+| **Flashcards** | 594 glossary terms, reviewed with spaced repetition. |
 | **Playground** | A multi-file Python scratchpad with templates (NumPy, linear regression, matplotlib, softmax & attention, pandas, scikit-learn). |
 | **Progress** | XP, levels, streaks and achievements. Everything is stored in your browser (localStorage). |
 | **Sync across devices** | Export your progress and code as a file (or a copyable sync code) and import it on another device — imports *merge* by default, so nothing is lost. You can also download all your code as one `.py` file. |
@@ -24,13 +24,13 @@ It is a static site: it runs on GitHub Pages, from any web server, or straight f
 ### The branches
 
 1. **Start Here** — what machine learning is.
-2. **Math Foundations** — vectors & matrices, derivatives & the chain rule, probability, statistics, entropy & cross-entropy.
-3. **Python & Data** — Python essentials, NumPy, data preparation, feature engineering.
-4. **Classical Machine Learning** — supervised learning, loss functions, gradient descent, linear & logistic regression, overfitting, regularization, evaluation metrics, cross-validation, k-NN, decision trees, ensembles, SVMs, naive Bayes, k-means, PCA, the scikit-learn workflow.
-5. **Neural Networks & Deep Learning** — perceptrons, activations, MLPs, backpropagation, autograd, training loops, optimizers, normalization & dropout, PyTorch, CNNs, RNNs, embeddings.
-6. **Transformers & LLMs** — text representation, language models, tokenization (BPE), attention, multi-head attention, positional encoding (incl. RoPE), the transformer block, GPT, decoding, pretraining & scaling laws, fine-tuning, LoRA, RLHF & DPO, quantization, and a capstone: build a tiny GPT.
-7. **Building with LLMs** — prompting & structured output, retrieval-augmented generation (RAG), agents & tool use, evaluating LLM applications.
-8. **Specializations** — reinforcement learning, generative models (VAEs, GANs, diffusion), vision transformers & CLIP, recommender systems, MLOps, responsible AI.
+2. **Math Foundations** — vectors & matrices, eigenvectors & the SVD, derivatives & the chain rule, matrix calculus, optimization theory (convexity, conditioning, Newton's method, Lagrange multipliers), probability, statistics, statistical inference (confidence intervals, hypothesis tests, A/B tests), entropy & cross-entropy.
+3. **Python & Data** — Python essentials, NumPy, pandas & exploratory data analysis, SQL & data engineering, data preparation, feature engineering.
+4. **Classical Machine Learning** — supervised learning, loss functions, maximum likelihood & MAP, Bayesian inference (MCMC, variational inference), gradient descent, linear & logistic regression, overfitting, generalization theory (PAC, VC dimension, double descent), regularization, evaluation metrics, calibration, uncertainty & conformal prediction, cross-validation, data-centric ML (augmentation, imbalance, few labels), k-NN, decision trees, ensembles, SVMs, Gaussian processes & Bayesian optimization, naive Bayes, k-means, Gaussian mixtures & EM (with DBSCAN and hierarchical clustering), PCA, the scikit-learn workflow, and a capstone: an end-to-end tabular project.
+5. **Neural Networks & Deep Learning** — perceptrons, activations, MLPs, backpropagation, autograd, training loops, optimizers, normalization & dropout, PyTorch, CNNs, RNNs, embeddings, sequence-to-sequence models (where attention began), knowledge distillation & pruning, self-supervised representation learning.
+6. **Transformers & LLMs** — text representation, language models, tokenization (BPE), attention, multi-head attention, positional encoding (incl. RoPE), the transformer block, GPT, BERT-style encoders, text embedding models, decoding, pretraining & scaling laws, training at scale (mixed precision, parallelism), efficient attention & long context, state-space models & hybrids (Mamba, linear attention), mixture of experts, multimodal models (vision, audio, any-to-any), fine-tuning, LoRA, RLHF & DPO, reasoning models, quantization, LLM inference & serving, and two capstones: build a tiny GPT, and fine-tune a model with LoRA while measuring adaptation and forgetting.
+7. **Building with LLMs** — prompting & structured output, vector search, retrieval-augmented generation (RAG), agents & tool use, advanced agents (context engineering, planning, multi-agent systems, agent evaluation), evaluating LLM applications, and a capstone: build and evaluate a RAG system.
+8. **Specializations** — reinforcement learning, deep RL (DQN, actor–critic, PPO), generative models (VAEs, GANs), diffusion models & flow matching, vision transformers & CLIP, object detection & segmentation, speech & audio, graph neural networks, recommender systems, learning to rank, time series & forecasting, anomaly detection, causal inference, mechanistic interpretability, adversarial ML, security & privacy, MLOps, responsible AI.
 
 ## Run it
 
@@ -108,6 +108,12 @@ Inside the app, **Progress & Sync → Run self-test** runs every reference solut
 
 See [docs/CONTENT_GUIDE.md](docs/CONTENT_GUIDE.md) for the concept format, markdown features (formulas with legends, callouts, tables), quiz types, the problem/test format, and the authoring checklist.
 
-## License
+## Copyright, license, terms and privacy
 
-The package is declared MIT in `package.json`. Add a `LICENSE` file before publishing if you want to make that explicit.
+© 2026 markotofu. See [LICENSE](LICENSE) for the details:
+
+- **Source code** (the app's JavaScript, HTML, CSS, tests and tools) is released under the **MIT License**.
+- **Educational content** (lessons, quizzes, practice problems, lesson code samples, glossary and flashcards in `js/data/`) is **all rights reserved**: free for personal, non-commercial learning in the app, but not for republishing without permission.
+- **Third-party software** (Vue in `vendor/`, and Pyodide with its Python packages loaded at run time) keeps its own license — see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+The app includes a **Terms of Use** page (`#/terms`) and a **Privacy Policy** page (`#/privacy`), linked from the sidebar and from Progress & Sync. Their texts, the copyright holder, the contact link and the "last updated" date live in one place: `js/data/legal.js`. The privacy policy describes what the app really does — progress stays in the browser's local storage, no cookies or analytics, and only the web host and the Python CDN (jsDelivr) see standard request data — so update it if you add analytics, accounts, a backend or another third-party service. These texts are a plain-language starting point, not legal advice; have them reviewed if you need certainty for your jurisdiction.

@@ -8,9 +8,20 @@ const T = suite('views');
 const Vue = global.Vue;
 
 T.ok('scripts load without errors', MLA.__loadErrors.length === 0, MLA.__loadErrors.join('\n'));
-const required = ['view-home', 'view-map', 'view-concept', 'view-problem', 'view-problems', 'view-playground', 'view-tracks', 'view-track', 'view-review', 'view-glossary', 'view-achievements', 'view-profile', 'view-selftest', 'code-editor', 'run-output', 'code-sample', 'quiz-runner', 'check-q', 'mla-demo', 'mla-md', 'onboard-dialog'];
+const required = ['view-home', 'view-map', 'view-concept', 'view-problem', 'view-problems', 'view-playground', 'view-tracks', 'view-track', 'view-review', 'view-glossary', 'view-achievements', 'view-profile', 'view-selftest', 'view-terms', 'view-privacy', 'code-editor', 'run-output', 'code-sample', 'quiz-runner', 'check-q', 'mla-demo', 'mla-md', 'onboard-dialog'];
 for (const n of required) T.ok('component ' + n + ' registered', !!MLA.components[n]);
-T.ok('every route has a view', MLA.router.routes.every(r => ['home', 'map', 'concept', 'problems', 'problem', 'playground', 'tracks', 'track', 'review', 'glossary', 'achievements', 'profile', 'selftest'].includes(r.name)));
+T.ok('every route has a view', MLA.router.routes.every(r => ['home', 'map', 'concept', 'problems', 'problem', 'playground', 'tracks', 'track', 'review', 'glossary', 'achievements', 'profile', 'selftest', 'terms', 'privacy'].includes(r.name)));
+
+// legal pages: placeholders filled in, key statements present, markdown renders
+const L = MLA.data.legal;
+T.ok('legal data loaded', !!(L && L.terms && L.privacy && L.owner));
+for (const key of ['terms', 'privacy']) {
+  const text = L.render(L[key]);
+  T.ok('legal ' + key + ': no unfilled placeholders', !/\{(owner|year|updated|contact|codeLicense)\}/.test(text));
+  T.ok('legal ' + key + ': renders', /<h[1-6]>/.test(MLA.util.md(text)));
+}
+T.ok('privacy policy names every localStorage key the app uses', ['mla.state.v1', 'mla.pyMirror'].every(k => L.privacy.includes(k)));
+T.ok('copyright notice has year and owner', L.copyright().includes(L.year) && L.copyright().includes(L.owner));
 
 let compiled = 0;
 for (const name of Object.keys(MLA.components)) {

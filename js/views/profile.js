@@ -134,6 +134,8 @@
         <div class="card-title"><h3 style="color:var(--red)">Danger zone</h3></div>
         <div class="row between"><div><strong class="small">Erase all progress</strong><div class="small muted">Removes everything stored by ML Atlas in this browser.</div></div><button class="btn danger" @click="reset"><mla-icon name="trash" :size="16"/> Erase</button></div>
       </div>
+
+      <div class="tiny dim center">{{ MLA.data.legal.copyright() }} · <a href="#/terms">Terms of Use</a> · <a href="#/privacy">Privacy Policy</a> · your data never leaves this browser unless you export it</div>
     </div>`
   };
 

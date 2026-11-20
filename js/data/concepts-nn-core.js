@@ -191,7 +191,8 @@ def train_perceptron(X, y, lr=1.0, epochs=10):
       }
     ],
     refs: [
-      { title: '3Blue1Brown — But what is a neural network?', url: 'https://www.3blue1brown.com/lessons/neural-networks' }
+      { title: '3Blue1Brown — But what is a neural network?', url: 'https://www.3blue1brown.com/lessons/neural-networks' },
+      { title: "Nielsen — Neural Networks and Deep Learning (free book)", url: "http://neuralnetworksanddeeplearning.com/" }
     ]
   },
 
@@ -442,7 +443,8 @@ def relu_grad(z):
       }
     ],
     refs: [
-      { title: 'Hendrycks & Gimpel — Gaussian Error Linear Units (GELU)', url: 'https://arxiv.org/abs/1606.08415' }
+      { title: 'Hendrycks & Gimpel — Gaussian Error Linear Units (GELU)', url: 'https://arxiv.org/abs/1606.08415' },
+      { title: "Zhang, Lipton, Li & Smola — Dive into Deep Learning (free book)", url: "https://d2l.ai/" }
     ]
   },
 
@@ -671,7 +673,7 @@ def mlp_forward(X, layers):
 
   // =====================================================================================
   {
-    id: 'backpropagation', branch: 'dl', title: 'Backpropagation', level: 2, minutes: 50, prereqs: ['mlp', 'derivatives', 'loss-functions'],
+    id: 'backpropagation', branch: 'dl', title: 'Backpropagation', level: 2, minutes: 50, prereqs: ['mlp', 'derivatives', 'loss-functions', 'matrix-calculus'],
     tags: ['backprop', 'chain rule', 'computational graph', 'gradients', 'gradient checking'],
     summary: 'How a network computes the gradient of the loss for every weight in one backward sweep: computational graphs, local gradients, the chain rule in matrix form, and gradient checking.',
     why: `Backpropagation is the algorithm that makes deep learning possible. A modern network has millions to trillions of parameters; computing each gradient separately (as with numerical derivatives) would be hopeless. Backprop computes **all** of them with roughly the cost of one extra forward pass, by applying the chain rule backwards through the network and reusing intermediate results. Every framework — PyTorch, TensorFlow, JAX — automates it, but understanding it lets you debug training, design layers, and reason about vanishing gradients.`,
@@ -1026,7 +1028,12 @@ loss.backward()
 for p in model.parameters(): p.data -= lr * p.grad
 \`\`\`
 
-The only thing PyTorch adds conceptually is **tensors**: each node holds a whole array, so one node's backward handles millions of numbers in one optimized kernel. Same algorithm, enormously faster.` }
+The only thing PyTorch adds conceptually is **tensors**: each node holds a whole array, so one node's backward handles millions of numbers in one optimized kernel. Same algorithm, enormously faster.` },
+      { type: 'text', title: 'Going further: from scalars to real frameworks', md: `- **Tensors, not scalars**: real engines apply the same idea to whole arrays using vector–Jacobian products (see *Matrix Calculus*), so one graph node handles millions of numbers at once.
+- **Reverse versus forward mode**: reverse mode (backpropagation) gives the gradient of one output with respect to every input in a single backward pass — ideal for a scalar loss. Forward mode carries derivatives along with the values and is efficient when there are few inputs.
+- **Memory**: reverse mode must keep the forward activations until the backward pass, which is why long sequences and big batches run out of memory, and why activation checkpointing exists (see *Training at Scale*).
+- **Dynamic and traced graphs**: PyTorch records the graph as the code runs; JAX traces a function once and transforms it (grad, jit, vmap).
+- **Higher-order derivatives**: differentiating the backward pass again gives Hessian–vector products, used by some optimizers and in meta-learning.` }
     ],
     when: `- Build this once to understand frameworks deeply; then use PyTorch/JAX autograd for real work.
 - Knowing the mechanics helps when you implement custom layers, debug "None" gradients, or reason about memory (the graph keeps references to intermediate values).`,
@@ -1197,6 +1204,67 @@ class Value:
           { name: 'relu, division, subtraction vs numerical derivative', setup: 'def f(v):\n    a = Value(v)\n    return ((a * 2 - 1).relu() / (a ** 2 + 1) + 3 - a).data\ndef run():\n    a = Value(0.8)\n    out = (a * 2 - 1).relu() / (a ** 2 + 1) + 3 - a\n    out.backward()\n    num = (f(0.8 + 1e-6) - f(0.8 - 1e-6)) / 2e-6\n    return abs(a.grad - num) < 1e-6', call: 'run()', expect: 'True', hidden: true },
           { name: 'shared sub-expression', setup: 'def run():\n    a = Value(1.5)\n    b = a * a\n    c = b * b + b\n    c.backward()\n    return a.grad', call: 'run()', expect: '4 * 1.5 ** 3 + 2 * 1.5', hidden: true }
         ]
+      },
+      {
+        id: 'local-backward-rules', title: 'Local Backward Rules for Arrays', difficulty: 'medium',
+        prompt: `An autograd engine is a collection of small backward rules, each mapping the gradient of an operation's output to the gradients of its inputs. Implement them for NumPy arrays (g is the upstream gradient, shaped like the output):
+
+1. \`mul_backward(a, b, g)\` → \`(g * b, g * a)\` for out = a * b (element-wise).
+2. \`tanh_backward(out, g)\` → g · (1 − out²), where out = tanh(x) is the saved forward result.
+3. \`matmul_backward(A, B, G)\` → \`(G @ Bᵀ, Aᵀ @ G)\` for out = A @ B.
+4. \`sum_backward(shape, g)\` → an array of the given shape filled with the scalar g, for out = x.sum().
+5. \`broadcast_add_backward(x_shape, g)\` → for out = x + b where a bias vector of shape (n,) was broadcast over the rows of a (m, n) array: return the gradient for the bias, \`g.sum(axis=0)\`, if \`x_shape\` has one dimension, otherwise g itself.`,
+        starter: `
+import numpy as np
+
+def mul_backward(a, b, g):
+    # TODO
+    pass
+
+def tanh_backward(out, g):
+    # TODO
+    pass
+
+def matmul_backward(A, B, G):
+    # TODO
+    pass
+
+def sum_backward(shape, g):
+    # TODO
+    pass
+
+def broadcast_add_backward(x_shape, g):
+    # TODO
+    pass
+`,
+        solution: `
+import numpy as np
+
+def mul_backward(a, b, g):
+    return g * b, g * a
+
+def tanh_backward(out, g):
+    return g * (1 - np.asarray(out) ** 2)
+
+def matmul_backward(A, B, G):
+    return G @ B.T, A.T @ G
+
+def sum_backward(shape, g):
+    return np.full(shape, float(g))
+
+def broadcast_add_backward(x_shape, g):
+    g = np.asarray(g)
+    return g.sum(axis=0) if len(x_shape) == 1 else g
+`,
+        hints: ['Each rule is the chain rule for one operation: local derivative times upstream gradient.', 'A broadcast value was used once per row, so its gradient adds up the rows.', 'Check shapes: the gradient of an input always has that input\'s shape.'],
+        explain: `Real frameworks implement exactly these rules — for hundreds of operations — and chain them in reverse topological order. Broadcasting is the classic source of shape bugs: whatever was broadcast in the forward pass must be summed in the backward pass.`,
+        tests: [
+          { call: 'mul_backward(np.array([2.0, 3.0]), np.array([4.0, 5.0]), np.array([1.0, 10.0]))', expect: '(np.array([4.0, 50.0]), np.array([2.0, 30.0]))' },
+          { call: '[sum_backward((2, 2), 3.0), broadcast_add_backward((2,), np.array([[1.0, 2.0], [3.0, 4.0]]))]', expect: '[np.full((2, 2), 3.0), np.array([4.0, 6.0])]' },
+          { name: 'tanh rule matches finite differences', setup: 'x = np.array([-1.0, 0.2, 2.0]); g = np.array([1.0, 2.0, -1.0])', code: 'num = (np.tanh(x + 1e-6) - np.tanh(x - 1e-6)) / 2e-6 * g\nassert np.allclose(tanh_backward(np.tanh(x), g), num, atol=1e-6)', hidden: false },
+          { name: 'matmul rule vs finite differences', setup: 'rng = np.random.default_rng(0)\nA = rng.normal(size=(3, 4)); B = rng.normal(size=(4, 2)); G = rng.normal(size=(3, 2))', code: 'dA, dB = matmul_backward(A, B, G)\nnum = np.zeros_like(A)\nfor i in range(A.size):\n    d = np.zeros_like(A); d.flat[i] = 1e-6\n    num.flat[i] = (np.sum(((A + d) @ B) * G) - np.sum(((A - d) @ B) * G)) / 2e-6\nassert np.allclose(dA, num, atol=1e-6) and dB.shape == B.shape', hidden: true },
+          { name: 'random values vs reference', setup: 'rng = np.random.default_rng(1)\na = rng.normal(size=5); b = rng.normal(size=5); g = rng.normal(size=5)', call: '[mul_backward(a, b, g), tanh_backward(np.tanh(a), g)]', hidden: true }
+        ]
       }
     ],
     refs: [
@@ -1295,7 +1363,14 @@ for epoch in range(1, 151):
 - otherwise increment the counter; when it reaches the **patience** (e.g. 5–10 epochs), stop and restore the best checkpoint.
 
 Early stopping is free regularization: training as long as it helps, and not a step longer. Checkpoints also protect long runs against crashes — large-model training saves them regularly and resumes from the latest one.` },
-      { type: 'check', question: { type: 'tf', q: 'If a model cannot overfit a single small batch of 20 examples, the pipeline probably has a bug.', answer: true, explain: 'Any reasonable network can memorise 20 examples; failing to do so points to broken data, labels or gradients.' } }
+      { type: 'check', question: { type: 'tf', q: 'If a model cannot overfit a single small batch of 20 examples, the pipeline probably has a bug.', answer: true, explain: 'Any reasonable network can memorise 20 examples; failing to do so points to broken data, labels or gradients.' } },
+      { type: 'text', title: 'Going further: a debugging checklist', md: `1. **Check the loss at initialization**: with k balanced classes it should be close to ln k. Much higher means the initialization or the loss is wrong.
+2. **Overfit one small batch** to nearly zero loss. If the model cannot memorize a handful of examples, there is a bug.
+3. **Find a workable learning rate** with a short sweep or a range test: increase it exponentially every step until the loss blows up, then use a value about ten times smaller.
+4. **Watch gradient norms and update sizes**: NaNs, exploding norms, or updates that are tiny relative to the weights all signal problems.
+5. **Look at the data right before the model**: decode a batch back into images or text and check the labels — data bugs are the most common bugs.
+6. **Change one thing at a time** and log every run (seed, configuration, metrics); always compare with a simple baseline.
+7. **Unstable training?** Lower the learning rate, add warmup, clip gradients, and check normalization and mixed-precision settings.` }
     ],
     when: `- Use this loop (or the framework equivalent) for every neural network.
 - Validate every epoch (or every N steps for long epochs); use early stopping by default.
@@ -1450,7 +1525,8 @@ def train(X, y, lr=1.0, epochs=2000, seed=0):
       }
     ],
     refs: [
-      { title: 'Andrej Karpathy — A Recipe for Training Neural Networks', url: 'https://karpathy.github.io/2019/04/25/recipe/', note: 'the classic practical guide' }
+      { title: 'Andrej Karpathy — A Recipe for Training Neural Networks', url: 'https://karpathy.github.io/2019/04/25/recipe/', note: 'the classic practical guide' },
+      { title: "Google Research — Deep Learning Tuning Playbook", url: "https://github.com/google-research/tuning_playbook" }
     ]
   }
   ]);

@@ -202,7 +202,8 @@ def train_linear_svm(X, y, lam=0.01, lr=0.1, epochs=200):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Support Vector Machines', url: 'https://scikit-learn.org/stable/modules/svm.html' }
+      { title: 'scikit-learn — Support Vector Machines', url: 'https://scikit-learn.org/stable/modules/svm.html' },
+      { title: "Stanford CS229 — Machine Learning lecture notes (SVMs and kernels)", url: "https://cs229.stanford.edu/main_notes.pdf" }
     ]
   },
 
@@ -395,6 +396,57 @@ class MultinomialNB:
           { name: 'likelihood matrix', setup: 'docs = ["a b a", "b c"]\nlabels = [1, 2]', call: 'MultinomialNB().fit(docs, labels).log_likelihood_', expect: 'np.log(np.array([[3 / 6, 2 / 6, 1 / 6], [1 / 5, 2 / 5, 2 / 5]]))', hidden: true },
           { name: 'random corpus vs reference', setup: 'rng = np.random.default_rng(4)\nwords = ["alpha", "beta", "gamma", "delta", "eps", "zeta"]\ndocs = [" ".join(rng.choice(words[:4] if i % 2 else words[2:], size=5)) for i in range(20)]\nlabels = ["odd" if i % 2 else "even" for i in range(20)]\ntests = [" ".join(rng.choice(words, size=4)) for _ in range(8)]', call: 'MultinomialNB().fit(docs, labels, alpha=0.5).predict(tests)', hidden: true }
         ]
+      },
+      {
+        id: 'nb-explain', title: 'Explaining a Naive Bayes Decision', difficulty: 'medium',
+        prompt: `A trained two-class Naive Bayes model is fully transparent: every word adds a fixed amount of evidence. Given \`log_prior\` (shape 2: class 0, class 1), \`log_likelihood\` (shape 2 × |V|, log P(word | class)) and the matching list \`vocab\`, implement:
+
+1. \`word_log_odds(log_likelihood, vocab)\` → a dict {word: log P(word | class 1) − log P(word | class 0)}.
+2. \`top_words(log_likelihood, vocab, k)\` → the k words with the **largest** log-odds (strongest evidence for class 1), largest first; ties keep vocabulary order.
+3. \`doc_log_odds(log_prior, log_likelihood, vocab, doc)\` → the log-odds of class 1 versus class 0 for a document: (log_prior[1] − log_prior[0]) plus the word log-odds of every token of \`doc.lower().split()\` that is in the vocabulary (repeated tokens count every time; unknown tokens are ignored). A positive value means class 1 wins.`,
+        starter: `
+import numpy as np
+
+def word_log_odds(log_likelihood, vocab):
+    # TODO
+    pass
+
+def top_words(log_likelihood, vocab, k):
+    # TODO
+    pass
+
+def doc_log_odds(log_prior, log_likelihood, vocab, doc):
+    # TODO
+    pass
+`,
+        solution: `
+import numpy as np
+
+def word_log_odds(log_likelihood, vocab):
+    L = np.asarray(log_likelihood, dtype=float)
+    return {w: float(L[1, j] - L[0, j]) for j, w in enumerate(vocab)}
+
+def top_words(log_likelihood, vocab, k):
+    odds = word_log_odds(log_likelihood, vocab)
+    order = sorted(range(len(vocab)), key=lambda j: -odds[vocab[j]])
+    return [vocab[j] for j in order[:k]]
+
+def doc_log_odds(log_prior, log_likelihood, vocab, doc):
+    odds = word_log_odds(log_likelihood, vocab)
+    total = float(log_prior[1] - log_prior[0])
+    for tok in doc.lower().split():
+        if tok in odds:
+            total += odds[tok]
+    return total
+`,
+        hints: ['Log-odds of a word: subtract its two log-likelihoods.', 'Python\'s `sorted` is stable, so sorting indices by −odds keeps vocabulary order on ties.', 'Start the document total from the prior log-odds.'],
+        explain: `Because Naive Bayes multiplies independent word probabilities, its log-odds are a sum of per-word contributions — a built-in explanation of every decision. The same additive view underlies logistic regression, which learns the per-word weights directly instead of from counts.`,
+        tests: [
+          { setup: 'L = np.log(np.array([[0.5, 0.25, 0.25], [0.1, 0.1, 0.8]])); V = ["meeting", "report", "prize"]', call: 'top_words(L, V, 2)', expect: '["prize", "report"]' },
+          { setup: 'L = np.log(np.array([[0.5, 0.25, 0.25], [0.1, 0.1, 0.8]])); V = ["meeting", "report", "prize"]; P = np.log(np.array([0.5, 0.5]))', call: 'doc_log_odds(P, L, V, "Prize prize unknown")', expect: '2 * np.log(0.8 / 0.25)' },
+          { setup: 'L = np.log(np.array([[0.5, 0.5], [0.25, 0.75]])); V = ["a", "b"]', call: 'word_log_odds(L, V)', expect: '{"a": np.log(0.5), "b": np.log(1.5)}' },
+          { name: 'random model vs reference', setup: 'rng = np.random.default_rng(0)\nraw = rng.random((2, 6)); L = np.log(raw / raw.sum(1, keepdims=True)); V = ["w%d" % i for i in range(6)]; P = np.log(np.array([0.7, 0.3]))', call: '[top_words(L, V, 3), doc_log_odds(P, L, V, "w1 w5 w5 zzz W2")]', hidden: true }
+        ]
       }
     ],
     refs: [
@@ -475,7 +527,20 @@ for k in range(1, 7):
 - Every point must belong to some cluster.
 
 Alternatives: **DBSCAN** (density-based, finds arbitrary shapes, labels noise), **hierarchical clustering** (a tree of merges), **Gaussian mixture models** (soft, elliptical clusters).` },
-      { type: 'check', question: { type: 'tf', q: 'Increasing k always decreases (or keeps equal) the best achievable inertia.', answer: true, explain: 'More centroids can only fit the points as well or better; that is why inertia alone can\'t choose k.' } }
+      { type: 'check', question: { type: 'tf', q: 'Increasing k always decreases (or keeps equal) the best achievable inertia.', answer: true, explain: 'More centroids can only fit the points as well or better; that is why inertia alone can\'t choose k.' } },
+      { type: 'text', title: 'Going further: k-means++, choosing k and scaling up', md: `- **k-means++ initialization** picks the first centroid at random and each next one with probability proportional to its squared distance from the nearest centroid already chosen. Spreading the starting points out gives faster convergence and better solutions; scikit-learn uses it by default and keeps the best of several runs.
+- **Choosing k**: look for the elbow of the inertia curve, compare silhouette scores, or let the downstream use decide; Gaussian mixtures add the BIC (see *Gaussian Mixtures & EM*). The silhouette of a point compares its own cluster with the nearest other one:
+
+$$ s(i) = ( b(i) − a(i) ) / max( a(i), b(i) ) $$
+:::where
+a(i) — the average distance from point i to the other points of its own cluster
+b(i) — the average distance from point i to the points of the nearest other cluster
+s(i) — the silhouette of point i, from −1 (probably in the wrong cluster) to +1 (well inside its cluster); average it over all points to compare values of k
+:::
+
+- **Scale**: mini-batch k-means updates the centroids from small random batches and handles millions of points.
+- **Limits**: k-means prefers round clusters of similar size and is sensitive to feature scaling and outliers; DBSCAN and Gaussian mixtures fit other shapes.
+- **Beyond clustering**: k-means codebooks compress vectors (IVF and product quantization in *Vector Search*) and turn audio into discrete units for speech models.` }
     ],
     when: `- Quick segmentation of data with compact, similar-sized groups; colour/vector quantization; a first exploratory look.
 - Scale features first and remove or cap outliers.
@@ -635,13 +700,14 @@ def kmeans(X, k, seed=0, max_iter=100):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Clustering', url: 'https://scikit-learn.org/stable/modules/clustering.html' }
+      { title: 'scikit-learn — Clustering', url: 'https://scikit-learn.org/stable/modules/clustering.html' },
+      { title: "Arthur & Vassilvitskii — k-means++: The Advantages of Careful Seeding", url: "https://theory.stanford.edu/~sergei/papers/kMeansPP-soda.pdf" }
     ]
   },
 
   // =====================================================================================
   {
-    id: 'pca', branch: 'ml', title: 'Dimensionality Reduction with PCA', short: 'PCA', level: 2, minutes: 40, prereqs: ['statistics', 'numpy'],
+    id: 'pca', branch: 'ml', title: 'Dimensionality Reduction with PCA', short: 'PCA', level: 2, minutes: 40, prereqs: ['statistics', 'numpy', 'eigen-svd'],
     tags: ['pca', 'svd', 'eigenvectors', 'explained variance', 'dimensionality reduction'],
     summary: 'Compress many correlated features into a few directions of maximum variance: the intuition, the SVD computation, explained variance, and how to use and misuse PCA.',
     why: `Real datasets often have hundreds or thousands of features that are heavily correlated — pixels next to each other, survey questions that ask nearly the same thing, gene expression levels. **Principal Component Analysis** finds the few directions that capture most of the variation, letting you visualize high-dimensional data in 2-D, speed up and regularize downstream models, remove noise, and understand structure. It is also the cleanest introduction to the linear-algebra machinery (eigenvectors, SVD) behind embeddings and low-rank tricks like LoRA.`,
@@ -902,7 +968,12 @@ model = joblib.load("model.joblib")          # same library versions recommended
 4. Compare with the same cross-validation folds; tune the best one or two.
 5. Evaluate the winner once on the test set; save the pipeline with its version info.
 
-Set \`random_state\` everywhere randomness appears so results are reproducible.` }
+Set \`random_state\` everywhere randomness appears so results are reproducible.` },
+      { type: 'text', title: 'Going further: mixed columns, tuning and saving models', md: `- **Mixed column types**: \`ColumnTransformer\` applies different preprocessing to numeric and categorical columns inside one pipeline (the tabular capstone uses it end to end).
+- **Tuning**: \`GridSearchCV\` and \`RandomizedSearchCV\` search pipeline parameters named step__parameter, such as logisticregression__C; successive-halving searches drop weak candidates early.
+- **Nested cross-validation**: an inner loop tunes, an outer loop estimates how well the whole tuning procedure generalizes — the honest number to report when there is no separate test set.
+- **Your own steps**: \`FunctionTransformer\`, or a small class with fit and transform, puts custom feature code inside the pipeline so it runs identically in training and in production.
+- **Saving**: \`joblib.dump(pipeline, "model.joblib")\` stores the fitted pipeline. Pickle-based files can run code when loaded, so only load files you trust, and record the library versions used.` }
     ],
     when: `- Any classical ML project on tabular or text-feature data — the default toolbox.
 - Use pipelines always; ColumnTransformer for mixed column types.
@@ -982,6 +1053,62 @@ def best_C(X, y, Cs):
           { name: 'CV accuracy on breast cancer', setup: 'from sklearn.datasets import load_breast_cancer\nX, y = load_breast_cancer(return_X_y=True)', call: 'cv_accuracy(make_model(1.0), X, y)', tol: 1e-9 },
           { name: 'accuracy is high', setup: 'from sklearn.datasets import load_breast_cancer\nX, y = load_breast_cancer(return_X_y=True)', code: 'acc = cv_accuracy(make_model(1.0), X, y)\nassert acc > 0.95, "expected CV accuracy above 0.95, got %.3f" % acc', hidden: true },
           { name: 'best C', setup: 'from sklearn.datasets import load_breast_cancer\nX, y = load_breast_cancer(return_X_y=True)', call: 'best_C(X, y, [0.001, 0.1, 1.0])', hidden: true }
+        ]
+      },
+      {
+        id: 'grid-search-pipeline', title: 'Tune a Pipeline with GridSearchCV', difficulty: 'medium',
+        prompt: `Tuning inside a pipeline keeps preprocessing inside the cross-validation folds. With scikit-learn, implement:
+
+1. \`make_pipe()\` → \`make_pipeline(StandardScaler(), LogisticRegression(max_iter=5000))\`.
+2. \`tune(X, y, Cs)\` → \`(best_C, best_score)\`: run \`GridSearchCV(make_pipe(), {"logisticregression__C": Cs}, cv=5)\` on (X, y) and return \`best_params_["logisticregression__C"]\` and \`best_score_\` (a float).
+3. \`final_test_accuracy(X_train, y_train, X_test, y_test, Cs)\` → tune on the training data only, refit is done for you by GridSearchCV, and return the accuracy of the tuned search object on the test data (\`search.score(X_test, y_test)\`).
+
+Step names in a \`make_pipeline\` are the lower-cased class names, which is why the parameter is called \`logisticregression__C\`.`,
+        starter: `
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+
+def make_pipe():
+    # TODO
+    pass
+
+def tune(X, y, Cs):
+    # TODO
+    pass
+
+def final_test_accuracy(X_train, y_train, X_test, y_test, Cs):
+    # TODO
+    pass
+`,
+        solution: `
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+
+def make_pipe():
+    return make_pipeline(StandardScaler(), LogisticRegression(max_iter=5000))
+
+def _search(X, y, Cs):
+    search = GridSearchCV(make_pipe(), {"logisticregression__C": list(Cs)}, cv=5)
+    return search.fit(X, y)
+
+def tune(X, y, Cs):
+    search = _search(X, y, Cs)
+    return search.best_params_["logisticregression__C"], float(search.best_score_)
+
+def final_test_accuracy(X_train, y_train, X_test, y_test, Cs):
+    return float(_search(X_train, y_train, Cs).score(X_test, y_test))
+`,
+        hints: ['Grid keys use the step name, two underscores, then the parameter name.', 'GridSearchCV refits the best configuration on all the data it was given (refit=True by default).', 'Never pass the test set to the search.'],
+        explain: `GridSearchCV performs k-fold cross-validation for every candidate, keeps the best, and refits it on all the training data. Its best_score_ is still optimistic (it is the maximum over candidates), which is why the final, untouched test score is reported separately.`,
+        tests: [
+          { setup: 'from sklearn.datasets import make_classification\nX, y = make_classification(n_samples=200, n_features=8, n_informative=4, random_state=0)', call: '[type(make_pipe()).__name__, [name for name, _ in make_pipe().steps]]', expect: '["Pipeline", ["standardscaler", "logisticregression"]]' },
+          { setup: 'from sklearn.datasets import make_classification\nX, y = make_classification(n_samples=200, n_features=8, n_informative=4, random_state=0)', call: 'tune(X, y, [0.01, 0.1, 1.0, 10.0])' },
+          { name: 'tuned on train, scored on test', setup: 'from sklearn.datasets import load_breast_cancer\nfrom sklearn.model_selection import train_test_split\nX, y = load_breast_cancer(return_X_y=True)\nXtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.25, random_state=0)', call: 'final_test_accuracy(Xtr, ytr, Xte, yte, [0.01, 0.1, 1.0])', hidden: true },
+          { name: 'the best score is a cross-validated accuracy', setup: 'from sklearn.datasets import make_classification\nX, y = make_classification(n_samples=150, n_features=6, random_state=1)', code: 'C, s = tune(X, y, [0.1, 1.0])\nassert C in (0.1, 1.0) and 0.5 < s <= 1.0', hidden: true }
         ]
       }
     ],

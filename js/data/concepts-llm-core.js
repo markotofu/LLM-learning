@@ -249,7 +249,7 @@ def tfidf(docs):
 
   // =====================================================================================
   {
-    id: 'language-models', branch: 'llm', title: 'Language Models & N-grams', short: 'Language Models', level: 2, minutes: 40, prereqs: ['text-representation', 'probability', 'information-theory'],
+    id: 'language-models', branch: 'llm', title: 'Language Models & N-grams', short: 'Language Models', level: 2, minutes: 40, prereqs: ['text-representation', 'probability', 'information-theory', 'mle-map'],
     tags: ['language model', 'n-gram', 'bigram', 'next token prediction', 'perplexity', 'smoothing', 'sampling'],
     summary: 'A language model assigns probabilities to text by predicting the next token. Counting-based n-gram models, smoothing, generating text, and measuring quality with perplexity.',
     why: `"Predict the next token" is the entire training objective of GPT, Claude and Llama. Before neural networks, the same idea was implemented by **counting**: how often does each word follow the previous one? Building an n-gram model by hand makes the concepts concrete — conditional probabilities, the chain rule for sequences, sampling to generate text, perplexity to evaluate — and shows exactly what neural language models improve: they generalize to contexts never seen verbatim and use far longer context.`,
@@ -751,7 +751,7 @@ def encode(word, merges):
 
   // =====================================================================================
   {
-    id: 'attention', branch: 'llm', title: 'Attention & Self-Attention', short: 'Attention', level: 2, minutes: 50, prereqs: ['embeddings', 'activation-functions'],
+    id: 'attention', branch: 'llm', title: 'Attention & Self-Attention', short: 'Attention', level: 2, minutes: 50, prereqs: ['embeddings', 'activation-functions', 'seq2seq'],
     tags: ['attention', 'self-attention', 'query', 'key', 'value', 'causal mask', 'softmax'],
     summary: 'The core idea behind transformers: every token builds a new representation as a weighted mix of all the tokens it attends to — queries, keys, values, scaled dot products, softmax, and the causal mask.',
     why: `Attention is the single most important idea in modern AI. It lets every token in a sequence look at every other token and decide, from the content itself, which ones matter: "it" can attend to "cat" twenty words back; a verb can find its subject; a code token can find the variable's definition. It replaced recurrence (no more one-step-at-a-time bottleneck), parallelizes beautifully on GPUs, and is the heart of every transformer — GPT, BERT, Llama, vision transformers and diffusion models.`,
@@ -1030,7 +1030,11 @@ print("output shape:", out.shape, "  attention parameters:", 4 * d_model * d_mod
 - **Grouped-query attention (GQA)**: heads are divided into g groups that each share a key/value head — a middle ground (e.g. 32 query heads with 8 KV heads). Used by Llama 2 70B, Llama 3, Mistral and many others.
 
 The math per head is unchanged; only the number of distinct K/V projections differs.` },
-      { type: 'check', question: { type: 'tf', q: 'Splitting attention into 12 heads multiplies the attention computation cost by roughly 12.', answer: false, explain: 'Each head has width d_model/12, so total work stays about the same as one full-width head.' } }
+      { type: 'check', question: { type: 'tf', q: 'Splitting attention into 12 heads multiplies the attention computation cost by roughly 12.', answer: false, explain: 'Each head has width d_model/12, so total work stays about the same as one full-width head.' } },
+      { type: 'text', title: 'Going further: what heads learn and what they cost', md: `- **Specialization**: trained heads attend to different things — the previous token, syntactic relations, matching brackets, the first token of the sequence (an "attention sink"). Many heads are redundant and can be pruned with little loss.
+- **Cost**: the projections W_Q, W_K, W_V and W_O hold about 4 · d_model² parameters per layer whatever the number of heads. Splitting d_model into h heads of size d_model / h keeps the compute the same while letting each head learn its own pattern.
+- **Smaller KV caches**: multi-query attention (one shared key/value head) and grouped-query attention (one key/value head per group) shrink the KV cache (see *Efficient Attention*); multi-head latent attention compresses keys and values into a small latent vector.
+- **Reading attention maps**: attention weights show where information flows, but they are an incomplete explanation — heads work together in circuits such as induction heads (see *Mechanistic Interpretability*).` }
     ],
     when: `- Multi-head attention is the default in every transformer layer.
 - Use GQA/MQA variants when inference memory (KV cache) and speed matter — most modern open LLMs do.

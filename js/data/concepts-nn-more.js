@@ -633,7 +633,13 @@ class Sequential:        forward: run layers in order; backward: run them in rev
 \`\`\`
 
 When that clicks, PyTorch stops being a black box: it is this design plus automatic differentiation, GPU kernels and a huge library of layers.` },
-      { type: 'check', question: { type: 'tf', q: 'nn.CrossEntropyLoss expects raw logits, so you should not apply softmax in the model\'s forward before it.', answer: true, explain: 'It applies log-softmax internally in a numerically stable way; adding your own softmax distorts the loss.' } }
+      { type: 'check', question: { type: 'tf', q: 'nn.CrossEntropyLoss expects raw logits, so you should not apply softmax in the model\'s forward before it.', answer: true, explain: 'It applies log-softmax internally in a numerically stable way; adding your own softmax distorts the loss.' } },
+      { type: 'text', title: 'Going further: data loading, devices and debugging', md: `- **Datasets and DataLoaders**: a Dataset defines \`__len__\` and \`__getitem__\`; a DataLoader shuffles, batches and can load in parallel worker processes.
+- **Devices and precision**: model and batch must live on the same device (\`.to("cuda")\`); \`torch.autocast\` runs most operations in 16-bit for speed (see *Training at Scale*).
+- **Modes**: \`model.train()\` and \`model.eval()\` switch dropout and batch normalization between training and inference behaviour; wrap evaluation in \`torch.no_grad()\` to save memory.
+- **Saving**: save \`model.state_dict()\` (just the weights) and load it with \`load_state_dict\`, rather than pickling the whole model object.
+- **Debugging**: print shapes on a tiny batch, overfit one batch first, beware of silent broadcasting, and check custom operations with \`torch.autograd.gradcheck\`.
+- **Speed**: \`torch.compile(model)\` compiles the model into optimized kernels and often speeds up training and inference.` }
     ],
     when: `- Use PyTorch for research, custom architectures, fine-tuning open models (Hugging Face transformers is built on it) and most deep-learning work.
 - Keep NumPy for data wrangling and small experiments; JAX is the main alternative for some research and TPU work.
@@ -837,7 +843,8 @@ def sgd_step(model, lr):
       }
     ],
     refs: [
-      { title: 'PyTorch — Learn the Basics', url: 'https://pytorch.org/tutorials/beginner/basics/intro.html' }
+      { title: 'PyTorch — Learn the Basics', url: 'https://pytorch.org/tutorials/beginner/basics/intro.html' },
+      { title: "PyTorch documentation", url: "https://pytorch.org/docs/stable/index.html" }
     ]
   },
 

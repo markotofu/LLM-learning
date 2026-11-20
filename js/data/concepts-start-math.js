@@ -214,6 +214,66 @@ def fit_threshold(xs, ys):
           { name: 'all positive labels', call: 'fit_threshold([3, 1, 2], [1, 1, 1])', expect: '1', hidden: true },
           { name: 'noisy random data', setup: 'rng = np.random.default_rng(3)\nxs = [float(v) for v in rng.uniform(0, 10, 40).round(2)]\nys = [int(x + rng.normal(0, 1.5) > 5) for x in xs]', call: 'fit_threshold(xs, ys)', hidden: true }
         ]
+      },
+      {
+        id: 'train-then-test', title: 'Train on One Part, Test on Another', difficulty: 'easy',
+        prompt: `The universal recipe of machine learning: **learn from training data, then check on data the model has never seen.** Using the threshold rule from the first problem (predict 1 if x ≥ t, else 0), implement:
+
+1. \`best_threshold(xs, ys)\` — try every value in \`xs\` as the threshold t and return the one with the highest accuracy on (xs, ys). If several tie, return the smallest.
+2. \`holdout_split(xs, ys, test_fraction)\` — put the **last** \`round(len(xs) * test_fraction)\` examples in the test set and the rest in the training set; return \`(xs_train, ys_train, xs_test, ys_test)\`.
+3. \`train_and_test(xs, ys, test_fraction=0.25)\` — split, choose t on the training part only, and return \`(t, train_accuracy, test_accuracy)\`.
+
+\`\`\`text
+best_threshold([1, 2, 3, 4], [0, 0, 1, 1])  ->  3
+holdout_split([1, 2, 3, 4], [0, 0, 1, 1], 0.25)  ->  ([1, 2, 3], [0, 0, 1], [4], [1])
+\`\`\``,
+        starter: `
+def accuracy(xs, ys, t):
+    return sum((1 if x >= t else 0) == y for x, y in zip(xs, ys)) / len(xs)
+
+def best_threshold(xs, ys):
+    # TODO: try each x as a threshold; keep the best (smallest on ties)
+    pass
+
+def holdout_split(xs, ys, test_fraction):
+    # TODO
+    pass
+
+def train_and_test(xs, ys, test_fraction=0.25):
+    # TODO
+    pass
+`,
+        solution: `
+def accuracy(xs, ys, t):
+    return sum((1 if x >= t else 0) == y for x, y in zip(xs, ys)) / len(xs)
+
+def best_threshold(xs, ys):
+    best_t, best_acc = None, -1.0
+    for t in sorted(xs):
+        acc = accuracy(xs, ys, t)
+        if acc > best_acc:
+            best_t, best_acc = t, acc
+    return best_t
+
+def holdout_split(xs, ys, test_fraction):
+    n_test = round(len(xs) * test_fraction)
+    cut = len(xs) - n_test
+    return list(xs[:cut]), list(ys[:cut]), list(xs[cut:]), list(ys[cut:])
+
+def train_and_test(xs, ys, test_fraction=0.25):
+    xtr, ytr, xte, yte = holdout_split(xs, ys, test_fraction)
+    t = best_threshold(xtr, ytr)
+    return t, accuracy(xtr, ytr, t), accuracy(xte, yte, t)
+`,
+        hints: ['Loop over the thresholds in ascending order and only replace the best when the accuracy is strictly higher.', 'Slicing with a cut point: xs[:cut] and xs[cut:].', 'The threshold must be chosen without looking at the test part.'],
+        explain: `Training accuracy measures how well the rule fits the examples it was chosen on; test accuracy estimates how it will do on new data. The gap between them — here usually small, because a threshold has only one parameter — is the generalization gap you will meet again in *Overfitting* and *Generalization Theory*.`,
+        tests: [
+          { call: 'best_threshold([1, 2, 3, 4], [0, 0, 1, 1])', expect: '3' },
+          { call: 'holdout_split([1, 2, 3, 4], [0, 0, 1, 1], 0.25)', expect: '([1, 2, 3], [0, 0, 1], [4], [1])' },
+          { call: 'train_and_test([1, 5, 2, 6, 3, 7, 4, 8], [0, 1, 0, 1, 0, 1, 0, 1], 0.25)', expect: '(5, 1.0, 1.0)' },
+          { name: 'ties go to the smallest threshold', call: 'best_threshold([2, 4, 6], [1, 1, 1])', expect: '2', hidden: true },
+          { name: 'noisy data vs reference', setup: 'import random\nrandom.seed(0)\nxs = [random.uniform(0, 10) for _ in range(40)]\nys = [1 if x + random.gauss(0, 1.5) > 5 else 0 for x in xs]', call: 'train_and_test(xs, ys, 0.3)', hidden: true }
+        ]
       }
     ],
     refs: [
@@ -1641,7 +1701,8 @@ def kl_divergence(p, q):
       }
     ],
     refs: [
-      { title: 'Chris Olah — Visual Information Theory', url: 'https://colah.github.io/posts/2015-09-Visual-Information/', note: 'the best visual explanation of entropy and cross-entropy' }
+      { title: 'Chris Olah — Visual Information Theory', url: 'https://colah.github.io/posts/2015-09-Visual-Information/', note: 'the best visual explanation of entropy and cross-entropy' },
+      { title: "Wikipedia — Entropy (information theory)", url: "https://en.wikipedia.org/wiki/Entropy_(information_theory)" }
     ]
   }
   ]);
