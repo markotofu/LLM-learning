@@ -71,7 +71,57 @@
   // Shared with js/views/demos-more.js
   MLA.demoKit = { palette, setup, frame, curve, dot, gauss, canvasPoint, softmax, redrawOnChange, kbCursor, niceStep, fmt };
 
-  C['mla-demo'] = { props: { name: String }, computed: { comp() { return C['demo-' + this.name] ? 'demo-' + this.name : null; } }, template: `<div class="demo"><component v-if="comp" :is="comp" /><div v-else class="callout warn">Unknown demo: {{ name }}</div></div>` };
+  // Screen readers: every canvas gets a text alternative (what it draws), and after a slider, button, click or key
+  // changes the demo, its readout lines (the small text that reports the numbers) are announced once they settle.
+  const DESCRIBE = {
+    'gradient-descent': 'A loss curve with the path gradient descent takes down it, one dot per step.',
+    'activations': 'Curves of the selected activation functions, and of their gradients when shown.',
+    'linear-fit': 'A scatter plot of the data with the current line through it.',
+    'overfit-poly': 'Training and test points with the fitted polynomial, and training and test error against the degree.',
+    'knn': 'Coloured decision regions of k-nearest neighbours over the training points.',
+    'kmeans': 'Points coloured by their nearest centroid, with the centroids marked.',
+    'threshold': 'The scores of the two classes with the threshold line, and the ROC or precision-recall curve.',
+    'neuron': 'The four inputs of the logic gate and the line where the neuron switches its output.',
+    'positional': 'A heat map of sinusoidal position encodings: positions down, dimensions across.',
+    'quantization': 'The original weights and their quantized values on the grid of quantization levels.',
+    'embeddings': 'Words placed as points in a two-dimensional embedding space.',
+    'calibration': 'A reliability diagram: predicted confidence against observed accuracy, with the diagonal for perfect calibration.',
+    'diffusion': 'Data points dissolving into noise at the selected step of the forward process.',
+    'roofline': 'A roofline plot of throughput against arithmetic intensity, with the current batch size marked.',
+    'ppo-clip': 'The clipped PPO objective against the probability ratio, for a positive and a negative advantage.',
+    'eigen': 'A vector v and its image A v under the matrix, both drawn from the origin.',
+    'conditioning': 'The contours of a narrow valley and the path gradient descent takes across it.',
+    'beta': 'The prior and posterior Beta distributions over the click rate.',
+    'gp': 'The Gaussian process mean with its 95% band, and the observed points.',
+    'pca': 'A cloud of points with the chosen direction and each point projected onto it.',
+    'lr-schedule': 'The learning rate over the training steps for the selected schedule.',
+    'bias-variance': 'Fits from many training sets with their average, and bias and variance against the degree.',
+    'tree-split': 'Points of two classes and the candidate split line.'
+  };
+  C['mla-demo'] = { props: { name: String },
+    data() { return { said: '' }; },
+    computed: { comp() { return C['demo-' + this.name] ? 'demo-' + this.name : null; } },
+    mounted() {
+      if (!this.$el || !this.$el.querySelectorAll) return;
+      this.$el.querySelectorAll('canvas:not([aria-label])').forEach(cv => {
+        cv.setAttribute('role', 'img');
+        cv.setAttribute('aria-label', (DESCRIBE[this.name] || 'An interactive chart.') + ' The text below it reports the current values.');
+      });
+    },
+    beforeUnmount() { clearTimeout(this._t); },
+    methods: {
+      changed() {
+        clearTimeout(this._t);
+        this._t = setTimeout(() => {
+          if (!this.$el || !this.$el.querySelectorAll) return;
+          const els = [...this.$el.querySelectorAll('.demo-status, .small.muted, .feedback, p.small')].filter(e => !e.closest('label, button, .sr-only'));
+          const read = els.slice(0, 1).concat(els.slice(1).filter(e => e.classList.contains('feedback') || e.classList.contains('demo-status')));   // the numbers line and any verdict
+          const text = read.map(e => e.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean).join('. ').slice(0, 400);
+          if (text && text !== this._last) { this._last = text; this.said = text; }
+        }, 700);
+      }
+    },
+    template: `<div class="demo" @input="changed" @change="changed" @click="changed" @keyup="changed"><component v-if="comp" :is="comp" /><div v-else class="callout warn">Unknown demo: {{ name }}</div><p class="sr-only" aria-live="polite">{{ said }}</p></div>` };
 
   // 1 ---------- Gradient descent on a 1-D loss ----------
   C['demo-gradient-descent'] = {
