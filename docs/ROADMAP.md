@@ -2,20 +2,28 @@
 
 Possible improvements, ranked by how much they help a learner per unit of effort. Status as of 21 November 2026:
 
-- 113 concepts, including 3 capstones; a typical (median) lesson has about 1,200 words;
-- 246 practice problems and 817 quiz questions;
-- 634 glossary terms;
-- 28 interactive demos, 12 diagrams and 146 charts of computed data;
-- 334 code samples that run in the browser, 136 of them with a "predict first" question, and a spaced-repetition queue of mistakes to revisit;
+- 123 concepts, including 3 capstones; a typical (median) lesson has about 1,200 words;
+- 266 practice problems and 877 quiz questions;
+- 683 glossary terms;
+- 28 interactive demos, 12 diagrams and 155 charts of computed data;
+- 356 code samples that run in the browser, 158 of them with a "predict first" question, and a spaced-repetition queue of mistakes to revisit;
 - Terms of Use and Privacy Policy pages, a Content-Security-Policy and a hardened local server.
 
 **Effort:**
 
-- **S** — under a day.
-- **M** — a few days.
-- **L** — a week or more.
+- **S**: under a day.
+- **M**: a few days.
+- **L**: a week or more.
 
 **Impact** is the expected gain in learning, reach or safety.
+
+## Done in the sixth round (also 21 November 2026)
+
+- **Ten topic lessons** for the gaps in the "full mastery" review, each with runnable samples that ask for a prediction first, two practice problems, six quiz questions, glossary terms and a computed chart (except Geometric Deep Learning): Graphical Models & Hidden Markov Models; GLMs & Survival Analysis; 3D Vision & Neural Rendering; AI for Science; Audio & Music Generation; AI Governance & Regulation; Contextual Bandits & Online Experimentation; Geometric & Equivariant Deep Learning; Mechanistic Interpretability in Practice; AI Hardware & Systems. They are placed in the Theory, Data Science, Build an LLM, LLM Application Engineer and Frontier Deep Learning tracks.
+- **Row previews.** 31 samples that load a dataset (scikit-learn datasets, generated DataFrames, an SQLite table, the capstone's churn data) now print a few rows first; digit images print as an 8 × 8 grid.
+- **Keyboard access.** The plots that take clicks (line fitting, k-NN, Gaussian processes) take a cross-hair moved with the arrow keys and Enter, and announce positions and results to screen readers; the direction plots (eigenvectors, PCA) turn with the arrow keys; the embedding demo has a word menu; the convolution grid and all quiz options (including true/false) work with Tab, the arrow keys, Enter and Space; map hubs and a few cards became focusable.
+- **Less machine-made style.** Emojis were replaced by the app's line icons (tracks, achievements, streak) or removed from messages; about 1,980 em dashes in lesson and interface text became colons, commas or parentheses (formula legends keep theirs, since the renderer uses them); exclamation marks and a few hype words went. Section ids did not change, so saved progress is unaffected.
+- **Loading screen.** A centred concept-map animation with the name, a progress bar and a note that appears if loading takes more than 12 seconds; plain HTML and CSS, so it works under the Content-Security-Policy, follows the saved theme and respects reduced motion.
 
 ## Done in the fifth round (also 21 November 2026)
 
@@ -84,12 +92,12 @@ Items 1–4, 6, 7, 8 and part of 10–11 below are done:
 
 | # | Improvement | Impact | Effort |
 | --- | --- | --- | --- |
-| 1 | Publish the site — done | High | S |
-| 2 | Stable section ids for progress — done | Medium | S |
-| 3 | Browser end-to-end and visual tests — done | High | M |
-| 4 | Raise the contrast of `--dim` app-wide — done | Medium | S |
+| 1 | Publish the site: done | High | S |
+| 2 | Stable section ids for progress: done | Medium | S |
+| 3 | Browser end-to-end and visual tests: done | High | M |
+| 4 | Raise the contrast of `--dim` app-wide: done | Medium | S |
 | 5 | Clearer error when a Python package download fails | Low | S |
-| 6 | Add matplotlib to CI — done | Low | S |
+| 6 | Add matplotlib to CI: done | Low | S |
 
 1. **Publish the site.** The GitHub Actions workflow already tests and deploys on every push to `main`. GitHub Pages needs **Settings → Pages → Source: GitHub Actions**, and either a public repository or a paid plan for a private one.
    - *Pros:* learners get a URL; offline use and installing as an app work over HTTPS.
@@ -120,8 +128,8 @@ Items 1–4, 6, 7, 8 and part of 10–11 below are done:
 
 | # | Improvement | Impact | Effort |
 | --- | --- | --- | --- |
-| 7 | Predict-then-run exercises — done | High | M |
-| 8 | Spaced review of missed quiz questions and problems — done | High | M |
+| 7 | Predict-then-run exercises: done | High | M |
+| 8 | Spaced review of missed quiz questions and problems: done | High | M |
 | 9 | Guided capstones with per-step checks | High | M–L |
 | 10 | More demos where a picture teaches best | Medium–High | S each |
 | 11 | More diagrams | Medium | S each |
@@ -152,10 +160,9 @@ Items 1–4, 6, 7, 8 and part of 10–11 below are done:
     - speculative decoding;
     - data, tensor and pipeline parallelism;
     - the CNN feature hierarchy.
-12. **Accessibility pass on the demos.** Most demos are slider-driven, so keyboard use works, and each has a live text summary. Still to do:
-    - give canvases `role="img"` with an updating label;
-    - make sure click-only interactions (GP points, k-NN points, PCA direction) have a keyboard or slider alternative;
-    - respect `prefers-reduced-motion` in animated demos.
+12. **Accessibility pass on the demos.** Most demos are slider-driven, and the click-only interactions now have keyboard alternatives (sixth round). Still to do:
+    - give the remaining canvases `role="img"` with an updating label;
+    - respect `prefers-reduced-motion` in animated demos (the loading screen already does).
 
 ## Priority 3: reach and depth
 
@@ -177,9 +184,9 @@ Items 1–4, 6, 7, 8 and part of 10–11 below are done:
     - survival analysis;
     - generalized linear models;
     - equivariant networks;
-    - robotics and vision-language-action models — done;
+    - robotics and vision-language-action models: done;
     - text-generation metrics (BLEU, ROUGE, BERTScore);
-    - data visualization — done;
+    - data visualization: done;
     - "open in Colab" links for the PyTorch examples that need a GPU.
 15. **Map at scale.** With 113 nodes:
     - mark *recommended* prerequisites separately from *required* ones;

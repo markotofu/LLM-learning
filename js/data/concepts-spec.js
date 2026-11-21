@@ -7,8 +7,8 @@
   {
     id: 'reinforcement-learning', branch: 'spec', title: 'Reinforcement Learning', short: 'Reinforcement Learning', level: 2, minutes: 50, prereqs: ['probability', 'supervised-learning'],
     tags: ['reinforcement learning', 'agent', 'environment', 'reward', 'policy', 'bandits', 'exploration', 'value function', 'bellman equation', 'q-learning', 'policy gradient', 'ppo'],
-    summary: 'Learning by trial and error: agents, environments, states, actions and rewards; multi-armed bandits and the exploration–exploitation trade-off; discounted returns, value functions and the Bellman equation; Q-learning; and policy gradients — the idea behind RLHF.',
-    why: `Supervised learning needs the correct answer for every example. For many problems nobody can provide that — the best move in a game, the right motor command for a robot, the ideal reply of a chatbot — but you *can* score the outcome. **Reinforcement learning** learns from such scores by trial and error. It produced AlphaGo and robot locomotion, optimizes data-centre cooling and chip layouts, and is the "RL" in RLHF and in the training of reasoning models.`,
+    summary: 'Learning by trial and error: agents, environments, states, actions and rewards; multi-armed bandits and the exploration–exploitation trade-off; discounted returns, value functions and the Bellman equation; Q-learning; and policy gradients (the idea behind RLHF).',
+    why: `Supervised learning needs the correct answer for every example. For many problems nobody can provide that (the best move in a game, the right motor command for a robot, the ideal reply of a chatbot) but you *can* score the outcome. **Reinforcement learning** learns from such scores by trial and error. It produced AlphaGo and robot locomotion, optimizes data-centre cooling and chip layouts, and is the "RL" in RLHF and in the training of reasoning models.`,
     objectives: [
       'Describe the RL loop: agent, environment, state, action, reward and policy',
       'Balance exploration and exploitation in a multi-armed bandit with ε-greedy',
@@ -26,7 +26,7 @@
        reward r_t+1, next state s_t+1
 \`\`\`
 
-The goal is to maximize the **total reward over time**, not the immediate reward — sometimes you must sacrifice now to win later.
+The goal is to maximize the **total reward over time**, not the immediate reward, sometimes you must sacrifice now to win later.
 
 | Problem | State | Action | Reward |
 | --- | --- | --- | --- |
@@ -35,7 +35,7 @@ The goal is to maximize the **total reward over time**, not the immediate reward
 | Recommendations | user context | which item to show | click or watch time |
 | LLM fine-tuning (RLHF) | prompt + text so far | the next token | a preference score for the finished reply |
 
-Compared with supervised learning: there are no labels, only rewards, often **delayed** (which move actually lost the game? — the credit-assignment problem); the agent's own actions decide which data it sees; and it must **explore** to discover what works.` },
+Compared with supervised learning: there are no labels, only rewards, often **delayed** (which move actually lost the game?, the credit-assignment problem); the agent's own actions decide which data it sees; and it must **explore** to discover what works.` },
       { type: 'text', title: 'Multi-armed bandits: explore or exploit?', md: `The simplest RL problem: K slot machines ("arms") with unknown average payouts. Each turn you pull one arm and receive a random reward. Estimate each arm's value as the average reward you have seen from it, updated incrementally:
 
 $$ Q(a) ← Q(a) + ( r − Q(a) ) / N(a) $$
@@ -83,7 +83,7 @@ r_{t+1} — the reward received right after the action at time t (and so on for 
 :::
 
 Discounting makes the agent prefer sooner rewards and keeps infinite sums finite. Roughly, the agent plans about 1 / (1 − γ) steps ahead: γ = 0.99 means about 100 steps.` },
-      { type: 'text', title: 'Value functions and the Bellman equation', md: `A **value function** predicts the expected return. Q(s, a) — the **action value** — is the expected return after taking action a in state s and acting well afterwards. If you knew the optimal Q*, acting optimally would be easy: pick the action with the highest Q* in every state.
+      { type: 'text', title: 'Value functions and the Bellman equation', md: `A **value function** predicts the expected return. Q(s, a) (the **action value**) is the expected return after taking action a in state s and acting well afterwards. If you knew the optimal Q*, acting optimally would be easy: pick the action with the highest Q* in every state.
 
 Q* satisfies a recursive consistency condition, the **Bellman optimality equation**:
 
@@ -141,7 +141,7 @@ print("greedy policy (G = goal, X = pit):")
 for r in range(H):
     print("  " + " ".join("G" if (r, c) == GOAL else "X" if (r, c) == PIT else ARROWS[int(np.argmax(Q[r, c]))] for c in range(W)))
 print("estimated value of the start state:", round(float(Q[0, 0].max()), 3))
-`, after: `Follow the arrows from the top-left corner: the agent learned a short route to the goal that steers around the pit. Cells it rarely visited can still show arbitrary arrows — it only learns about states it explores.` },
+`, after: `Follow the arrows from the top-left corner: the agent learned a short route to the goal that steers around the pit. Cells it rarely visited can still show arbitrary arrows: it only learns about states it explores.` },
       { type: 'text', title: 'Policy gradients and modern RL', md: `Instead of learning values, **policy-gradient** methods adjust a policy network's parameters θ directly, making actions that led to high returns more likely:
 
 $$ ∇_θ J(θ) = E[ Σ_t ∇_θ log π_θ(a_t | s_t) · A_t ] $$
@@ -153,7 +153,7 @@ J(θ) — the expected return when acting with this policy
 A_t — the advantage: how much better the action turned out than expected (the return minus a baseline)
 :::
 
-REINFORCE uses this directly; **actor–critic** methods learn a value function as the baseline; **PPO** clips each update so the policy can't change too much at once, which makes training stable — it is the algorithm behind classic RLHF. For an LLM the recipe reads: sample a reply, score it, and raise the log-probability of the tokens in good replies while lowering it in bad ones.` },
+REINFORCE uses this directly; **actor–critic** methods learn a value function as the baseline; **PPO** clips each update so the policy can't change too much at once, which makes training stable: it is the algorithm behind classic RLHF. For an LLM the recipe reads: sample a reply, score it, and raise the log-probability of the tokens in good replies while lowering it in bad ones.` },
       { type: 'check', question: { type: 'tf', q: 'In Q-learning, the update moves Q(s, a) towards the reward plus the discounted value of the best action in the next state.', answer: true, explain: 'That target comes from the Bellman optimality equation.' } }
     ],
     when: `- Sequential decisions with delayed rewards where you can simulate or interact cheaply: games, robotics in simulation, control, scheduling, resource allocation.
@@ -162,7 +162,7 @@ REINFORCE uses this directly; **actor–critic** methods learn a value function 
 - Avoid it when labeled data exists (supervised learning is far more sample-efficient) or when exploring in the real world is dangerous or expensive.`,
     pitfalls: `- Reward hacking: the agent maximizes a badly specified reward in unintended ways.
 - Too little exploration, so the agent settles for a mediocre strategy.
-- Instability and strong sensitivity to hyperparameters and random seeds — compare over several seeds.
+- Instability and strong sensitivity to hyperparameters and random seeds: compare over several seeds.
 - Sample inefficiency: many problems need millions of episodes.
 - The sim-to-real gap: policies trained in simulation can fail on real hardware.`,
     takeaways: [
@@ -170,7 +170,7 @@ REINFORCE uses this directly; **actor–critic** methods learn a value function 
       'Exploration vs exploitation: ε-greedy explores with probability ε.',
       'Return G = Σ γ^k r: discounting makes nearer rewards count more.',
       'Q-learning: Q(s, a) ← Q(s, a) + α[r + γ max Q(s′, ·) − Q(s, a)].',
-      'Policy gradients (REINFORCE, PPO) push up the probability of advantageous actions — the basis of RLHF.'
+      'Policy gradients (REINFORCE, PPO) push up the probability of advantageous actions: the basis of RLHF.'
     ],
     quiz: [
       { type: 'mcq', q: 'What is the main difference between reinforcement learning and supervised learning?', options: ['RL uses neural networks', 'RL learns from rewards for its own actions instead of from labelled correct answers', 'RL needs more labelled data', 'RL cannot handle images'], answer: 1, explain: 'The agent must discover good actions by trying them.' },
@@ -329,7 +329,7 @@ def greedy_policy(Q):
     return np.argmax(np.asarray(Q), axis=1)
 `,
         hints: ['Copy first with `np.array(Q, dtype=float)`.', 'Compute the target before changing anything.', '`np.argmax(Q, axis=1)` gives one action per state.'],
-        explain: `Note that the target uses the *best* next action even if the agent will actually explore — that is what makes Q-learning off-policy. Applying this update over many episodes propagates the goal's reward backwards through the states, as in the gridworld example.`,
+        explain: `Note that the target uses the *best* next action even if the agent will actually explore: that is what makes Q-learning off-policy. Applying this update over many episodes propagates the goal's reward backwards through the states, as in the gridworld example.`,
         tests: [
           { call: 'q_update(np.zeros((2, 2)), 0, 1, 1.0, 1, False, 0.5, 0.9)', expect: 'np.array([[0.0, 0.5], [0.0, 0.0]])' },
           { name: 'bootstraps from the next state', call: 'q_update(np.array([[0.0, 0.0], [2.0, 4.0]]), 0, 0, 1.0, 1, False, 0.5, 0.5)', expect: 'np.array([[1.5, 0.0], [2.0, 4.0]])' },
@@ -340,10 +340,10 @@ def greedy_policy(Q):
       }
     ],
     refs: [
-      { title: 'Sutton & Barto — Reinforcement Learning: An Introduction (free book)', url: 'http://incompleteideas.net/book/the-book-2nd.html' },
-      { title: 'Mnih et al. — Human-level control through deep reinforcement learning (DQN)', url: 'https://www.nature.com/articles/nature14236' },
-      { title: 'Schulman et al. — Proximal Policy Optimization Algorithms', url: 'https://arxiv.org/abs/1707.06347' },
-      { title: 'OpenAI — Spinning Up in Deep RL', url: 'https://spinningup.openai.com/' }
+      { title: 'Sutton & Barto, Reinforcement Learning: An Introduction (free book)', url: 'http://incompleteideas.net/book/the-book-2nd.html' },
+      { title: 'Mnih et al., Human-level control through deep reinforcement learning (DQN)', url: 'https://www.nature.com/articles/nature14236' },
+      { title: 'Schulman et al., Proximal Policy Optimization Algorithms', url: 'https://arxiv.org/abs/1707.06347' },
+      { title: 'OpenAI, Spinning Up in Deep RL', url: 'https://spinningup.openai.com/' }
     ]
   },
 
@@ -351,8 +351,8 @@ def greedy_policy(Q):
   {
     id: 'generative-models', branch: 'spec', title: 'Generative Models: Autoencoders, VAEs, GANs & Diffusion', short: 'Generative Models', level: 3, minutes: 50, prereqs: ['mlp', 'probability'],
     tags: ['generative models', 'autoencoder', 'vae', 'latent space', 'reparameterization', 'gan', 'diffusion', 'denoising', 'stable diffusion'],
-    summary: 'Models that create new data: autoencoders and latent spaces, variational autoencoders and the reparameterization trick, GANs (a generator against a discriminator), and diffusion models that learn to remove noise step by step — the technology behind modern image, audio and video generation.',
-    why: `A classifier answers "what is this?"; a **generative model** learns what the data looks like well enough to produce new examples. Diffusion models power today's image and video generators; autoencoders compress data and learn useful representations; GANs produced the first photorealistic synthetic faces. LLMs are generative models too — autoregressive ones. Seeing the main families side by side shows the different ways to model a probability distribution over complex data.`,
+    summary: 'Models that create new data: autoencoders and latent spaces, variational autoencoders and the reparameterization trick, GANs (a generator against a discriminator), and diffusion models that learn to remove noise step by step (the technology behind modern image, audio and video generation).',
+    why: `A classifier answers "what is this?"; a **generative model** learns what the data looks like well enough to produce new examples. Diffusion models power today's image and video generators; autoencoders compress data and learn useful representations; GANs produced the first photorealistic synthetic faces. LLMs are generative models too: autoregressive ones. Seeing the main families side by side shows the different ways to model a probability distribution over complex data.`,
     objectives: [
       'Explain what it means to model a data distribution and to sample from it',
       'Describe autoencoders and latent spaces; explain the VAE loss and the reparameterization trick',
@@ -360,7 +360,7 @@ def greedy_policy(Q):
       'Explain the forward (noising) and reverse (denoising) processes of diffusion models'
     ],
     sections: [
-      { type: 'text', title: 'What generative models do', md: `A generative model learns the probability distribution p(x) of its training data — images, sounds, sentences, molecules — so that it can **sample** new, realistic x. The main families take different routes:
+      { type: 'text', title: 'What generative models do', md: `A generative model learns the probability distribution p(x) of its training data (images, sounds, sentences, molecules) so that it can **sample** new, realistic x. The main families take different routes:
 
 | Family | How it generates | Examples | Trade-offs |
 | --- | --- | --- | --- |
@@ -445,7 +445,7 @@ x_t — the noisy version after t steps
 I — the identity matrix: every value gets independent noise
 :::
 
-A neural network ε_θ(x_t, t) — usually a U-Net or a transformer — is trained to **predict the noise** that was added:
+A neural network ε_θ(x_t, t) (usually a U-Net or a transformer) is trained to **predict the noise** that was added:
 
 $$ L = ‖ ε − ε_θ(x_t, t) ‖² $$
 :::where
@@ -474,7 +474,7 @@ eps = rng.normal(size=x0.shape)
 xt = np.sqrt(alpha_bar[t]) * x0 + np.sqrt(1 - alpha_bar[t]) * eps
 x0_hat = (xt - np.sqrt(1 - alpha_bar[t]) * eps) / np.sqrt(alpha_bar[t])
 print("max error when the true noise is known:", float(np.abs(x0_hat - x0).max()))
-`, after: `By the last step the signal is essentially gone. Learning to predict the added noise is learning to reverse this destruction — which is all a diffusion model needs to turn random noise into new data.` },
+`, after: `By the last step the signal is essentially gone. Learning to predict the added noise is learning to reverse this destruction, which is all a diffusion model needs to turn random noise into new data.` },
       { type: 'check', question: { type: 'tf', q: 'A diffusion model generates data by starting from pure noise and denoising it over many steps.', answer: true, explain: 'Each step removes a little of the noise the network predicts.' } },
       { type: 'text', title: "Evaluating generative models", md: `There is no single right answer to compare a generated image with, so generative models are judged on whole sets of samples. The most common metric, the **Fréchet Inception Distance (FID)**, embeds real and generated images with a pretrained image network, fits a Gaussian to each set of embeddings, and measures the distance between the two Gaussians:
 
@@ -514,7 +514,7 @@ print("lack of variety is penalised:", frechet(real, collapsed) > 5 * frechet(re
 - **GANs** when you need very fast single-step generation in a narrow domain (faces, super-resolution, style transfer).
 - **Autoregressive models** for text and other sequences.
 - Plain autoencoders for denoising, compression and unsupervised features.`,
-    pitfalls: `- Judging generators only by eye — measure quality and diversity (e.g. FID) and check for memorized training examples.
+    pitfalls: `- Judging generators only by eye: measure quality and diversity (e.g. FID) and check for memorized training examples.
 - GAN training collapse or oscillation; changing several hyperparameters at once.
 - A VAE KL term that is too strong, which makes the model ignore the latent code (blurry, average outputs).
 - Using too few sampling steps for a diffusion model trained for many, without a matching sampler.
@@ -670,7 +670,7 @@ def gan_losses(d_real, d_fake):
     return float(d_loss), float(g_loss)
 `,
         hints: ['`np.clip(x, 1e-7, 1 - 1e-7)` keeps the logs finite.', 'Both losses are binary cross-entropies.'],
-        explain: `When the discriminator is fooled (d_fake near 1) the generator loss is small; when it confidently rejects fakes, −log d_fake is large and gives the generator a strong gradient — the reason for the non-saturating form.`,
+        explain: `When the discriminator is fooled (d_fake near 1) the generator loss is small; when it confidently rejects fakes, −log d_fake is large and gives the generator a strong gradient: the reason for the non-saturating form.`,
         tests: [
           { call: 'gan_losses(np.array([0.5]), np.array([0.5]))', expect: '(2 * np.log(2), np.log(2))' },
           { name: 'a confident, correct discriminator', call: 'gan_losses(np.array([0.99, 0.95]), np.array([0.01, 0.05]))' },
@@ -680,10 +680,10 @@ def gan_losses(d_real, d_fake):
       }
     ],
     refs: [
-      { title: 'Kingma & Welling — Auto-Encoding Variational Bayes (VAE)', url: 'https://arxiv.org/abs/1312.6114' },
-      { title: 'Goodfellow et al. — Generative Adversarial Nets', url: 'https://arxiv.org/abs/1406.2661' },
-      { title: 'Ho et al. — Denoising Diffusion Probabilistic Models', url: 'https://arxiv.org/abs/2006.11239' },
-      { title: 'Rombach et al. — High-Resolution Image Synthesis with Latent Diffusion Models', url: 'https://arxiv.org/abs/2112.10752' }
+      { title: 'Kingma & Welling, Auto-Encoding Variational Bayes (VAE)', url: 'https://arxiv.org/abs/1312.6114' },
+      { title: 'Goodfellow et al., Generative Adversarial Nets', url: 'https://arxiv.org/abs/1406.2661' },
+      { title: 'Ho et al., Denoising Diffusion Probabilistic Models', url: 'https://arxiv.org/abs/2006.11239' },
+      { title: 'Rombach et al., High-Resolution Image Synthesis with Latent Diffusion Models', url: 'https://arxiv.org/abs/2112.10752' }
     ]
   },
 
@@ -691,8 +691,8 @@ def gan_losses(d_real, d_fake):
   {
     id: 'vision-transformers', branch: 'spec', title: 'Vision Transformers & Multimodal Models', short: 'Vision Transformers', level: 3, minutes: 40, prereqs: ['cnn', 'transformer-block'],
     tags: ['vision transformer', 'vit', 'patches', 'image classification', 'clip', 'contrastive learning', 'multimodal', 'vision-language models'],
-    summary: 'Applying transformers to images: cutting an image into patches, patch embeddings with a class token and position embeddings, how ViTs compare with CNNs, and multimodal models — CLIP\'s contrastive image–text training and vision-language models that read images.',
-    why: `The transformer turned out to be a general-purpose architecture: treat an image as a sequence of patches and the same blocks that power GPT can classify, detect and segment — and, joined to a language model, let assistants read screenshots, charts and photos. CLIP-style image–text embeddings drive image search and serve as the text encoders inside image generators.`,
+    summary: 'Applying transformers to images: cutting an image into patches, patch embeddings with a class token and position embeddings, how ViTs compare with CNNs, and multimodal models (CLIP\'s contrastive image–text training and vision-language models that read images).',
+    why: `The transformer turned out to be a general-purpose architecture: treat an image as a sequence of patches and the same blocks that power GPT can classify, detect and segment, and, joined to a language model, let assistants read screenshots, charts and photos. CLIP-style image–text embeddings drive image search and serve as the text encoders inside image generators.`,
     objectives: [
       'Turn an image into a sequence of patch tokens and compute the sequence length',
       'Describe the ViT architecture: patch embedding, class token, position embeddings, encoder blocks, classification head',
@@ -703,7 +703,7 @@ def gan_losses(d_real, d_fake):
       { type: 'text', title: 'An image is worth 16 × 16 words', md: `A **Vision Transformer (ViT)** turns an image into a sequence of tokens:
 
 1. Cut the H × W image (with C colour channels) into non-overlapping P × P **patches**.
-2. Flatten each patch into a vector and project it with one learned matrix to the model width d — the **patch embedding** (equivalent to a convolution with kernel size and stride P).
+2. Flatten each patch into a vector and project it with one learned matrix to the model width d: the **patch embedding** (equivalent to a convolution with kernel size and stride P).
 3. Prepend a learned **[CLS] token** and add learned **position embeddings**.
 4. Run a standard transformer **encoder** (bidirectional attention: every patch can attend to every other).
 5. Classify from the final [CLS] vector with a small MLP head.
@@ -813,7 +813,7 @@ Because an image becomes a few hundred to a few thousand tokens, images cost tok
 - CLIP-style embeddings for image search, zero-shot classification and dataset curation.
 - Vision-language models for documents, screenshots, charts and visual question answering.`,
     pitfalls: `- Training a ViT from scratch on a small dataset (use a pretrained model).
-- Forgetting that the patch grid fixes the input resolution — position embeddings must be interpolated for other sizes.
+- Forgetting that the patch grid fixes the input resolution: position embeddings must be interpolated for other sizes.
 - Underestimating attention cost at high resolution.
 - Expecting zero-shot CLIP to handle counting, fine-grained text or precise spatial relations reliably.
 - Treating text read from images as trusted instructions (prompt injection via images).`,
@@ -838,7 +838,7 @@ Because an image becomes a few hundred to a few thousand tokens, images cost tok
         id: 'image-to-patches', title: 'Patchify an Image', difficulty: 'medium',
         prompt: `Implement:
 
-- \`patchify(img, P)\`: \`img\` has shape (H, W, C). Raise \`ValueError\` if H or W is not divisible by P. Return an array of shape (N, P·P·C), with patches in reading order (left to right, then top to bottom) and each patch flattened in (row, column, channel) order — i.e. patch k equals \`img[r*P:(r+1)*P, c*P:(c+1)*P].reshape(-1)\` for k = r·(W/P) + c.
+- \`patchify(img, P)\`: \`img\` has shape (H, W, C). Raise \`ValueError\` if H or W is not divisible by P. Return an array of shape (N, P·P·C), with patches in reading order (left to right, then top to bottom) and each patch flattened in (row, column, channel) order, i.e. patch k equals \`img[r*P:(r+1)*P, c*P:(c+1)*P].reshape(-1)\` for k = r·(W/P) + c.
 - \`unpatchify(patches, H, W, C, P)\`: the exact inverse.
 
 Hint: reshape to (H/P, P, W/P, P, C), transpose to (H/P, W/P, P, P, C), then reshape.`,
@@ -867,7 +867,7 @@ def unpatchify(patches, H, W, C, P):
     return np.asarray(patches).reshape(H // P, W // P, P, P, C).transpose(0, 2, 1, 3, 4).reshape(H, W, C)
 `,
         hints: ['Reshape first, so each row splits into (block row, row inside the block).', 'The transpose brings the two block indices to the front.', 'For the inverse, undo the steps in reverse order.'],
-        explain: `Reshape-transpose-reshape rearranges memory without loops — the same trick used for splitting attention heads. Real ViTs implement this step as a convolution with kernel size P and stride P, followed by flattening.`,
+        explain: `Reshape-transpose-reshape rearranges memory without loops: the same trick used for splitting attention heads. Real ViTs implement this step as a convolution with kernel size P and stride P, followed by flattening.`,
         tests: [
           { name: 'a 4×4 single-channel image', call: 'patchify(np.arange(16).reshape(4, 4, 1), 2)', expect: 'np.array([[0, 1, 4, 5], [2, 3, 6, 7], [8, 9, 12, 13], [10, 11, 14, 15]])' },
           { name: 'shape and one patch', setup: 'rng = np.random.default_rng(0)\nimg = rng.random((32, 48, 3))', code: 'p = patchify(img, 16)\nassert p.shape == (6, 768), p.shape\nassert np.allclose(p[4], img[16:32, 16:32].reshape(-1))' },
@@ -915,7 +915,7 @@ def clip_loss(img_emb, txt_emb, tau=0.07):
     return float((loss_i + loss_t) / 2)
 `,
         hints: ['`np.diag` of the log-softmax matrix picks each row\'s correct column.', 'The text-to-image direction is the same computation on `logits.T`.'],
-        explain: `Every other caption in the batch serves as a negative example, so bigger batches give a harder, more informative task — CLIP used batches of 32,768 pairs.`,
+        explain: `Every other caption in the batch serves as a negative example, so bigger batches give a harder, more informative task: CLIP used batches of 32,768 pairs.`,
         tests: [
           { name: 'perfectly aligned orthogonal pairs', call: 'clip_loss(np.eye(4), np.eye(4))', expect: 'float(-np.log(np.exp(1 / 0.07) / (np.exp(1 / 0.07) + 3)))' },
           { name: 'identical embeddings give chance level', call: 'clip_loss(np.ones((5, 3)), np.ones((5, 3)))', expect: 'np.log(5)' },
@@ -926,9 +926,9 @@ def clip_loss(img_emb, txt_emb, tau=0.07):
       }
     ],
     refs: [
-      { title: 'Dosovitskiy et al. — An Image is Worth 16x16 Words (ViT)', url: 'https://arxiv.org/abs/2010.11929' },
-      { title: 'Radford et al. — Learning Transferable Visual Models From Natural Language Supervision (CLIP)', url: 'https://arxiv.org/abs/2103.00020' },
-      { title: 'Liu et al. — Visual Instruction Tuning (LLaVA)', url: 'https://arxiv.org/abs/2304.08485' }
+      { title: 'Dosovitskiy et al., An Image is Worth 16x16 Words (ViT)', url: 'https://arxiv.org/abs/2010.11929' },
+      { title: 'Radford et al., Learning Transferable Visual Models From Natural Language Supervision (CLIP)', url: 'https://arxiv.org/abs/2103.00020' },
+      { title: 'Liu et al., Visual Instruction Tuning (LLaVA)', url: 'https://arxiv.org/abs/2304.08485' }
     ]
   },
 
@@ -937,7 +937,7 @@ def clip_loss(img_emb, txt_emb, tau=0.07):
     id: 'recommender-systems', branch: 'spec', title: 'Recommender Systems', short: 'Recommenders', level: 2, minutes: 45, prereqs: ['embeddings', 'regularization'],
     tags: ['recommender systems', 'collaborative filtering', 'content-based', 'matrix factorization', 'embeddings', 'implicit feedback', 'cold start', 'two-tower', 'ranking', 'precision@k'],
     summary: 'Suggesting items people will like: content-based versus collaborative filtering, matrix factorization with user and item embeddings trained by SGD, implicit feedback and cold start, the retrieval → ranking pipeline used at scale, and how to evaluate recommendations.',
-    why: `Recommenders decide much of what people see online: videos, products, songs, news, jobs, friends. They are among the most commercially important ML systems — and a beautiful application of embeddings: learn a vector for every user and every item so that their dot product predicts how much the user will like the item.`,
+    why: `Recommenders decide much of what people see online: videos, products, songs, news, jobs, friends. They are among the most commercially important ML systems, and a clear application of embeddings: learn a vector for every user and every item so that their dot product predicts how much the user will like the item.`,
     objectives: [
       'Distinguish content-based and collaborative filtering',
       'Factorize a sparse rating matrix into user and item embeddings and train it with SGD and L2 regularization',
@@ -945,7 +945,7 @@ def clip_loss(img_emb, txt_emb, tau=0.07):
       'Describe the retrieval → ranking pipeline and evaluate with precision@k and recall@k'
     ],
     sections: [
-      { type: 'text', title: 'The problem', md: `Picture a huge **users × items** matrix of interactions — ratings, clicks, purchases, watch time. Almost all of it is empty: a typical user has touched a tiny fraction of the catalogue (often well under 1%). The task is to predict the missing entries, or simply to rank the items each user is most likely to want.
+      { type: 'text', title: 'The problem', md: `Picture a huge **users × items** matrix of interactions: ratings, clicks, purchases, watch time. Almost all of it is empty: a typical user has touched a tiny fraction of the catalogue (often well under 1%). The task is to predict the missing entries, or simply to rank the items each user is most likely to want.
 
 | Approach | Idea | Strengths | Weaknesses |
 | --- | --- | --- | --- |
@@ -1016,7 +1016,7 @@ for epoch in range(25):
         print(f"epoch {epoch + 1:2d}: train RMSE {rmse(train):.3f}   test RMSE {rmse(test):.3f}")
 `, after: `For the first few epochs the tiny random embeddings barely help; once they grow, the model captures the users' tastes and the test error falls well below the "predict the average" baseline.` },
       { type: 'check', question: { type: 'mcq', q: 'In matrix factorization, which entries of the rating matrix appear in the training loss?', options: ['All entries, with missing ones set to 0', 'Only the observed ratings', 'Only the missing entries', 'Only the diagonal'], answer: 1, explain: 'Missing does not mean "rated zero"; it means unknown.' } },
-      { type: 'text', title: 'Implicit feedback and cold start', md: `Most real data is **implicit**: clicks, views, purchases, listening time. There are no explicit dislikes — not clicking an item doesn't mean you dislike it; you may never have seen it. Common approaches: treat interactions as positives and **sample** some unobserved items as likely negatives; weight observations by confidence (weighted matrix factorization); or train with a ranking loss such as **BPR**, which only asks that an item the user interacted with scores higher than a random one they didn't.
+      { type: 'text', title: 'Implicit feedback and cold start', md: `Most real data is **implicit**: clicks, views, purchases, listening time. There are no explicit dislikes, not clicking an item doesn't mean you dislike it; you may never have seen it. Common approaches: treat interactions as positives and **sample** some unobserved items as likely negatives; weight observations by confidence (weighted matrix factorization); or train with a ranking loss such as **BPR**, which only asks that an item the user interacted with scores higher than a random one they didn't.
 
 **Cold start**: a new user or item has no interactions, so collaborative filtering knows nothing about it. Fixes: content features (embed the item's text and images), popularity-based defaults, a few onboarding questions, and **bandit** exploration to learn quickly what newcomers like (see *Reinforcement Learning*).` },
       { type: 'text', title: 'Recommendation at scale', md: `Large platforms rank millions of items in milliseconds with a multi-stage pipeline:
@@ -1025,12 +1025,12 @@ for epoch in range(25):
 millions of items --(1) candidate retrieval--> ~500 candidates --(2) ranking--> top 50 --(3) re-ranking--> page
 \`\`\`
 
-1. **Retrieval** with a **two-tower model**: one network embeds the user (history, context), another embeds each item, trained so that interacted pairs score high. Item embeddings are precomputed and searched with approximate nearest-neighbour search — the same machinery as RAG.
+1. **Retrieval** with a **two-tower model**: one network embeds the user (history, context), another embeds each item, trained so that interacted pairs score high. Item embeddings are precomputed and searched with approximate nearest-neighbour search: the same machinery as RAG.
 2. **Ranking**: a heavier model with rich features (user history, item statistics, time, device) predicts the probability of a click, purchase or long watch for each candidate.
 3. **Re-ranking**: business rules, diversity, freshness, and removing items already seen.
 
 **Feedback loops** are a real risk: recommendations shape what people see, which shapes the next training data. Popular items get more popular, and users can get trapped in filter bubbles, so production systems deliberately add exploration and diversity.` },
-      { type: 'text', title: 'Evaluating recommenders', md: `Offline, hold out each user's **most recent** interactions (a time-based split — predicting the past from the future is cheating) and measure ranking quality:
+      { type: 'text', title: 'Evaluating recommenders', md: `Offline, hold out each user's **most recent** interactions (a time-based split, predicting the past from the future is cheating) and measure ranking quality:
 
 $$ precision@k = |relevant ∩ top_k| / k          recall@k = |relevant ∩ top_k| / |relevant| $$
 :::where
@@ -1042,7 +1042,7 @@ precision@k — the share of the recommendations that were right
 recall@k — the share of the user's relevant items that you found
 :::
 
-Ranking-aware metrics such as NDCG also reward putting hits near the top, and RMSE suits explicit ratings. Online, run **A/B tests** on what actually matters — clicks, watch time, purchases, retention — because offline gains don't always survive contact with real users.` },
+Ranking-aware metrics such as NDCG also reward putting hits near the top, and RMSE suits explicit ratings. Online, run **A/B tests** on what actually matters (clicks, watch time, purchases, retention) because offline gains don't always survive contact with real users.` },
       { type: 'text', title: "Beyond accuracy: popularity bias and feedback loops", md: `Interactions follow a **long tail**: a few blockbuster items collect a large share of all activity, and most of the catalogue is rarely touched (see the chart at the top). Two consequences:
 
 - **Popularity is a strong baseline.** Recommending the most popular items a user hasn't seen yet is often surprisingly hard to beat on accuracy metrics. Always report it next to your model.
@@ -1217,9 +1217,9 @@ def mean_at_k(metric, all_recommended, all_relevant, k):
       }
     ],
     refs: [
-      { title: 'Koren, Bell & Volinsky — Matrix Factorization Techniques for Recommender Systems', url: 'https://datajobs.com/data-science-repo/Recommender-Systems-[Netflix].pdf' },
-      { title: 'Rendle et al. — BPR: Bayesian Personalized Ranking from Implicit Feedback', url: 'https://arxiv.org/abs/1205.2618' },
-      { title: 'Covington et al. — Deep Neural Networks for YouTube Recommendations', url: 'https://research.google/pubs/deep-neural-networks-for-youtube-recommendations/' }
+      { title: 'Koren, Bell & Volinsky, Matrix Factorization Techniques for Recommender Systems', url: 'https://datajobs.com/data-science-repo/Recommender-Systems-[Netflix].pdf' },
+      { title: 'Rendle et al., BPR: Bayesian Personalized Ranking from Implicit Feedback', url: 'https://arxiv.org/abs/1205.2618' },
+      { title: 'Covington et al., Deep Neural Networks for YouTube Recommendations', url: 'https://research.google/pubs/deep-neural-networks-for-youtube-recommendations/' }
     ]
   },
 
@@ -1228,7 +1228,7 @@ def mean_at_k(metric, all_recommended, all_relevant, k):
     id: 'mlops', branch: 'spec', title: 'MLOps: Deploying & Monitoring Models', short: 'MLOps', level: 2, minutes: 40, prereqs: ['evaluation-metrics', 'sklearn-workflow', 'sql-data-engineering'],
     tags: ['mlops', 'deployment', 'serving', 'monitoring', 'data drift', 'concept drift', 'psi', 'model registry', 'reproducibility', 'data validation', 'a/b testing'],
     summary: 'Getting models into production and keeping them healthy: the ML lifecycle, reproducibility and experiment tracking, batch versus online serving, testing and validating data, monitoring for data and concept drift with PSI, and safe rollouts with shadow, canary and A/B tests.',
-    why: `Most ML projects fail not in the notebook but on the way to production — or quietly afterwards. Data changes, pipelines break, latency matters, and a model that scored 95% in testing slowly degrades without anyone noticing. **MLOps** applies software-engineering discipline — versioning, testing, automation, monitoring — to machine learning so that models stay correct and useful over time.`,
+    why: `Most ML projects fail not in the notebook but on the way to production, or quietly afterwards. Data changes, pipelines break, latency matters, and a model that scored 95% in testing slowly degrades without anyone noticing. **MLOps** applies software-engineering discipline (versioning, testing, automation, monitoring) to machine learning so that models stay correct and useful over time.`,
     objectives: [
       'Describe the ML lifecycle and what must be versioned for reproducibility',
       'Choose between batch and online serving, and package a model behind an API',
@@ -1236,7 +1236,7 @@ def mean_at_k(metric, all_recommended, all_relevant, k):
       'Plan safe rollouts (shadow, canary, A/B) and retraining'
     ],
     sections: [
-      { type: 'demo', title: 'The ML lifecycle', demo: 'dg-lifecycle', after: `To **reproduce** any model — to debug it, audit it or roll back to it — you must be able to recreate it exactly. Version all of:
+      { type: 'demo', title: 'The ML lifecycle', demo: 'dg-lifecycle', after: `To **reproduce** any model (to debug it, audit it or roll back to it) you must be able to recreate it exactly. Version all of:
 - **code** (git), including feature-engineering code;
 - **data** (snapshots or content hashes; tools such as DVC);
 - **configuration and hyperparameters**, plus random seeds;
@@ -1246,11 +1246,11 @@ def mean_at_k(metric, all_recommended, all_relevant, k):
 **Experiment tracking** (MLflow, Weights & Biases) records every training run's parameters, metrics and artifacts, so "which settings produced the good model last month?" has an answer.` },
       { type: 'text', title: 'Serving models', md: `| Mode | How | Good for |
 | --- | --- | --- |
-| **Batch** | score everything on a schedule and write results to a table | nightly churn scores, weekly recommendations — simple and cheap |
-| **Online** | a web API answers each request in real time | fraud checks at payment time, search ranking — needs a latency budget |
-| **Streaming / edge** | score events as they arrive, or on the device | sensors, keyboards, cameras — no network round trip |
+| **Batch** | score everything on a schedule and write results to a table | nightly churn scores, weekly recommendations: simple and cheap |
+| **Online** | a web API answers each request in real time | fraud checks at payment time, search ranking: needs a latency budget |
+| **Streaming / edge** | score events as they arrive, or on the device | sensors, keyboards, cameras: no network round trip |
 
-Package the **whole pipeline** — preprocessing and model together, e.g. a scikit-learn \`Pipeline\` saved with joblib — load it once at start-up, validate every input, and return the model version with each prediction.
+Package the **whole pipeline**: preprocessing and model together, e.g. a scikit-learn \`Pipeline\` saved with joblib: load it once at start-up, validate every input, and return the model version with each prediction.
 
 **Training–serving skew** is a classic silent bug: a feature computed one way in the training notebook and another way in production. Share the feature code between the two, or use a feature store.` },
       { type: 'code', title: 'Serving a scikit-learn pipeline with FastAPI', run: false, md: `Run locally: \`pip install fastapi uvicorn scikit-learn pandas joblib\`, save a fitted pipeline with \`joblib.dump(pipeline, "model-v3.joblib")\`, then start the server with \`uvicorn app:app --port 8000\`.`, code: `
@@ -1281,8 +1281,8 @@ def predict(house: House):
 - **CI/CD**: on every change, run the tests, retrain or re-evaluate, and compare against the current production model before promoting anything.` },
       { type: 'text', title: 'Monitoring and drift', md: `The world keeps changing after deployment:
 
-- **Data drift** (covariate shift): the distribution of the inputs changes — new customer segments, a recalibrated sensor, a new app version.
-- **Concept drift**: the relationship between inputs and outputs changes — fraudsters adapt, tastes change, a pandemic rewrites shopping habits.
+- **Data drift** (covariate shift): the distribution of the inputs changes (new customer segments, a recalibrated sensor, a new app version).
+- **Concept drift**: the relationship between inputs and outputs changes (fraudsters adapt, tastes change, a pandemic rewrites shopping habits).
 - **Label delay**: true outcomes (did the loan default?) can arrive months later, so monitor the **inputs and the predictions** as early-warning signals.
 
 The **population stability index** compares a feature's distribution in production with the training data, bin by bin:
@@ -1320,10 +1320,10 @@ for label, production in scenarios:
 ` },
       { type: 'chart', title: "PSI as an input distribution shifts", md: `A feature whose distribution shifts by a growing amount, compared with its training-time reference (10 quantile bins, 5,000 new values):`, after: `PSI grows roughly with the square of the shift. By the usual rules of thumb, a shift of about 0.4 standard deviations crosses the "watch" line (PSI ≈ 0.14) and one of about half a standard deviation reaches the "investigate" line (PSI ≈ 0.24). The thresholds are conventions, not laws: tune them per feature, and remember that drift in an unimportant feature may not hurt the model at all, while a small drift in a key feature might.`, chart: {"kind":"line","x":[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1],"series":[{"name":"PSI of the shifted data against the reference","y":[0.003,0.008,0.043,0.072,0.143,0.238,0.333,0.473,0.635,0.715,0.905]}],"xLabel":"shift of the mean, in standard deviations","yLabel":"population stability index","hlines":[{"y":0.1,"label":"0.1: watch"},{"y":0.25,"label":"0.25: investigate"}],"yMin":0} },
       { type: 'check', question: { type: 'mcq', q: 'Fraudsters change their tactics, so the same transaction features now mean something different. What is this?', options: ['Data drift', 'Concept drift', 'Label leakage', 'Underfitting'], answer: 1, explain: 'The relationship P(y | x) changed, not just the input distribution.' } },
-      { type: 'text', title: 'Safe rollouts and retraining', md: `- **Shadow deployment** — the new model scores live traffic, but its predictions are only logged, not used. You compare it with the current model at zero risk.
-- **Canary release** — send a small share of traffic (say 5%) to the new model, watch the metrics, then ramp up.
-- **A/B test** — split users randomly and compare business metrics with proper statistics.
-- **Rollback** — always keep the previous model ready to switch back to instantly.
+      { type: 'text', title: 'Safe rollouts and retraining', md: `- **Shadow deployment**: the new model scores live traffic, but its predictions are only logged, not used. You compare it with the current model at zero risk.
+- **Canary release**: send a small share of traffic (say 5%) to the new model, watch the metrics, then ramp up.
+- **A/B test**: split users randomly and compare business metrics with proper statistics.
+- **Rollback**: always keep the previous model ready to switch back to instantly.
 
 Retrain on a schedule (e.g. weekly) or when monitoring triggers it, but **always evaluate before promoting**: a model retrained on bad or drifted data can be worse than the old one.` },
       { type: 'text', title: "Reproducibility, lineage and feature stores", md: `Months after deployment someone will ask which data and code produced a model. Answering requires recording, for every model version:
@@ -1334,7 +1334,7 @@ Retrain on a schedule (e.g. weekly) or when monitoring triggers it, but **always
 
 The most common production bug is **training–serving skew**: a feature computed one way in the training pipeline and slightly differently in the serving code (another time zone, a missing default, an outdated lookup table). The model then receives inputs it never saw in training, and nothing crashes. **Feature stores** address this by defining each feature once and serving the same computation both to training, with point-in-time correct history (see [SQL & Data Engineering for ML](#/concept/sql-data-engineering)), and to real-time inference.` }
     ],
-    when: `- As soon as a model's predictions are used by people or systems — not just in a notebook.
+    when: `- As soon as a model's predictions are used by people or systems, not just in a notebook.
 - Batch serving whenever predictions can be precomputed; online serving only when inputs are only known at request time.
 - Drift monitoring for every feature that matters, with alerts tied to retraining or investigation.`,
     pitfalls: `- No record of which data, code and parameters produced the production model.
@@ -1468,9 +1468,9 @@ def validate_rows(rows, schema):
       }
     ],
     refs: [
-      { title: 'Sculley et al. — Hidden Technical Debt in Machine Learning Systems', url: 'https://papers.nips.cc/paper/5656-hidden-technical-debt-in-machine-learning-systems' },
-      { title: 'Breck et al. — The ML Test Score: A Rubric for ML Production Readiness', url: 'https://research.google/pubs/the-ml-test-score-a-rubric-for-ml-production-readiness-and-technical-debt-reduction/' },
-      { title: 'Chip Huyen — Designing Machine Learning Systems', url: 'https://huyenchip.com/books/' },
+      { title: 'Sculley et al., Hidden Technical Debt in Machine Learning Systems', url: 'https://papers.nips.cc/paper/5656-hidden-technical-debt-in-machine-learning-systems' },
+      { title: 'Breck et al., The ML Test Score: A Rubric for ML Production Readiness', url: 'https://research.google/pubs/the-ml-test-score-a-rubric-for-ml-production-readiness-and-technical-debt-reduction/' },
+      { title: 'Chip Huyen, Designing Machine Learning Systems', url: 'https://huyenchip.com/books/' },
       { title: 'MLflow documentation', url: 'https://mlflow.org/docs/latest/index.html' }
     ]
   },
@@ -1480,7 +1480,7 @@ def validate_rows(rows, schema):
     id: 'responsible-ai', branch: 'spec', title: 'Responsible AI: Fairness, Explainability & Safety', short: 'Responsible AI', level: 2, minutes: 40, prereqs: ['evaluation-metrics'],
     tags: ['responsible ai', 'fairness', 'bias', 'demographic parity', 'equal opportunity', 'equalized odds', 'explainability', 'permutation importance', 'shap', 'privacy', 'model cards', 'ai safety'],
     summary: 'Building ML that is fair, transparent, private and safe: where bias comes from, group fairness metrics (demographic parity, equal opportunity, equalized odds) and their trade-offs, explainability with permutation importance and SHAP, privacy, documentation with model cards, and AI-safety basics.',
-    why: `ML systems now help decide who gets a loan, a job interview, medical attention or extra police scrutiny — and they can silently reproduce or amplify historical bias, fail for under-represented groups, leak private data or be misused. Responsible AI is not a final checkbox: it means measuring these risks like any other metric, explaining decisions, documenting limitations, and complying with growing regulation such as the EU AI Act.`,
+    why: `ML systems now help decide who gets a loan, a job interview, medical attention or extra police scrutiny, and they can silently reproduce or amplify historical bias, fail for under-represented groups, leak private data or be misused. Responsible AI is not a final checkbox: it means measuring these risks like any other metric, explaining decisions, documenting limitations, and complying with growing regulation such as the EU AI Act.`,
     objectives: [
       'Identify where bias enters the ML lifecycle',
       'Compute and interpret demographic parity, equal opportunity and equalized-odds gaps',
@@ -1488,12 +1488,12 @@ def validate_rows(rows, schema):
       'Apply privacy, documentation (model cards) and safety practices'
     ],
     sections: [
-      { type: 'text', title: 'Where bias comes from', md: `- **Historical bias** — the data faithfully records past discrimination (e.g. who was hired or promoted).
-- **Representation bias** — some groups are under-represented in the data (e.g. face datasets dominated by lighter skin).
-- **Measurement bias** — the label is a skewed proxy for what you care about (arrests as a proxy for crime; past healthcare spending as a proxy for medical need).
-- **Aggregation bias** — one model for groups whose patterns genuinely differ.
-- **Evaluation bias** — test sets that don't represent the people the system will serve.
-- **Feedback loops** — the model's decisions shape the next round of data.
+      { type: 'text', title: 'Where bias comes from', md: `- **Historical bias**: the data faithfully records past discrimination (e.g. who was hired or promoted).
+- **Representation bias**: some groups are under-represented in the data (e.g. face datasets dominated by lighter skin).
+- **Measurement bias**: the label is a skewed proxy for what you care about (arrests as a proxy for crime; past healthcare spending as a proxy for medical need).
+- **Aggregation bias**: one model for groups whose patterns genuinely differ.
+- **Evaluation bias**: test sets that don't represent the people the system will serve.
+- **Feedback loops**: the model's decisions shape the next round of data.
 
 Simply deleting the sensitive attribute ("fairness through unawareness") rarely works: postcode, name, school or shopping habits can act as **proxies** for it.` },
       { type: 'text', title: 'Group fairness metrics', md: `For a binary decision ŷ (1 = approve), true outcome y and group g:
@@ -1510,11 +1510,11 @@ FPR_g — the false-positive rate: how often unqualified members of g are approv
 :::
 
 - **Demographic parity**: equal selection rates across groups.
-- **Equal opportunity**: equal TPR — qualified people are approved equally often whatever their group.
+- **Equal opportunity**: equal TPR (qualified people are approved equally often whatever their group).
 - **Equalized odds**: equal TPR *and* equal FPR.
 - The **disparate impact ratio** (lowest selection rate ÷ highest) is often checked against the "four-fifths rule" (below 0.8 is a red flag).
 
-These criteria can conflict: when base rates differ between groups, a classifier generally cannot satisfy calibration and equalized odds at the same time. Choosing a criterion is a value judgment about which errors cause harm — involve domain experts, affected communities and legal review. Mitigations act before training (re-weighting data), during training (fairness constraints) or after it (group-specific thresholds).` },
+These criteria can conflict: when base rates differ between groups, a classifier generally cannot satisfy calibration and equalized odds at the same time. Choosing a criterion is a value judgment about which errors cause harm: involve domain experts, affected communities and legal review. Mitigations act before training (re-weighting data), during training (fairness constraints) or after it (group-specific thresholds).` },
       { type: 'chart', title: "Selection rates of two groups under one threshold", md: `Model scores whose distribution differs between two groups, approved whenever the score passes a single threshold:`, after: `At any single threshold the two groups are approved at different rates: at 0.5, 73% of group A against 42% of group B. Whether that gap is unfair depends on why the scores differ, which is exactly what the fairness criteria disagree about: demographic parity would demand equal approval rates (different thresholds per group), while equal opportunity looks only at people who would have repaid.`, chart: {"kind":"line","x":[0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8],"series":[{"name":"group A approved","y":[0.977,0.958,0.93,0.893,0.846,0.791,0.726,0.655,0.575,0.491,0.405,0.315,0.219]},{"name":"group B approved","y":[0.88,0.812,0.743,0.662,0.582,0.5,0.423,0.345,0.272,0.206,0.148,0.098,0.057]}],"xLabel":"approval threshold on the model's score","yLabel":"share approved","yMin":0,"yMax":1,"vlines":[{"x":0.5,"label":"a typical threshold"}]} },
       { type: 'code', title: 'Auditing a loan model for fairness', code: `
 import numpy as np
@@ -1548,7 +1548,7 @@ FPR — the false positive rate: the share of true negatives that are wrongly fl
 :::
 
 If two groups have different values of p, then equal PPV and equal FNR force different FPRs, and similarly for every other pair of criteria (results by Chouldechova, and by Kleinberg and colleagues, in 2016). Fairness therefore always involves a choice about which errors matter most in the application (a good borrower wrongly refused a loan, or an innocent customer wrongly flagged for fraud), and that choice should be made explicitly, with the people affected in mind, not left to whatever a default threshold happens to do.` },
-      { type: 'text', title: 'Explainability', md: `Explanations can be **global** (which features matter overall?) or **local** (why did *this* applicant get rejected?). Simple models — linear models, small trees — are interpretable by design; complex ones need post-hoc tools.
+      { type: 'text', title: 'Explainability', md: `Explanations can be **global** (which features matter overall?) or **local** (why did *this* applicant get rejected?). Simple models (linear models, small trees) are interpretable by design; complex ones need post-hoc tools.
 
 **Permutation importance** (global, model-agnostic): shuffle one feature's column in the validation data, breaking its link to the target, and measure how much the score drops:
 
@@ -1588,10 +1588,10 @@ for j, name in enumerate(names):
     importance = round(float(np.mean(drops)), 3) + 0.0     # + 0.0 turns -0.0 into 0.0 for printing
     print(f"{name:9s} importance {importance:.3f} ± {np.std(drops):.3f}")
 `, after: `The ranking matches how the data was generated: size matters most, then distance, then rooms, and the two noise features score about zero.` },
-      { type: 'text', title: 'Privacy, documentation and safety', md: `- **Privacy** — collect only the data you need, protect and anonymize it, and remember that models can memorize and leak training examples (LLMs can regurgitate text; membership-inference attacks can reveal whether someone was in the training data). **Differential privacy** adds calibrated noise during training to bound what can be learned about any individual; **federated learning** trains on devices without centralizing raw data.
-- **Documentation** — **model cards** state the intended use, performance broken down by group, limitations and ethical considerations; **datasheets for datasets** record how data was collected and labelled.
-- **Safety and misuse** — test robustness (adversarial examples), red-team the system, keep humans in the loop for high-stakes decisions, and give people a way to contest decisions. For LLMs this includes harmful content, hallucinations, jailbreaks and prompt injection.
-- **Regulation** — the EU AI Act sorts systems into risk tiers (unacceptable, high, limited, minimal); high-risk uses such as hiring and credit scoring require risk management, data governance, documentation, transparency and human oversight.` },
+      { type: 'text', title: 'Privacy, documentation and safety', md: `- **Privacy**: collect only the data you need, protect and anonymize it, and remember that models can memorize and leak training examples (LLMs can regurgitate text; membership-inference attacks can reveal whether someone was in the training data). **Differential privacy** adds calibrated noise during training to bound what can be learned about any individual; **federated learning** trains on devices without centralizing raw data.
+- **Documentation**: **model cards** state the intended use, performance broken down by group, limitations and ethical considerations; **datasheets for datasets** record how data was collected and labelled.
+- **Safety and misuse**: test robustness (adversarial examples), red-team the system, keep humans in the loop for high-stakes decisions, and give people a way to contest decisions. For LLMs this includes harmful content, hallucinations, jailbreaks and prompt injection.
+- **Regulation**: the EU AI Act sorts systems into risk tiers (unacceptable, high, limited, minimal); high-risk uses such as hiring and credit scoring require risk management, data governance, documentation, transparency and human oversight.` },
       { type: 'check', question: { type: 'tf', q: 'Removing the sensitive attribute (e.g. ethnicity) from the features guarantees a fair model.', answer: false, explain: 'Other features can act as proxies for it.' } }
     ],
     when: `- Always for systems that affect people, and especially in high-stakes domains: credit, hiring, housing, healthcare, education, justice.
@@ -1668,7 +1668,7 @@ def fairness_report(y_true, y_pred, groups):
             "fpr_diff": max(fpr) - min(fpr), "di_ratio": min(sel) / max(sel)}
 `,
         hints: ['Boolean masks combine with `&`: `(groups == g) & (y_true == 1)`.', 'The mean of a boolean array is the fraction of True values.', '`np.unique(groups)` lists each group once.'],
-        explain: `A fairness audit is just ordinary metrics computed per group — but deciding which gap matters, and what to do about it, requires understanding the harms of each kind of error in the real application.`,
+        explain: `A fairness audit is just ordinary metrics computed per group, but deciding which gap matters, and what to do about it, requires understanding the harms of each kind of error in the real application.`,
         tests: [
           { setup: 'y_true = [1, 1, 0, 0, 1, 1, 0, 0]\ny_pred = [1, 1, 1, 0, 1, 0, 0, 0]\ngroups = ["A", "A", "A", "A", "B", "B", "B", "B"]', call: 'group_metrics(y_true, y_pred, groups)', expect: '{"A": {"selection_rate": 0.75, "tpr": 1.0, "fpr": 0.5}, "B": {"selection_rate": 0.25, "tpr": 0.5, "fpr": 0.0}}' },
           { setup: 'y_true = [1, 1, 0, 0, 1, 1, 0, 0]\ny_pred = [1, 1, 1, 0, 1, 0, 0, 0]\ngroups = ["A", "A", "A", "A", "B", "B", "B", "B"]', call: 'fairness_report(y_true, y_pred, groups)', expect: '{"dp_diff": 0.5, "eo_diff": 0.5, "fpr_diff": 0.5, "di_ratio": 1 / 3}' },
@@ -1711,7 +1711,7 @@ def permutation_importance(predict, X, y, metric, n_repeats=5, seed=0):
     return importances
 `,
         hints: ['Compute the baseline score once.', '`X.copy()` before shuffling keeps the original data intact.', '`rng.permutation(column)` returns a shuffled copy.'],
-        explain: `Because it only needs predictions, permutation importance works for any model — a neural network, a gradient-boosted ensemble or a black-box API. Repeating the shuffle and averaging reduces the randomness of a single permutation.`,
+        explain: `Because it only needs predictions, permutation importance works for any model: a neural network, a gradient-boosted ensemble or a black-box API. Repeating the shuffle and averaging reduces the randomness of a single permutation.`,
         tests: [
           { name: 'a model that only uses feature 0', setup: 'rng = np.random.default_rng(0)\nX = rng.normal(size=(200, 3))\ny = 2 * X[:, 0]\npredict = lambda X: 2 * X[:, 0]\nmse_score = lambda y, p: -np.mean((y - p) ** 2)', code: 'imp = permutation_importance(predict, X, y, mse_score)\nassert imp.shape == (3,)\nassert imp[0] > 1.0 and abs(imp[1]) < 1e-12 and abs(imp[2]) < 1e-12, imp' },
           { name: 'matches the reference', setup: 'rng = np.random.default_rng(1)\nX = rng.normal(size=(100, 4))\nw = np.array([1.0, -2.0, 0.5, 0.0])\ny = X @ w + rng.normal(0, 0.1, 100)\npredict = lambda X: X @ w\nr2 = lambda y, p: 1 - np.sum((y - p) ** 2) / np.sum((y - y.mean()) ** 2)', call: 'permutation_importance(predict, X, y, r2, n_repeats=3, seed=4)' },
@@ -1721,10 +1721,10 @@ def permutation_importance(predict, X, y, metric, n_repeats=5, seed=0):
       }
     ],
     refs: [
-      { title: 'Barocas, Hardt & Narayanan — Fairness and Machine Learning (free book)', url: 'https://fairmlbook.org/' },
-      { title: 'Mitchell et al. — Model Cards for Model Reporting', url: 'https://arxiv.org/abs/1810.03993' },
-      { title: 'Lundberg & Lee — A Unified Approach to Interpreting Model Predictions (SHAP)', url: 'https://arxiv.org/abs/1705.07874' },
-      { title: 'Molnar — Interpretable Machine Learning (free book)', url: 'https://christophm.github.io/interpretable-ml-book/' }
+      { title: 'Barocas, Hardt & Narayanan, Fairness and Machine Learning (free book)', url: 'https://fairmlbook.org/' },
+      { title: 'Mitchell et al., Model Cards for Model Reporting', url: 'https://arxiv.org/abs/1810.03993' },
+      { title: 'Lundberg & Lee, A Unified Approach to Interpreting Model Predictions (SHAP)', url: 'https://arxiv.org/abs/1705.07874' },
+      { title: 'Molnar, Interpretable Machine Learning (free book)', url: 'https://christophm.github.io/interpretable-ml-book/' }
     ]
   }
   ]);

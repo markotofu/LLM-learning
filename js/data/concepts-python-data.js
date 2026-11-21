@@ -8,7 +8,7 @@
     id: 'python-essentials', branch: 'code', title: 'Python Essentials for Machine Learning', short: 'Python Essentials', level: 1, minutes: 45, prereqs: ['what-is-ml'],
     tags: ['python', 'lists', 'dicts', 'functions', 'classes', 'comprehensions'],
     summary: 'Just enough Python to read and write ML code: values, lists and dicts, loops, functions, comprehensions and classes.',
-    why: `Python is the language of machine learning: PyTorch, TensorFlow, JAX, scikit-learn, pandas and Hugging Face are all Python-first. You do not need to master the whole language — ML code leans heavily on a small core: lists and dictionaries, loops, functions, comprehensions and classes (every PyTorch model is a class). This lesson covers exactly that core, with the ML-flavoured examples you will meet again later, like building a vocabulary for a tokenizer.`,
+    why: `Python is the language of machine learning: PyTorch, TensorFlow, JAX, scikit-learn, pandas and Hugging Face are all Python-first. You do not need to master the whole language, ML code leans heavily on a small core: lists and dictionaries, loops, functions, comprehensions and classes (every PyTorch model is a class). This lesson covers exactly that core, with the ML-flavoured examples you will meet again later, like building a vocabulary for a tokenizer.`,
     objectives: [
       'Use numbers, strings, booleans, None and f-strings',
       'Work with lists, tuples, dictionaries and sets, including slicing',
@@ -22,14 +22,14 @@
 | Type | Examples | Notes |
 | --- | --- | --- |
 | \`int\` | \`3\`, \`-42\`, \`10_000\` | whole numbers of any size |
-| \`float\` | \`3.14\`, \`1e-5\` | decimals; \`1e-5\` = 0.00001 (learning rates!) |
+| \`float\` | \`3.14\`, \`1e-5\` | decimals; \`1e-5\` = 0.00001 (as in learning rates) |
 | \`str\` | \`"cat"\`, \`'hello world'\` | text |
 | \`bool\` | \`True\`, \`False\` | results of comparisons |
-| \`None\` | \`None\` | "no value" — what a function without \`return\` gives back |
+| \`None\` | \`None\` | "no value": what a function without \`return\` gives back |
 
 Arithmetic you'll use constantly: \`+ - * /\`, \`**\` (power), \`//\` (integer division), \`%\` (remainder). Note that \`/\` always gives a float: \`7 / 2 == 3.5\`.
 
-**f-strings** put values into text: \`f"loss = {loss:.4f}"\` prints the loss with 4 decimals — you will see this in every training loop.` },
+**f-strings** put values into text: \`f"loss = {loss:.4f}"\` prints the loss with 4 decimals (you will see this in every training loop).` },
       { type: 'code', title: 'Basics in action', code: `
 learning_rate = 1e-3          # scientific notation: 0.001
 epochs = 5
@@ -54,7 +54,7 @@ print("a function without return gives:", no_return())
 
 **Dictionaries** map keys to values: \`config = {"lr": 0.001, "epochs": 10}\`, \`config["lr"]\`. They are everywhere in ML: hyperparameter configs, a tokenizer's vocabulary (\`{"the": 0, "cat": 1}\`), counts of words.
 
-**Sets** hold unique items: \`set(["a", "b", "a"]) == {"a", "b"}\` — handy for finding the distinct words in a text.` },
+**Sets** hold unique items: \`set(["a", "b", "a"]) == {"a", "b"}\` (handy for finding the distinct words in a text).` },
       { type: 'code', title: 'Building a vocabulary (the first step of a tokenizer)', code: `
 text = "the cat sat on the mat the end"
 words = text.split()                       # split on whitespace -> list of strings
@@ -87,12 +87,12 @@ def accuracy(predictions, labels):
 \`\`\`
 
 Loop helpers you will use constantly:
-- \`range(n)\` — 0, 1, …, n−1 (\`for epoch in range(10):\`).
-- \`enumerate(items)\` — gives \`(index, item)\` pairs.
-- \`zip(a, b)\` — pairs up items from two lists.
-- \`sorted(items, key=..., reverse=True)\` — sort by any criterion.
+- \`range(n)\`: 0, 1, …, n−1 (\`for epoch in range(10):\`).
+- \`enumerate(items)\`: gives \`(index, item)\` pairs.
+- \`zip(a, b)\`: pairs up items from two lists.
+- \`sorted(items, key=..., reverse=True)\`: sort by any criterion.
 
-Functions can have **default arguments** — \`def train(lr=0.01, epochs=10):\` — and are called with keywords for clarity: \`train(epochs=5)\`.` },
+Functions can have **default arguments**, \`def train(lr=0.01, epochs=10):\`, and are called with keywords for clarity: \`train(epochs=5)\`.` },
       { type: 'code', title: 'Comprehensions, sorting and lambdas', md: `A **list comprehension** builds a list in one readable line: \`[expression for item in items if condition]\`.`, code: `
 scores = {"alice": 0.91, "bob": 0.78, "carol": 0.88, "dan": 0.65}
 
@@ -123,7 +123,7 @@ model = LinearModel(w=2.0, b=1.0)
 model.predict(3.0)                 # 7.0
 \`\`\`
 
-\`self\` is how a method reaches the object's own data. When you later write a PyTorch model, you'll subclass \`nn.Module\`, create layers in \`__init__\` and define the computation in a method called \`forward\` — the same pattern.` },
+\`self\` is how a method reaches the object's own data. When you later write a PyTorch model, you'll subclass \`nn.Module\`, create layers in \`__init__\` and define the computation in a method called \`forward\`: the same pattern.` },
       { type: 'code', title: 'A tiny model class that learns', code: `
 class MeanPredictor:
     """The simplest possible regression model: always predict the training mean.
@@ -254,15 +254,15 @@ print("round trip ok:", loaded == config, loaded)`, after: `The last batch has o
 - Use **comprehensions** for short transformations; switch to a regular loop when the logic needs several lines.
 - Use **classes** when data and the operations on it belong together (models, datasets, tokenizers); plain functions otherwise.
 - Use **NumPy** (next lesson) as soon as you are doing arithmetic on many numbers.`,
-    pitfalls: `- **Off-by-one slicing** — \`xs[a:b]\` excludes index b.
-- **Forgetting \`return\`** — the function silently returns \`None\`.
-- **Mutable default arguments** — \`def f(xs=[])\` shares one list across calls; use \`xs=None\` and create the list inside.
-- **Integer vs float division** — \`//\` truncates.
-- **Mixing tabs and spaces** — indentation errors. Use 4 spaces.
-- **\`[[0] * 3] * 3\`** — three references to the *same* row; use \`[[0] * 3 for _ in range(3)]\`.`,
+    pitfalls: `- **Off-by-one slicing**: \`xs[a:b]\` excludes index b.
+- **Forgetting \`return\`**: the function silently returns \`None\`.
+- **Mutable default arguments**: \`def f(xs=[])\` shares one list across calls; use \`xs=None\` and create the list inside.
+- **Integer vs float division**: \`//\` truncates.
+- **Mixing tabs and spaces**: indentation errors. Use 4 spaces.
+- **\`[[0] * 3] * 3\`**: three references to the *same* row; use \`[[0] * 3 for _ in range(3)]\`.`,
     takeaways: [
       'Indexing starts at 0; slices xs[a:b] stop before b.',
-      'Dicts map keys to values — configs, vocabularies and counts are all dicts.',
+      'Dicts map keys to values: configs, vocabularies and counts are all dicts.',
       'zip, enumerate, sorted(key=...) and comprehensions make data-wrangling code short and clear.',
       'A class bundles data (self.attributes) with methods; ML models follow this pattern.',
       'Use Python for logic, NumPy/PyTorch for heavy arithmetic.'
@@ -270,10 +270,10 @@ print("round trip ok:", loaded == config, loaded)`, after: `The last batch has o
     quiz: [
       { type: 'mcq', q: 'What does `len({"a": 1, "b": 2, "c": 3})` return?', options: ['6', '3', '2', 'An error'], answer: 1, explain: 'len of a dict counts its keys: 3.' },
       { type: 'fill', q: 'What does `[x * 2 for x in range(4)]` produce?', answer: ['[0, 2, 4, 6]', '[0,2,4,6]'], display: '[0, 2, 4, 6]', explain: 'range(4) is 0, 1, 2, 3; each doubled.' },
-      { type: 'mcq', q: 'A function has no `return` statement. What does calling it return?', options: ['0', 'An empty string', 'None', 'An error'], answer: 2, explain: 'Python functions return None by default — a very common source of bugs in practice problems.' },
+      { type: 'mcq', q: 'A function has no `return` statement. What does calling it return?', options: ['0', 'An empty string', 'None', 'An error'], answer: 2, explain: 'Python functions return None by default: a very common source of bugs in practice problems.' },
       { type: 'mcq', q: 'Which data structure is best for looking up a word\'s integer id in a tokenizer?', options: ['A list of words', 'A dict mapping word → id', 'A tuple', 'A set'], answer: 1, explain: 'Dicts give fast lookup by key: word_to_id["cat"].' },
       { type: 'tf', q: '`xs[-1]` gives the last element of a non-empty list xs.', answer: true, explain: 'Negative indices count from the end: -1 is the last item, -2 the second-to-last.' },
-      { type: 'mcq', q: 'Why do ML libraries wrap models in classes?', options: ['Classes run faster than functions', 'A model needs to keep its parameters (data) together with its methods like predict/forward', 'Python requires it', 'To avoid using dictionaries'], answer: 1, explain: 'The parameters live on the object (self.w) and the methods use them — the PyTorch nn.Module pattern.' },
+      { type: 'mcq', q: 'Why do ML libraries wrap models in classes?', options: ['Classes run faster than functions', 'A model needs to keep its parameters (data) together with its methods like predict/forward', 'Python requires it', 'To avoid using dictionaries'], answer: 1, explain: 'The parameters live on the object (self.w) and the methods use them: the PyTorch nn.Module pattern.' },
       {"type":"mcq","q":"After a = [1, 2]; b = a; b.append(3), what is a?","options":["[1, 2]","[1, 2, 3]","[3]","An error"],"answer":1,"explain":"b = a makes b a second name for the same list, so appending through b changes the list that a names too."},
       {"type":"mcq","q":"Which exception does config['missing'] raise when the dict has no such key?","options":["IndexError","ValueError","KeyError","TypeError"],"answer":2,"explain":"Looking up a missing dictionary key raises KeyError; config.get('missing', default) returns the default instead."},
       {"type":"tf","q":"A generator computes all of its values as soon as it is created.","answer":false,"explain":"A generator is lazy: it computes each value only when the next one is requested, which is why it can describe streams larger than memory."}
@@ -324,8 +324,8 @@ def word_counts(text):
 def top_k(counts, k):
     return sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:k]
 `,
-        hints: ['`counts.get(word, 0) + 1` increments a count that may not exist yet.', 'Sort by a tuple key: `key=lambda kv: (-kv[1], kv[0])` — negative count gives descending counts, the word breaks ties alphabetically.', 'Slice the sorted list with `[:k]`.'],
-        explain: `\`dict.get(key, default)\` avoids a KeyError the first time a word appears. Sorting by the tuple \`(-count, word)\` handles "highest first, then alphabetical" in one pass. Python's \`collections.Counter\` does this for you (\`Counter(words).most_common(k)\`), but its tie order is insertion order — writing the key yourself makes the result deterministic.`,
+        hints: ['`counts.get(word, 0) + 1` increments a count that may not exist yet.', 'Sort by a tuple key: `key=lambda kv: (-kv[1], kv[0])` (negative count gives descending counts, the word breaks ties alphabetically).', 'Slice the sorted list with `[:k]`.'],
+        explain: `\`dict.get(key, default)\` avoids a KeyError the first time a word appears. Sorting by the tuple \`(-count, word)\` handles "highest first, then alphabetical" in one pass. Python's \`collections.Counter\` does this for you (\`Counter(words).most_common(k)\`), but its tie order is insertion order: writing the key yourself makes the result deterministic.`,
         tests: [
           { call: 'word_counts("The cat. The hat!")', expect: '{"the": 2, "cat": 1, "hat": 1}' },
           { call: 'top_k({"the": 2, "cat": 1, "hat": 1}, 2)', expect: '[("the", 2), ("cat", 1)]' },
@@ -337,7 +337,7 @@ def top_k(counts, k):
       },
       {
         id: 'moving-average', title: 'Moving Average', difficulty: 'easy',
-        prompt: `A moving average smooths a noisy series — the same idea is used to smooth training-loss curves and in the "momentum" of optimizers.
+        prompt: `A moving average smooths a noisy series: the same idea is used to smooth training-loss curves and in the "momentum" of optimizers.
 
 Implement \`moving_average(xs, window)\` returning a list with the average of every run of \`window\` consecutive values. The result has \`len(xs) - window + 1\` items.
 
@@ -366,7 +366,7 @@ def moving_average(xs, window):
         out.append(running / window)
     return out
 `,
-        hints: ['The windows start at positions 0, 1, …, len(xs) − window.', 'A simple version: `[sum(xs[i:i + window]) / window for i in range(len(xs) - window + 1)]`.', 'Faster: keep a running sum — add the value entering the window and subtract the one leaving.'],
+        hints: ['The windows start at positions 0, 1, …, len(xs) − window.', 'A simple version: `[sum(xs[i:i + window]) / window for i in range(len(xs) - window + 1)]`.', 'Faster: keep a running sum (add the value entering the window and subtract the one leaving).'],
         explain: `The comprehension version is correct but re-adds every window from scratch (O(n·w)). The sliding running sum updates in O(1) per step: add the newcomer, subtract the value that fell out. "Maintain a running statistic instead of recomputing" is a pattern you will see again in exponential moving averages and optimizers.`,
         tests: [
           { call: 'moving_average([1, 2, 3, 4, 5], 2)', expect: '[1.5, 2.5, 3.5, 4.5]' },
@@ -380,7 +380,7 @@ def moving_average(xs, window):
     ],
     refs: [
       { title: 'The official Python tutorial', url: 'https://docs.python.org/3/tutorial/' },
-      { title: "Python documentation — Built-in types", url: "https://docs.python.org/3/library/stdtypes.html" }
+      { title: "Python documentation, Built-in types", url: "https://docs.python.org/3/library/stdtypes.html" }
     ]
   },
 
@@ -389,7 +389,7 @@ def moving_average(xs, window):
     id: 'numpy', branch: 'code', title: 'NumPy: Arrays, Broadcasting & Vectorization', short: 'NumPy', level: 1, minutes: 45, prereqs: ['python-essentials', 'vectors-matrices'],
     tags: ['numpy', 'arrays', 'broadcasting', 'vectorization', 'axis'],
     summary: 'The array library underneath all of Python ML: shapes, indexing, axis-wise operations, broadcasting, and why vectorized code is ~100× faster.',
-    why: `NumPy's \`ndarray\` is the data structure of scientific Python. pandas columns, scikit-learn inputs and images are NumPy arrays, and PyTorch tensors deliberately copy NumPy's API — learn NumPy once and you can read all of them. More importantly, NumPy teaches you to think in **whole arrays**: one expression that operates on a million numbers at C speed instead of a Python loop. That habit — vectorization — is how all efficient ML code (and GPU code) is written.`,
+    why: `NumPy's \`ndarray\` is the data structure of scientific Python. pandas columns, scikit-learn inputs and images are NumPy arrays, and PyTorch tensors deliberately copy NumPy's API: learn NumPy once and you can read all of them. More importantly, NumPy teaches you to think in **whole arrays**: one expression that operates on a million numbers at C speed instead of a Python loop. That habit (vectorization) is how all efficient ML code (and GPU code) is written.`,
     objectives: [
       'Create arrays and reason about their shape, dtype and number of dimensions',
       'Index and slice arrays, filter with boolean masks, and know when you get a view vs a copy',
@@ -403,9 +403,9 @@ def moving_average(xs, window):
 The result: \`a + b\` on a million numbers takes a millisecond or two in NumPy versus roughly a hundred milliseconds with a Python loop.
 
 Three attributes describe every array:
-- \`.shape\` — size along each dimension, e.g. \`(32, 784)\`;
-- \`.ndim\` — number of dimensions (2 for a matrix);
-- \`.dtype\` — the element type (\`float64\`, \`int64\`, \`bool\`…).` },
+- \`.shape\`: size along each dimension, e.g. \`(32, 784)\`;
+- \`.ndim\`: number of dimensions (2 for a matrix);
+- \`.dtype\`: the element type (\`float64\`, \`int64\`, \`bool\`…).` },
       { type: 'code', title: 'Creating and inspecting arrays', code: `
 import numpy as np
 
@@ -439,7 +439,7 @@ print(X.astype(np.float32).dtype)       # change the type (GPUs love float32)
 **Boolean masks** are how you filter data: \`y == 1\` gives an array of True/False, and \`X[y == 1]\` selects the rows of the positive class.
 
 :::warn Slices are views, not copies
-\`row = X[0]\` does not copy anything — it is a window into X. Changing \`row[0] = 99\` changes \`X\` too! Use \`X[0].copy()\` when you need an independent array. (Masks and fancy indexing *do* return copies.)
+\`row = X[0]\` does not copy anything: it is a window into X. Changing \`row[0] = 99\` changes \`X\` too. Use \`X[0].copy()\` when you need an independent array. (Masks and fancy indexing *do* return copies.)
 :::` },
       { type: 'code', title: 'Indexing in practice', code: `
 import numpy as np
@@ -465,12 +465,12 @@ print("X[1, 0] after changing a copy:", X[1, 0])     # unchanged
       { type: 'check', question: { type: 'fill', q: 'X has shape (5, 3). What is the shape of `X[:, 1]`? (write it like (n,))', answer: ['(5,)', '(5, )', '5'], display: '(5,)', explain: 'Selecting one column with a plain integer index removes that dimension: 5 rows → a 1-D array of length 5.' } },
       { type: 'text', title: 'Aggregations and the axis argument', md: `\`sum\`, \`mean\`, \`std\`, \`max\`, \`argmax\` and friends work on the whole array, or along one **axis**:
 
-- \`axis=0\` — collapse the rows → one result **per column** (e.g. the mean of every feature).
-- \`axis=1\` — collapse the columns → one result **per row** (e.g. the predicted class of every example with \`argmax\`).
+- \`axis=0\`: collapse the rows → one result **per column** (e.g. the mean of every feature).
+- \`axis=1\`: collapse the columns → one result **per row** (e.g. the predicted class of every example with \`argmax\`).
 
 Memory trick: **the axis you name is the one that disappears.** For X with shape (100, 10), \`X.mean(axis=0)\` has shape (10,) and \`X.mean(axis=1)\` has shape (100,).
 
-Add \`keepdims=True\` to keep the collapsed axis with size 1 — shape (100, 1) — which is exactly what you need for the next topic, broadcasting.` },
+Add \`keepdims=True\` to keep the collapsed axis with size 1: shape (100, 1), which is exactly what you need for the next topic, broadcasting.` },
       { type: 'text', title: 'Broadcasting', md: `Broadcasting lets NumPy combine arrays of different shapes **without copying data**. Compare the shapes from the right-hand end; two dimensions are compatible if they are **equal** or one of them is **1** (missing dimensions count as 1). The size-1 dimension is stretched to match.
 
 | A | B | Result | Use |
@@ -479,7 +479,7 @@ Add \`keepdims=True\` to keep the collapsed axis with size 1 — shape (100, 1) 
 | (100, 10) | (100, 1) | (100, 10) | divide each row by its own norm |
 | (3, 1) | (4,) | (3, 4) | an "outer" combination of every pair |
 | (n, 1, d) | (1, m, d) | (n, m, d) | differences between every pair of points |
-| (100, 10) | (100,) | ✗ error | 10 vs 100 don't match — reshape to (100, 1) |
+| (100, 10) | (100,) | error | 10 vs 100 don't match: reshape to (100, 1) |
 
 Broadcasting is how you standardize a dataset in one line, \`(X - X.mean(axis=0)) / X.std(axis=0)\`, and how you compute all pairwise distances without a loop.` },
       { type: 'code', title: 'Broadcasting and the speed of vectorization', code: `
@@ -583,13 +583,13 @@ print("stable softmax:", softmax(z).round(4))`, predict: {"type":"mcq","q":"X ha
 - Reach for **axis** arguments instead of looping over rows or columns.
 - Use **broadcasting** to apply per-feature or per-example statistics.
 - Keep plain Python for control flow (which file to load, which model to try); move to pandas for labelled tabular data with mixed types, and to PyTorch/JAX when you need GPUs or automatic gradients.`,
-    pitfalls: `- **Views vs copies** — modifying a slice modifies the original.
-- **Shape (n,) vs (n, 1)** — a 1-D array and a column vector broadcast very differently; \`keepdims=True\` or \`[:, None]\` fixes many surprises.
-- **Integer arrays** — \`np.array([1, 2]) / 2\` is fine, but in-place \`a /= 2\` on an int array fails; create float arrays when doing math.
-- **Silent broadcasting** — a shape mistake can broadcast into a huge wrong array instead of raising an error. Assert shapes in important code.
-- **The old \`np.random.seed\` global state** — prefer \`rng = np.random.default_rng(seed)\`.`,
+    pitfalls: `- **Views vs copies**: modifying a slice modifies the original.
+- **Shape (n,) vs (n, 1)**: a 1-D array and a column vector broadcast very differently; \`keepdims=True\` or \`[:, None]\` fixes many surprises.
+- **Integer arrays**: \`np.array([1, 2]) / 2\` is fine, but in-place \`a /= 2\` on an int array fails; create float arrays when doing math.
+- **Silent broadcasting**: a shape mistake can broadcast into a huge wrong array instead of raising an error. Assert shapes in important code.
+- **The old \`np.random.seed\` global state**: prefer \`rng = np.random.default_rng(seed)\`.`,
     takeaways: [
-      'An ndarray has a shape, a dtype and stores numbers contiguously — operations run in C.',
+      'An ndarray has a shape, a dtype and stores numbers contiguously: operations run in C.',
       'X[:, j] is a column, X[i] is a row, X[mask] filters rows; slices are views.',
       'Aggregations take an axis: the named axis disappears from the result.',
       'Broadcasting aligns shapes from the right; size-1 dimensions stretch.',
@@ -610,7 +610,7 @@ print("stable softmax:", softmax(z).round(4))`, predict: {"type":"mcq","q":"X ha
         id: 'normalize-rows', title: 'Normalize Rows to Unit Length', difficulty: 'easy',
         prompt: `Implement \`normalize_rows(X)\` for a 2-D NumPy array: divide every row by its L2 norm (length) so that each row has length 1.
 
-- Rows that are all zeros (norm 0) must stay all zeros — no division by zero, no NaN.
+- Rows that are all zeros (norm 0) must stay all zeros: no division by zero, no NaN.
 - Do not modify \`X\` in place; return a new float array of the same shape.
 - Try to do it **without a Python loop**: \`np.linalg.norm(X, axis=1, keepdims=True)\` + broadcasting.
 
@@ -618,7 +618,7 @@ print("stable softmax:", softmax(z).round(4))`, predict: {"type":"mcq","q":"X ha
 normalize_rows(np.array([[3.0, 4.0], [0.0, 2.0]]))  ->  [[0.6, 0.8], [0.0, 1.0]]
 \`\`\`
 
-(Unit-length embeddings make cosine similarity a plain dot product — that's how vector databases are usually set up.)`,
+(Unit-length embeddings make cosine similarity a plain dot product: that's how vector databases are usually set up.)`,
         starter: `
 import numpy as np
 
@@ -651,7 +651,7 @@ def normalize_rows(X):
         id: 'pairwise-distances', title: 'Pairwise Distances with Broadcasting', difficulty: 'medium',
         prompt: `Implement \`pairwise_distances(A, B)\` returning the matrix of **Euclidean distances** between every row of \`A\` (shape n×d) and every row of \`B\` (shape m×d). The result has shape **(n, m)** and \`D[i, j] = ‖A[i] − B[j]‖\`.
 
-Use broadcasting, not loops: \`A[:, None, :] - B[None, :, :]\` has shape (n, m, d) — the difference between every pair.
+Use broadcasting, not loops: \`A[:, None, :] - B[None, :, :]\` has shape (n, m, d) (the difference between every pair).
 
 \`\`\`text
 pairwise_distances(np.array([[0, 0], [3, 4]]), np.array([[0, 0], [6, 8]]))
@@ -701,7 +701,7 @@ def pairwise_distances(A, B):
     id: 'data-preparation', branch: 'code', title: 'Data Preparation: Cleaning, Splitting & Leakage', short: 'Data Preparation', level: 1, minutes: 40, prereqs: ['numpy', 'statistics', 'pandas-eda'],
     tags: ['pandas', 'missing values', 'train test split', 'data leakage', 'cleaning'],
     summary: 'Turning raw data into trustworthy training data: inspecting it, handling missing values and duplicates, splitting into train/validation/test, and avoiding data leakage.',
-    why: `Practitioners routinely say that most of machine learning is data work — and that the quality of the data matters more than the choice of model. A brilliant model trained on messy data learns the mess. Worse, a subtle mistake in how you **split** or **preprocess** data — *data leakage* — can make a useless model look excellent in your notebook and then fail in production. This lesson is about getting the boring parts exactly right, because everything downstream depends on them.`,
+    why: `Practitioners routinely say that most of machine learning is data work, and that the quality of the data matters more than the choice of model. A brilliant model trained on messy data learns the mess. Worse, a subtle mistake in how you **split** or **preprocess** data (*data leakage*) can make a useless model look excellent in your notebook and then fail in production. This lesson is about getting the boring parts exactly right, because everything downstream depends on them.`,
     objectives: [
       'Inspect a dataset for types, missing values, duplicates and suspicious values',
       'Choose a strategy for missing values and apply it without leaking information',
@@ -711,15 +711,15 @@ def pairwise_distances(A, B):
     sections: [
       { type: 'text', title: 'The unglamorous 80%', md: `Before training anything, walk through this checklist:
 
-1. **Look at the data** — a few rows, the column types, summary statistics.
-2. **Missing values** — how many per column, and *why* are they missing?
-3. **Duplicates** — exact copies, or the same entity recorded twice.
-4. **Impossible values** — negative ages, prices of 0, dates in the future.
-5. **The label** — is it reliable? Is its distribution balanced?
-6. **Split** — set aside validation and test data *before* fitting any preprocessing.
+1. **Look at the data**: a few rows, the column types, summary statistics.
+2. **Missing values**: how many per column, and *why* are they missing?
+3. **Duplicates**: exact copies, or the same entity recorded twice.
+4. **Impossible values**: negative ages, prices of 0, dates in the future.
+5. **The label**: is it reliable? Is its distribution balanced?
+6. **Split**: set aside validation and test data *before* fitting any preprocessing.
 
 :::analogy Cooking
-No chef can rescue spoiled ingredients. Data preparation is checking, washing and chopping the ingredients — dull, essential, and where most kitchen disasters actually begin.
+No chef can rescue spoiled ingredients. Data preparation is checking, washing and chopping the ingredients: dull, essential, and where most kitchen disasters actually begin.
 :::` },
       { type: 'code', title: 'A first look with pandas', md: `**pandas** is Python's table library: a \`DataFrame\` is a table with named columns. (The first time you run this, the browser downloads pandas, so it takes a little longer.)`, code: `
 import pandas as pd
@@ -779,6 +779,7 @@ food = pd.DataFrame({
     "item":   ["bacon", "pulled pork", "Bacon", "pastrami", "corned beef", "bacon", "nova lox"],
     "ounces": [4, 3, 12, 6, 7.5, 4, 6],
 })
+print(food, "\\n")
 print("duplicate rows:", food.duplicated().tolist())
 food = food.drop_duplicates()                         # keeps the first occurrence
 
@@ -853,16 +854,16 @@ print("unused categories still count:", grades.value_counts(sort=False).to_dict(
 - For modelling, categories usually become one-hot columns (see [Feature Engineering](#/concept/feature-engineering)).` },
       { type: 'text', title: 'Training, validation and test sets', md: `You need data the model has never seen to estimate how it will perform in the real world:
 
-- **Training set** (e.g. 70–80%) — used to fit the model's parameters.
-- **Validation set** (e.g. 10–15%) — used to choose hyperparameters and compare models.
-- **Test set** (e.g. 10–15%) — touched **once**, at the very end, for an honest final estimate.
+- **Training set** (e.g. 70–80%): used to fit the model's parameters.
+- **Validation set** (e.g. 10–15%): used to choose hyperparameters and compare models.
+- **Test set** (e.g. 10–15%): touched **once**, at the very end, for an honest final estimate.
 
 Why three? Every time you pick something (a model, a learning rate) because it scored best on a dataset, you slightly overfit to that dataset. The test set stays untouched by those decisions.
 
 How to split:
-- **Shuffle first** — files are often sorted by date, class or source.
-- **Stratify** for classification — keep the class proportions the same in every split (critical for rare classes).
-- **Split by time** for anything predicting the future — train on the past, test on later data. Shuffling time series leaks the future into training.
+- **Shuffle first**: files are often sorted by date, class or source.
+- **Stratify** for classification: keep the class proportions the same in every split (critical for rare classes).
+- **Split by time** for anything predicting the future: train on the past, test on later data. Shuffling time series leaks the future into training.
 - **Split by group** when examples are related (several photos of the same patient go in the same split).` },
       { type: 'code', title: 'Splitting with NumPy', code: `
 import numpy as np
@@ -885,23 +886,23 @@ print("unshuffled test labels:", y[-n_test:])
       { type: 'text', title: 'Data leakage', md: `**Leakage** happens when information that would not be available at prediction time sneaks into training. The model looks brilliant in evaluation and fails in reality.
 
 Common forms:
-1. **Preprocessing on all data** — computing the mean for scaling or imputation over the full dataset before splitting. The test set's statistics leak into training.
-2. **Target leakage** — a feature that is a consequence of the label. Predicting customer churn with a column \`cancellation_reason\` — it is only filled in *after* the customer churned.
-3. **Duplicates across splits** — the same (or nearly the same) example in train and test.
-4. **Time leakage** — using future data to predict the past.
-5. **Tuning on the test set** — repeatedly checking the test score while making decisions.
+1. **Preprocessing on all data**: computing the mean for scaling or imputation over the full dataset before splitting. The test set's statistics leak into training.
+2. **Target leakage**: a feature that is a consequence of the label. Predicting customer churn with a column \`cancellation_reason\`: it is only filled in *after* the customer churned.
+3. **Duplicates across splits**: the same (or nearly the same) example in train and test.
+4. **Time leakage**: using future data to predict the past.
+5. **Tuning on the test set**: repeatedly checking the test score while making decisions.
 
 :::key The fix is a habit
 Split first. Fit every preprocessing step (imputers, scalers, encoders, feature selection) on the **training data only**, then *apply* it to validation and test. scikit-learn's \`Pipeline\` enforces this automatically.
 :::
 
 :::warn Too good to be true
-If a model scores 99.9% on a hard problem, suspect leakage before celebrating. Check which features matter most — the leak is usually at the top.
+If a model scores 99.9% on a hard problem, suspect leakage before celebrating. Check which features matter most: the leak is usually at the top.
 :::` },
       { type: 'check', question: { type: 'tf', q: 'It is fine to fill missing values with the mean computed over the whole dataset before splitting into train and test.', answer: false, explain: 'That mean includes test examples, so information from the test set leaks into training. Compute it on the training split only.' } },
       { type: 'text', title: 'Outliers, duplicates and label noise', md: `- **Outliers**: find them with z-scores (|z| > 3) or the IQR rule (below Q1 − 1.5·IQR or above Q3 + 1.5·IQR). Then decide with domain knowledge: a typo (age 999 → remove or fix) or a real extreme (a mansion → keep, maybe log-transform).
 - **Duplicates**: drop exact duplicate rows (\`df.drop_duplicates()\`) and think about near-duplicates (the same text with different whitespace).
-- **Label noise**: some labels are simply wrong. Spot-check examples, especially those the model gets confidently wrong — they are often mislabelled.` }
+- **Label noise**: some labels are simply wrong. Spot-check examples, especially those the model gets confidently wrong: they are often mislabelled.` }
     ],
     when: `- Do this preparation **every time**, for every project, before any modelling.
 - Use a **random stratified split** for typical classification, a **time-based split** for forecasting or any data with a time order, and a **group split** when examples are related.
@@ -922,9 +923,9 @@ If a model scores 99.9% on a hard problem, suspect leakage before celebrating. C
     quiz: [
       { type: 'mcq', q: 'What is the main purpose of a separate test set?', options: ['To train the model faster', 'To get an honest estimate of performance on unseen data, untouched by modelling decisions', 'To tune the learning rate', 'To store extra training data'], answer: 1, explain: 'The test set is used once, at the end. Using it for decisions would make it optimistic.' },
       { type: 'multi', q: 'Which of these are data leakage? (select all)', options: ['Scaling features using the mean of the full dataset before splitting', 'Including the column "refund_issued" when predicting whether an order will be returned', 'Imputing missing values with the training-set median', 'Having the same customer\'s duplicate records in both train and test'], answer: [0, 1, 3], explain: 'Training-set statistics are correct practice. The others let test or future information reach training.' },
-      { type: 'mcq', q: 'A classification dataset has 2% positive examples. Why stratify the split?', options: ['To make the classes balanced 50/50', 'So each split keeps about 2% positives — otherwise a small test set might contain almost none', 'Stratification speeds up training', 'It removes outliers'], answer: 1, explain: 'Stratification preserves class proportions in every split so rare classes are represented.' },
-      { type: 'tf', q: 'For data with a natural time order, a random shuffled split can make results look better than they will be in production.', answer: true, explain: 'Shuffling lets the model train on data from after the test period — future information leaks into training.' },
-      { type: 'mcq', q: 'A model scores 99.8% accuracy on a problem experts find hard. What should you check first?', options: ['Whether to add more layers', 'Whether some feature leaks the label or test examples duplicate training ones', 'Whether to use a bigger test set', 'Nothing — ship it'], answer: 1, explain: 'Implausibly good results are usually leakage. Inspect the most important features and look for duplicates.' },
+      { type: 'mcq', q: 'A classification dataset has 2% positive examples. Why stratify the split?', options: ['To make the classes balanced 50/50', 'So each split keeps about 2% positives; otherwise a small test set might contain almost none', 'Stratification speeds up training', 'It removes outliers'], answer: 1, explain: 'Stratification preserves class proportions in every split so rare classes are represented.' },
+      { type: 'tf', q: 'For data with a natural time order, a random shuffled split can make results look better than they will be in production.', answer: true, explain: 'Shuffling lets the model train on data from after the test period: future information leaks into training.' },
+      { type: 'mcq', q: 'A model scores 99.8% accuracy on a problem experts find hard. What should you check first?', options: ['Whether to add more layers', 'Whether some feature leaks the label or test examples duplicate training ones', 'Whether to use a bigger test set', 'Nothing: ship it'], answer: 1, explain: 'Implausibly good results are usually leakage. Inspect the most important features and look for duplicates.' },
       {"type":"mcq","q":"A sensor writes −999 when a reading fails. What should you do before computing averages?","options":["Nothing: −999 is a valid number","Replace −999 with NaN (missing) and handle the gaps explicitly","Multiply the column by −1","Drop the whole column"],"answer":1,"explain":"A sentinel value is a missing value in disguise; left in place it distorts every statistic. `replace(-999, np.nan)` makes it a proper missing value."},
       {"type":"mcq","q":"What is the difference between `pd.cut` and `pd.qcut`?","options":["cut uses edges you choose (or equal-width bins); qcut uses quantiles so bins hold about equal counts","cut works on text, qcut on numbers","They are the same function","qcut removes outliers"],"answer":0,"explain":"cut bins by value; qcut bins by rank, so each bin contains roughly the same number of observations."},
       {"type":"tf","q":"pandas' vectorized string methods (`Series.str…`) raise an error when a value is missing.","answer":false,"explain":"They skip missing values and return NaN for them, which is one of their main advantages over looping with plain Python string methods."}
@@ -968,7 +969,7 @@ def train_test_split(X, y, test_ratio=0.2, seed=0):
     return X[train_idx], X[test_idx], y[train_idx], y[test_idx]
 `,
         hints: ['`perm[:n_test]` are the test indices and `perm[n_test:]` the training indices.', 'Index X and y with the **same** index arrays so rows stay aligned: `X[train_idx]`, `y[train_idx]`.'],
-        explain: `Shuffling *indices* rather than the arrays themselves keeps X and y perfectly aligned. Seeding the generator makes the split reproducible — essential when you compare models, because they must be evaluated on the same test examples. scikit-learn's \`train_test_split\` does the same thing (plus stratification).`,
+        explain: `Shuffling *indices* rather than the arrays themselves keeps X and y perfectly aligned. Seeding the generator makes the split reproducible: essential when you compare models, because they must be evaluated on the same test examples. scikit-learn's \`train_test_split\` does the same thing (plus stratification).`,
         tests: [
           { name: 'seeded split', setup: 'X = np.arange(10).reshape(5, 2)\ny = np.arange(5)', call: 'train_test_split(X, y, 0.4, seed=1)' },
           { name: 'sizes and alignment', setup: 'X = np.arange(40).reshape(20, 2)\ny = np.arange(20) * 2', code: 'Xtr, Xte, ytr, yte = train_test_split(X, y, 0.25, seed=3)\nassert len(Xte) == 5 and len(Xtr) == 15, "expected 15 train / 5 test rows"\nassert np.all(Xtr[:, 0] == ytr), "X and y rows must stay aligned"\nassert np.all(Xte[:, 0] == yte)\nassert set(ytr.tolist()).isdisjoint(set(yte.tolist())), "train and test must not overlap"' },
@@ -1009,7 +1010,7 @@ def impute_mean(X_train, X_test):
     return train_filled, test_filled
 `,
         hints: ['`np.nanmean(X_train, axis=0)` gives one mean per column, skipping NaNs.', '`np.where(np.isnan(X), means, X)` broadcasts the (d,) means across every row.'],
-        explain: `This is the fit/transform pattern in miniature: **fit** (compute the means) on training data, **transform** both splits with those same numbers. Using the test set's own means would be leakage — at prediction time a single new example has no "column mean" of its own.`,
+        explain: `This is the fit/transform pattern in miniature: **fit** (compute the means) on training data, **transform** both splits with those same numbers. Using the test set's own means would be leakage: at prediction time a single new example has no "column mean" of its own.`,
         tests: [
           { call: 'impute_mean(np.array([[1.0, np.nan], [3.0, 4.0]]), np.array([[np.nan, 10.0]]))', expect: '(np.array([[1.0, 4.0], [3.0, 4.0]]), np.array([[2.0, 10.0]]))' },
           { name: 'test uses training means (no leakage)', call: 'impute_mean(np.array([[0.0], [2.0]]), np.array([[np.nan], [np.nan], [100.0]]))', expect: '(np.array([[0.0], [2.0]]), np.array([[1.0], [1.0], [100.0]]))' },
@@ -1019,8 +1020,8 @@ def impute_mean(X_train, X_test):
       }
     ],
     refs: [
-      { title: 'pandas — 10 minutes to pandas', url: 'https://pandas.pydata.org/docs/user_guide/10min.html' },
-      { title: 'scikit-learn — Common pitfalls and recommended practices (data leakage)', url: 'https://scikit-learn.org/stable/common_pitfalls.html' }
+      { title: 'pandas, 10 minutes to pandas', url: 'https://pandas.pydata.org/docs/user_guide/10min.html' },
+      { title: 'scikit-learn, Common pitfalls and recommended practices (data leakage)', url: 'https://scikit-learn.org/stable/common_pitfalls.html' }
     ]
   },
 
@@ -1029,7 +1030,7 @@ def impute_mean(X_train, X_test):
     id: 'feature-engineering', branch: 'code', title: 'Feature Engineering & Scaling', short: 'Feature Engineering', level: 2, minutes: 40, prereqs: ['data-preparation'],
     tags: ['scaling', 'standardization', 'one-hot', 'encoding', 'features'],
     summary: 'Making features a model can use: scaling numbers, encoding categories, transforming skewed values and creating informative new features.',
-    why: `Models only see numbers, and *how* you present information changes what they can learn. A distance-based model will ignore "number of bedrooms" if "size in m²" is a thousand times larger; a linear model cannot use "city" until it is encoded; a price that spans three orders of magnitude is easier to model on a log scale; and "price per m²" can be far more informative than price and size separately. On tabular data, thoughtful features often beat fancier models — and even in deep learning, the same ideas appear as normalization layers and embeddings.`,
+    why: `Models only see numbers, and *how* you present information changes what they can learn. A distance-based model will ignore "number of bedrooms" if "size in m²" is a thousand times larger; a linear model cannot use "city" until it is encoded; a price that spans three orders of magnitude is easier to model on a log scale; and "price per m²" can be far more informative than price and size separately. On tabular data, thoughtful features often beat fancier models, and even in deep learning, the same ideas appear as normalization layers and embeddings.`,
     objectives: [
       'Standardize and min-max scale features with the fit/transform pattern',
       'Know which models need feature scaling and which do not',
@@ -1039,8 +1040,8 @@ def impute_mean(X_train, X_test):
     sections: [
       { type: 'text', title: 'Why the representation matters', md: `Imagine predicting house prices from \`size_m2\` (50–400) and \`bedrooms\` (1–6). Two common problems:
 
-1. **Scale.** In a distance computation, a 10 m² difference outweighs a 4-bedroom difference — purely because of units. Gradient descent also struggles when features differ hugely in scale: the loss surface becomes a long narrow valley.
-2. **Type.** A model can't multiply \`"Lyon"\` by a weight. Categories must become numbers — without inventing a fake order.
+1. **Scale.** In a distance computation, a 10 m² difference outweighs a 4-bedroom difference: purely because of units. Gradient descent also struggles when features differ hugely in scale: the loss surface becomes a long narrow valley.
+2. **Type.** A model can't multiply \`"Lyon"\` by a weight. Categories must become numbers, without inventing a fake order.
 
 Feature engineering is the craft of choosing representations that make the true patterns easy to learn.` },
       { type: 'text', title: 'Scaling numeric features', md: `| Method | Formula | Result |
@@ -1050,8 +1051,8 @@ Feature engineering is the craft of choosing representations that make the true 
 | **Robust scaling** | (x − median) / IQR | resists outliers |
 
 **Which models care?**
-- **Need scaling:** anything using distances or dot products with regularization — k-nearest neighbours, k-means, SVMs, PCA, linear and logistic regression with regularization, and neural networks (training is much faster).
-- **Don't need it:** decision trees, random forests and gradient-boosted trees — they split on thresholds, which are unaffected by monotonic rescaling.
+- **Need scaling:** anything using distances or dot products with regularization, k-nearest neighbours, k-means, SVMs, PCA, linear and logistic regression with regularization, and neural networks (training is much faster).
+- **Don't need it:** decision trees, random forests and gradient-boosted trees (they split on thresholds, which are unaffected by monotonic rescaling).
 
 As always: **fit** the scaler (learn mean and std) on training data, then **transform** all splits with those numbers.` },
       { type: 'code', title: 'A scaler with the fit / transform pattern', md: `scikit-learn's preprocessing objects all follow this two-step API. Here is a minimal standard scaler from scratch.`, code: `
@@ -1078,18 +1079,18 @@ print(scaler.transform(X_train).round(2))
 print("test scaled (uses the training statistics):")
 print(scaler.transform(X_test).round(2))
 ` },
-      { type: 'text', title: 'Encoding categorical features', md: `**Nominal** categories have no order (city, colour, product type). Encoding them as 0, 1, 2 would tell a linear model that "Paris" (2) is twice "Lyon" (1) — nonsense. Use **one-hot encoding**: one column per category, with a 1 in the column that applies.
+      { type: 'text', title: 'Encoding categorical features', md: `**Nominal** categories have no order (city, colour, product type). Encoding them as 0, 1, 2 would tell a linear model that "Paris" (2) is twice "Lyon" (1): nonsense. Use **one-hot encoding**: one column per category, with a 1 in the column that applies.
 
 | city | is_Lyon | is_Paris | is_Nice |
 | --- | --- | --- | --- |
 | Paris | 0 | 1 | 0 |
 | Nice | 0 | 0 | 1 |
 
-**Ordinal** categories *do* have an order (small < medium < large, or education levels) — mapping them to 0, 1, 2 is reasonable.
+**Ordinal** categories *do* have an order (small < medium < large, or education levels): mapping them to 0, 1, 2 is reasonable.
 
 Practical issues:
 - **Unseen categories** at prediction time: map them to an all-zeros row (or an explicit "other" column).
-- **High cardinality** (thousands of zip codes or product ids): one-hot becomes huge. Alternatives: group rare categories into "other", hashing, target encoding (carefully, it leaks easily), or **learned embeddings** — dense vectors per category, exactly how LLMs represent words.` },
+- **High cardinality** (thousands of zip codes or product ids): one-hot becomes huge. Alternatives: group rare categories into "other", hashing, target encoding (carefully, it leaks easily), or **learned embeddings**: dense vectors per category, exactly how LLMs represent words.` },
       { type: 'check', question: { type: 'mcq', q: 'Why is encoding colours as red=0, green=1, blue=2 a problem for a linear model?', options: ['Numbers use more memory than strings', 'It invents an order and distances (blue = 2 × green) that don\'t exist', 'Linear models cannot use integers', 'It is fine; there is no problem'], answer: 1, explain: 'A linear model would treat the codes as quantities. One-hot encoding avoids inventing an order.' } },
       { type: 'code', title: 'One-hot encoding by hand', code: `
 import numpy as np
@@ -1109,6 +1110,7 @@ print(encoded)
 import pandas as pd
 
 df = pd.DataFrame({"key": ["b", "b", "a", "c", "a", "b"], "value": range(6)})
+print(df, "\\n")
 print(pd.get_dummies(df["key"], prefix="key", dtype=int).join(df["value"]))
 
 movies = pd.DataFrame({"title": ["Toy Story", "Heat", "Sabrina"],
@@ -1125,10 +1127,10 @@ print(pd.get_dummies(pd.cut(values, [0, 0.2, 0.4, 0.6, 0.8, 1.0]), dtype=int))`,
 - **Ratios and differences** that match the domain: price per m², debt-to-income, time since last purchase.
 - **Date and time parts**: hour of day, day of week, month, "is weekend". Cyclical features can be encoded with sine/cosine so that 23:00 is close to 00:00.
 - **Binning**: turning age into age groups when the effect is step-like.
-- **Interactions and polynomials**: x₁·x₂ or x² let linear models fit curves — but add too many and you overfit (see *Overfitting*).
-- **Text** becomes numbers via bag-of-words, TF-IDF or embeddings — the start of the NLP branch.
+- **Interactions and polynomials**: x₁·x₂ or x² let linear models fit curves, but add too many and you overfit (see *Overfitting*).
+- **Text** becomes numbers via bag-of-words, TF-IDF or embeddings: the start of the NLP branch.
 
-Always ask: *would this feature be available at prediction time?* — a feature computed from the future is leakage.` },
+Always ask: *would this feature be available at prediction time?* (a feature computed from the future is leakage).` },
       { type: 'check', question: { type: 'mcq', q: 'Which model is essentially unaffected by standardizing its features?', options: ['k-nearest neighbours', 'A decision tree', 'Logistic regression with L2 regularization', 'A neural network'], answer: 1, explain: 'Trees choose thresholds on one feature at a time, so rescaling a feature just rescales its thresholds.' } },
       { type: 'text', title: "Binning: letting a linear model bend", md: `A linear model can only learn "y changes by w per unit of x". When the real relationship rises and falls, **binning** (discretisation) gives it more freedom: cut the range of x into intervals, one-hot encode the interval each value falls into, and the model learns a separate level for every interval.
 
@@ -1209,8 +1211,8 @@ Whatever you use, **select inside the cross-validation loop**, on the training f
     when: `- **Standardize** by default for linear models, SVMs, kNN, PCA, k-means and neural networks; skip scaling for tree ensembles.
 - **One-hot** low-cardinality nominal features; **ordinal-encode** naturally ordered ones; consider **embeddings** for high-cardinality ids when you have lots of data.
 - **Log-transform** heavily right-skewed positive features.
-- Add **domain ratios and time features** when domain knowledge suggests them — and verify each helps on validation data.`,
-    pitfalls: `- Fitting scalers or encoders on all data (leakage) — fit on training data only.
+- Add **domain ratios and time features** when domain knowledge suggests them, and verify each helps on validation data.`,
+    pitfalls: `- Fitting scalers or encoders on all data (leakage): fit on training data only.
 - Forgetting to save the fitted scaler/encoder with the model; production data must be transformed identically.
 - Integer-encoding nominal categories for linear models or neural nets.
 - Exploding the feature count with one-hot encodings of IDs.
@@ -1226,7 +1228,7 @@ Whatever you use, **select inside the cross-validation loop**, on the training f
       { type: 'fill', q: 'A feature has training mean 50 and standard deviation 10. What is the standardized value of 65?', answer: ['1.5'], explain: '(65 − 50) / 10 = 1.5.' },
       { type: 'mcq', q: 'One-hot encoding a "country" column with 5 distinct countries produces how many columns?', options: ['1', '5', '2', '25'], answer: 1, explain: 'One indicator column per category: 5.' },
       { type: 'mcq', q: 'Incomes in a dataset range from 10k to 10 million with a long right tail. A common, helpful transform is…', options: ['Squaring the values', 'Taking the logarithm', 'One-hot encoding them', 'Removing all values above the mean'], answer: 1, explain: 'A log transform compresses the tail so that ratios (doubling) become equal steps.' },
-      { type: 'tf', q: 'At prediction time you should re-fit the scaler on the new incoming data before transforming it.', answer: false, explain: 'Use the scaler fitted on the training data — the model was trained on features scaled with those statistics.' },
+      { type: 'tf', q: 'At prediction time you should re-fit the scaler on the new incoming data before transforming it.', answer: false, explain: 'Use the scaler fitted on the training data: the model was trained on features scaled with those statistics.' },
       { type: 'multi', q: 'Which models usually benefit from feature scaling? (select all)', options: ['k-nearest neighbours', 'Random forest', 'Neural network', 'Support vector machine'], answer: [0, 2, 3], explain: 'Distance and gradient-based models are sensitive to scale; tree ensembles are not.' },
       {"type":"mcq","q":"With 20 input features, how many features does PolynomialFeatures(degree=2) produce, leaving out the constant term?","options":["40","210","230","400"],"answer":2,"explain":"C(20 + 2, 2) − 1 = 231 − 1 = 230: the 20 originals, 20 squares and 190 pairwise products."},
       {"type":"mcq","q":"Why should target encoding be computed out of fold on the training data?","options":["It is faster","Otherwise each row's own label leaks into its encoding and the feature looks more predictive than it is","Out-of-fold encodings need no smoothing","Because the test data has no categories"],"answer":1,"explain":"Including a row's own label in its category average makes the encoding partly a copy of the label on the training data."},
@@ -1237,9 +1239,9 @@ Whatever you use, **select inside the cross-validation loop**, on the training f
         id: 'standard-scaler', title: 'Build a StandardScaler', difficulty: 'easy',
         prompt: `Implement a \`StandardScaler\` class with the scikit-learn API:
 
-- \`fit(X)\` — learn \`self.mean_\` (per-column mean) and \`self.scale_\` (per-column population std, \`ddof=0\`). If a column's std is 0, use 1 instead. Return \`self\`.
-- \`transform(X)\` — return \`(X - mean_) / scale_\` as a new float array.
-- \`fit_transform(X)\` — fit, then transform the same data.
+- \`fit(X)\`: learn \`self.mean_\` (per-column mean) and \`self.scale_\` (per-column population std, \`ddof=0\`). If a column's std is 0, use 1 instead. Return \`self\`.
+- \`transform(X)\`: return \`(X - mean_) / scale_\` as a new float array.
+- \`fit_transform(X)\`: fit, then transform the same data.
 
 \`\`\`text
 sc = StandardScaler().fit(np.array([[1.0, 10.0], [3.0, 10.0]]))
@@ -1328,7 +1330,7 @@ def one_hot(values, categories):
     return out
 `,
         hints: ['Make a lookup dict: `index = {c: i for i, c in enumerate(categories)}`.', 'Start from `np.zeros((len(values), len(categories)))` and set one entry per known value.'],
-        explain: `A dictionary lookup gives O(1) access to each category's column; \`index.get(v)\` returns None for unseen values, which we leave as zeros. This is the same lookup a tokenizer does from token to id — and an embedding layer is equivalent to multiplying a one-hot matrix by a weight matrix.`,
+        explain: `A dictionary lookup gives O(1) access to each category's column; \`index.get(v)\` returns None for unseen values, which we leave as zeros. This is the same lookup a tokenizer does from token to id, and an embedding layer is equivalent to multiplying a one-hot matrix by a weight matrix.`,
         tests: [
           { call: 'one_hot(["b", "a", "z"], ["a", "b", "c"])', expect: 'np.array([[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 0.0]])' },
           { call: 'one_hot([2, 2, 0], [0, 1, 2])', expect: 'np.array([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]])' },
@@ -1338,8 +1340,8 @@ def one_hot(values, categories):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Preprocessing data', url: 'https://scikit-learn.org/stable/modules/preprocessing.html' },
-      { title: "Kuhn & Johnson — Feature Engineering and Selection (free book)", url: "https://bookdown.org/max/FES/" }
+      { title: 'scikit-learn, Preprocessing data', url: 'https://scikit-learn.org/stable/modules/preprocessing.html' },
+      { title: "Kuhn & Johnson, Feature Engineering and Selection (free book)", url: "https://bookdown.org/max/FES/" }
     ]
   }
   ]);

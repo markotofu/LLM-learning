@@ -27,7 +27,7 @@
     recordActivity(type || 'xp', label || 'XP earned', amount);
     if (MLA.ui) MLA.ui.toast('+' + amount + ' XP · ' + (label || ''), 'xp');
     const after = levelInfo(s.xp).level;
-    if (after > before && MLA.ui) setTimeout(() => MLA.ui.toast('Level up! You are now level ' + after + ' — ' + title(after), 'success', 5000), 400);
+    if (after > before && MLA.ui) setTimeout(() => MLA.ui.toast('Level up. You are now level ' + after + ': ' + title(after), 'success', 5000), 400);
     touchStreak();
     checkAchievements();
   }
@@ -83,7 +83,7 @@
     for (const a of earned) {
       recordActivity('achievement', 'Achievement unlocked: ' + a.title, a.xp);
       if (a.xp) s.xp += a.xp;
-      if (MLA.ui) MLA.ui.toast(a.icon + ' Achievement unlocked: ' + a.title + (a.xp ? ' (+' + a.xp + ' XP)' : ''), 'success', 5000);
+      if (MLA.ui) MLA.ui.toast('Achievement unlocked: ' + a.title + (a.xp ? ' (+' + a.xp + ' XP)' : ''), 'success', 5000);
     }
     return earned;
   }

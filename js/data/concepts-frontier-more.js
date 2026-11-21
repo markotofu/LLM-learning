@@ -224,10 +224,10 @@ def attention_pairs(T, S):
       }
     ],
     refs: [
-      { title: 'Ho et al. — Video Diffusion Models (2022)', url: 'https://arxiv.org/abs/2204.03458' },
-      { title: 'OpenAI — Video generation models as world simulators (Sora technical report, 2024)', url: 'https://openai.com/index/video-generation-models-as-world-simulators/' },
-      { title: 'Unterthiner et al. — Towards Accurate Generative Models of Video: FVD (2018)', url: 'https://arxiv.org/abs/1812.01717' },
-      { title: 'C2PA — Content Credentials', url: 'https://c2pa.org/' }
+      { title: 'Ho et al., Video Diffusion Models (2022)', url: 'https://arxiv.org/abs/2204.03458' },
+      { title: 'OpenAI, Video generation models as world simulators (Sora technical report, 2024)', url: 'https://openai.com/index/video-generation-models-as-world-simulators/' },
+      { title: 'Unterthiner et al., Towards Accurate Generative Models of Video: FVD (2018)', url: 'https://arxiv.org/abs/1812.01717' },
+      { title: 'C2PA, Content Credentials', url: 'https://c2pa.org/' }
     ]
   },
 
@@ -462,9 +462,9 @@ def best_plan(A, B, s0, goal, plans):
       }
     ],
     refs: [
-      { title: 'Ha & Schmidhuber — World Models (2018)', url: 'https://worldmodels.github.io/' },
-      { title: 'Hafner et al. — Mastering Diverse Domains through World Models (DreamerV3, 2023)', url: 'https://arxiv.org/abs/2301.04104' },
-      { title: 'Schrittwieser et al. — Mastering Atari, Go, Chess and Shogi by Planning with a Learned Model (MuZero, 2019)', url: 'https://arxiv.org/abs/1911.08265' }
+      { title: 'Ha & Schmidhuber, World Models (2018)', url: 'https://worldmodels.github.io/' },
+      { title: 'Hafner et al., Mastering Diverse Domains through World Models (DreamerV3, 2023)', url: 'https://arxiv.org/abs/2301.04104' },
+      { title: 'Schrittwieser et al., Mastering Atari, Go, Chess and Shogi by Planning with a Learned Model (MuZero, 2019)', url: 'https://arxiv.org/abs/1911.08265' }
     ]
   },
 
@@ -718,10 +718,10 @@ def from_tokens(tokens, low, high, bins=256):
       }
     ],
     refs: [
-      { title: 'Ross, Gordon & Bagnell — A Reduction of Imitation Learning to No-Regret Online Learning (DAgger, 2011)', url: 'https://arxiv.org/abs/1011.0686' },
-      { title: 'Brohan et al. — RT-2: Vision-Language-Action Models Transfer Web Knowledge to Robotic Control (2023)', url: 'https://arxiv.org/abs/2307.15818' },
-      { title: 'Kim et al. — OpenVLA: An Open-Source Vision-Language-Action Model (2024)', url: 'https://arxiv.org/abs/2406.09246' },
-      { title: 'Black et al. — π0: A Vision-Language-Action Flow Model for General Robot Control (2024)', url: 'https://arxiv.org/abs/2410.24164' }
+      { title: 'Ross, Gordon & Bagnell, A Reduction of Imitation Learning to No-Regret Online Learning (DAgger, 2011)', url: 'https://arxiv.org/abs/1011.0686' },
+      { title: 'Brohan et al., RT-2: Vision-Language-Action Models Transfer Web Knowledge to Robotic Control (2023)', url: 'https://arxiv.org/abs/2307.15818' },
+      { title: 'Kim et al., OpenVLA: An Open-Source Vision-Language-Action Model (2024)', url: 'https://arxiv.org/abs/2406.09246' },
+      { title: 'Black et al., π0: A Vision-Language-Action Flow Model for General Robot Control (2024)', url: 'https://arxiv.org/abs/2410.24164' }
     ]
   }
   ]);

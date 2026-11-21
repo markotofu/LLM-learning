@@ -95,7 +95,7 @@
           <h1 class="page-title">{{ title }}</h1>
           <div class="topbar-right">
             <span class="chip py-chip" :title="py.message || pyLabel()" @click="go('/playground')"><span class="py-dot" :class="py.state"></span><span class="hide-sm">{{ pyLabel() }}</span></span>
-            <span class="chip amber" title="Learning streak (days)">🔥 {{ streak.current }}</span>
+            <span class="chip amber" title="Learning streak (days)" :aria-label="'Learning streak: ' + streak.current + ' days'"><span class="chip-ico" v-html="icon('flame')"></span>{{ streak.current }}</span>
             <span class="chip accent" title="Experience points"><mla-icon name="star" :size="13"/> {{ state.xp.toLocaleString() }}</span>
           </div>
         </header>
@@ -139,10 +139,10 @@
     },
     template: `
     <div class="onboard">
-      <p>ML Atlas is an interactive <b>map</b> of machine learning — from the maths and Python you need, through classic ML and neural networks, to how large language models are built, fine-tuned and used. Every concept is a lesson with runnable code, demos, a quiz and coding problems that run right here in your browser.</p>
+      <p>ML Atlas is an interactive <b>map</b> of machine learning: from the maths and Python you need, through classic ML and neural networks, to how large language models are built, fine-tuned and used. Every concept is a lesson with runnable code, demos, a quiz and coding problems that run right here in your browser.</p>
       <div class="field"><label>What should we call you?</label><input type="text" v-model="name" maxlength="24" placeholder="Your name" @keyup.enter="finish(true)" /></div>
       <div class="field"><label>Where do you want to go? (you can change this any time)</label>
-        <div class="onboard-tracks"><button v-for="t in tracks" :key="t.id" :class="{active: goal===t.id}" @click="goal=t.id"><span class="ot-icon">{{ t.icon }}</span><span><b>{{ t.title }}</b><span class="tiny dim">{{ t.short }}</span></span></button></div>
+        <div class="onboard-tracks"><button v-for="t in tracks" :key="t.id" :class="{active: goal===t.id}" @click="goal=t.id"><span class="ot-icon"><mla-icon :name="t.icon" :size="18"/></span><span><b>{{ t.title }}</b><span class="tiny dim">{{ t.short }}</span></span></button></div>
       </div>
       <div class="callout note"><div class="callout-title">Good to know</div>Progress is saved in this browser automatically. Use <b>Progress &amp; Sync</b> to move it to another device. The first time you run code, about 15 MB of Python downloads once and is then cached.</div>
       <div class="btn-row mt"><button class="btn primary" @click="finish(true)">Start learning</button><button class="btn ghost" @click="finish(false)">Explore the map first</button></div>

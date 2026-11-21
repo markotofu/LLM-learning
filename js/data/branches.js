@@ -6,11 +6,11 @@
 
   MLA.data.branches = [
     { id: 'start', name: 'Start Here', short: 'Start', color: '#cbd5e1', icon: 'flag', desc: 'What machine learning is, and how this map is organised.' },
-    { id: 'math', name: 'Math Foundations', short: 'Math', color: '#818cf8', icon: 'graph', desc: 'Vectors, derivatives, probability, statistics and information theory — the language machine learning is written in. Only the parts you actually need, explained from scratch.' },
+    { id: 'math', name: 'Math Foundations', short: 'Math', color: '#818cf8', icon: 'graph', desc: 'Vectors, derivatives, probability, statistics and information theory: the language machine learning is written in. Only the parts you actually need, explained from scratch.' },
     { id: 'code', name: 'Python & Data', short: 'Python & Data', color: '#22d3ee', icon: 'code', desc: 'Python, NumPy and the craft of turning messy real-world data into something a model can learn from.' },
-    { id: 'ml', name: 'Classical Machine Learning', short: 'Classical ML', color: '#4ade80', icon: 'target', desc: 'Regression, classification, trees, clustering and dimensionality reduction — plus how to train, tune and evaluate models honestly.' },
+    { id: 'ml', name: 'Classical Machine Learning', short: 'Classical ML', color: '#4ade80', icon: 'target', desc: 'Regression, classification, trees, clustering and dimensionality reduction, plus how to train, tune and evaluate models honestly.' },
     { id: 'dl', name: 'Neural Networks & Deep Learning', short: 'Neural Networks', color: '#fbbf24', icon: 'brain', desc: 'From a single neuron to deep networks: backpropagation, training, optimizers, CNNs, RNNs and embeddings.' },
-    { id: 'llm', name: 'Transformers & LLMs', short: 'Transformers & LLMs', color: '#a78bfa', icon: 'sparkles', desc: 'Tokenization, attention, the transformer, GPT, pretraining, fine-tuning, alignment and efficient inference — how large language models are built.' },
+    { id: 'llm', name: 'Transformers & LLMs', short: 'Transformers & LLMs', color: '#a78bfa', icon: 'sparkles', desc: 'Tokenization, attention, the transformer, GPT, pretraining, fine-tuning, alignment and efficient inference: how large language models are built.' },
     { id: 'apps', name: 'Building with LLMs', short: 'LLM Apps', color: '#f472b6', icon: 'bolt', desc: 'Using LLMs in real software: prompting, retrieval-augmented generation (RAG), agents with tools, and evaluation.' },
     { id: 'spec', name: 'Specializations', short: 'Specializations', color: '#fb923c', icon: 'layers', desc: 'Branch-out areas that build on the core: reinforcement learning, generative models, vision transformers, recommender systems, MLOps and responsible AI.' }
   ];

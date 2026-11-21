@@ -8,7 +8,7 @@
     id: 'optimizers', branch: 'dl', title: 'Optimizers: Momentum, RMSProp & Adam', short: 'Optimizers', level: 2, minutes: 40, prereqs: ['training-loop'],
     tags: ['sgd', 'momentum', 'rmsprop', 'adam', 'adamw', 'learning rate schedule', 'warmup', 'gradient clipping'],
     summary: 'Smarter ways to follow the gradient: momentum to roll through ravines, adaptive per-parameter step sizes, Adam/AdamW, learning-rate warmup and cosine decay, and gradient clipping.',
-    why: `Plain gradient descent struggles on the long, narrow valleys and noisy gradients typical of neural networks. Optimizers like **Adam** and **AdamW** — used to train virtually every transformer and LLM — fix this with momentum and per-parameter adaptive step sizes. Combined with a **learning-rate schedule** (warmup then cosine decay) and **gradient clipping**, they are what makes training large models stable. The optimizer state is also a big part of the memory cost of training (Adam stores two extra numbers per parameter).`,
+    why: `Plain gradient descent struggles on the long, narrow valleys and noisy gradients typical of neural networks. Optimizers like **Adam** and **AdamW** (used to train virtually every transformer and LLM) fix this with momentum and per-parameter adaptive step sizes. Combined with a **learning-rate schedule** (warmup then cosine decay) and **gradient clipping**, they are what makes training large models stable. The optimizer state is also a big part of the memory cost of training (Adam stores two extra numbers per parameter).`,
     objectives: [
       'Explain the problems of plain SGD: ravines, noise and a single global learning rate',
       'Implement momentum and explain it as a running average of gradients',
@@ -19,7 +19,7 @@
       { type: 'text', title: 'Where plain SGD struggles', md: `1. **Ravines.** When the loss curves steeply in one direction and gently in another (an elongated bowl), the gradient points mostly across the ravine. A learning rate small enough to avoid bouncing between the steep walls crawls painfully along the valley floor.
 2. **Noise.** Mini-batch gradients are noisy, so the path zig-zags.
 3. **One learning rate for everyone.** Some parameters get large, frequent gradients; others (e.g. embeddings of rare words) get tiny, rare ones. A single global step size can't suit both.` },
-      { type: 'text', title: 'Momentum', md: `Keep a **velocity** — a running (exponentially weighted) sum of past gradients — and step along it:
+      { type: 'text', title: 'Momentum', md: `Keep a **velocity**: a running (exponentially weighted) sum of past gradients, and step along it:
 
 $$ v ← β v + g          θ ← θ − η v $$
 :::where
@@ -131,9 +131,9 @@ print("Adam step, gradients x 1000: ", [f"{v:+.5f}" for v in adam_step(1000 * g)
 print("Adam is scale invariant:", np.allclose(adam_step(g), adam_step(1000 * g)))`, after: `With a steady gradient, Adam moves every parameter by about the learning rate whatever the size of its gradient: the 0.002 gradient and the 3.0 gradient both give a step of 0.01, while SGD's steps differ by a factor of 1,500. Multiplying all gradients by 1,000, as rescaling the loss would, leaves Adam's steps unchanged: what matters to Adam is the direction and consistency of each gradient, not its size.`, predict: {"type":"mcq","q":"Every gradient is multiplied by 1,000 (for example because the loss was scaled up). How do Adam's updates change?","options":["They become 1,000 times larger","They become about 31 times larger","They stay essentially the same","They become 1,000 times smaller"],"answer":2,"explain":"Adam divides the averaged gradient by the square root of the averaged squared gradient, so a common scale factor cancels out (apart from the tiny ε).","expect":["Adam is scale invariant: True"]} },
       { type: 'text', title: 'Learning-rate schedules', md: `The best learning rate changes during training: early on, large updates make fast progress; later, smaller ones settle into a good minimum. Common schedules:
 
-- **Step decay** — divide the rate by 10 at fixed epochs (classic for CNNs).
-- **Cosine decay** — smoothly lower the rate along half a cosine wave from the peak to a minimum.
-- **Warmup** — start from a tiny rate and increase it linearly over the first few hundred or thousand steps. Adam's statistics are unreliable at the start and transformers are fragile early on; warmup prevents early divergence.
+- **Step decay**: divide the rate by 10 at fixed epochs (classic for CNNs).
+- **Cosine decay**: smoothly lower the rate along half a cosine wave from the peak to a minimum.
+- **Warmup**: start from a tiny rate and increase it linearly over the first few hundred or thousand steps. Adam's statistics are unreliable at the start and transformers are fragile early on; warmup prevents early divergence.
 
 **Warmup + cosine decay** is the standard recipe for training transformers and LLMs.
 
@@ -165,16 +165,16 @@ The direction is kept; only the size is capped. It is standard for RNNs and tran
     when: `- **AdamW** with warmup + cosine decay: the default for transformers and most deep learning.
 - **SGD with momentum** (often with step or cosine schedules): still excellent for CNNs, sometimes generalizing slightly better than Adam.
 - Always consider **gradient clipping** for RNNs, transformers and any training with occasional loss spikes.
-- Tune the **learning rate** first — it matters more than the choice between reasonable optimizers.`,
-    pitfalls: `- Using Adam's default learning rate (1e-3) for fine-tuning large pretrained models — usually far too high (1e-5 to 1e-4 is typical).
-- Adding L2 regularization to the loss with Adam and expecting weight-decay behaviour — use AdamW.
+- Tune the **learning rate** first: it matters more than the choice between reasonable optimizers.`,
+    pitfalls: `- Using Adam's default learning rate (1e-3) for fine-tuning large pretrained models, usually far too high (1e-5 to 1e-4 is typical).
+- Adding L2 regularization to the loss with Adam and expecting weight-decay behaviour: use AdamW.
 - Forgetting warmup for transformers (early divergence).
 - Forgetting the optimizer state when saving/resuming checkpoints.
 - Memory: Adam keeps two extra tensors the size of the model.`,
     takeaways: [
       'Momentum: v ← βv + g; θ ← θ − ηv. Accelerates consistent directions, damps oscillations.',
       'RMSProp/Adam scale each parameter\'s step by the root of its average squared gradient.',
-      'Adam = momentum + RMSProp + bias correction; AdamW decouples weight decay — the LLM standard.',
+      'Adam = momentum + RMSProp + bias correction; AdamW decouples weight decay: the LLM standard.',
       'Warmup + cosine decay is the standard schedule for transformers.',
       'Gradient clipping caps the gradient norm to prevent destructive updates.'
     ],
@@ -224,7 +224,7 @@ def momentum_step(w, v, grad, lr=0.01, beta=0.9):
     return w_new, v_new
 `,
         hints: ['Update the velocity first, then use the new velocity for the weights.'],
-        explain: `The velocity is an exponentially weighted sum of past gradients: with β = 0.9 it remembers roughly the last 10 steps. A constant gradient g makes v approach g/(1 − β) = 10g — momentum effectively multiplies the learning rate along consistent directions.`,
+        explain: `The velocity is an exponentially weighted sum of past gradients: with β = 0.9 it remembers roughly the last 10 steps. A constant gradient g makes v approach g/(1 − β) = 10g: momentum effectively multiplies the learning rate along consistent directions.`,
         tests: [
           { call: 'momentum_step(np.array([1.0]), np.array([0.0]), np.array([2.0]), lr=0.1, beta=0.9)', expect: '(np.array([0.8]), np.array([2.0]))' },
           { name: 'second step uses the velocity', call: 'momentum_step(np.array([0.8]), np.array([2.0]), np.array([2.0]), lr=0.1, beta=0.9)', expect: '(np.array([0.42]), np.array([3.8]))' },
@@ -267,7 +267,7 @@ def adam_step(w, m, v, grad, t, lr=1e-3, beta1=0.9, beta2=0.999, eps=1e-8):
     return w_new, m_new, v_new
 `,
         hints: ['Follow the five lines in order; `t` appears only in the bias corrections.', 'Use `np.sqrt` for the element-wise square root.'],
-        explain: `On step 1, m̂ = g and v̂ = g², so the update is lr·g/(|g| + ε) ≈ lr·sign(g): the step size no longer depends on the gradient's scale. That scale-invariance is why Adam is so forgiving to tune — and why its learning rate is directly "how far each weight moves per step".`,
+        explain: `On step 1, m̂ = g and v̂ = g², so the update is lr·g/(|g| + ε) ≈ lr·sign(g): the step size no longer depends on the gradient's scale. That scale-invariance is why Adam is so forgiving to tune, and why its learning rate is directly "how far each weight moves per step".`,
         tests: [
           { name: 'first step', call: 'adam_step(np.array([1.0, -2.0]), np.zeros(2), np.zeros(2), np.array([0.5, -30.0]), t=1)' },
           { name: 'first step moves each weight by about lr', code: 'w = np.array([0.0, 0.0, 0.0])\nw2, m, v = adam_step(w, np.zeros(3), np.zeros(3), np.array([1e-4, 1.0, 1e4]), t=1, lr=0.01)\nassert np.allclose(np.abs(w2 - w), 0.01, rtol=1e-3), np.abs(w2 - w)' },
@@ -278,8 +278,8 @@ def adam_step(w, m, v, grad, t, lr=1e-3, beta1=0.9, beta2=0.999, eps=1e-8):
         id: 'warmup-cosine', title: 'Warmup + Cosine Learning-Rate Schedule', difficulty: 'easy',
         prompt: `Implement \`lr_at(step, max_lr, warmup_steps, total_steps, min_lr=0.0)\` (steps start at 0):
 
-- **Warmup** — if \`step < warmup_steps\`: \`max_lr * (step + 1) / warmup_steps\`.
-- **Cosine decay** — otherwise: \`progress = (step - warmup_steps) / max(1, total_steps - warmup_steps)\`, capped at 1, and
+- **Warmup**: if \`step < warmup_steps\`: \`max_lr * (step + 1) / warmup_steps\`.
+- **Cosine decay**: otherwise: \`progress = (step - warmup_steps) / max(1, total_steps - warmup_steps)\`, capped at 1, and
   \`min_lr + 0.5 * (max_lr - min_lr) * (1 + cos(pi * progress))\`.
 
 \`\`\`text
@@ -316,9 +316,9 @@ def lr_at(step, max_lr, warmup_steps, total_steps, min_lr=0.0):
       }
     ],
     refs: [
-      { title: 'Kingma & Ba — Adam: A Method for Stochastic Optimization', url: 'https://arxiv.org/abs/1412.6980' },
-      { title: 'Loshchilov & Hutter — Decoupled Weight Decay Regularization (AdamW)', url: 'https://arxiv.org/abs/1711.05101' },
-      { title: 'Distill — Why Momentum Really Works', url: 'https://distill.pub/2017/momentum/' }
+      { title: 'Kingma & Ba, Adam: A Method for Stochastic Optimization', url: 'https://arxiv.org/abs/1412.6980' },
+      { title: 'Loshchilov & Hutter, Decoupled Weight Decay Regularization (AdamW)', url: 'https://arxiv.org/abs/1711.05101' },
+      { title: 'Distill, Why Momentum Really Works', url: 'https://distill.pub/2017/momentum/' }
     ]
   },
 
@@ -327,7 +327,7 @@ def lr_at(step, max_lr, warmup_steps, total_steps, min_lr=0.0):
     id: 'normalization', branch: 'dl', title: 'Initialization, Normalization & Dropout', short: 'Init, Norm & Dropout', level: 2, minutes: 40, prereqs: ['training-loop', 'statistics'],
     tags: ['xavier', 'he init', 'batch norm', 'layer norm', 'rmsnorm', 'dropout', 'residual'],
     summary: 'Keeping signals healthy in deep networks: variance-preserving weight initialization, batch and layer normalization, dropout, and residual connections.',
-    why: `A deep network is a long chain of multiplications: if each layer slightly shrinks or grows the signal, after 50 layers it vanishes or explodes — and so do the gradients. **Initialization** schemes keep the signal's scale steady at the start; **normalization layers** (BatchNorm, LayerNorm, RMSNorm) keep it steady during training; **residual connections** give gradients a highway; and **dropout** regularizes. Every transformer block contains LayerNorm (or RMSNorm), residual connections and, often, dropout — these are not optional details.`,
+    why: `A deep network is a long chain of multiplications: if each layer slightly shrinks or grows the signal, after 50 layers it vanishes or explodes, and so do the gradients. **Initialization** schemes keep the signal's scale steady at the start; **normalization layers** (BatchNorm, LayerNorm, RMSNorm) keep it steady during training; **residual connections** give gradients a highway; and **dropout** regularizes. Every transformer block contains LayerNorm (or RMSNorm), residual connections and, often, dropout: these are not optional details.`,
     objectives: [
       'Explain why weight scale matters and use Xavier and He initialization',
       'Compute batch normalization and layer normalization, and contrast them',
@@ -374,7 +374,7 @@ y — the layer's output
 
 γ and β are learned so the layer can still represent any scale and shift. Benefits: faster, more stable training, higher usable learning rates, mild regularization.
 
-Caveats: it depends on the batch — tiny batches give noisy statistics; at inference time it must switch to **running averages** collected during training (forgetting \`model.eval()\` is a classic bug); and it is awkward for variable-length sequences. That is why it is common in CNNs but not in transformers.` },
+Caveats: it depends on the batch, tiny batches give noisy statistics; at inference time it must switch to **running averages** collected during training (forgetting \`model.eval()\` is a classic bug); and it is awkward for variable-length sequences. That is why it is common in CNNs but not in transformers.` },
       { type: 'text', title: 'Layer normalization and RMSNorm', md: `**LayerNorm** normalizes across the **features of each example** instead of across the batch:
 
 $$ μ = mean of x over its d features,   σ² = variance over its d features $$
@@ -387,12 +387,12 @@ x — the vector of d features of one example (for instance one token's hidden v
 y — the normalized output, with the same shape as x
 :::
 
-It behaves identically in training and inference, works with any batch size (even 1) and any sequence length — so it is used in **every transformer**. Modern LLMs place it *before* each sub-layer ("pre-norm"), which trains more stably.
+It behaves identically in training and inference, works with any batch size (even 1) and any sequence length, so it is used in **every transformer**. Modern LLMs place it *before* each sub-layer ("pre-norm"), which trains more stably.
 
-**RMSNorm** (used by LLaMA and many recent LLMs) drops the mean subtraction and β: y = γ · x / √(mean(x²) + ε) — slightly cheaper, works just as well.` },
+**RMSNorm** (used by LLaMA and many recent LLMs) drops the mean subtraction and β: y = γ · x / √(mean(x²) + ε) (slightly cheaper, works just as well).` },
       { type: 'chart', title: "Activation size through 30 ReLU layers", md: `The badly scaled network from the first code example, with and without a LayerNorm after every layer:`, after: `With weights that are too small, the activations shrink about tenfold per layer and are numerically dead long before layer 30. Adding a LayerNorm after every layer resets each token's activations to mean 0 and variance 1, so the same bad weights keep a healthy scale all the way down. Normalisation makes training far less sensitive to the initial scale, although a good initialisation (the He line) achieves the same without it.`, chart: {"kind":"line","x":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],"yLog":true,"points":false,"series":[{"name":"init std 0.01, no normalisation","y":[0.06362,0.006954,0.0008181,0.00008922,0.00001083,0.000001223,1.579e-7,1.9e-8,2.285e-9,2.675e-10,2.546e-11,2.62e-12,3.113e-13,3.797e-14,3.739e-15,4.53e-16,4.482e-17,5.578e-18,6.688e-19,7.05e-20,8.503e-21,1.002e-21,1.177e-22,1.415e-23,1.449e-24,1.841e-25,1.827e-26,2.362e-27,2.846e-28,3.445e-29]},{"name":"init std 0.01, LayerNorm after every layer","y":[0.7912,0.7921,0.7907,0.7915,0.7902,0.7938,0.7907,0.7919,0.7909,0.7911,0.7931,0.7907,0.7914,0.7905,0.793,0.7919,0.7908,0.7918,0.7916,0.7919,0.7907,0.7919,0.7894,0.7919,0.7908,0.792,0.7923,0.7892,0.7903,0.7913]},{"name":"He init, no normalisation","y":[0.5623,0.5432,0.5649,0.5446,0.5843,0.5831,0.6653,0.7077,0.7524,0.7785,0.655,0.5957,0.6255,0.6746,0.5871,0.6286,0.5498,0.6048,0.641,0.5972,0.6366,0.663,0.6886,0.7316,0.6619,0.7437,0.6523,0.7454,0.7937,0.8492]}],"xLabel":"layer","yLabel":"average |activation| (log scale)"} },
-      { type: 'check', question: { type: 'mcq', q: 'Why do transformers use LayerNorm rather than BatchNorm?', options: ['LayerNorm has more parameters', 'LayerNorm normalizes each token\'s features independently of the batch, so it works for any batch size and sequence length and behaves the same at inference', 'BatchNorm cannot be backpropagated', 'LayerNorm is a type of dropout'], answer: 1, explain: 'Per-example statistics avoid batch dependence — ideal for variable-length text and small or single-example batches.' } },
-      { type: 'text', title: 'Dropout', md: `**Dropout** randomly sets each activation to zero with probability p during training (p = 0.1–0.5). The network can't rely on any single unit, so it learns redundant, more robust features — like training an ensemble of thinned networks that share weights.
+      { type: 'check', question: { type: 'mcq', q: 'Why do transformers use LayerNorm rather than BatchNorm?', options: ['LayerNorm has more parameters', 'LayerNorm normalizes each token\'s features independently of the batch, so it works for any batch size and sequence length and behaves the same at inference', 'BatchNorm cannot be backpropagated', 'LayerNorm is a type of dropout'], answer: 1, explain: 'Per-example statistics avoid batch dependence: ideal for variable-length text and small or single-example batches.' } },
+      { type: 'text', title: 'Dropout', md: `**Dropout** randomly sets each activation to zero with probability p during training (p = 0.1–0.5). The network can't rely on any single unit, so it learns redundant, more robust features, like training an ensemble of thinned networks that share weights.
 
 **Inverted dropout** (what frameworks implement) scales the surviving activations by 1/(1 − p) during training, so their expected value is unchanged; at evaluation time dropout is simply turned **off**.
 
@@ -476,8 +476,8 @@ print("kept fraction:", mask.mean(), " mean before/after:", x.mean().round(3), d
 - **BatchNorm** in CNNs with reasonably large batches; **LayerNorm / RMSNorm** in transformers and RNNs.
 - **Dropout** (0.1–0.5) when a model overfits; often 0.1 in transformers, less or none for huge pretraining runs.
 - **Residual connections** whenever you stack many layers.`,
-    pitfalls: `- Forgetting \`model.eval()\` — BatchNorm keeps using batch statistics and dropout keeps dropping at inference.
-- All-zero (or identical) weight initialization — every neuron computes the same thing forever (symmetry is never broken).
+    pitfalls: `- Forgetting \`model.eval()\`: BatchNorm keeps using batch statistics and dropout keeps dropping at inference.
+- All-zero (or identical) weight initialization, every neuron computes the same thing forever (symmetry is never broken).
 - Tiny batches with BatchNorm.
 - Applying dropout to the inputs of the final classifier too aggressively, or using it at evaluation.`,
     takeaways: [
@@ -526,7 +526,7 @@ def layer_norm(x, gamma, beta, eps=1e-5):
     return np.asarray(gamma) * (x - mu) / np.sqrt(var + eps) + np.asarray(beta)
 `,
         hints: ['Use `axis=-1, keepdims=True` for both the mean and the variance.', '`x.var()` is the population variance (ddof=0), which is what LayerNorm uses.'],
-        explain: `\`axis=-1\` with \`keepdims=True\` makes the same code work for any number of leading dimensions — exactly how LayerNorm is applied to a (batch, sequence, features) tensor in a transformer.`,
+        explain: `\`axis=-1\` with \`keepdims=True\` makes the same code work for any number of leading dimensions, exactly how LayerNorm is applied to a (batch, sequence, features) tensor in a transformer.`,
         tests: [
           { call: 'layer_norm(np.array([[1.0, 2.0, 3.0]]), np.ones(3), np.zeros(3))', expect: 'np.array([[-1.0, 0.0, 1.0]]) / np.sqrt(2 / 3 + 1e-5)' },
           { name: 'gamma and beta', call: 'layer_norm(np.array([2.0, 4.0]), np.array([2.0, 3.0]), np.array([0.5, -1.0]))', expect: 'np.array([2.0 * -1 / np.sqrt(1 + 1e-5) + 0.5, 3.0 * 1 / np.sqrt(1 + 1e-5) - 1.0])' },
@@ -565,7 +565,7 @@ def dropout(x, p, seed=0, training=True):
     return x * mask / (1 - p)
 `,
         hints: ['Handle the "no dropout" cases first.', 'Scale the kept values by 1/(1 − p) so the expected value is unchanged.'],
-        explain: `Because each unit survives with probability 1 − p and is scaled by 1/(1 − p), its expected value is unchanged — so the network sees activations of the same average size in training and evaluation, and evaluation needs no adjustment.`,
+        explain: `Because each unit survives with probability 1 − p and is scaled by 1/(1 − p), its expected value is unchanged, so the network sees activations of the same average size in training and evaluation, and evaluation needs no adjustment.`,
         tests: [
           { name: 'seeded mask', call: 'dropout(np.arange(1.0, 9.0), 0.5, seed=0)' },
           { call: 'dropout(np.ones(4), 0.5, training=False)', expect: 'np.ones(4)' },
@@ -598,7 +598,7 @@ def he_init(fan_in, fan_out, seed=0):
 def xavier_init(fan_in, fan_out, seed=0):
     return np.random.default_rng(seed).normal(0.0, np.sqrt(2.0 / (fan_in + fan_out)), size=(fan_in, fan_out))
 `,
-        hints: ['`rng.normal(loc, scale, size=(rows, cols))` — scale is the standard deviation, not the variance.'],
+        hints: ['`rng.normal(loc, scale, size=(rows, cols))`: scale is the standard deviation, not the variance.'],
         explain: `Scaling the standard deviation by 1/√fan_in keeps each neuron's summed input at a similar scale no matter how many inputs it has; the factor 2 compensates for ReLU zeroing half of its inputs.`,
         tests: [
           { name: 'seeded He matrix', call: 'he_init(4, 3, seed=1)' },
@@ -608,9 +608,9 @@ def xavier_init(fan_in, fan_out, seed=0):
       }
     ],
     refs: [
-      { title: 'He et al. — Delving Deep into Rectifiers (He initialization)', url: 'https://arxiv.org/abs/1502.01852' },
-      { title: 'Ba et al. — Layer Normalization', url: 'https://arxiv.org/abs/1607.06450' },
-      { title: 'He et al. — Deep Residual Learning (ResNet)', url: 'https://arxiv.org/abs/1512.03385' }
+      { title: 'He et al., Delving Deep into Rectifiers (He initialization)', url: 'https://arxiv.org/abs/1502.01852' },
+      { title: 'Ba et al., Layer Normalization', url: 'https://arxiv.org/abs/1607.06450' },
+      { title: 'He et al., Deep Residual Learning (ResNet)', url: 'https://arxiv.org/abs/1512.03385' }
     ]
   },
 
@@ -618,8 +618,8 @@ def xavier_init(fan_in, fan_out, seed=0):
   {
     id: 'pytorch', branch: 'dl', title: 'PyTorch Fundamentals', short: 'PyTorch', level: 2, minutes: 45, prereqs: ['training-loop', 'optimizers'],
     tags: ['pytorch', 'tensor', 'nn.Module', 'autograd', 'dataloader', 'gpu'],
-    summary: 'The framework most modern AI is built in: tensors, autograd, nn.Module, losses and optimizers, the PyTorch training loop, devices, and saving models — mapped onto what you already built in NumPy.',
-    why: `Nearly every recent model you have heard of — Llama, Stable Diffusion, Whisper, and most research code — is written in **PyTorch**. Good news: you already understand everything it does. A tensor is a NumPy array that can live on a GPU and remember its computation; \`loss.backward()\` is the autograd engine you built; \`nn.Module\` is the class pattern from the Python lesson; \`optimizer.step()\` is the update rule. This lesson maps your knowledge onto PyTorch's vocabulary so you can read and write real model code.`,
+    summary: 'The framework most modern AI is built in: tensors, autograd, nn.Module, losses and optimizers, the PyTorch training loop, devices, and saving models (mapped onto what you already built in NumPy).',
+    why: `Nearly every recent model you have heard of (Llama, Stable Diffusion, Whisper, and most research code) is written in **PyTorch**. Good news: you already understand everything it does. A tensor is a NumPy array that can live on a GPU and remember its computation; \`loss.backward()\` is the autograd engine you built; \`nn.Module\` is the class pattern from the Python lesson; \`optimizer.step()\` is the update rule. This lesson maps your knowledge onto PyTorch's vocabulary so you can read and write real model code.`,
     objectives: [
       'Create and manipulate tensors and move them between CPU and GPU',
       'Use autograd: requires_grad, backward, .grad, no_grad',
@@ -637,7 +637,7 @@ def xavier_init(fan_in, fan_out, seed=0):
 | \`w -= lr * grad\` | \`torch.optim.AdamW(...)\`, \`optimizer.step()\` |
 | index batches yourself | \`DataLoader(dataset, batch_size, shuffle=True)\` |
 
-PyTorch isn't available in the browser runtime, so the PyTorch examples here are for reading — run them locally (\`pip install torch\`) or in Google Colab. The practice problems build the same pieces in NumPy.` },
+PyTorch isn't available in the browser runtime, so the PyTorch examples here are for reading: run them locally (\`pip install torch\`) or in Google Colab. The practice problems build the same pieces in NumPy.` },
       { type: 'code', title: 'Tensors and autograd', lang: 'pytorch', code: `
 import torch
 
@@ -718,7 +718,7 @@ When that clicks, PyTorch stops being a black box: it is this design plus automa
       { type: 'text', title: "Shape bugs that do not crash", md: `The most dangerous bugs in deep-learning code raise no error: broadcasting quietly turns a mistake into a valid computation. The classic one: a regression model outputs predictions of shape (N, 1), the targets have shape (N,), and
 
 \`\`\`python
-loss = ((pred - target) ** 2).mean()      # (N, 1) - (N,) broadcasts to (N, N)!
+loss = ((pred - target) ** 2).mean()      # (N, 1) - (N,) broadcasts to (N, N), a silent bug
 \`\`\`
 
 averages over all N × N pairs of predictions and targets. Training runs, the loss goes down a little, and the model learns to predict roughly the average. (PyTorch's \`nn.MSELoss\` warns about this mismatch; a hand-written loss does not.)
@@ -796,7 +796,7 @@ print("loss on the last 200 examples:", model.evaluate(X[-200:], y[-200:], verbo
       'Save and load state_dict(); move model and data to the same device.'
     ],
     quiz: [
-      { type: 'order', q: 'Order the core lines of a PyTorch training step.', items: ['logits = model(xb)', 'loss = loss_fn(logits, yb)', 'optimizer.zero_grad()', 'loss.backward()', 'optimizer.step()'], explain: 'Forward, loss, clear old gradients, backprop, update. (zero_grad may also come first — it just has to precede backward.)' },
+      { type: 'order', q: 'Order the core lines of a PyTorch training step.', items: ['logits = model(xb)', 'loss = loss_fn(logits, yb)', 'optimizer.zero_grad()', 'loss.backward()', 'optimizer.step()'], explain: 'Forward, loss, clear old gradients, backprop, update. (zero_grad may also come first: it just has to precede backward.)' },
       { type: 'mcq', q: 'What does `model.eval()` change?', options: ['It freezes the weights permanently', 'Layers like dropout and BatchNorm switch to inference behaviour', 'It moves the model to the GPU', 'It computes the validation loss'], answer: 1, explain: 'Dropout turns off and BatchNorm uses running statistics.' },
       { type: 'mcq', q: 'In PyTorch, what is `dim=1` in `x.mean(dim=1)` equivalent to in NumPy?', options: ['keepdims=True', 'axis=1', 'ddof=1', 'out=1'], answer: 1, explain: 'PyTorch calls the axis argument dim.' },
       { type: 'tf', q: 'Wrapping inference code in `torch.no_grad()` saves memory because no computational graph is recorded.', answer: true, explain: 'Without gradient tracking, intermediate values needn\'t be kept for backward.' },
@@ -983,7 +983,7 @@ def sgd_step(model, lr):
       }
     ],
     refs: [
-      { title: 'PyTorch — Learn the Basics', url: 'https://pytorch.org/tutorials/beginner/basics/intro.html' },
+      { title: 'PyTorch, Learn the Basics', url: 'https://pytorch.org/tutorials/beginner/basics/intro.html' },
       { title: "PyTorch documentation", url: "https://pytorch.org/docs/stable/index.html" }
     ]
   },
@@ -993,7 +993,7 @@ def sgd_step(model, lr):
     id: 'cnn', branch: 'dl', title: 'Convolutional Neural Networks', short: 'CNNs', level: 2, minutes: 45, prereqs: ['mlp'],
     tags: ['convolution', 'cnn', 'filters', 'pooling', 'stride', 'padding', 'resnet', 'computer vision'],
     summary: 'How networks see: sliding filters that detect local patterns anywhere in an image, stride and padding, pooling, feature hierarchies, and the architectures that launched the deep-learning era.',
-    why: `In 2012 a convolutional network (AlexNet) crushed the ImageNet competition and kicked off the modern deep-learning boom. CNNs encode two powerful assumptions about images — **local patterns matter** and **the same pattern can appear anywhere** — which lets them learn from images with far fewer parameters than an MLP. They power photo tagging, medical imaging, self-driving perception and document scanning, and their ideas (weight sharing, hierarchical features, residual connections) carried straight into transformers and diffusion models.`,
+    why: `In 2012 a convolutional network (AlexNet) crushed the ImageNet competition and kicked off the modern deep-learning boom. CNNs encode two useful assumptions about images (**local patterns matter** and **the same pattern can appear anywhere**) which lets them learn from images with far fewer parameters than an MLP. They power photo tagging, medical imaging, self-driving perception and document scanning, and their ideas (weight sharing, hierarchical features, residual connections) carried straight into transformers and diffusion models.`,
     objectives: [
       'Compute a 2-D convolution by hand and explain filters and feature maps',
       'Calculate output sizes from input size, kernel, stride and padding',
@@ -1001,14 +1001,14 @@ def sgd_step(model, lr):
       'Describe a typical CNN architecture and why CNNs need far fewer parameters than MLPs'
     ],
     sections: [
-      { type: 'text', title: 'Why not just use an MLP?', md: `A 224×224 colour image has 150,528 numbers. A single dense layer with 1,000 hidden units would need **150 million** weights — and it would have to learn "a cat in the top-left corner" separately from "a cat in the bottom-right".
+      { type: 'text', title: 'Why not just use an MLP?', md: `A 224×224 colour image has 150,528 numbers. A single dense layer with 1,000 hidden units would need **150 million** weights, and it would have to learn "a cat in the top-left corner" separately from "a cat in the bottom-right".
 
 Images have structure an MLP ignores:
-1. **Locality** — nearby pixels are related; useful patterns (edges, corners, textures) are small.
-2. **Translation equivariance** — a pattern means the same thing wherever it appears.
+1. **Locality**: nearby pixels are related; useful patterns (edges, corners, textures) are small.
+2. **Translation equivariance**: a pattern means the same thing wherever it appears.
 
 A **convolutional layer** bakes both in: small filters look at local patches, and the **same filter weights are reused at every position** (weight sharing).` },
-      { type: 'text', title: 'The convolution operation', md: `A **filter** (kernel) is a small grid of weights, e.g. 3×3. Slide it over the image; at each position multiply the overlapping numbers element-wise and add them up (plus a bias). The grid of results is a **feature map** — high where the image locally matches the filter's pattern.
+      { type: 'text', title: 'The convolution operation', md: `A **filter** (kernel) is a small grid of weights, e.g. 3×3. Slide it over the image; at each position multiply the overlapping numbers element-wise and add them up (plus a bias). The grid of results is a **feature map**: high where the image locally matches the filter's pattern.
 
 \`\`\`text
 image patch      kernel (vertical edge)       output
@@ -1017,9 +1017,9 @@ image patch      kernel (vertical edge)       output
 [0 0 1]          [-1 0 1]
 \`\`\`
 
-(Strictly speaking, deep-learning libraries compute *cross-correlation* — the kernel isn't flipped — but everyone calls it convolution.)
+(Strictly speaking, deep-learning libraries compute *cross-correlation* (the kernel isn't flipped) but everyone calls it convolution.)
 
-**Channels.** A colour image has 3 input channels; a filter spans all of them (3×3×3 weights). A layer usually has many filters — say 64 — producing 64 output channels (feature maps). Its weights form a tensor of shape (64, 3, 3, 3).
+**Channels.** A colour image has 3 input channels; a filter spans all of them (3×3×3 weights). A layer usually has many filters (say 64) producing 64 output channels (feature maps). Its weights form a tensor of shape (64, 3, 3, 3).
 
 **Learned, not designed.** Classical computer vision hand-crafted edge filters; a CNN learns its filters by backpropagation.` },
       { type: 'demo', title: 'Interactive: convolution with different kernels', md: `Toggle pixels and switch kernels. Hover an output cell to see its receptive field and the multiply-and-add behind it.`, demo: 'convolution' },
@@ -1041,7 +1041,7 @@ Examples: 32×32 input, 3×3 kernel, p = 1, s = 1 → 32×32. 32×32, 3×3, p = 
       { type: 'check', question: { type: 'fill', q: 'Input 28×28, kernel 5×5, no padding, stride 1. What is the output size (one side)?', answer: ['24', '24x24', '24×24'], explain: '(28 + 0 − 5)/1 + 1 = 24.' } },
       { type: 'text', title: 'Pooling and the feature hierarchy', md: `**Max pooling** (typically 2×2, stride 2) keeps the largest value in each window: it halves the resolution, keeps the strongest responses, and adds a little tolerance to small shifts. Average pooling keeps the mean; **global average pooling** at the end turns each feature map into one number.
 
-Stacking conv → ReLU → (pool) blocks builds a **hierarchy**: early layers detect edges and colours; middle layers, textures and parts (eyes, wheels); late layers, whole objects. Each layer sees a larger region of the original image — its **receptive field** grows with depth.
+Stacking conv → ReLU → (pool) blocks builds a **hierarchy**: early layers detect edges and colours; middle layers, textures and parts (eyes, wheels); late layers, whole objects. Each layer sees a larger region of the original image: its **receptive field** grows with depth.
 
 A classic CNN classifier:
 
@@ -1141,14 +1141,14 @@ print("weights of a 3x3 conv from 64 to 128 channels (no biases):", 3 * 3 * 64 *
 | large | fine-tune everything, still starting from the pretrained weights |
 
 Practical tips: replace the final layer to match your classes; give the pretrained layers a learning rate 10 to 100 times smaller than the new head; use the same preprocessing (resizing and normalisation) the backbone was trained with; and add **data augmentation** (flips, crops, colour changes) matching the variations you expect, so the model learns invariances instead of memorising the few images it has (see [Data-Centric ML](#/concept/data-centric)).` },
-      { type: 'text', title: 'Landmark architectures', md: `- **LeNet-5** (1998) — digit recognition for cheques; the original CNN design.
-- **AlexNet** (2012) — deep CNN on GPUs with ReLU and dropout; won ImageNet by a huge margin.
-- **VGG** (2014) — simple stacks of 3×3 convolutions.
-- **ResNet** (2015) — residual connections allowed 50–150+ layers; still a standard backbone.
-- **EfficientNet / ConvNeXt** — carefully scaled and modernised CNNs.
-- **Vision Transformers** (2020) — split images into patches and use attention instead of convolution; competitive at large scale (see *Vision Transformers*).
+      { type: 'text', title: 'Landmark architectures', md: `- **LeNet-5** (1998): digit recognition for cheques; the original CNN design.
+- **AlexNet** (2012): deep CNN on GPUs with ReLU and dropout; won ImageNet by a huge margin.
+- **VGG** (2014): simple stacks of 3×3 convolutions.
+- **ResNet** (2015): residual connections allowed 50–150+ layers; still a standard backbone.
+- **EfficientNet / ConvNeXt**: carefully scaled and modernised CNNs.
+- **Vision Transformers** (2020): split images into patches and use attention instead of convolution; competitive at large scale (see *Vision Transformers*).
 
-In practice you rarely train a CNN from scratch: start from a **pretrained** backbone (on ImageNet) and fine-tune it on your images — **transfer learning** works remarkably well even with a few hundred labelled images.` },
+In practice you rarely train a CNN from scratch: start from a **pretrained** backbone (on ImageNet) and fine-tune it on your images (**transfer learning** works remarkably well even with a few hundred labelled images).` },
       { type: 'check', question: { type: 'mcq', q: 'What does weight sharing in a convolutional layer mean?', options: ['All layers share one set of weights', 'The same filter weights are applied at every position of the input', 'Weights are copied between models', 'Filters share biases with dense layers'], answer: 1, explain: 'One small filter slides everywhere, so it detects its pattern anywhere with very few parameters.' } }
     ],
     when: `- Images, video frames, spectrograms (audio as images), and other grid-like data with local structure.
@@ -1218,7 +1218,7 @@ def trace_shapes(n, layers):
       },
       {
         id: 'conv2d', title: '2-D Convolution from Scratch', difficulty: 'medium',
-        prompt: `Implement \`conv2d(image, kernel, stride=1)\` — a single-channel "valid" convolution (cross-correlation, no kernel flip, no padding):
+        prompt: `Implement \`conv2d(image, kernel, stride=1)\`, a single-channel "valid" convolution (cross-correlation, no kernel flip, no padding):
 
 - image: (H, W), kernel: (kh, kw).
 - Output shape: ((H − kh)//stride + 1, (W − kw)//stride + 1).
@@ -1253,7 +1253,7 @@ def conv2d(image, kernel, stride=1):
     return out
 `,
         hints: ['Compute the output shape first with the size formula.', 'Each output cell is the sum of an element-wise product of a window and the kernel.'],
-        explain: `Two loops over output positions, one element-wise multiply-and-sum each. Real libraries rearrange the windows into a big matrix ("im2col") and use one matrix multiplication — or specialised GPU kernels — to do all positions at once.`,
+        explain: `Two loops over output positions, one element-wise multiply-and-sum each. Real libraries rearrange the windows into a big matrix ("im2col") and use one matrix multiplication (or specialised GPU kernels) to do all positions at once.`,
         tests: [
           { call: 'conv2d(np.arange(16.0).reshape(4, 4), np.ones((2, 2)))', expect: 'np.array([[10.0, 14.0, 18.0], [26.0, 30.0, 34.0], [42.0, 46.0, 50.0]])' },
           { name: 'vertical edge detector', setup: 'img = np.zeros((5, 5)); img[:, 2:] = 1.0\nk = np.array([[-1.0, 0.0, 1.0]] * 3)', call: 'conv2d(img, k)', expect: 'np.array([[3.0, 3.0, 0.0], [3.0, 3.0, 0.0], [3.0, 3.0, 0.0]])' },
@@ -1289,7 +1289,7 @@ def max_pool2d(x, size=2):
     return x.reshape(H, size, W, size).max(axis=(1, 3))
 `,
         hints: ['Crop to a multiple of size first.', 'A neat vectorized trick: `x.reshape(H, size, W, size).max(axis=(1, 3))`.'],
-        explain: `Reshaping to (H, size, W, size) groups each window's rows and columns into their own axes, so one \`max\` over axes 1 and 3 pools every window at once — no loops.`,
+        explain: `Reshaping to (H, size, W, size) groups each window's rows and columns into their own axes, so one \`max\` over axes 1 and 3 pools every window at once: no loops.`,
         tests: [
           { call: 'max_pool2d(np.array([[1, 3, 2, 0], [4, 2, 1, 5], [0, 1, 7, 2], [3, 2, 1, 1]]))', expect: 'np.array([[4.0, 5.0], [3.0, 7.0]])' },
           { name: 'odd size is cropped', call: 'max_pool2d(np.arange(25.0).reshape(5, 5))', expect: 'np.array([[6.0, 8.0], [16.0, 18.0]])' },
@@ -1298,8 +1298,8 @@ def max_pool2d(x, size=2):
       }
     ],
     refs: [
-      { title: 'CS231n — Convolutional Neural Networks for Visual Recognition', url: 'https://cs231n.github.io/convolutional-networks/' },
-      { title: 'Krizhevsky et al. — ImageNet Classification with Deep CNNs (AlexNet)', url: 'https://papers.nips.cc/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html' }
+      { title: 'CS231n, Convolutional Neural Networks for Visual Recognition', url: 'https://cs231n.github.io/convolutional-networks/' },
+      { title: 'Krizhevsky et al., ImageNet Classification with Deep CNNs (AlexNet)', url: 'https://papers.nips.cc/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html' }
     ]
   },
 
@@ -1307,8 +1307,8 @@ def max_pool2d(x, size=2):
   {
     id: 'rnn', branch: 'dl', title: 'Recurrent Networks & LSTMs', short: 'RNNs & LSTMs', level: 2, minutes: 45, prereqs: ['mlp', 'backpropagation'],
     tags: ['rnn', 'lstm', 'gru', 'sequence', 'bptt', 'vanishing gradient'],
-    summary: 'Networks with memory for sequences: the recurrent hidden state, backpropagation through time, vanishing gradients, LSTM gates — and why attention replaced them.',
-    why: `Text, speech, sensor readings and prices are **sequences**, where order and context matter. Recurrent neural networks process a sequence one step at a time while carrying a memory (the hidden state). From about 2014 to 2017, LSTMs powered machine translation, speech recognition and text generation. Their limitations — slow sequential processing and difficulty remembering far back — are precisely the problems **attention** and **transformers** solved. Understanding RNNs makes it clear why transformers are designed the way they are, and RNN-like ideas are returning in efficient "state space" models.`,
+    summary: 'Networks with memory for sequences: the recurrent hidden state, backpropagation through time, vanishing gradients, LSTM gates, and why attention replaced them.',
+    why: `Text, speech, sensor readings and prices are **sequences**, where order and context matter. Recurrent neural networks process a sequence one step at a time while carrying a memory (the hidden state). From about 2014 to 2017, LSTMs powered machine translation, speech recognition and text generation. Their limitations (slow sequential processing and difficulty remembering far back) are precisely the problems **attention** and **transformers** solved. Understanding RNNs makes it clear why transformers are designed the way they are, and RNN-like ideas are returning in efficient "state space" models.`,
     objectives: [
       'Write the RNN recurrence and unroll it over time',
       'Explain backpropagation through time and why gradients vanish or explode',
@@ -1329,7 +1329,7 @@ b — the bias
 tanh — the hyperbolic tangent, which squashes values into the range (−1, 1)
 :::
 
-The **same weights** (W_x, W_h, b) are used at every time step — weight sharing across time, just as a CNN shares weights across space. The hidden state can feed an output at each step (tagging every word) or only at the end (classifying a whole review).
+The **same weights** (W_x, W_h, b) are used at every time step: weight sharing across time, just as a CNN shares weights across space. The hidden state can feed an output at each step (tagging every word) or only at the end (classifying a whole review).
 
 **Unrolling** draws the recurrence as a deep feed-forward network with one layer per time step, all sharing weights:
 
@@ -1352,10 +1352,10 @@ for t in range(T):
     h = np.tanh(X[t] @ Wx + h @ Wh + b)        # new memory = f(current input, old memory)
     print(f"t={t}: h = {h.round(3)}")
 ` },
-      { type: 'text', title: 'Backpropagation through time and vanishing gradients', md: `Training unrolls the network over the sequence and runs ordinary backpropagation — **backpropagation through time (BPTT)**. The gradient from step T back to step 1 passes through the recurrence T times, multiplying by W_h (and by tanh′ ≤ 1) at every step.
+      { type: 'text', title: 'Backpropagation through time and vanishing gradients', md: `Training unrolls the network over the sequence and runs ordinary backpropagation: **backpropagation through time (BPTT)**. The gradient from step T back to step 1 passes through the recurrence T times, multiplying by W_h (and by tanh′ ≤ 1) at every step.
 
 - If those factors are mostly **smaller than 1**, the gradient shrinks exponentially: the network can't learn dependencies more than ~10–20 steps apart (**vanishing gradients**). In "The cat, which already ate a whole fish this morning, *was* full", connecting *was* to *cat* is hard.
-- If they are **larger than 1**, it grows exponentially (**exploding gradients**) — fixed with gradient clipping.
+- If they are **larger than 1**, it grows exponentially (**exploding gradients**): fixed with gradient clipping.
 
 Long sequences are often trained with **truncated BPTT**: backpropagate through only the last k steps.` },
       { type: 'code', title: 'Watching a gradient vanish (or explode)', code: `
@@ -1373,11 +1373,11 @@ for scale in [0.5, 1.0, 1.5]:
 ` },
       { type: 'chart', title: "The gradient's size as it travels back in time", after: `The experiment above, step by step. Each step back multiplies the gradient by the same recurrent matrix, so its size changes geometrically: at scale 0.5 it halves at every step and is negligible after a couple of dozen; at 1.5 it grows by half at every step and explodes; near 1 it changes slowly (here it grows about fifteenfold over 50 steps), a knife-edge that training cannot rely on. (The tanh derivatives, left out here, only shrink it further.)`, chart: {"kind":"line","x":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50],"yLog":true,"points":false,"series":[{"name":"recurrent weight scale 0.5","y":[2.369,0.9765,0.5033,0.2326,0.1144,0.06013,0.02953,0.01366,0.007905,0.004145,0.001917,0.0009345,0.0004775,0.0002225,0.0001214,0.00006427,0.00003124,0.00001398,0.00000732,0.000003702,0.000001928,9.365e-7,4.399e-7,2.289e-7,9.989e-8,5.727e-8,3.01e-8,1.459e-8,6.765e-9,3.404e-9,1.71e-9,9.167e-10,4.564e-10,2.198e-10,1.145e-10,4.814e-11,2.877e-11,1.485e-11,7.411e-12,3.646e-12,1.709e-12,8.985e-13,4.769e-13,2.401e-13,1.226e-13,6.203e-14,2.674e-14,1.597e-14,7.926e-15,4.175e-15]},{"name":"recurrent weight scale 1.0","y":[5.396,6.768,7.737,8.582,10.9,9.931,10.19,9.776,10.97,11,10.8,12.94,11.97,13.44,13.77,15.96,17.35,17.88,16.14,14.63,19.07,19.21,21.08,23.22,24.71,25.36,26.6,27.17,23.52,27.81,31.12,32.51,36.12,38.27,36.57,36.01,42.38,41.33,42.53,49.42,51.19,52.52,57.27,59.43,54.25,62.1,69.84,68.66,75.44,82.46]},{"name":"recurrent weight scale 1.5","y":[7.823,11.41,12.95,16.2,18.24,25.97,36.51,43.26,48.27,64.55,100.6,127.4,173.1,239.9,284.7,371.9,507.2,772.9,1122,1318,1644,1979,2719,3515,4825,5266,7534,9623,14060,19760,27610,37800,57040,68700,91680,118400,162400,227000,339100,486800,745400,913000,1212000,1494000,1989000,2666000,3540000,5071000,7650000,10430000]}],"xLabel":"time steps back","yLabel":"gradient norm (log scale)"} },
       { type: 'check', question: { type: 'mcq', q: 'Why do plain RNNs struggle with long-range dependencies?', options: ['They have too many parameters', 'Gradients are multiplied through every time step and tend to vanish (or explode)', 'They cannot process numbers', 'They forget their weights'], answer: 1, explain: 'Repeated multiplication by the recurrent Jacobian shrinks or grows the gradient exponentially with distance.' } },
-      { type: 'text', title: 'LSTMs: gated memory', md: `The **Long Short-Term Memory** cell (1997) adds a separate **cell state** c_t — a conveyor belt of memory updated mostly by *addition* — and three **gates** (sigmoids between 0 and 1) that decide what flows:
+      { type: 'text', title: 'LSTMs: gated memory', md: `The **Long Short-Term Memory** cell (1997) adds a separate **cell state** c_t (a conveyor belt of memory updated mostly by *addition*) and three **gates** (sigmoids between 0 and 1) that decide what flows:
 
-- **forget gate** f_t — how much of the old cell state to keep;
-- **input gate** i_t — how much of the new candidate g_t to write;
-- **output gate** o_t — how much of the cell state to expose as h_t.
+- **forget gate** f_t: how much of the old cell state to keep;
+- **input gate** i_t: how much of the new candidate g_t to write;
+- **output gate** o_t: how much of the cell state to expose as h_t.
 
 $$ i, f, o = σ(·),   g = tanh(·)   (each from x_t W + h_{t−1} U + b) $$
 $$ c_t = f ⊙ c_{t−1} + i ⊙ g          h_t = o ⊙ tanh(c_t) $$
@@ -1393,7 +1393,7 @@ c_t — the cell state, the long-term memory: f decides what to keep and i decid
 h_t — the new hidden state, a gated view of the cell state
 :::
 
-Because c_t is updated additively and the forget gate can stay near 1, gradients flow back through many steps — the same "highway" idea as residual connections. The **GRU** is a simpler two-gate variant with similar performance.` },
+Because c_t is updated additively and the forget gate can stay near 1, gradients flow back through many steps: the same "highway" idea as residual connections. The **GRU** is a simpler two-gate variant with similar performance.` },
       { type: 'demo', title: 'Diagram: inside an LSTM cell', demo: 'dg-lstm' },
       { type: 'text', title: "GRUs, bidirectional RNNs and sequence tasks", md: `The **GRU** (gated recurrent unit, 2014) is a lighter cousin of the LSTM: it merges the cell and hidden states and uses two gates instead of three:
 
@@ -1448,10 +1448,10 @@ lstm_left = np.linalg.norm(lstm_cell(memory) - lstm_cell(empty))
 print(f"what is left of the stored value after {steps} steps:  plain RNN {rnn_left:.2e}   LSTM cell {lstm_left:.3f}")
 print("cell state preserved:", bool(lstm_left > 0.6 and rnn_left < 0.1))`, after: `Comparing runs with and without the stored value isolates what the state still knows about it. The plain RNN pushes its whole state through a weight matrix and tanh at every step, and after 50 steps the difference is about 10⁻¹⁵: forgotten. The LSTM's cell is only multiplied by the forget gate, σ(5) ≈ 0.993, at each step, so 0.993⁵⁰ ≈ 0.71 of the value survives. A trained LSTM learns when to hold its gates like this and when to overwrite.`, predict: {"type":"mcq","q":"A value is stored, then 50 steps of unrelated input follow. With the forget gate held near 1 and the input gate near 0, how much of the value survives in the LSTM's cell state?","options":["Almost none","About 70%","Exactly 100%","It grows"],"answer":1,"explain":"Each step multiplies the cell by the forget gate, about 0.993, so 0.993⁵⁰ ≈ 0.71 remains. The plain RNN rewrites its whole state every step and keeps almost nothing.","expect":["cell state preserved: True"]} },
       { type: 'text', title: 'Why transformers took over', md: `RNNs (even LSTMs) have two structural limits:
-1. **Sequential computation** — step t needs step t−1, so you can't parallelise across the sequence. Training on huge datasets with GPUs is slow.
-2. **A fixed-size memory bottleneck** — everything the model knows about the past must squeeze into one hidden vector; long-range information still degrades.
+1. **Sequential computation**: step t needs step t−1, so you can't parallelise across the sequence. Training on huge datasets with GPUs is slow.
+2. **A fixed-size memory bottleneck**: everything the model knows about the past must squeeze into one hidden vector; long-range information still degrades.
 
-**Attention** (2014) first helped by letting a decoder look directly at all encoder states. The **Transformer** (2017) went all-in: no recurrence at all, every token attends to every other token in parallel. That made training massively parallel and long-range dependencies one step away — and enabled today's LLMs. (Recent "state-space" models such as Mamba revisit recurrence with efficient parallel training — recurrence isn't dead.)` },
+**Attention** (2014) first helped by letting a decoder look directly at all encoder states. The **Transformer** (2017) went all-in: no recurrence at all, every token attends to every other token in parallel. That made training massively parallel and long-range dependencies one step away, and enabled today's LLMs. (Recent "state-space" models such as Mamba revisit recurrence with efficient parallel training: recurrence isn't dead.)` },
       { type: 'check', question: { type: 'tf', q: 'In an LSTM, the forget gate decides how much of the previous cell state to keep.', answer: true, explain: 'c_t = f ⊙ c_{t−1} + i ⊙ g: f near 1 keeps the memory, near 0 erases it.' } }
     ],
     when: `- Small sequence problems, streaming/online settings where you process one step at a time with constant memory, and some time-series tasks.
@@ -1482,7 +1482,7 @@ print("cell state preserved:", bool(lstm_left > 0.6 and rnn_left < 0.1))`, after
         id: 'rnn-forward', title: 'RNN Forward Pass', difficulty: 'medium',
         prompt: `Implement \`rnn_forward(X, h0, Wx, Wh, b)\` → \`H\`:
 
-- X: (T, d_in) — one input vector per time step; h0: (d_h,) initial state.
+- X: (T, d_in), one input vector per time step; h0: (d_h,) initial state.
 - For t = 0 … T−1: \`h = tanh(X[t] @ Wx + h @ Wh + b)\`.
 - Return H: (T, d_h), the hidden state after every step.
 
@@ -1512,7 +1512,7 @@ def rnn_forward(X, h0, Wx, Wh, b):
     return np.array(states)
 `,
         hints: ['Loop over time; the new h depends on the old h.', 'Append each new state, then stack with `np.array(states)`.'],
-        explain: `The loop is the essence of recurrence — and also why RNNs are slow on GPUs: step t can't start until step t−1 has finished. Notice how the same three weight arrays are used at every step.`,
+        explain: `The loop is the essence of recurrence, and also why RNNs are slow on GPUs: step t can't start until step t−1 has finished. Notice how the same three weight arrays are used at every step.`,
         tests: [
           { name: 'no memory: H = tanh(X)', call: 'rnn_forward(np.array([[0.5], [-1.0], [2.0]]), np.zeros(1), np.array([[1.0]]), np.array([[0.0]]), np.zeros(1))', expect: 'np.tanh(np.array([[0.5], [-1.0], [2.0]]))' },
           { name: 'with memory', call: 'rnn_forward(np.array([[1.0], [0.0]]), np.zeros(1), np.array([[1.0]]), np.array([[1.0]]), np.zeros(1))', expect: 'np.array([[np.tanh(1.0)], [np.tanh(np.tanh(1.0))]])' },
@@ -1570,8 +1570,8 @@ def lstm_step(x, h, c, W, U, b):
       }
     ],
     refs: [
-      { title: 'Chris Olah — Understanding LSTM Networks', url: 'https://colah.github.io/posts/2015-08-Understanding-LSTMs/' },
-      { title: 'Andrej Karpathy — The Unreasonable Effectiveness of RNNs', url: 'https://karpathy.github.io/2015/05/21/rnn-effectiveness/' }
+      { title: 'Chris Olah, Understanding LSTM Networks', url: 'https://colah.github.io/posts/2015-08-Understanding-LSTMs/' },
+      { title: 'Andrej Karpathy, The Unreasonable Effectiveness of RNNs', url: 'https://karpathy.github.io/2015/05/21/rnn-effectiveness/' }
     ]
   },
 
@@ -1580,7 +1580,7 @@ def lstm_step(x, h, c, W, U, b):
     id: 'embeddings', branch: 'dl', title: 'Embeddings: Meaning as Vectors', short: 'Embeddings', level: 2, minutes: 40, prereqs: ['mlp', 'vectors-matrices'],
     tags: ['embeddings', 'word2vec', 'lookup table', 'semantic similarity', 'vector search'],
     summary: 'Representing words, tokens, users or products as dense learned vectors where similar things are close: lookup tables, how embeddings are learned, similarity and analogies.',
-    why: `Embeddings are how neural networks represent **discrete things** — words, tokens, products, users, songs — as points in a continuous space where **distance means similarity**. Every LLM starts by looking up an embedding vector for each input token; recommendation systems embed users and items; semantic search and RAG embed documents and queries and find nearest neighbours. Understanding embeddings is understanding how meaning becomes geometry.`,
+    why: `Embeddings are how neural networks represent **discrete things** (words, tokens, products, users, songs) as points in a continuous space where **distance means similarity**. Every LLM starts by looking up an embedding vector for each input token; recommendation systems embed users and items; semantic search and RAG embed documents and queries and find nearest neighbours. Understanding embeddings is understanding how meaning becomes geometry.`,
     objectives: [
       'Explain why one-hot vectors are a poor representation and what dense embeddings fix',
       'Implement an embedding layer as a lookup table and relate it to a one-hot matrix product',
@@ -1589,8 +1589,8 @@ def lstm_step(x, h, c, W, U, b):
     ],
     sections: [
       { type: 'text', title: 'From one-hot to dense vectors', md: `How do we feed the word "cat" to a network? One option is **one-hot**: a vector the size of the vocabulary (say 50,000) with a single 1. Problems:
-- **Huge and sparse** — 50,000 numbers per word, all but one zero.
-- **No notion of similarity** — "cat" and "kitten" are exactly as different as "cat" and "carburettor" (all one-hot vectors are orthogonal).
+- **Huge and sparse**: 50,000 numbers per word, all but one zero.
+- **No notion of similarity**: "cat" and "kitten" are exactly as different as "cat" and "carburettor" (all one-hot vectors are orthogonal).
 
 An **embedding** maps each item to a short **dense** vector of, say, 64–4096 learned numbers. Training arranges the space so that items used in similar ways end up **close together**. Individual dimensions usually aren't interpretable, but directions often are (e.g. a rough "gender" or "plural" direction).` },
       { type: 'text', title: 'An embedding layer is a lookup table', md: `An embedding layer is just a matrix **E** of shape (vocabulary size V, dimension d). Row i is the vector for token i:
@@ -1677,20 +1677,20 @@ query = E[idx["puppy"]] - E[idx["dog"]] + E[idx["cat"]]     # "dog is to puppy a
 answer = closest(query, exclude=("puppy", "dog", "cat"))
 print("puppy - dog + cat ->", answer)
 print("the analogy finds kitten:", answer[0] == "kitten")`, after: `The offset from dog to puppy (adult to young), added to cat, lands nearest to kitten. Analogies like this make a striking demonstration rather than a reliable tool: they work best for frequent words and simple relations, and published examples exclude the three input words from the answers, as done here.`, predict: {"type":"mcq","q":"With these word vectors, which word is nearest to vector(puppy) − vector(dog) + vector(cat)?","options":["kitten","milk","truck","dog"],"answer":0,"explain":"The difference puppy − dog captures 'young version of', and adding it to cat points towards kitten, which appears in the same contexts as puppy does relative to dog.","expect":["the analogy finds kitten: True"]} },
-      { type: 'check', question: { type: 'mcq', q: 'How is an embedding layer computed for token id 42?', options: ['A matrix multiplication with random noise', 'Row 42 of the embedding matrix is looked up', 'The id is divided by the vocabulary size', 'A softmax over the vocabulary'], answer: 1, explain: 'It is a lookup — equivalent to one_hot(42) @ E, but far cheaper.' } },
+      { type: 'check', question: { type: 'mcq', q: 'How is an embedding layer computed for token id 42?', options: ['A matrix multiplication with random noise', 'Row 42 of the embedding matrix is looked up', 'The id is divided by the vocabulary size', 'A softmax over the vocabulary'], answer: 1, explain: 'It is a lookup: equivalent to one_hot(42) @ E, but far cheaper.' } },
       { type: 'text', title: 'Embeddings everywhere', md: `- **LLMs**: token embeddings (+ positional information) are the input to every transformer.
 - **Recommenders**: user and item embeddings whose dot product predicts a rating or click.
 - **Search / RAG**: embed documents and queries with the same model; retrieve nearest neighbours by cosine similarity.
 - **Categorical features** in tabular models: an embedding per category instead of huge one-hot vectors.
 - **Images, audio, multimodal**: CLIP embeds images and text into one shared space, so "a photo of a dog" lands near dog photos.
 
-Cautions: embeddings absorb **biases** from their training data (word embeddings famously associated professions with genders), and similarity in embedding space reflects co-occurrence statistics — not verified truth.` },
+Cautions: embeddings absorb **biases** from their training data (word embeddings famously associated professions with genders), and similarity in embedding space reflects co-occurrence statistics, not verified truth.` },
       { type: 'check', question: { type: 'tf', q: 'In static word2vec embeddings, the word "bank" has the same vector whether it refers to a river bank or a financial bank.', answer: true, explain: 'Static embeddings give one vector per word type; contextual embeddings from transformers fix this.' } }
     ],
     when: `- Any time you feed discrete items (tokens, IDs, categories) to a neural network.
 - Similarity search, clustering, recommendation and retrieval: compare embeddings with cosine similarity.
 - Use pretrained embedding models (sentence-transformers, API embedding endpoints) for search and RAG instead of training your own.`,
-    pitfalls: `- Comparing embeddings from **different** models — their spaces are unrelated.
+    pitfalls: `- Comparing embeddings from **different** models: their spaces are unrelated.
 - Forgetting to normalise before using dot products as cosine similarity.
 - Treating embedding similarity as factual or unbiased.
 - One-hot encoding a huge vocabulary when an embedding layer would do.`,
@@ -1715,7 +1715,7 @@ Cautions: embeddings absorb **biases** from their training data (word embeddings
         id: 'embedding-lookup', title: 'Embedding Lookup = One-Hot × Matrix', difficulty: 'easy',
         prompt: `Implement two equivalent ways to embed a list of token ids with an embedding matrix \`E\` of shape (V, d):
 
-1. \`embed(ids, E)\` → \`E[ids]\`, shape (len(ids), d) — the fast lookup.
+1. \`embed(ids, E)\` → \`E[ids]\`, shape (len(ids), d): the fast lookup.
 2. \`embed_one_hot(ids, E)\` → build the one-hot matrix of shape (len(ids), V) and multiply it by E.
 
 Both must give the same result.
@@ -1749,7 +1749,7 @@ def embed_one_hot(ids, E):
     return one_hot @ E
 `,
         hints: ['Fancy indexing: `E[ids]` with an array of ids returns those rows.', 'Set `one_hot[np.arange(n), ids] = 1` in one go.'],
-        explain: `A one-hot row times E selects one row of E — so an embedding layer is mathematically a linear layer applied to one-hot inputs, implemented as a cheap lookup. That's also why its gradient only updates the rows of tokens present in the batch.`,
+        explain: `A one-hot row times E selects one row of E, so an embedding layer is mathematically a linear layer applied to one-hot inputs, implemented as a cheap lookup. That's also why its gradient only updates the rows of tokens present in the batch.`,
         tests: [
           { call: 'embed([2, 0, 2], np.array([[0, 1], [2, 3], [4, 5]]))', expect: 'np.array([[4, 5], [0, 1], [4, 5]])' },
           { call: 'embed_one_hot([2, 0, 2], np.array([[0, 1], [2, 3], [4, 5]]))', expect: 'np.array([[4.0, 5.0], [0.0, 1.0], [4.0, 5.0]])' },
@@ -1788,7 +1788,7 @@ def most_similar(word, vocab, E, k=3):
     return [(vocab[j], float(sims[j])) for j in order]
 `,
         hints: ['Normalise every row once; then cosine similarity is a dot product.', '`np.argsort(-sims, kind="stable")` sorts descending while keeping vocabulary order on ties.', 'Skip the word\'s own index.'],
-        explain: `Normalising all vectors once turns cosine similarity into a single matrix-vector product. Vector databases do the same thing — at the scale of billions of vectors, with approximate nearest-neighbour indexes instead of a full sort.`,
+        explain: `Normalising all vectors once turns cosine similarity into a single matrix-vector product. Vector databases do the same thing: at the scale of billions of vectors, with approximate nearest-neighbour indexes instead of a full sort.`,
         tests: [
           { call: 'most_similar("cat", ["cat", "dog", "car"], [[1, 0], [0.9, 0.1], [0, 1]], 1)', expect: '[("dog", 0.9 / np.sqrt(0.82))]' },
           { name: 'order and exclusion', call: 'most_similar("a", ["a", "b", "c", "d"], [[1, 0], [0, 1], [1, 1], [-1, 0]], 3)', expect: '[("c", 1 / np.sqrt(2)), ("b", 0.0), ("d", -1.0)]' },
@@ -1797,7 +1797,7 @@ def most_similar(word, vocab, E, k=3):
       },
       {
         id: 'word-analogy', title: 'Solve Word Analogies', difficulty: 'medium',
-        prompt: `"a is to b as c is to ?" — e.g. man : king :: woman : **queen**.
+        prompt: `"a is to b as c is to ?", e.g. man : king :: woman : **queen**.
 
 Implement \`analogy(a, b, c, vocab, E)\`:
 1. target = E[b] − E[a] + E[c]
@@ -1838,8 +1838,8 @@ def analogy(a, b, c, vocab, E):
       }
     ],
     refs: [
-      { title: 'Mikolov et al. — Efficient Estimation of Word Representations (word2vec)', url: 'https://arxiv.org/abs/1301.3781' },
-      { title: 'Jay Alammar — The Illustrated Word2vec', url: 'https://jalammar.github.io/illustrated-word2vec/' }
+      { title: 'Mikolov et al., Efficient Estimation of Word Representations (word2vec)', url: 'https://arxiv.org/abs/1301.3781' },
+      { title: 'Jay Alammar, The Illustrated Word2vec', url: 'https://jalammar.github.io/illustrated-word2vec/' }
     ]
   }
   ]);

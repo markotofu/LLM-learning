@@ -8,7 +8,7 @@
     id: 'multimodal-models', branch: 'llm', title: 'Multimodal Models: Vision, Audio & Any-to-Any', short: 'Multimodal Models', level: 3, minutes: 45, prereqs: ['vision-transformers', 'speech-audio', 'fine-tuning'],
     tags: ['multimodal', 'vision-language model', 'vlm', 'vision encoder', 'projector', 'image tokens', 'cross-attention', 'early fusion', 'visual instruction tuning', 'dynamic resolution', 'video tokens', 'audio tokens', 'any-to-any', 'object hallucination'],
     summary: 'How language models learn to see and hear: turning images, audio and video into sequences of vectors an LLM can attend to, vision encoders with projectors versus cross-attention and early-fusion designs, staged training with visual instruction tuning, the token cost of resolution and video, audio input and speech output, any-to-any generation, and how multimodal models fail.',
-    why: `Real-world information is not only text: screenshots, charts, scanned documents, photos, speech, diagrams and video. Frontier assistants read all of them, and many applications — document processing, accessibility, robotics, video search, voice assistants — depend on it. The core idea is simple: **turn every modality into a sequence of vectors in the language model's embedding space**. Understanding how that is done explains what multimodal models are good at, what they cost, and where they hallucinate.`,
+    why: `Real-world information is not only text: screenshots, charts, scanned documents, photos, speech, diagrams and video. Frontier assistants read all of them, and many applications (document processing, accessibility, robotics, video search, voice assistants) depend on it. The core idea is simple: **turn every modality into a sequence of vectors in the language model's embedding space**. Understanding how that is done explains what multimodal models are good at, what they cost, and where they hallucinate.`,
     objectives: [
       'Explain how an image becomes "image tokens" through a vision encoder and a projector',
       'Compare projector-based, cross-attention and early-fusion architectures',
@@ -16,7 +16,7 @@
       'Outline audio input, speech output and any-to-any generation, and the typical failure modes'
     ],
     sections: [
-      { type: 'text', title: 'One model, many senses', md: `A language model only knows how to process a sequence of vectors. A multimodal model therefore needs, for each modality, a way to produce vectors that live in the same space as the word embeddings — then attention does the rest: a question about a chart can attend to the chart's patches exactly as it attends to earlier words.
+      { type: 'text', title: 'One model, many senses', md: `A language model only knows how to process a sequence of vectors. A multimodal model therefore needs, for each modality, a way to produce vectors that live in the same space as the word embeddings, then attention does the rest: a question about a chart can attend to the chart's patches exactly as it attends to earlier words.
 
 - **Images** → patches → a vision encoder (a ViT, see *Vision Transformers & Multimodal Models*) → a few hundred vectors.
 - **Audio** → a log-mel spectrogram → an audio encoder (as in Whisper) or a neural codec's discrete tokens (see *Speech & Audio Models*).
@@ -65,7 +65,7 @@ print("positions 0-575 are image patches and 576-581 are the words; the LLM atte
       { type: 'text', title: 'Training in stages', md: `Vision-language models are usually built from a pretrained vision encoder and a pretrained LLM, then trained in stages:
 
 1. **Alignment (projector pretraining)**: freeze both and train only the projector on image–caption pairs, so that image tokens land where the LLM expects related words.
-2. **Visual instruction tuning**: train the projector and the LLM (fully or with LoRA) on conversations about images — questions, answers, explanations, OCR, charts — with the loss only on the assistant's answers:
+2. **Visual instruction tuning**: train the projector and the LLM (fully or with LoRA) on conversations about images (questions, answers, explanations, OCR, charts) with the loss only on the assistant's answers:
 
 $$ L = − Σ_t log p( a_t | image tokens, prompt, a_{<t} ) $$
 :::where
@@ -74,7 +74,7 @@ a_{<t} — the answer tokens before it
 p( … ) — the LLM's predicted probability, given the image tokens and the prompt
 :::
 
-Large-scale models also pretrain on interleaved web documents (text with images in place), video, and synthetic captions written by stronger models. Data quality — accurate, detailed captions and diverse tasks — matters as much as architecture.` },
+Large-scale models also pretrain on interleaved web documents (text with images in place), video, and synthetic captions written by stronger models. Data quality (accurate, detailed captions and diverse tasks) matters as much as architecture.` },
       { type: 'code', title: 'Learning a projector from paired embeddings', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -98,7 +98,7 @@ for n_train in (20, 50, 100, 300):
     X, Y = pairs(n_train)
     W = np.linalg.lstsq(X, Y, rcond=None)[0]                      # fit a linear projector by least squares
     print(f"trained on {n_train:4d} pairs: caption retrieval accuracy {retrieval_accuracy(W):.3f}")
-`, after: `A random projector puts images nowhere near their captions. Fitting even a linear map on a few hundred pairs aligns the two spaces almost perfectly — the essence of stage-1 alignment, which real models do with millions of pairs and an MLP.` },
+`, after: `A random projector puts images nowhere near their captions. Fitting even a linear map on a few hundred pairs aligns the two spaces almost perfectly: the essence of stage-1 alignment, which real models do with millions of pairs and an MLP.` },
       { type: 'text', title: 'Resolution, video and the token budget', md: `Image tokens cost context and compute just like words. For a ViT with patch size p:
 
 $$ tokens = ⌈W / p⌉ · ⌈H / p⌉ / r² $$
@@ -110,8 +110,8 @@ r — an optional pooling or merging factor (2 × 2 pooling gives r = 2, four ti
 :::
 
 - **High resolution** for small text and details: split the image into tiles (plus a low-resolution thumbnail of the whole), or use encoders that accept native, variable resolutions.
-- **Video**: frames sampled at, say, 1–2 per second, each costing an image's worth of tokens — a few minutes of video can fill a long context, so models pool tokens per frame, merge similar tokens across frames, or sample frames adaptively.
-- Practical consequence for applications: resize images to the detail you need, crop to the relevant region, and send fewer frames when possible — it saves money and latency.` },
+- **Video**: frames sampled at, say, 1–2 per second, each costing an image's worth of tokens, a few minutes of video can fill a long context, so models pool tokens per frame, merge similar tokens across frames, or sample frames adaptively.
+- Practical consequence for applications: resize images to the detail you need, crop to the relevant region, and send fewer frames when possible (it saves money and latency).` },
       { type: 'code', title: 'An image-token budget calculator', code: `
 import math
 
@@ -130,25 +130,25 @@ print("same, tiled with 2 x 2 pooling: ", tiled_tokens(1344, 1008, pool=2), "tok
 for fps in (1, 2):
     frames = 60 * fps
     print(f"a 1-minute video at {fps} frame(s) per second: {frames * image_tokens(336, 336, pool=2):6d} tokens (pooled frames)")
-`, after: `A single detailed photo can cost as much context as several pages of text, and video multiplies that by the number of frames — which is why models pool and merge visual tokens, and why applications should send only the resolution and frames they need.` },
+`, after: `A single detailed photo can cost as much context as several pages of text, and video multiplies that by the number of frames, which is why models pool and merge visual tokens, and why applications should send only the resolution and frames they need.` },
       { type: 'chart', title: "Image tokens for a square image", after: `Tokens grow with the square of the side: doubling the resolution quadruples the cost. A 1,344-pixel square photo costs over 9,000 tokens at full resolution, the length of a short book chapter. Tiling adds a thumbnail but keeps each tile at the encoder's native size, and pooling neighbouring tokens divides the count by four, the usual compromise between seeing small details and staying within the context budget.`, chart: {"kind":"line","x":[224,336,448,672,896,1344],"xLog":true,"yLog":true,"series":[{"name":"whole image at full resolution, 14-pixel patches","y":[256,576,1024,2304,4096,9216]},{"name":"336-pixel tiles plus a thumbnail","y":[1152,1152,2880,2880,5760,9792]},{"name":"whole image with 2 × 2 token pooling","y":[64,144,256,576,1024,2304]}],"xLabel":"image side in pixels (log scale)","yLabel":"tokens (log scale)"} },
-      { type: 'text', title: 'Audio, speech and any-to-any models', md: `- **Audio in**: an audio encoder (often Whisper-like) turns the spectrogram into feature vectors, which a projector maps into the LLM — the same recipe as for images. Alternatively a neural audio codec turns sound into discrete tokens the LLM reads directly.
-- **Speech out**: instead of piping text through a separate text-to-speech system, a speech-native model generates audio tokens that a codec decoder turns into sound — lower latency, and the model can control tone and emotion.
+      { type: 'text', title: 'Audio, speech and any-to-any models', md: `- **Audio in**: an audio encoder (often Whisper-like) turns the spectrogram into feature vectors, which a projector maps into the LLM (the same recipe as for images). Alternatively a neural audio codec turns sound into discrete tokens the LLM reads directly.
+- **Speech out**: instead of piping text through a separate text-to-speech system, a speech-native model generates audio tokens that a codec decoder turns into sound (lower latency, and the model can control tone and emotion).
 - **Images out**: either generate discrete image tokens autoregressively (early-fusion models) or have the LLM condition a diffusion decoder (see *Diffusion Models & Flow Matching*).
 - **Any-to-any** models accept and produce interleaved text, images and audio in one conversation.` },
       { type: 'text', title: 'Evaluating and trusting multimodal models', md: `Benchmarks cover visual question answering, document and chart understanding, OCR, diagrams, video question answering and expert-level multi-discipline questions. Typical failure modes to test on your own data:
 
-- **Object hallucination**: describing things that are not in the image — check with targeted yes/no questions about absent objects.
+- **Object hallucination**: describing things that are not in the image (check with targeted yes/no questions about absent objects).
 - **Counting, spatial relations and fine detail**: often weaker than general description; higher resolution or cropping helps.
 - **Text in images**: models read it, which also means **prompt injection** can arrive inside an image (see *Adversarial ML, Security & Privacy*).
-- **Privacy**: photos and documents may contain faces, names, addresses and IDs — handle them under the same rules as any personal data.` },
+- **Privacy**: photos and documents may contain faces, names, addresses and IDs (handle them under the same rules as any personal data).` },
       { type: 'check', question: { type: 'fill', q: 'A ViT uses 14-pixel patches. How many image tokens does a 448 × 448 image produce without pooling?', answer: ['1024'], explain: '448 / 14 = 32 patches per side, 32 × 32 = 1024.' } }
     ],
     when: `- Documents, screenshots, charts, forms and photos as input to LLM applications.
 - Voice interfaces (speech in and out) and audio understanding.
-- Video search, summarization and monitoring — with careful frame and token budgets.
+- Video search, summarization and monitoring, with careful frame and token budgets.
 - Fine-tune (often with LoRA) on domain images such as medical scans, industrial defects or specific document types when general models fall short.`,
-    pitfalls: `- Sending full-resolution images or every video frame by default — slow and expensive.
+    pitfalls: `- Sending full-resolution images or every video frame by default: slow and expensive.
 - Trusting descriptions without checking for hallucinated objects, especially in automated pipelines.
 - Ignoring instructions embedded in images (prompt injection) when the model can take actions.
 - Evaluating only on public benchmarks instead of your own images and failure cases.
@@ -209,7 +209,7 @@ def video_tokens(seconds, fps, tokens_per_frame):
     return math.ceil(seconds * fps) * tokens_per_frame
 `,
         hints: ['Round up the number of patches per side before pooling, then round up again after dividing by the pool factor.', 'The thumbnail costs exactly one tile.'],
-        explain: `Token arithmetic like this is how you estimate the cost and latency of multimodal requests before you send them — and it shows why cropping, resizing and frame sampling are the cheapest optimizations.`,
+        explain: `Token arithmetic like this is how you estimate the cost and latency of multimodal requests before you send them, and it shows why cropping, resizing and frame sampling are the cheapest optimizations.`,
         tests: [
           { call: '[image_tokens(336, 336), image_tokens(336, 336, pool=2), image_tokens(450, 300)]', expect: '[576, 144, 33 * 22]' },
           { call: 'tiled_tokens(1344, 1008)', expect: '13 * 576' },
@@ -273,10 +273,10 @@ def splice(token_ids, text_embed, images, image_token_id):
       }
     ],
     refs: [
-      { title: 'Liu et al. — Visual Instruction Tuning (LLaVA)', url: 'https://arxiv.org/abs/2304.08485' },
-      { title: 'Alayrac et al. — Flamingo: a Visual Language Model for Few-Shot Learning', url: 'https://arxiv.org/abs/2204.14198' },
-      { title: 'Chameleon Team — Chameleon: Mixed-Modal Early-Fusion Foundation Models', url: 'https://arxiv.org/abs/2405.09818' },
-      { title: 'Li et al. — Evaluating Object Hallucination in Large Vision-Language Models (POPE)', url: 'https://arxiv.org/abs/2305.10355' }
+      { title: 'Liu et al., Visual Instruction Tuning (LLaVA)', url: 'https://arxiv.org/abs/2304.08485' },
+      { title: 'Alayrac et al., Flamingo: a Visual Language Model for Few-Shot Learning', url: 'https://arxiv.org/abs/2204.14198' },
+      { title: 'Chameleon Team, Chameleon: Mixed-Modal Early-Fusion Foundation Models', url: 'https://arxiv.org/abs/2405.09818' },
+      { title: 'Li et al., Evaluating Object Hallucination in Large Vision-Language Models (POPE)', url: 'https://arxiv.org/abs/2305.10355' }
     ]
   },
 
@@ -285,7 +285,7 @@ def splice(token_ids, text_embed, images, image_token_id):
     id: 'advanced-agents', branch: 'apps', title: 'Advanced Agents: Context, Planning, Multi-Agent Systems & Evaluation', short: 'Advanced Agents', level: 3, minutes: 50, prereqs: ['agents', 'llm-evaluation'],
     tags: ['agents', 'context engineering', 'context window', 'compaction', 'memory', 'planning', 'reflection', 'verification', 'multi-agent', 'orchestrator-worker', 'subagents', 'computer use', 'reliability', 'pass^k', 'agent evaluation', 'sandbox', 'human in the loop'],
     summary: 'Engineering agents that finish long, real tasks: why reliability compounds over many steps and how verification and retries fix it, context engineering (what goes into the window, compaction, notes and just-in-time retrieval), planning, memory and self-correction, multi-agent patterns and their costs, computer-use agents and safety, and how to evaluate agents with environments, pass^k and confidence intervals.',
-    why: `The basic agent loop (see *LLM Agents & Tool Use*) works for short tasks. Long tasks — fixing a bug across a codebase, researching a question across dozens of sources, operating a system — fail for different reasons: the context fills up, the agent loses track of the goal, small error rates compound over many steps, actions have real side effects, and costs grow. **Agent engineering** is the discipline of managing context, structuring work so mistakes are caught, and measuring reliability honestly.`,
+    why: `The basic agent loop (see *LLM Agents & Tool Use*) works for short tasks. Long tasks (fixing a bug across a codebase, researching a question across dozens of sources, operating a system) fail for different reasons: the context fills up, the agent loses track of the goal, small error rates compound over many steps, actions have real side effects, and costs grow. **Agent engineering** is the discipline of managing context, structuring work so mistakes are caught, and measuring reliability honestly.`,
     objectives: [
       'Quantify how per-step reliability compounds over long tasks and how verification changes it',
       'Design an agent\'s context: stable prefixes, compaction, notes and just-in-time retrieval',
@@ -304,7 +304,7 @@ pass@k — the chance that at least one of k independent attempts succeeds (usef
 pass^k — the chance that all k attempts succeed: consistency, which is what users experience when they rely on an agent every day
 :::
 
-A 99%-reliable step sounds excellent, yet a 100-step task then succeeds only about a third of the time. The remedies are **verification** — checking each result (tests, schemas, re-reading the requirement) so failures can be retried or repaired — and **shorter effective chains**: better tools that do more per step, and checkpoints that let work resume instead of restarting.` },
+A 99%-reliable step sounds excellent, yet a 100-step task then succeeds only about a third of the time. The remedies are **verification**: checking each result (tests, schemas, re-reading the requirement) so failures can be retried or repaired, and **shorter effective chains**: better tools that do more per step, and checkpoints that let work resume instead of restarting.` },
       { type: 'code', title: "Why small error rates sink long tasks", code: `for p in (0.90, 0.95, 0.99, 0.999):
     row = "   ".join(f"{n:3d} steps: {p ** n:6.1%}" for n in (1, 10, 50, 100))
     print(f"per-step success {p:.3f} ->  {row}")
@@ -312,24 +312,24 @@ A 99%-reliable step sounds excellent, yet a 100-step task then succeeds only abo
 p, steps = 0.95, 50
 for retries in (0, 1, 2):
     step_ok = 1 - (1 - p) ** (retries + 1)       # a reliable check lets a failed step be retried
-    print(f"with {retries} verified retr{'y' if retries == 1 else 'ies'} per step: a {steps}-step task succeeds {step_ok ** steps:.1%} of the time")`, after: `Without checks, even 95%-reliable steps make a 50-step task fail more than nine times in ten. A single verified retry per step lifts it to almost 90%. This is why good agents run tests, validate outputs and re-check requirements — verification is worth more than a slightly better model. [LLM Agents & Tool Use](#/concept/agents) shows what happens when the checks themselves miss some failures.`, predict: {"type":"mcq","q":"Each step of a task succeeds 99% of the time, independently. Roughly how often does a 100-step task succeed?","options":["About 99% of the time","About 90% of the time","About a third of the time","Almost never (under 1%)"],"answer":2,"explain":"0.99¹⁰⁰ ≈ 0.366. A 1% error rate per step compounds over 100 steps until the task fails about two times in three.","expect":["100 steps:  36.6%"]} },
+    print(f"with {retries} verified retr{'y' if retries == 1 else 'ies'} per step: a {steps}-step task succeeds {step_ok ** steps:.1%} of the time")`, after: `Without checks, even 95%-reliable steps make a 50-step task fail more than nine times in ten. A single verified retry per step lifts it to almost 90%. This is why good agents run tests, validate outputs and re-check requirements: verification is worth more than a slightly better model. [LLM Agents & Tool Use](#/concept/agents) shows what happens when the checks themselves miss some failures.`, predict: {"type":"mcq","q":"Each step of a task succeeds 99% of the time, independently. Roughly how often does a 100-step task succeed?","options":["About 99% of the time","About 90% of the time","About a third of the time","Almost never (under 1%)"],"answer":2,"explain":"0.99¹⁰⁰ ≈ 0.366. A 1% error rate per step compounds over 100 steps until the task fails about two times in three.","expect":["100 steps:  36.6%"]} },
       { type: 'text', title: 'Context engineering', md: `The context window is the agent's working memory, and everything in it costs tokens, latency and attention. Typical contents, from most to least stable:
 
-1. **System prompt and tool definitions** — keep them stable and first, so prompt caching can reuse them (see *LLM Inference & Serving*).
-2. **The task and the current plan** — re-stated or kept in a notes file the agent updates.
-3. **Relevant memory and retrieved documents** — only what this step needs.
-4. **Recent history** — the last few actions and observations.
-5. **Tool results** — often the biggest part: logs, file contents, web pages.
+1. **System prompt and tool definitions**: keep them stable and first, so prompt caching can reuse them (see *LLM Inference & Serving*).
+2. **The task and the current plan**: re-stated or kept in a notes file the agent updates.
+3. **Relevant memory and retrieved documents**: only what this step needs.
+4. **Recent history**: the last few actions and observations.
+5. **Tool results**: often the biggest part: logs, file contents, web pages.
 
 Strategies when the context grows:
 
 - **Trim tool results**: return summaries, the first and last lines, or a pointer to a file instead of everything.
 - **Compaction**: replace old turns with a summary of what was done, decided and learned, keeping recent turns verbatim.
-- **Notes and to-do files**: the agent writes its plan, progress and findings to files it can re-read — memory that survives compaction and restarts.
+- **Notes and to-do files**: the agent writes its plan, progress and findings to files it can re-read (memory that survives compaction and restarts).
 - **Just-in-time retrieval**: give the agent tools to fetch details when needed (search, open a file, query a database) rather than preloading everything.
 - **Subagents** explore in their own fresh context and return only a condensed answer.
 
-Very long contexts also degrade quality — models attend less reliably to details buried in the middle — so a smaller, curated context often beats a bigger one.` },
+Very long contexts also degrade quality (models attend less reliably to details buried in the middle) so a smaller, curated context often beats a bigger one.` },
       { type: 'text', title: "What a long run costs", md: `Every step of an agent is a model call that reads the whole context: system prompt, tool definitions, history and tool results. If each step adds its action and result to the history, the context grows in a straight line, and the total number of tokens read over a run grows with the **square** of its length:
 
 $$ total ≈ n · S + g · n² / 2 $$
@@ -414,7 +414,7 @@ small = compact(history, budget=400, summarize=summarize)
 print("before:", sum(tokens(m) for m in history), "tokens in", len(history), "messages")
 print("after: ", sum(tokens(m) for m in small), "tokens in", len(small), "messages")
 print(small[1]["content"])
-`, after: `The newest turns survive verbatim; everything older collapses into one short summary that preserves what matters — here, which files were touched. In real agents the quality of that summary (decisions made, open problems, file paths, next steps) decides whether the agent can continue seamlessly.` },
+`, after: `The newest turns survive verbatim; everything older collapses into one short summary that preserves what matters: here, which files were touched. In real agents the quality of that summary (decisions made, open problems, file paths, next steps) decides whether the agent can pick up where it left off.` },
       { type: 'check', question: { type: 'mcq', q: 'Why put the system prompt and tool definitions first and keep them unchanged?', options: ['Models ignore the end of the context', 'A stable prefix can be served from the prompt cache, saving cost and latency on every step', 'Tools must be defined last', 'It improves tokenization'], answer: 1, explain: 'Changing anything early in the context invalidates the cache for everything after it.' } },
       { type: 'text', title: "When context goes wrong, and memory that lasts", md: `Long-running agents fail in characteristic ways that come from their context rather than from the model:
 
@@ -435,9 +435,9 @@ The remedies are the context-engineering tools above, used deliberately: validat
 Memory needs policies: what is worth writing (and with what source and date), what to retrieve (relevant and recent, and only a little of it), when entries expire, and who can inspect and delete them. Treat memory as untrusted input too: a poisoned memory persists across sessions and users.` },
       { type: 'text', title: 'Planning, memory and self-correction', md: `- **Plan, then execute**: have the agent write an explicit plan or to-do list, execute step by step, and update the plan when reality differs. Plans make progress visible and give compaction something to preserve.
 - **Decomposition**: split big tasks into sub-tasks with clear completion criteria; a sub-task should be checkable on its own.
-- **Verification and reflection**: before declaring success, check against the original requirements — run the tests, validate the output's schema, re-read the question. Critique-and-revise loops help most when the critique is grounded in an external signal (a test result, an error message) rather than the model's own opinion.
+- **Verification and reflection**: before declaring success, check against the original requirements (run the tests, validate the output's schema, re-read the question). Critique-and-revise loops help most when the critique is grounded in an external signal (a test result, an error message) rather than the model's own opinion.
 - **Search over alternatives**: for hard steps, generate several candidate actions or solutions and pick with a verifier (see *Reasoning Models & Test-Time Compute*).
-- **Long-term memory**: store facts, preferences and lessons learned outside the context, retrieve them by relevance and recency, and decide deliberately what is worth remembering — memory can also be poisoned by malicious content, so treat it as untrusted input.` },
+- **Long-term memory**: store facts, preferences and lessons learned outside the context, retrieve them by relevance and recency, and decide deliberately what is worth remembering (memory can also be poisoned by malicious content, so treat it as untrusted input).` },
       { type: 'text', title: "Designing tools for agents", md: `Tools are the agent's interface to the world and deserve the care of a user interface: an *agent–computer interface*. A model can use a tool only as well as its name, description and results allow.
 
 - **Few, well-chosen tools.** Many overlapping tools make each choice harder and fill the context with definitions. Prefer one tool per real job (\`schedule_meeting\` rather than \`list_users\`, \`list_events\` and \`create_event\`), with clear names, grouped by a prefix when there are many (\`github_create_issue\`, \`github_list_pulls\`).
@@ -482,14 +482,14 @@ print("\\n".join(head_tail_matches(log)[9:14]))`, after: `Head-and-tail truncati
 - **Critique**: one agent proposes, another reviews against explicit criteria.
 - **Routing**: a cheap classifier sends each request to the right specialist or model.
 
-Multi-agent setups shine on **broad, parallelizable** work such as research across many sources, where separate contexts let more total information be processed. They cost more — each agent re-reads instructions and context, so token use can multiply — and they add coordination failures: duplicated work, conflicting edits, lost details in hand-offs. For tightly coupled tasks (most code changes), a single strong agent with good tools is usually better. Whatever the pattern, define each agent's task, output format and boundaries precisely.` },
+Multi-agent setups shine on **broad, parallelizable** work such as research across many sources, where separate contexts let more total information be processed. They cost more (each agent re-reads instructions and context, so token use can multiply) and they add coordination failures: duplicated work, conflicting edits, lost details in hand-offs. For tightly coupled tasks (most code changes), a single strong agent with good tools is usually better. Whatever the pattern, define each agent's task, output format and boundaries precisely.` },
       { type: 'text', title: 'Computer use and real-world actions', md: `**Computer-use agents** operate graphical interfaces from screenshots with mouse and keyboard actions; browser agents navigate web pages. They reach any application without an API, but they are slower and more brittle than direct tool calls, so prefer an API or command-line tool when one exists.
 
 Agents that act in the real world need guardrails beyond prompts:
 
 - **Sandboxing**: run code and browsers in containers or virtual machines with only the files, network access and credentials the task needs (**least privilege**).
 - **Confirmation** before irreversible or outward-facing actions: payments, deletions, sending messages, publishing.
-- **Untrusted content**: web pages, emails and documents can carry prompt injections (see *Adversarial ML, Security & Privacy*) — treat what the agent reads as data, never as instructions.
+- **Untrusted content**: web pages, emails and documents can carry prompt injections (see *Adversarial ML, Security & Privacy*) (treat what the agent reads as data, never as instructions).
 - **Budgets and limits**: caps on steps, tokens, money and time; rate limits; a way to stop the agent.
 - **Audit logs** of every action and observation, for debugging and accountability.` },
       { type: 'code', title: "A permission gate for tool calls", md: `Prompts alone cannot make an agent safe: a model that reads text written by an attacker may follow it. The dangerous combination, which the developer Simon Willison calls the **lethal trifecta**, is an agent with **access to private data**, **exposure to untrusted content** and **a way to send data out**. When all three meet in one context, an injected instruction can leak the data. The harness, which is ordinary code, can track which tools have put text into the context and hold outward-facing calls for a person when the combination occurs:`, code: `PRIVATE = {"read_file", "query_customers"}           # tools that return private data
@@ -519,11 +519,11 @@ for i, call in enumerate(trajectory, 1):
         held.append(i)
 print("calls held for confirmation:", held)`, after: `The injected request (call 3) is held, but so is the harmless email to a colleague (call 4): once untrusted text is in the context, the harness cannot tell which instructions came from the user. That is the price of the rule, and real systems also limit the damage in other ways: one agent reads untrusted content while a separate agent without it takes actions, recipients and domains come from allow-lists, and credentials are read-only where possible. Because the gate is ordinary code, no injected text can talk its way past it, which no prompt can promise.`, predict: {"type":"mcq","q":"The agent has read a private report and then a web page. Which of its two email calls will this gate hold for confirmation?","options":["Only the one to the outside address","Both of them","Neither: the user asked for the task","Only the internal one"],"answer":1,"explain":"Once private data and untrusted text are both in the context, the harness cannot know whose instruction an outward call is following, so it holds every one of them, even the email to a colleague.","expect":["calls held for confirmation: [3, 4]"]} },
       { type: 'check', question: {"type":"mcq","q":"Which change reliably protects an email-summarizing agent against data theft by prompt injection?","options":["A stronger warning against injections in the system prompt","Removing its ability to send anything out of the sandbox, or holding such calls for a person","Using a larger model","Lowering the sampling temperature"],"answer":1,"explain":"Taking away one ingredient of the trifecta (private data, untrusted content, a way out) makes exfiltration impossible whatever the injected text says. Prompts and model choice only make it less likely."} },
-      { type: 'text', title: 'Evaluating agents', md: `- **Tasks with environments**: each test case is a task plus a sandboxed environment (a repository, a website, simulated tools) and an **automatic check** of the end state — unit tests pass, the database has the right rows, the answer matches.
+      { type: 'text', title: 'Evaluating agents', md: `- **Tasks with environments**: each test case is a task plus a sandboxed environment (a repository, a website, simulated tools) and an **automatic check** of the end state (unit tests pass, the database has the right rows, the answer matches).
 - **Success rate with uncertainty**: agents are stochastic, so run each task several times and report success with a confidence interval (see *Statistical Inference*). Small eval sets cannot distinguish small improvements.
 - **Consistency**: report pass^k alongside pass@k.
-- **Cost and latency**: tokens, dollars, wall-clock time and number of steps per task — a slightly better agent that costs five times more may not be better.
-- **Trajectory review**: read failed transcripts (with LLM-as-judge for scale and humans for calibration) to find *why* the agent failed — wrong tool, lost context, gave up early, misread the task.
+- **Cost and latency**: tokens, dollars, wall-clock time and number of steps per task (a slightly better agent that costs five times more may not be better).
+- **Trajectory review**: read failed transcripts (with LLM-as-judge for scale and humans for calibration) to find *why* the agent failed (wrong tool, lost context, gave up early, misread the task).
 - **Regression testing**: re-run the suite on every change of prompt, tools or model; keep held-out tasks to avoid overfitting to the eval.` },
       { type: 'code', title: "An agent evaluation harness", code: `import numpy as np
 rng = np.random.default_rng(0)
@@ -556,7 +556,7 @@ print("the two 95% intervals overlap:", bool(lo2 < hi1 and lo1 < hi2))`, after: 
 - When tasks exceed one context window: notes, compaction and subagents.
 - Broad, parallelizable exploration: orchestrator–worker designs.
 - Before any agent touches real systems: sandboxing, confirmations, budgets and an evaluation suite.`,
-    pitfalls: `- Stuffing the context with everything "just in case" — cost, latency and worse attention.
+    pitfalls: `- Stuffing the context with everything "just in case": cost, latency and worse attention.
 - Declaring success without verification; trusting the agent's own claim that the tests passed.
 - Multi-agent systems for tightly coupled work, or without precise task boundaries.
 - Evaluating on a handful of runs and reading noise as improvement; ignoring cost and consistency.
@@ -691,10 +691,10 @@ def run_plan(plan, tools, max_attempts=3, max_calls=20):
       }
     ],
     refs: [
-      { title: 'Anthropic — Building effective agents', url: 'https://www.anthropic.com/engineering/building-effective-agents' },
-      { title: 'Anthropic — Effective context engineering for AI agents', url: 'https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents' },
-      { title: 'Anthropic — How we built our multi-agent research system', url: 'https://www.anthropic.com/engineering/multi-agent-research-system' },
-      { title: 'Yao et al. — τ-bench: tool-agent-user interaction benchmark (pass^k)', url: 'https://arxiv.org/abs/2406.12045' }
+      { title: 'Anthropic, Building effective agents', url: 'https://www.anthropic.com/engineering/building-effective-agents' },
+      { title: 'Anthropic, Effective context engineering for AI agents', url: 'https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents' },
+      { title: 'Anthropic, How we built our multi-agent research system', url: 'https://www.anthropic.com/engineering/multi-agent-research-system' },
+      { title: 'Yao et al., τ-bench: tool-agent-user interaction benchmark (pass^k)', url: 'https://arxiv.org/abs/2406.12045' }
     ]
   },
 
@@ -703,7 +703,7 @@ def run_plan(plan, tools, max_attempts=3, max_calls=20):
     id: 'ssm-architectures', branch: 'llm', title: 'Beyond Attention: State-Space Models, Linear RNNs & Hybrids', short: 'State-Space Models', level: 3, minutes: 45, prereqs: ['efficient-attention', 'rnn'],
     tags: ['state space model', 'ssm', 's4', 'mamba', 'selective scan', 'linear recurrence', 'parallel scan', 'convolution', 'linear attention', 'delta rule', 'rwkv', 'retnet', 'hybrid architecture', 'associative recall', 'long context'],
     summary: 'Sequence models with a fixed-size memory: linear recurrences and state-space models that train in parallel (as a convolution or scan) yet generate with constant memory per token, Mamba\'s input-dependent selectivity, linear attention as a matrix-valued RNN and the delta rule, the memory limits of a fixed state, and hybrid models that combine a few attention layers with many recurrent ones.',
-    why: `Attention keeps every past token in its KV cache, so memory grows with context length and compute grows quadratically (see *Efficient Attention & Long Context*). For million-token documents, streaming audio, genomics or always-on agents, a model with a **fixed-size state** — constant memory and time per token — is very attractive. Old RNNs had that property but trained slowly and forgot; modern **state-space models** and **linear RNNs** keep the constant-memory inference while training in parallel like transformers, and **hybrid** models combine them with attention to get the best of both.`,
+    why: `Attention keeps every past token in its KV cache, so memory grows with context length and compute grows quadratically (see *Efficient Attention & Long Context*). For million-token documents, streaming audio, genomics or always-on agents, a model with a **fixed-size state** (constant memory and time per token) is very attractive. Old RNNs had that property but trained slowly and forgot; modern **state-space models** and **linear RNNs** keep the constant-memory inference while training in parallel like transformers, and **hybrid** models combine them with attention to get the best of both.`,
     objectives: [
       'Write a linear state-space recurrence and compute it both recurrently and as a convolution',
       'Explain why Mamba\'s input-dependent (selective) parameters matter',
@@ -721,7 +721,7 @@ A, B, C — the model's parameters in continuous time; Ā and B̄ are their disc
 Δ — "delta": the step size, which controls how quickly the state forgets and how strongly a new input is written
 :::
 
-Because the recurrence is **linear** in h, unrolling it gives y_t = Σ_l C Ā^l B̄ x_{t−l}: a **convolution** of the input with the kernel K = (CB̄, CĀB̄, CĀ²B̄, …). So the same model can be computed two ways — step by step with a fixed-size state (ideal for generation), or for the whole sequence at once as a convolution or a parallel scan (ideal for training on GPUs). That is the trick classic RNNs lacked: their nonlinearity between steps forces sequential training.` },
+Because the recurrence is **linear** in h, unrolling it gives y_t = Σ_l C Ā^l B̄ x_{t−l}: a **convolution** of the input with the kernel K = (CB̄, CĀB̄, CĀ²B̄, …). So the same model can be computed two ways: step by step with a fixed-size state (ideal for generation), or for the whole sequence at once as a convolution or a parallel scan (ideal for training on GPUs). That is the trick classic RNNs lacked: their nonlinearity between steps forces sequential training.` },
       { type: 'code', title: 'One SSM, two ways to compute it', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -741,10 +741,10 @@ y_conv = [sum(K[l] * x[t - l] for l in range(t + 1)) for t in range(L)]
 print("recurrence: ", np.round(y_rec, 4)[:6])
 print("convolution:", np.round(y_conv, 4)[:6])
 print("identical:", bool(np.allclose(y_rec, y_conv)), "   kernel:", np.round(K[:6], 3))
-`, after: `Both computations give exactly the same outputs. The kernel shows how the influence of past inputs fades — the decay factors in Ā decide how long the model remembers.` },
+`, after: `Both computations give exactly the same outputs. The kernel shows how the influence of past inputs fades: the decay factors in Ā decide how long the model remembers.` },
       { type: 'text', title: 'S4 and Mamba: from fixed to selective', md: `**S4** (2021) made SSMs work for long sequences with a carefully structured A (initialized so the state keeps a compressed history of the input) and the convolution view for fast training. But its parameters are **time-invariant**: the same Ā, B̄ and C apply to every token, so it cannot decide, based on content, what to store and what to ignore.
 
-**Mamba** (2023) makes the parameters functions of the current input — a **selective** SSM:
+**Mamba** (2023) makes the parameters functions of the current input, a **selective** SSM:
 
 $$ Δ_t = softplus( w_Δ · x_t )          B_t = W_B x_t          C_t = W_C x_t          h_t = exp(Δ_t A) h_{t−1} + Δ_t B_t x_t $$
 :::where
@@ -770,7 +770,7 @@ for t in range(L):
 print(f"value to remember:               {x[5]:.2f}")
 print(f"selective state after {L} steps:  {h_selective:.2f}")
 print(f"fixed-decay state after {L} steps: {h_fixed:.2f}")
-`, after: `A time-invariant recurrence blends the important value with everything that follows and loses it. A gate computed from the input itself writes at the marker and then holds — the essence of selectivity.` },
+`, after: `A time-invariant recurrence blends the important value with everything that follows and loses it. A gate computed from the input itself writes at the marker and then holds: the essence of selectivity.` },
       { type: 'check', question: { type: 'mcq', q: 'What does Mamba change compared with S4?', options: ['It removes the hidden state', 'Its step size and input/output maps depend on the current token, so it can choose what to remember', 'It uses softmax attention', 'It only works for images'], answer: 1, explain: 'Selective, input-dependent parameters act like gates.' } },
       { type: 'text', title: 'Linear attention is an RNN', md: `Remove the softmax from attention and use feature maps φ (see *Efficient Attention*); the attention output can then be computed with a running **matrix-valued state**:
 
@@ -784,7 +784,7 @@ o_t — the output for token t (often divided by a normalizer)
 
 Writing adds the outer product v kᵀ; reading multiplies by the query. Variants add **decay** (RetNet, RWKV-style models), **gates**, and the **delta rule**, which overwrites the old value stored for a key instead of piling up: S_t = S_{t−1} − β_t (S_{t−1} k_t − v_t) k_tᵀ, where β_t sets how strongly to correct. Gated and delta-rule linear RNNs are among the strongest attention alternatives.
 
-The catch is **capacity**: a d × d state can hold only about d clean associations. Beyond that, memories interfere — while softmax attention, keeping every key, retrieves exactly.` },
+The catch is **capacity**: a d × d state can hold only about d clean associations. Beyond that, memories interfere, while softmax attention, keeping every key, retrieves exactly.` },
       { type: 'code', title: 'The memory limit of a fixed-size state', code: `
 import numpy as np
 rng = np.random.default_rng(1)
@@ -802,7 +802,7 @@ for n in (8, 32, 64, 128, 256, 1024):
     soft = att @ V
     soft_fid = np.mean(np.sum(soft * V, axis=1) / np.linalg.norm(soft, axis=1))
     print(f"{n:5d} {d * d:14d} {2 * n * d:11d} {lin_fid:31.3f} {soft_fid:19.3f}")
-`, after: `The linear state never grows (4,096 numbers), but as the number of stored pairs passes its dimension the recalled values drift away from the originals (cosine fidelity falls). Softmax attention recalls perfectly — because it keeps every key and value, so its memory keeps growing. That is the fundamental trade-off between fixed-state and attention models.` },
+`, after: `The linear state never grows (4,096 numbers), but as the number of stored pairs passes its dimension the recalled values drift away from the originals (cosine fidelity falls). Softmax attention recalls perfectly, because it keeps every key and value, so its memory keeps growing. That is the fundamental trade-off between fixed-state and attention models.` },
       { type: 'text', title: 'Hybrids and trade-offs', md: `| | Attention | SSM / linear RNN | Hybrid |
 | --- | --- | --- | --- |
 | Memory during generation | grows with context (KV cache) | constant state | small KV cache in a few layers |
@@ -810,7 +810,7 @@ for n in (8, 32, 64, 128, 256, 1024):
 | Exact recall and copying | excellent | limited by state size | good |
 | Long streams | expensive | natural | good |
 
-**Hybrid** models interleave a minority of attention layers with many SSM or linear-RNN layers — Jamba (Mamba + attention + mixture of experts) was an early large example, and several recent open models follow the same pattern. The attention layers provide precise retrieval; the recurrent layers carry cheap long-range context and keep the KV cache small.
+**Hybrid** models interleave a minority of attention layers with many SSM or linear-RNN layers: Jamba (Mamba + attention + mixture of experts) was an early large example, and several recent open models follow the same pattern. The attention layers provide precise retrieval; the recurrent layers carry cheap long-range context and keep the KV cache small.
 
 When to consider these architectures: very long contexts or streams, memory-limited deployment, high-throughput serving. When to stay with attention: tasks dominated by precise lookup and copying over long inputs, and wherever the mature transformer tooling matters most.` },
       { type: 'code', title: 'Memory as context grows: KV cache versus a fixed state', code: `
@@ -829,12 +829,12 @@ for ctx in (4_000, 32_000, 128_000, 1_000_000):
 - Memory-limited or high-throughput generation where the KV cache is the bottleneck.
 - Hybrids for long-context language models that still need precise retrieval.
 - Stay with standard attention when exact copying and lookup over long inputs dominate, or tooling maturity matters most.`,
-    pitfalls: `- Assuming a fixed-size state can remember everything in a long context — test associative recall and needle-in-a-haystack style tasks.
+    pitfalls: `- Assuming a fixed-size state can remember everything in a long context: test associative recall and needle-in-a-haystack style tasks.
 - Comparing architectures at different compute budgets or training-data sizes.
 - Ignoring implementation details: selective scans need specialized kernels to be fast.
-- Treating "linear time" as automatically faster — at short lengths well-optimized attention often wins.`,
+- Treating "linear time" as automatically faster: at short lengths well-optimized attention often wins.`,
     takeaways: [
-      'SSMs: h_t = Āh_{t−1} + B̄x_t, y_t = Ch_t — a recurrence for generation, a convolution or scan for training.',
+      'SSMs: h_t = Āh_{t−1} + B̄x_t, y_t = Ch_t (a recurrence for generation, a convolution or scan for training).',
       'Mamba makes Δ, B and C depend on the input (selectivity), letting the model choose what to store.',
       'Linear attention is an RNN with a matrix state S; decay, gates and the delta rule improve it.',
       'A fixed-size state has limited capacity: recall degrades as stored associations exceed its dimension.',
@@ -896,8 +896,8 @@ def causal_conv(K, x):
         out.append(float(np.sum(K[:m] * x[t::-1][:m])))
     return np.array(out)
 `,
-        hints: ['Element-wise products handle a diagonal Ā: `a * h`.', 'For the convolution at step t, pair K[0..t] with x[t], x[t−1], …, x[0] — `x[t::-1]`.'],
-        explain: `This equivalence is what lets SSMs train like convolutional networks yet generate like RNNs. Real implementations compute the long convolution with FFTs, or — for selective models whose kernel changes per token — with a parallel scan.`,
+        hints: ['Element-wise products handle a diagonal Ā: `a * h`.', 'For the convolution at step t, pair K[0..t] with x[t], x[t−1], …, x[0], `x[t::-1]`.'],
+        explain: `This equivalence is what lets SSMs train like convolutional networks yet generate like RNNs. Real implementations compute the long convolution with FFTs, or (for selective models whose kernel changes per token) with a parallel scan.`,
         tests: [
           { call: 'ssm_scan([0.5], [1.0], [1.0], [1.0, 0.0, 0.0])', expect: 'np.array([1.0, 0.5, 0.25])' },
           { call: 'ssm_kernel([0.5, 0.0], [1.0, 2.0], [1.0, 1.0], 3)', expect: 'np.array([3.0, 0.5, 0.25])' },
@@ -968,11 +968,11 @@ def recall_accuracy(S, keys, values):
       }
     ],
     refs: [
-      { title: 'Gu, Goel & Ré — Efficiently Modeling Long Sequences with Structured State Spaces (S4)', url: 'https://arxiv.org/abs/2111.00396' },
-      { title: 'Gu & Dao — Mamba: Linear-Time Sequence Modeling with Selective State Spaces', url: 'https://arxiv.org/abs/2312.00752' },
-      { title: 'Katharopoulos et al. — Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention', url: 'https://arxiv.org/abs/2006.16236' },
-      { title: 'Lieber et al. — Jamba: A Hybrid Transformer-Mamba Language Model', url: 'https://arxiv.org/abs/2403.19887' },
-      { title: 'Yang et al. — Parallelizing Linear Transformers with the Delta Rule over Sequence Length', url: 'https://arxiv.org/abs/2406.06484' }
+      { title: 'Gu, Goel & Ré, Efficiently Modeling Long Sequences with Structured State Spaces (S4)', url: 'https://arxiv.org/abs/2111.00396' },
+      { title: 'Gu & Dao, Mamba: Linear-Time Sequence Modeling with Selective State Spaces', url: 'https://arxiv.org/abs/2312.00752' },
+      { title: 'Katharopoulos et al., Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention', url: 'https://arxiv.org/abs/2006.16236' },
+      { title: 'Lieber et al., Jamba: A Hybrid Transformer-Mamba Language Model', url: 'https://arxiv.org/abs/2403.19887' },
+      { title: 'Yang et al., Parallelizing Linear Transformers with the Delta Rule over Sequence Length', url: 'https://arxiv.org/abs/2406.06484' }
     ]
   }
   ]);

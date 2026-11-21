@@ -66,7 +66,7 @@
       startQuiz() { const att = (this.P.peekC(this.c.id) || {}).quizAttempts || 0; this.quizQs = MLA.quiz.prepare(this.c.quiz, MLA.util.seededRng(MLA.util.hashString(this.c.id) + att * 7919)); },
       onQuiz(result) {
         const passed = this.P.recordQuiz(this.c.id, result);
-        if (passed) MLA.ui.toast('Quiz passed! ' + (this.pr.solved < this.pr.needSolved ? 'Solve a practice problem to complete the concept.' : ''), 'success', 4500);
+        if (passed) MLA.ui.toast('Quiz passed. ' + (this.pr.solved < this.pr.needSolved ? 'Solve a practice problem to complete the concept.' : ''), 'success', 4500);
       },
       retryQuiz() { this.quizQs = MLA.quiz.prepare(this.c.quiz, MLA.util.seededRng(Date.now() >>> 0)); },
       openProblem(p) { this.go('/problem/' + p.id); }
@@ -126,8 +126,8 @@
                   <div class="predict-head"><mla-icon name="target" :size="15"/> <b>Predict first</b> <span class="small muted">commit to an answer, then run the code to check it</span></div>
                   <div class="q-text"><mla-md :src="s.predict.q" /></div>
                   <check-q :q="s.predict" :done="checkDone['p' + i]" @answer="answerPredict(i, s, $event)" />
-                  <div v-if="checkDone['p' + i]" class="feedback" :class="checkDone['p' + i].correct ? 'ok' : 'bad'"><strong>{{ checkDone['p' + i].correct ? 'Good prediction!' : 'Not what happens.' }}</strong> <mla-md :src="checkDone['p' + i].explanation" inline /> Run the code below to see it for yourself.</div>
-                  <div v-else-if="cs.checks && cs.checks['predict-' + s.id] != null" class="small muted mt-sm">You made this prediction before{{ cs.checks['predict-' + s.id] ? ', correctly ✓' : '' }}.</div>
+                  <div v-if="checkDone['p' + i]" class="feedback" :class="checkDone['p' + i].correct ? 'ok' : 'bad'"><strong>{{ checkDone['p' + i].correct ? 'Good prediction.' : 'Not what happens.' }}</strong> <mla-md :src="checkDone['p' + i].explanation" inline /> Run the code below to see it for yourself.</div>
+                  <div v-else-if="cs.checks && cs.checks['predict-' + s.id] != null" class="small muted mt-sm">You made this prediction before{{ cs.checks['predict-' + s.id] ? ', correctly' : '' }}.</div>
                 </div>
                 <code-sample :code="s.code" :lang="s.lang || 'python'" :runnable="isRunnable(s)" :title="c.title + ' – ' + (s.title || 'example')" :timeout-sec="s.timeoutSec" />
                 <div v-if="s.lang==='pytorch'" class="tiny dim mt-sm"><mla-icon name="info" :size="12"/> PyTorch is not available in the in-browser Python, so this example is for reading (run it locally or in Google Colab). The practice problems implement the same ideas in NumPy.</div>
@@ -146,8 +146,8 @@
               <template v-else-if="s.type==='check'">
                 <div class="q-text"><mla-md :src="s.question.q" /></div>
                 <check-q :q="s.question" :done="checkDone[i]" @answer="answerCheck(i, s.question, $event)" />
-                <div v-if="checkDone[i]" class="feedback" :class="checkDone[i].correct ? 'ok' : 'bad'"><strong>{{ checkDone[i].correct ? 'Correct!' : 'Not quite.' }}</strong> <mla-md :src="checkDone[i].explanation" inline /><span v-if="!checkDone[i].correct && checkDone[i].expected"> Answer: <b>{{ checkDone[i].expected }}</b></span></div>
-                <div v-else-if="cs.checks && cs.checks[s.id] != null" class="tiny dim mt-sm">You answered this before{{ cs.checks[s.id] ? ' correctly ✓' : '' }}.</div>
+                <div v-if="checkDone[i]" class="feedback" :class="checkDone[i].correct ? 'ok' : 'bad'"><strong>{{ checkDone[i].correct ? 'Correct.' : 'Not quite.' }}</strong> <mla-md :src="checkDone[i].explanation" inline /><span v-if="!checkDone[i].correct && checkDone[i].expected"> Answer: <b>{{ checkDone[i].expected }}</b></span></div>
+                <div v-else-if="cs.checks && cs.checks[s.id] != null" class="tiny dim mt-sm">You answered this before{{ cs.checks[s.id] ? ', correctly' : '' }}.</div>
               </template>
               <div v-if="s.type!=='check'" class="sec-end" :data-sid="s.id"></div>
             </section>
@@ -166,12 +166,12 @@
             </div>
             <div v-if="c.refs && c.refs.length" class="lesson-section">
               <div class="sec-head"><mla-icon name="external" :size="16"/><h3>Go deeper</h3></div>
-              <ul><li v-for="r in c.refs" :key="r.url"><a :href="r.url" target="_blank" rel="noopener">{{ r.title }}</a><span v-if="r.note" class="tiny dim"> — {{ r.note }}</span></li></ul>
+              <ul><li v-for="r in c.refs" :key="r.url"><a :href="r.url" target="_blank" rel="noopener">{{ r.title }}</a><span v-if="r.note" class="tiny dim">: {{ r.note }}</span></li></ul>
             </div>
 
             <div class="card next-card">
               <h3 style="margin-top:0">Prove it</h3>
-              <p class="small muted">Understanding shows up when you can use it. {{ reqText || 'This concept is complete — the remaining problems and a 90%+ quiz score earn mastery.' }}</p>
+              <p class="small muted">Understanding shows up when you can use it. {{ reqText || 'This concept is complete. The remaining problems and a 90%+ quiz score earn mastery.' }}</p>
               <div class="btn-row">
                 <button v-if="c.problems.length" class="btn primary" @click="tab='practice'"><mla-icon name="code" :size="16"/> Practice problems ({{ pr.solved }}/{{ pr.problems }})</button>
                 <button v-if="c.quiz.length" class="btn" @click="tab='quiz'"><mla-icon name="clipboard" :size="16"/> {{ pr.quizPassed ? 'Retake the quiz' : 'Take the quiz' }}</button>
@@ -192,7 +192,7 @@
               <hr>
               <div class="small">
                 <div class="row between"><span class="muted">Sections read</span><span>{{ pr.sectionsRead }}/{{ pr.sections }}</span></div>
-                <div class="row between"><span class="muted">Quiz</span><span>{{ pr.quizPassed ? 'passed (' + pr.quizBest + '%)' : (pr.quizAttempts ? 'best ' + pr.quizBest + '%' : '—') }}</span></div>
+                <div class="row between"><span class="muted">Quiz</span><span>{{ pr.quizPassed ? 'passed (' + pr.quizBest + '%)' : (pr.quizAttempts ? 'best ' + pr.quizBest + '%' : 'not taken yet') }}</span></div>
                 <div class="row between"><span class="muted">Problems</span><span>{{ pr.solved }}/{{ pr.problems }}</span></div>
               </div>
               <button v-if="pr.sectionsRead < pr.sections" class="btn xs ghost block mt-sm" @click="markAll">Mark all sections read</button>
@@ -209,12 +209,12 @@
             <p class="small muted" style="margin:8px 0 0"><mla-md :src="it.preview" inline /></p>
           </div>
         </div>
-        <empty-state v-if="!problems.length" icon="code" text="This concept has no coding problems — the quiz completes it." />
+        <empty-state v-if="!problems.length" icon="code" text="This concept has no coding problems; the quiz completes it." />
       </template>
 
       <template v-else-if="tab==='quiz'">
         <div class="card">
-          <div class="row between mb"><h3 style="margin:0">Mastery quiz — {{ c.title }}</h3><span class="muted small">Pass: {{ P.PASS }}% · best {{ pr.quizBest }}%</span></div>
+          <div class="row between mb"><h3 style="margin:0">Mastery quiz: {{ c.title }}</h3><span class="muted small">Pass: {{ P.PASS }}% · best {{ pr.quizBest }}%</span></div>
           <quiz-runner v-if="quizQs && quizQs.length" :key="(quizQs[0] && quizQs[0].q) + pr.quizAttempts" :questions="quizQs" :pass="P.PASS" @complete="onQuiz" @retry="retryQuiz" @close="tab='learn'" />
           <empty-state v-else icon="clipboard" text="No quiz for this concept." />
         </div>

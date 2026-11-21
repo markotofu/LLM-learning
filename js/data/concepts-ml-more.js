@@ -8,7 +8,7 @@
     id: 'evaluation-metrics', branch: 'ml', title: 'Evaluation Metrics: Beyond Accuracy', short: 'Evaluation Metrics', level: 1, minutes: 45, prereqs: ['logistic-regression'],
     tags: ['accuracy', 'precision', 'recall', 'f1', 'roc', 'auc', 'confusion matrix', 'rmse'],
     summary: 'How to measure whether a model is actually good: confusion matrices, precision and recall, F1, ROC/AUC, thresholds, and the right metric for regression.',
-    why: `"95% accurate" can mean an excellent model or a useless one that always predicts the majority class. Real decisions — approving loans, flagging fraud, screening for disease, filtering spam — have asymmetric costs: a missed cancer is not the same as a false alarm. Choosing the right metric, and the right decision threshold, is how you align a model with what actually matters. It is also how you compare models honestly, report results credibly, and avoid shipping something that looks good on paper only.`,
+    why: `"95% accurate" can mean an excellent model or a useless one that always predicts the majority class. Real decisions (approving loans, flagging fraud, screening for disease, filtering spam) have asymmetric costs: a missed cancer is not the same as a false alarm. Choosing the right metric, and the right decision threshold, is how you align a model with what actually matters. It is also how you compare models honestly, report results credibly, and avoid shipping something that looks good on paper only.`,
     objectives: [
       'Build a confusion matrix and compute accuracy, precision, recall and F1',
       'Explain why accuracy misleads on imbalanced data',
@@ -21,8 +21,8 @@
 
 | | Predicted positive | Predicted negative |
 | --- | --- | --- |
-| **Actually positive** | **TP** — true positive (caught it) | **FN** — false negative (missed it) |
-| **Actually negative** | **FP** — false positive (false alarm) | **TN** — true negative (correctly ignored) |
+| **Actually positive** | **TP**: true positive (caught it) | **FN**, false negative (missed it) |
+| **Actually negative** | **FP**: false positive (false alarm) | **TN**, true negative (correctly ignored) |
 
 Everything else is computed from these four counts:
 
@@ -34,7 +34,7 @@ Everything else is computed from these four counts:
 | **Specificity** | TN / (TN + FP) | Of all real negatives, how many does it leave alone? |
 | **False positive rate** | FP / (FP + TN) | How often does it raise a false alarm? |
 | **F1 score** | 2·P·R / (P + R) | A single balance of precision and recall (harmonic mean) |` },
-      { type: 'text', title: 'Why accuracy misleads', md: `A fraud dataset with 1% fraud: a "model" that always says "legitimate" scores **99% accuracy** — and catches zero fraud (recall 0). Whenever classes are imbalanced, accuracy is dominated by the majority class.
+      { type: 'text', title: 'Why accuracy misleads', md: `A fraud dataset with 1% fraud: a "model" that always says "legitimate" scores **99% accuracy**, and catches zero fraud (recall 0). Whenever classes are imbalanced, accuracy is dominated by the majority class.
 
 Which metric to emphasise depends on the cost of each mistake:
 
@@ -53,6 +53,9 @@ from sklearn.dummy import DummyClassifier
 from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score
 
 digits = load_digits()
+print(f"{len(digits.images)} images of 8 x 8 grey levels (0 to 16). The first one, a {digits.target[0]}:")
+for row in digits.images[0].astype(int):
+    print("  ", " ".join(f"{v:2d}" for v in row))
 X_train, X_test, y_train, y_test = train_test_split(digits.data, digits.target, stratify=digits.target, random_state=0)
 y_train_5 = (y_train == 5)                       # True for 5s, False for every other digit
 print(f"share of 5s: {y_train_5.mean():.1%}")
@@ -70,7 +73,7 @@ print(f"precision {precision_score(y_train_5, pred):.3f}   recall {recall_score(
       { type: 'text', title: 'ROC curves and AUC', md: `Sweeping the threshold from 1 down to 0 traces the **ROC curve**: the true positive rate (recall) against the false positive rate. The diagonal is random guessing; the top-left corner is perfection.
 
 **AUC** (area under the ROC curve) summarises it in one threshold-free number:
-- 1.0 = perfect ranking, 0.5 = random, below 0.5 = worse than random (flip the predictions!).
+- 1.0 = perfect ranking, 0.5 = random, below 0.5 = worse than random (flip the predictions).
 - Elegant interpretation: **AUC is the probability that a randomly chosen positive gets a higher score than a randomly chosen negative.** It measures how well the model *ranks*, regardless of threshold or calibration.
 
 On **highly imbalanced** data ROC can look rosy because the false positive rate stays small even with many false alarms (the negatives are so numerous). The **precision-recall curve** and its area (average precision) are more informative there.` },
@@ -124,7 +127,7 @@ pos, neg = scores[y_true == 1], scores[y_true == 0]
 auc = np.mean([(p > n) + 0.5 * (p == n) for p in pos for n in neg])
 print("AUC:", round(auc, 3))
 ` },
-      { type: 'check', question: { type: 'mcq', q: 'A cancer screening test should miss as few cancers as possible, even at the cost of extra follow-up tests. Which metric should it prioritise?', options: ['Precision', 'Recall', 'Accuracy', 'Specificity'], answer: 1, explain: 'Missing a positive (false negative) is the costly error, so maximise recall — accept lower precision.' } },
+      { type: 'check', question: { type: 'mcq', q: 'A cancer screening test should miss as few cancers as possible, even at the cost of extra follow-up tests. Which metric should it prioritise?', options: ['Precision', 'Recall', 'Accuracy', 'Specificity'], answer: 1, explain: 'Missing a positive (false negative) is the costly error, so maximise recall: accept lower precision.' } },
       { type: 'text', title: 'Regression metrics and multi-class averaging', md: `**Regression:**
 
 | Metric | Meaning | Note |
@@ -135,9 +138,9 @@ print("AUC:", round(auc, 3))
 | **MAPE** | mean of \|error\| / \|y\| | relative error; explodes when y ≈ 0 |
 
 **Multi-class** precision/recall/F1 are computed per class (one-vs-rest) and then averaged:
-- **macro average** — the plain mean over classes: every class counts equally (good for rare classes);
-- **weighted average** — weighted by class frequency;
-- **micro average** — pool all decisions first (equals accuracy for single-label problems).
+- **macro average**: the plain mean over classes: every class counts equally (good for rare classes);
+- **weighted average**: weighted by class frequency;
+- **micro average**: pool all decisions first (equals accuracy for single-label problems).
 
 Report a confusion matrix too: it shows *which* classes get confused with which.` },
       { type: 'code', title: "Many classes: one-versus-rest and one-versus-one", md: `Some algorithms handle many classes natively (logistic regression with softmax, trees, naive Bayes). Binary-only algorithms are extended in one of two ways:
@@ -206,12 +209,12 @@ A generalization, **multioutput** classification, lets each label take more than
     pitfalls: `- Reporting accuracy on imbalanced data.
 - Choosing the threshold on the test set.
 - Comparing F1 scores computed with different averaging (macro vs weighted).
-- Treating AUC as accuracy — a model can have high AUC and still be badly calibrated or use a poor threshold.
+- Treating AUC as accuracy: a model can have high AUC and still be badly calibrated or use a poor threshold.
 - Ignoring the confidence interval: a 1-point difference on a small test set is noise.`,
     takeaways: [
       'Everything starts from the confusion matrix: TP, FP, FN, TN.',
       'Precision = TP/(TP+FP): trust in positive predictions. Recall = TP/(TP+FN): coverage of real positives.',
-      'The threshold trades precision against recall — choose it by the cost of each mistake.',
+      'The threshold trades precision against recall: choose it by the cost of each mistake.',
       'AUC = probability a random positive outranks a random negative; PR curves suit rare positives.',
       'Accuracy alone is misleading on imbalanced data.'
     ],
@@ -219,7 +222,7 @@ A generalization, **multioutput** classification, lets each label take more than
       { type: 'fill', q: 'TP = 40, FN = 10. What is the recall? (decimal)', answer: ['0.8', '.8', '0.80', '4/5'], explain: 'TP / (TP + FN) = 40 / 50 = 0.8.' },
       { type: 'mcq', q: 'Raising the decision threshold of a classifier usually…', options: ['raises recall and lowers precision', 'raises precision and lowers recall', 'raises both', 'changes nothing'], answer: 1, explain: 'Fewer, more confident positive predictions: fewer false alarms (precision ↑) but more misses (recall ↓).' },
       { type: 'mcq', q: 'An AUC of 0.5 means…', options: ['the model is perfect', 'the model ranks positives above negatives no better than chance', 'half the predictions are correct', 'precision is 0.5'], answer: 1, explain: 'AUC is the probability that a random positive outranks a random negative; 0.5 is a coin flip.' },
-      { type: 'fill', q: 'Precision 0.5 and recall 1.0. What is the F1 score? (decimal, 2 places)', answer: ['0.67', '0.667', '2/3', '0.6667'], explain: '2·0.5·1/(0.5 + 1) = 1/1.5 ≈ 0.67 — the harmonic mean is pulled toward the smaller value.' },
+      { type: 'fill', q: 'Precision 0.5 and recall 1.0. What is the F1 score? (decimal, 2 places)', answer: ['0.67', '0.667', '2/3', '0.6667'], explain: '2·0.5·1/(0.5 + 1) = 1/1.5 ≈ 0.67: the harmonic mean is pulled toward the smaller value.' },
       { type: 'mcq', q: 'For a dataset with 0.1% positives, which evaluation is most informative?', options: ['Accuracy', 'Precision-recall curve / average precision', 'R²', 'Training loss'], answer: 1, explain: 'With extreme imbalance accuracy and even ROC can look great; precision-recall focuses on the rare positive class.' },
       {"type":"mcq","q":"Why use `cross_val_predict` to build a confusion matrix on the training set?","options":["It is faster than predict","Every prediction comes from a model that did not train on that example, so the errors are honest","It removes the need for labels","It automatically chooses the best threshold"],"answer":1,"explain":"Each fold's examples are predicted by a model trained on the other folds, so the confusion matrix reflects generalization without spending the test set."},
       {"type":"mcq","q":"When should you prefer the precision–recall curve over the ROC curve?","options":["When the classes are perfectly balanced","When positives are rare or false positives are what you care about most","When the model outputs no scores","Never: the ROC curve is always better"],"answer":1,"explain":"With rare positives, the false-positive rate stays tiny even when false alarms swamp the true hits, so the ROC curve looks good while precision is poor. The PR curve exposes that."},
@@ -258,7 +261,7 @@ def confusion(y_true, y_pred):
     }
 `,
         hints: ['Combine masks with `&`, e.g. `(y_pred == 1) & (y_true == 1)`, and remember the parentheses.', '`np.sum` of a boolean array counts the Trues; wrap in `int(...)`.'],
-        explain: `Each count is the size of an intersection of two boolean masks. Every other classification metric is a ratio of these four numbers, so getting them right — including the operator precedence trap without parentheses — is the foundation.`,
+        explain: `Each count is the size of an intersection of two boolean masks. Every other classification metric is a ratio of these four numbers, so getting them right (including the operator precedence trap without parentheses) is the foundation.`,
         tests: [
           { call: 'confusion([1, 0, 1, 1, 0], [1, 1, 0, 1, 0])', expect: '{"tp": 2, "fp": 1, "fn": 1, "tn": 1}' },
           { call: 'confusion([0, 0, 0], [0, 0, 0])', expect: '{"tp": 0, "fp": 0, "fn": 0, "tn": 3}' },
@@ -300,7 +303,7 @@ def precision_recall_f1(y_true, y_pred):
     return float(precision), float(recall), float(f1)
 `,
         hints: ['Compute TP, FP and FN first.', 'Guard each division: `x / y if y > 0 else 0.0`.'],
-        explain: `F1 is the harmonic mean of precision and recall: it is high only when **both** are high, unlike the arithmetic mean which a single strong number can prop up. The zero-division guards matter in practice — a model that never predicts positive has undefined precision.`,
+        explain: `F1 is the harmonic mean of precision and recall: it is high only when **both** are high, unlike the arithmetic mean which a single strong number can prop up. The zero-division guards matter in practice: a model that never predicts positive has undefined precision.`,
         tests: [
           { call: 'precision_recall_f1([1, 0, 1, 1, 0], [1, 1, 0, 1, 0])', expect: '(2 / 3, 2 / 3, 2 / 3)' },
           { call: 'precision_recall_f1([1, 1, 0, 0], [1, 0, 0, 0])', expect: '(1.0, 0.5, 2 / 3)' },
@@ -344,7 +347,7 @@ def roc_auc(y_true, scores):
     return float(np.mean(greater + 0.5 * ties))
 `,
         hints: ['`pos[:, None] > neg[None, :]` is a (n_pos, n_neg) table of comparisons.', 'Add 0.5 for every tie, then take the mean over all pairs.'],
-        explain: `This pairwise definition is mathematically equal to the area under the ROC curve (it is the Mann–Whitney U statistic, normalised). It makes clear that AUC only cares about **ordering** — multiplying all scores by 10 or squaring them doesn't change it. For large datasets, a sort-based O(n log n) version is used instead of all pairs.`,
+        explain: `This pairwise definition is mathematically equal to the area under the ROC curve (it is the Mann–Whitney U statistic, normalised). It makes clear that AUC only cares about **ordering**: multiplying all scores by 10 or squaring them doesn't change it. For large datasets, a sort-based O(n log n) version is used instead of all pairs.`,
         tests: [
           { call: 'roc_auc([0, 0, 1, 1], [0.1, 0.4, 0.35, 0.8])', expect: '0.75' },
           { name: 'perfect ranking', call: 'roc_auc([0, 0, 1, 1], [0.1, 0.2, 0.8, 0.9])', expect: '1.0' },
@@ -355,9 +358,9 @@ def roc_auc(y_true, scores):
       }
     ],
     refs: [
-      { title: 'Google ML Crash Course — Classification: accuracy, precision, recall, ROC/AUC', url: 'https://developers.google.com/machine-learning/crash-course/classification' },
-      { title: "scikit-learn — Metrics and scoring", url: "https://scikit-learn.org/stable/modules/model_evaluation.html" },
-      { title: "Aurélien Géron — Hands-On Machine Learning with Scikit-Learn, Keras and TensorFlow (book; code and notebooks)", url: "https://github.com/ageron/handson-ml3" }
+      { title: 'Google ML Crash Course, Classification: accuracy, precision, recall, ROC/AUC', url: 'https://developers.google.com/machine-learning/crash-course/classification' },
+      { title: "scikit-learn, Metrics and scoring", url: "https://scikit-learn.org/stable/modules/model_evaluation.html" },
+      { title: "Aurélien Géron, Hands-On Machine Learning with Scikit-Learn, Keras and TensorFlow (book; code and notebooks)", url: "https://github.com/ageron/handson-ml3" }
     ]
   },
 
@@ -366,7 +369,7 @@ def roc_auc(y_true, scores):
     id: 'cross-validation', branch: 'ml', title: 'Validation, Cross-Validation & Hyperparameter Tuning', short: 'Cross-Validation & Tuning', level: 2, minutes: 40, prereqs: ['overfitting', 'data-preparation'],
     tags: ['k-fold', 'hyperparameters', 'grid search', 'random search', 'model selection'],
     summary: 'Choosing models and hyperparameters without fooling yourself: validation sets, k-fold cross-validation, grid and random search, and the final test.',
-    why: `Every model has knobs you set before training — learning rate, regularization strength, tree depth, number of neighbours. Pick them by looking at the test set and your reported score becomes optimistic fiction; pick them on a single small validation split and you may be choosing by luck. **Cross-validation** gives stable estimates from limited data, and a disciplined tuning procedure gives you numbers you can trust. This is how real projects choose models.`,
+    why: `Every model has knobs you set before training: learning rate, regularization strength, tree depth, number of neighbours. Pick them by looking at the test set and your reported score becomes optimistic fiction; pick them on a single small validation split and you may be choosing by luck. **Cross-validation** gives stable estimates from limited data, and a disciplined tuning procedure gives you numbers you can trust. This is how real projects choose models.`,
     objectives: [
       'Distinguish parameters (learned) from hyperparameters (chosen)',
       'Run k-fold cross-validation and report mean ± standard deviation',
@@ -378,7 +381,7 @@ def roc_auc(y_true, scores):
 - **Hyperparameters** are chosen *before* training and control the learning process or model capacity: learning rate, λ, max tree depth, k in kNN, number of layers, batch size.
 
 You can't learn hyperparameters from the training loss (it would always prefer the most flexible setting, i.e. overfitting), so you choose them by **validation performance**.` },
-      { type: 'text', title: 'k-fold cross-validation', md: `With a single validation split, your score depends on which examples happened to land in it — noisy, especially for small datasets. **k-fold cross-validation** uses all the data for validation, once each:
+      { type: 'text', title: 'k-fold cross-validation', md: `With a single validation split, your score depends on which examples happened to land in it: noisy, especially for small datasets. **k-fold cross-validation** uses all the data for validation, once each:
 
 1. Shuffle and split the training data into **k folds** of roughly equal size (k = 5 or 10 is typical).
 2. For each fold i: train on the other k − 1 folds, evaluate on fold i.
@@ -387,10 +390,10 @@ You can't learn hyperparameters from the training loss (it would always prefer t
 Cost: k training runs. Cheap for classical models; often too expensive for big neural networks, which use a single validation set instead.
 
 Variants:
-- **Stratified k-fold** — each fold keeps the class proportions (default for classification).
-- **Group k-fold** — all examples from one patient/user/document stay in the same fold.
-- **Time-series split** — train on the past, validate on the next period, roll forward. Never shuffle time.
-- **Leave-one-out** — k = n; nearly unbiased but expensive and high-variance.` },
+- **Stratified k-fold**: each fold keeps the class proportions (default for classification).
+- **Group k-fold**: all examples from one patient/user/document stay in the same fold.
+- **Time-series split**: train on the past, validate on the next period, roll forward. Never shuffle time.
+- **Leave-one-out**: k = n; nearly unbiased but expensive and high-variance.` },
       { type: 'demo', title: 'Diagram: five folds and a locked test set', demo: 'dg-cv' },
       { type: 'code', title: 'k-fold cross-validation from scratch', code: `
 import numpy as np
@@ -412,9 +415,9 @@ for lam in [0.0, 1.0, 10.0, 100.0]:
     print(f"lambda={lam:<6} CV MSE = {np.mean(scores):.4f} ± {np.std(scores):.4f}")
 ` },
       { type: 'check', question: { type: 'mcq', q: 'Why use k-fold cross-validation instead of one validation split on a small dataset?', options: ['It trains the final model faster', 'Every example is used for validation once, giving a less noisy estimate', 'It removes the need for a test set', 'It prevents overfitting during training'], answer: 1, explain: 'Averaging over k different validation folds reduces the luck of a single split.' } },
-      { type: 'text', title: 'Searching for good hyperparameters', md: `- **Grid search** — try every combination from lists of values (λ ∈ {0.01, 0.1, 1, 10} × depth ∈ {3, 5, 7}). Simple, exhaustive, explodes combinatorially.
-- **Random search** — sample combinations at random. With the same budget it usually beats grid search, because only a few hyperparameters really matter and random sampling tries more distinct values of each.
-- **Bayesian optimization / successive halving** (e.g. Optuna, Hyperband) — use earlier results to decide what to try next, or stop bad runs early.
+      { type: 'text', title: 'Searching for good hyperparameters', md: `- **Grid search**: try every combination from lists of values (λ ∈ {0.01, 0.1, 1, 10} × depth ∈ {3, 5, 7}). Simple, exhaustive, explodes combinatorially.
+- **Random search**: sample combinations at random. With the same budget it usually beats grid search, because only a few hyperparameters really matter and random sampling tries more distinct values of each.
+- **Bayesian optimization / successive halving** (e.g. Optuna, Hyperband): use earlier results to decide what to try next, or stop bad runs early.
 
 Search on a **log scale** for things like learning rates and λ (1e-4 … 1).
 
@@ -430,6 +433,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 
 X, y = load_iris(return_X_y=True)
+print("X: 150 flowers x 4 measurements in cm (sepal length, sepal width, petal length, petal width). One flower of each species:")
+for row, label in zip(X[::50], y[::50]):
+    print("  ", row.tolist(), "->", label)
 X_trainval, X_test, y_trainval, y_test = train_test_split(X, y, random_state=0)                 # test set: locked away
 X_train, X_valid, y_train, y_valid = train_test_split(X_trainval, y_trainval, random_state=1)   # train + validation
 print(f"train {len(X_train)}   validation {len(X_valid)}   test {len(X_test)}")
@@ -504,18 +510,18 @@ param_grid = {"C": [0.001, 0.01, 0.1, 1, 10, 100], "gamma": [0.001, 0.01, 0.1, 1
 scores = cross_val_score(GridSearchCV(SVC(), param_grid, cv=5), X, y, cv=5)   # 5 outer x 36 x 5 inner fits
 print("outer-fold accuracies:", scores.round(3))
 print(f"mean {scores.mean():.3f} +/- {scores.std():.3f}")`, after: `Nested cross-validation does not produce a model; it answers "how well does *this whole procedure* (an SVM tuned by this grid search) generalize?" It is expensive (here 900 fits), so it is mostly used to compare procedures or to report a trustworthy number on small datasets.` },
-      { type: 'check', question: { type: 'tf', q: 'It is fine to try 50 hyperparameter settings, pick the one with the best test-set score, and report that score.', answer: false, explain: 'Choosing by test score makes that score optimistically biased — the test set has effectively been used for training decisions.' } },
-      { type: 'text', title: 'Going further: choosing the right split', md: `- **Stratified k-fold** keeps the class proportions in every fold — the default for classification.
-- **Group k-fold**: when examples come in groups — several scans of one patient, many sessions of one user — keep each group inside a single fold, or the model is tested on people it has already seen.
+      { type: 'check', question: { type: 'tf', q: 'It is fine to try 50 hyperparameter settings, pick the one with the best test-set score, and report that score.', answer: false, explain: 'Choosing by test score makes that score optimistically biased: the test set has effectively been used for training decisions.' } },
+      { type: 'text', title: 'Going further: choosing the right split', md: `- **Stratified k-fold** keeps the class proportions in every fold: the default for classification.
+- **Group k-fold**: when examples come in groups (several scans of one patient, many sessions of one user) keep each group inside a single fold, or the model is tested on people it has already seen.
 - **Time-ordered splits**: train on the past and validate on the future (see *Time Series & Forecasting*).
 - **Nested cross-validation**: an inner loop tunes the hyperparameters, an outer loop measures how well the whole tuning procedure generalizes.
 - **Repeated k-fold** averages several random splits to steady the estimate on small datasets; leave-one-out (k = n) is costly and noisy, so 5 or 10 folds are the usual compromise.
-- **Report the spread**: give the mean and the standard deviation across folds — two models whose difference is smaller than that spread are not reliably different.` }
+- **Report the spread**: give the mean and the standard deviation across folds (two models whose difference is smaller than that spread are not reliably different).` }
     ],
     when: `- **k-fold CV** for small to medium datasets and fast models; **single validation split** for large datasets or expensive models (deep learning).
 - **Stratified** folds for classification, **group** folds for related examples, **time-series** splits for temporal data.
 - **Random search** (or smarter tuners) when there are more than two or three hyperparameters.`,
-    pitfalls: `- Preprocessing (scaling, imputation, feature selection) fitted on all data before CV — must happen inside each fold (use pipelines).
+    pitfalls: `- Preprocessing (scaling, imputation, feature selection) fitted on all data before CV: must happen inside each fold (use pipelines).
 - Shuffled CV on time series.
 - Tuning against the test set.
 - Over-interpreting tiny CV differences smaller than the standard deviation across folds.
@@ -638,7 +644,7 @@ def best_lambda(X, y, lambdas, k=5, seed=0):
     return best
 `,
         hints: ['Compute the folds once, outside the λ loop, so every λ is judged on identical splits.', 'Average the k validation MSEs per λ and keep the smallest (strict `<` keeps the earlier λ on ties).'],
-        explain: `Using the same folds for every candidate makes the comparison fair — differences come from λ, not from which examples landed where. This loop is exactly what \`GridSearchCV\` automates (plus parallelism and refitting the winner on all data).`,
+        explain: `Using the same folds for every candidate makes the comparison fair: differences come from λ, not from which examples landed where. This loop is exactly what \`GridSearchCV\` automates (plus parallelism and refitting the winner on all data).`,
         tests: [
           { name: 'noisy, many features: some regularization wins', setup: 'rng = np.random.default_rng(0)\nX = rng.normal(size=(40, 15))\ny = X[:, 0] - X[:, 1] + rng.normal(0, 1.0, 40)', call: 'best_lambda(X, y, [0.0, 1.0, 10.0, 100.0, 1000.0])' },
           { name: 'clean data: little regularization wins', setup: 'rng = np.random.default_rng(1)\nX = rng.normal(size=(100, 3))\ny = X @ np.array([3.0, -2.0, 1.0]) + rng.normal(0, 0.05, 100)', call: 'best_lambda(X, y, [0.0, 10.0, 100.0])', expect: '0.0' },
@@ -647,9 +653,9 @@ def best_lambda(X, y, lambdas, k=5, seed=0):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Cross-validation: evaluating estimator performance', url: 'https://scikit-learn.org/stable/modules/cross_validation.html' },
-      { title: 'Bergstra & Bengio — Random Search for Hyper-Parameter Optimization (2012)', url: 'https://www.jmlr.org/papers/v13/bergstra12a.html' },
-      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
+      { title: 'scikit-learn, Cross-validation: evaluating estimator performance', url: 'https://scikit-learn.org/stable/modules/cross_validation.html' },
+      { title: 'Bergstra & Bengio, Random Search for Hyper-Parameter Optimization (2012)', url: 'https://www.jmlr.org/papers/v13/bergstra12a.html' },
+      { title: "Andreas Müller & Sarah Guido, Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 
@@ -658,7 +664,7 @@ def best_lambda(X, y, lambdas, k=5, seed=0):
     id: 'knn', branch: 'ml', title: 'k-Nearest Neighbours', short: 'k-Nearest Neighbours', level: 1, minutes: 30, prereqs: ['supervised-learning', 'numpy'],
     tags: ['knn', 'distance', 'lazy learning', 'curse of dimensionality', 'nearest neighbor search'],
     summary: 'Predict by looking at the most similar training examples: distances, choosing k, feature scaling, and the curse of dimensionality.',
-    why: `k-nearest neighbours (kNN) is the most intuitive learning algorithm there is — "you are like your closest neighbours" — and it needs no training at all. It is a strong baseline, works for classification and regression, and makes the importance of **distance** and **feature scaling** impossible to ignore. The same nearest-neighbour search, scaled to billions of vectors, powers semantic search, recommendation engines and retrieval-augmented generation (RAG) for LLMs.`,
+    why: `k-nearest neighbours (kNN) is the most intuitive learning algorithm there is ("you are like your closest neighbours") and it needs no training at all. It is a strong baseline, works for classification and regression, and makes the importance of **distance** and **feature scaling** impossible to ignore. The same nearest-neighbour search, scaled to billions of vectors, powers semantic search, recommendation engines and retrieval-augmented generation (RAG) for LLMs.`,
     objectives: [
       'Describe the kNN algorithm for classification and regression',
       'Choose a distance metric and explain why feature scaling matters',
@@ -675,11 +681,11 @@ def best_lambda(X, y, lambdas, k=5, seed=0):
 It is called a **lazy** or **instance-based** learner: the "model" *is* the data.
 
 Common distances:
-- **Euclidean** √Σ(aᵢ − bᵢ)² — the default.
-- **Manhattan** Σ|aᵢ − bᵢ| — city blocks; more robust to single large differences.
-- **Cosine distance** 1 − cos_sim — for text and embedding vectors where direction matters.` },
+- **Euclidean** √Σ(aᵢ − bᵢ)²: the default.
+- **Manhattan** Σ|aᵢ − bᵢ|: city blocks; more robust to single large differences.
+- **Cosine distance** 1 − cos_sim, for text and embedding vectors where direction matters.` },
       { type: 'demo', title: 'Interactive: choosing k', md: `Move the slider: small k gives jagged boundaries that chase individual noisy points (low bias, high variance); large k gives smooth boundaries (higher bias, lower variance). Click to add points.`, demo: 'knn' },
-      { type: 'text', title: 'Scaling is not optional', md: `Distances add up differences across features. If one feature is "income in euros" (differences of thousands) and another is "number of children" (differences of 1–3), the income completely dominates — the model effectively ignores the children feature.
+      { type: 'text', title: 'Scaling is not optional', md: `Distances add up differences across features. If one feature is "income in euros" (differences of thousands) and another is "number of children" (differences of 1–3), the income completely dominates: the model effectively ignores the children feature.
 
 **Always standardize features before kNN** (fit the scaler on training data). Similarly, irrelevant features add noise to every distance; feature selection helps kNN more than most models.` },
       { type: 'code', title: 'kNN from scratch (and why scaling matters)', code: `
@@ -709,6 +715,9 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 
 X, y = load_breast_cancer(return_X_y=True)
+print(f"X: {X.shape[0]} tumours x {X.shape[1]} measurements. The first 3 rows (first 5 columns) and labels (0 = malignant, 1 = benign):")
+for row, label in zip(X[:3], y[:3]):
+    print("  ", row[:5].round(2).tolist(), "->", label)
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=66)
 scaler = StandardScaler().fit(X_train)            # learn the scaling on the training data only
 X_train, X_test = scaler.transform(X_train), scaler.transform(X_test)
@@ -744,19 +753,19 @@ In practice k-NN is mostly used as a quick, honest baseline and as a building bl
       { type: 'check', question: { type: 'mcq', q: 'In kNN, what happens as k becomes very large (close to the number of training examples)?', options: ['The model overfits more', 'Predictions approach the overall majority class / mean (underfitting)', 'Training becomes slower', 'Distances become more accurate'], answer: 1, explain: 'With k ≈ n every prediction averages almost the whole dataset, ignoring the local structure: high bias.' } },
       { type: 'text', title: 'The curse of dimensionality and the cost of prediction', md: `In high dimensions, intuition about "nearby" breaks down. With hundreds of features, data points become sparse and **distances concentrate**: the nearest and farthest neighbours are almost equally far away, so "nearest" carries little information. To keep the same density of points, the data needed grows exponentially with the number of dimensions. Remedies: feature selection, dimensionality reduction (PCA), or learned representations (embeddings) where distances are meaningful.
 
-**Cost:** prediction compares the query with every training example — O(n·d) per query. For millions of examples, systems use **approximate nearest-neighbour** indexes (HNSW graphs, IVF, product quantization) that trade a little accuracy for enormous speed. Those indexes are what "vector databases" are made of, and they are a core part of RAG systems.` },
+**Cost:** prediction compares the query with every training example, O(n·d) per query. For millions of examples, systems use **approximate nearest-neighbour** indexes (HNSW graphs, IVF, product quantization) that trade a little accuracy for enormous speed. Those indexes are what "vector databases" are made of, and they are a core part of RAG systems.` },
       { type: 'check', question: { type: 'tf', q: 'kNN has an expensive training phase and a cheap prediction phase.', answer: false, explain: 'The reverse: training just stores the data; prediction must search it.' } },
       { type: 'text', title: 'Going further: weights, regression and speed', md: `- **Distance-weighted votes**: closer neighbours count more (for example with weight 1/distance), which makes the result less sensitive to the exact choice of k.
-- **kNN regression**: predict the average — or the distance-weighted average — of the neighbours' target values.
+- **kNN regression**: predict the average (or the distance-weighted average) of the neighbours' target values.
 - **Choosing k and the distance** by cross-validation: a small k gives jagged, high-variance boundaries; a large k smooths them but blurs real structure. An odd k avoids ties in two-class problems. Euclidean distance suits scaled numeric features, cosine similarity suits text and embeddings.
 - **Speed**: brute force costs about n · d operations per query. KD-trees and ball trees speed this up in low dimensions; for embeddings with hundreds of dimensions, approximate nearest-neighbour indexes take over (see *Vector Search*).
 - **The idea lives on**: retrieval in RAG, "customers like you" recommendations and few-shot classification on embeddings are all nearest-neighbour methods.` }
     ],
     when: `- **Good for**: small to medium datasets with a meaningful distance (after scaling), low-to-moderate dimensionality, quick baselines, and problems where similar inputs truly have similar outputs.
-- **Similarity search** over learned embeddings (images, text, products) — kNN is the retrieval step of RAG and recommendations.
+- **Similarity search** over learned embeddings (images, text, products): kNN is the retrieval step of RAG and recommendations.
 - **Avoid** for very high-dimensional raw features, huge datasets without an ANN index, or when you need fast predictions on modest hardware.`,
     pitfalls: `- Forgetting to scale features.
-- Even k for binary classification causes ties — prefer odd k (or weight votes by distance).
+- Even k for binary classification causes ties: prefer odd k (or weight votes by distance).
 - Irrelevant features silently destroy performance.
 - Leaving the test point inside the training set during evaluation (distance 0 to itself).
 - Slow predictions at scale without an index.`,
@@ -768,7 +777,7 @@ In practice k-NN is mostly used as a quick, honest baseline and as a building bl
       'Large-scale nearest-neighbour search (vector databases) powers RAG and recommendations.'
     ],
     quiz: [
-      { type: 'mcq', q: 'kNN with k = 1 achieves 100% training accuracy. Why is that not impressive?', options: ['Because k = 1 is always optimal', 'Each training point\'s nearest neighbour is itself — it memorised the data', 'Because accuracy is the wrong metric', 'Because distances were not scaled'], answer: 1, explain: 'Evaluate on held-out data; 1-NN memorises and is very sensitive to noise.' },
+      { type: 'mcq', q: 'kNN with k = 1 achieves 100% training accuracy. Why is that not impressive?', options: ['Because k = 1 is always optimal', 'Each training point\'s nearest neighbour is itself: it memorised the data', 'Because accuracy is the wrong metric', 'Because distances were not scaled'], answer: 1, explain: 'Evaluate on held-out data; 1-NN memorises and is very sensitive to noise.' },
       { type: 'mcq', q: 'Why prefer an odd k for binary classification?', options: ['It is faster', 'It avoids tied votes', 'It reduces the dimensionality', 'Even k is not allowed'], answer: 1, explain: 'With two classes and odd k, the vote cannot tie.' },
       { type: 'tf', q: 'For kNN regression, the prediction is typically the average target of the k nearest neighbours.', answer: true, explain: 'Optionally weighted by inverse distance.' },
       { type: 'mcq', q: 'What is the main problem with kNN on 1,000 raw features?', options: ['It cannot compute distances in 1,000 dimensions', 'Distances become nearly equal, so neighbours carry little information', 'It needs a GPU', 'It always underfits'], answer: 1, explain: 'This is the curse of dimensionality: distances concentrate.' },
@@ -783,7 +792,7 @@ In practice k-NN is mostly used as a quick, honest baseline and as a building bl
 
 For each test row:
 1. compute the Euclidean distance to every training row;
-2. take the indices of the k smallest distances — use \`np.argsort(d, kind="stable")[:k]\` so equal distances keep training order;
+2. take the indices of the k smallest distances: use \`np.argsort(d, kind="stable")[:k]\` so equal distances keep training order;
 3. return the most common label among those k neighbours; if labels tie, return the **smallest** tied label.
 
 Return a NumPy array of predictions.
@@ -821,7 +830,7 @@ def knn_predict(X_train, y_train, X_test, k):
     return np.array(preds)
 `,
         hints: ['`np.linalg.norm(X_train - x, axis=1)` gives the distance from x to every training row.', '`np.unique(labels, return_counts=True)` returns sorted labels, so `argmax(counts)` breaks ties toward the smallest.'],
-        explain: `The loop handles one query at a time: compute distances, sort, vote. Sorted labels from \`np.unique\` plus \`argmax\` (first maximum) gives deterministic tie-breaking. A fully vectorized version computes the whole (n_test, n_train) distance matrix at once, as in the lesson — faster, but memory grows with n_test × n_train.`,
+        explain: `The loop handles one query at a time: compute distances, sort, vote. Sorted labels from \`np.unique\` plus \`argmax\` (first maximum) gives deterministic tie-breaking. A fully vectorized version computes the whole (n_test, n_train) distance matrix at once, as in the lesson: faster, but memory grows with n_test × n_train.`,
         tests: [
           { call: 'knn_predict([[0], [1], [2], [10], [11]], [0, 0, 0, 1, 1], [[1.5], [10.5]], 3)', expect: 'np.array([0, 1])' },
           { name: 'k = 1', call: 'knn_predict([[0, 0], [5, 5]], ["a", "b"], [[1, 1], [4, 4], [6, 5]], 1)', expect: 'np.array(["a", "b", "b"])' },
@@ -868,9 +877,9 @@ def knn_regress(X_train, y_train, X_test, k):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Nearest Neighbors', url: 'https://scikit-learn.org/stable/modules/neighbors.html' },
-      { title: "Stanford CS231n — Image classification and nearest neighbours", url: "https://cs231n.github.io/classification/" },
-      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
+      { title: 'scikit-learn, Nearest Neighbors', url: 'https://scikit-learn.org/stable/modules/neighbors.html' },
+      { title: "Stanford CS231n, Image classification and nearest neighbours", url: "https://cs231n.github.io/classification/" },
+      { title: "Andreas Müller & Sarah Guido, Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 
@@ -879,7 +888,7 @@ def knn_regress(X_train, y_train, X_test, k):
     id: 'decision-trees', branch: 'ml', title: 'Decision Trees', level: 2, minutes: 40, prereqs: ['supervised-learning', 'information-theory'],
     tags: ['tree', 'gini', 'entropy', 'information gain', 'cart', 'pruning'],
     summary: 'A flowchart of yes/no questions learned from data: how trees choose splits with Gini impurity or entropy, how they overfit, and why they are the foundation of the strongest tabular models.',
-    why: `Decision trees are among the most interpretable models — you can print one and follow its reasoning — and they handle mixed feature types, non-linear interactions and unscaled data with no fuss. On their own they overfit easily, but combined into **random forests** and **gradient-boosted trees** (XGBoost, LightGBM) they are still the state of the art for spreadsheet-style tabular data, often beating deep learning there. Understanding how a single tree picks its splits is the key to all of them.`,
+    why: `Decision trees are among the most interpretable models (you can print one and follow its reasoning) and they handle mixed feature types, non-linear interactions and unscaled data with no fuss. On their own they overfit easily, but combined into **random forests** and **gradient-boosted trees** (XGBoost, LightGBM) they are still the state of the art for spreadsheet-style tabular data, often beating deep learning there. Understanding how a single tree picks its splits is the key to all of them.`,
     objectives: [
       'Explain how a decision tree makes predictions',
       'Compute Gini impurity and entropy and the information gain of a split',
@@ -905,7 +914,7 @@ def knn_regress(X_train, y_train, X_test, k):
 - To predict, start at the root and follow the answers down to a leaf.
 
 The boundaries are **axis-aligned**: each split cuts the feature space with a horizontal or vertical line (in 2-D), producing rectangular regions.` },
-      { type: 'text', title: 'Measuring impurity', md: `A good split produces children that are **purer** — more dominated by a single class — than the parent. Two standard impurity measures for a node whose class proportions are p₁, …, p_K:
+      { type: 'text', title: 'Measuring impurity', md: `A good split produces children that are **purer** (more dominated by a single class) than the parent. Two standard impurity measures for a node whose class proportions are p₁, …, p_K:
 
 $$ Gini = 1 − Σ p_k²          Entropy = − Σ p_k log₂ p_k $$
 :::where
@@ -951,6 +960,9 @@ from sklearn.tree import DecisionTreeClassifier, export_text
 iris = load_iris()
 X = iris.data[:, 2:]                     # petal length and petal width only
 y = iris.target
+print("petal length and width (cm) of one flower of each species:")
+for row, label in zip(X[::50], y[::50]):
+    print("  ", row.tolist(), "->", iris.target_names[label])
 tree = DecisionTreeClassifier(max_depth=2, random_state=42).fit(X, y)
 print(export_text(tree, feature_names=["petal length", "petal width"], show_weights=True))
 
@@ -997,6 +1009,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 
 X, y = make_moons(n_samples=300, noise=0.3, random_state=0)
+print(f"X: {X.shape[0]} points with 2 coordinates; y says which moon (0 or 1). The first 3:")
+for row, label in zip(X[:3], y[:3]):
+    print("  ", row.round(2).tolist(), "->", label)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 settings = [{}, {"max_depth": 4}, {"min_samples_leaf": 5}, {"max_leaf_nodes": 8}, {"ccp_alpha": 0.01}]
 for kw in settings:
@@ -1038,14 +1053,14 @@ print("tree prediction is flat beyond the training data:", np.exp(tree.predict([
 2. Apply the best split.
 3. Recurse on each child until a stopping rule triggers.
 
-Grown without limits, a tree keeps splitting until every leaf is pure — memorising the training data, noise included. Controls (hyperparameters):
-- \`max_depth\` — limit the number of questions in a row;
-- \`min_samples_leaf\` / \`min_samples_split\` — don't create tiny leaves;
+Grown without limits, a tree keeps splitting until every leaf is pure: memorising the training data, noise included. Controls (hyperparameters):
+- \`max_depth\`: limit the number of questions in a row;
+- \`min_samples_leaf\` / \`min_samples_split\`: don't create tiny leaves;
 - \`max_leaf_nodes\`;
-- **cost-complexity pruning** (\`ccp_alpha\`) — grow fully, then cut back branches that don't pay for their complexity.
+- **cost-complexity pruning** (\`ccp_alpha\`): grow fully, then cut back branches that don't pay for their complexity.
 
 Even well-tuned single trees are **unstable**: a small change in the data can change the top split and therefore the whole tree. That high variance is exactly what ensembles average away.` },
-      { type: 'code', title: 'A tree in scikit-learn', md: `\`export_text\` prints the learned rules — interpretability for free.`, code: `
+      { type: 'code', title: 'A tree in scikit-learn', md: `\`export_text\` prints the learned rules: interpretability for free.`, code: `
 from sklearn.datasets import load_iris
 from sklearn.tree import DecisionTreeClassifier, export_text
 from sklearn.model_selection import train_test_split
@@ -1065,9 +1080,9 @@ print(export_text(DecisionTreeClassifier(max_depth=2, random_state=0).fit(X_tr, 
     when: `- When you need an **interpretable** model or explicit rules.
 - Mixed numeric/categorical features, missing values (in many implementations), non-linear interactions, no scaling needed.
 - As the building block of **random forests** and **gradient boosting**, which are usually what you actually deploy on tabular data.
-- Avoid a single deep tree when accuracy matters — use an ensemble.`,
+- Avoid a single deep tree when accuracy matters: use an ensemble.`,
     pitfalls: `- Unlimited depth → memorisation (overfitting).
-- Instability — small data changes produce very different trees; don't over-interpret one tree's structure.
+- Instability: small data changes produce very different trees; don't over-interpret one tree's structure.
 - Axis-aligned splits approximate diagonal boundaries with staircases.
 - Impurity-based feature importances are biased toward features with many unique values; prefer permutation importance.`,
     takeaways: [
@@ -1194,9 +1209,9 @@ def best_split(x, y):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Decision Trees', url: 'https://scikit-learn.org/stable/modules/tree.html' },
-      { title: 'R2D3 — A visual introduction to machine learning', url: 'http://www.r2d3.us/visual-intro-to-machine-learning-part-1/' },
-      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
+      { title: 'scikit-learn, Decision Trees', url: 'https://scikit-learn.org/stable/modules/tree.html' },
+      { title: 'R2D3, A visual introduction to machine learning', url: 'http://www.r2d3.us/visual-intro-to-machine-learning-part-1/' },
+      { title: "Andreas Müller & Sarah Guido, Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 
@@ -1205,7 +1220,7 @@ def best_split(x, y):
     id: 'ensembles', branch: 'ml', title: 'Ensembles: Random Forests & Gradient Boosting', short: 'Ensembles & Boosting', level: 2, minutes: 45, prereqs: ['decision-trees', 'overfitting'],
     tags: ['random forest', 'bagging', 'boosting', 'gradient boosting', 'xgboost', 'lightgbm'],
     summary: 'Many weak models beat one strong one: bagging and random forests reduce variance; boosting builds models that fix each other\'s mistakes. The best tools for tabular data.',
-    why: `For structured, spreadsheet-like data — customer records, transactions, sensor logs — **gradient-boosted trees** (XGBoost, LightGBM, CatBoost) and **random forests** remain the strongest practical models, regularly winning competitions and powering production systems in finance, retail and logistics. They need little preprocessing, handle non-linear interactions, and are robust. The ideas behind them — averaging to cut variance, and sequentially correcting errors — reappear throughout ML (dropout, model averaging, residual connections).`,
+    why: `For structured, spreadsheet-like data (customer records, transactions, sensor logs) **gradient-boosted trees** (XGBoost, LightGBM, CatBoost) and **random forests** remain the strongest practical models, regularly winning competitions and powering production systems in finance, retail and logistics. They need little preprocessing, handle non-linear interactions, and are robust. The ideas behind them (averaging to cut variance, and sequentially correcting errors) reappear throughout ML (dropout, model averaging, residual connections).`,
     objectives: [
       'Explain why averaging many models reduces variance',
       'Describe bagging, bootstrap samples, random forests and out-of-bag error',
@@ -1213,7 +1228,7 @@ def best_split(x, y):
       'Choose between random forests and gradient boosting and tune their key knobs'
     ],
     sections: [
-      { type: 'text', title: 'The wisdom of crowds', md: `Average the guesses of many people at the weight of an ox and the average is often closer than nearly any individual guess — *if* their errors are independent. The same holds for models: averaging B models whose errors are uncorrelated divides the variance by B.
+      { type: 'text', title: 'The wisdom of crowds', md: `Average the guesses of many people at the weight of an ox and the average is often closer than nearly any individual guess, *if* their errors are independent. The same holds for models: averaging B models whose errors are uncorrelated divides the variance by B.
 
 Two ensemble families exploit this differently:
 - **Bagging** trains many models **in parallel** on random variations of the data and averages them → reduces **variance**. (Best with low-bias, high-variance models like deep trees.)
@@ -1223,7 +1238,7 @@ Two ensemble families exploit this differently:
 2. Train a model (typically a deep, unpruned tree) on it.
 3. Repeat B times; predict by majority vote (classification) or averaging (regression).
 
-**Random forests** add one twist: at each split, a tree may only consider a **random subset of features** (e.g. √d of them). This *decorrelates* the trees — otherwise every tree would split on the same dominant feature first — and decorrelated errors average out much better.
+**Random forests** add one twist: at each split, a tree may only consider a **random subset of features** (e.g. √d of them). This *decorrelates* the trees (otherwise every tree would split on the same dominant feature first) and decorrelated errors average out much better.
 
 A free bonus: each tree never saw ~37% of examples (**out-of-bag** examples), so evaluating each example only with the trees that didn't train on it gives a built-in validation estimate (OOB score).
 
@@ -1253,14 +1268,14 @@ print("error of the bagged average:   ", round(float(np.mean((bagged - truth) **
 
 1. Start with a constant prediction F₀(x) = mean(y).
 2. For m = 1 … M:
-   - compute the **residuals** rᵢ = yᵢ − F_{m−1}(xᵢ) — what is still unexplained;
+   - compute the **residuals** rᵢ = yᵢ − F_{m−1}(xᵢ): what is still unexplained;
    - fit a small tree h_m (depth 1–6) to predict those residuals;
    - update F_m(x) = F_{m−1}(x) + η · h_m(x), with a small **learning rate** η (e.g. 0.05–0.1).
 
 Why "gradient"? The residuals are exactly the negative gradient of the squared-error loss with respect to the predictions. Gradient boosting is **gradient descent in function space**: each tree is a step downhill, and other losses (log loss for classification, quantile loss, ranking losses) simply use their own gradients as targets.
 
 Key hyperparameters: number of trees M, learning rate η (smaller needs more trees but generalizes better), tree depth, subsampling of rows/columns, and **early stopping** on validation loss. Modern libraries (XGBoost, LightGBM, CatBoost) add regularization, clever split finding and native categorical handling.` },
-      { type: 'check', question: { type: 'mcq', q: 'In gradient boosting with squared-error loss, what does each new tree try to predict?', options: ['The original targets y', 'The residuals of the current ensemble', 'A random subset of labels', 'The feature importances'], answer: 1, explain: 'Each tree fits what the ensemble still gets wrong — the residuals, i.e. the negative gradient.' } },
+      { type: 'check', question: { type: 'mcq', q: 'In gradient boosting with squared-error loss, what does each new tree try to predict?', options: ['The original targets y', 'The residuals of the current ensemble', 'A random subset of labels', 'The feature importances'], answer: 1, explain: 'Each tree fits what the ensemble still gets wrong: the residuals, i.e. the negative gradient.' } },
       { type: 'code', title: 'Random forest vs gradient boosting in scikit-learn', timeoutSec: 90, code: `
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import cross_val_score
@@ -1268,6 +1283,9 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
 
 X, y = load_breast_cancer(return_X_y=True)
+print(f"X: {X.shape[0]} tumours x {X.shape[1]} measurements. The first 3 rows (first 5 columns) and labels (0 = malignant, 1 = benign):")
+for row, label in zip(X[:3], y[:3]):
+    print("  ", row[:5].round(2).tolist(), "->", label)
 models = {
     "single tree": DecisionTreeClassifier(random_state=0),
     "random forest": RandomForestClassifier(n_estimators=200, random_state=0),
@@ -1328,7 +1346,7 @@ For large datasets use \`HistGradientBoostingClassifier\`, which bins the featur
 - **Prefer neural networks** for images, audio, text, and very large unstructured datasets.`,
     pitfalls: `- Boosting with too many trees and no early stopping overfits.
 - A high learning rate in boosting needs fewer trees but generalizes worse.
-- Interpreting impurity-based feature importance as causal — use permutation importance or SHAP, and still be careful.
+- Interpreting impurity-based feature importance as causal: use permutation importance or SHAP, and still be careful.
 - Large forests are slow to predict and big to store.
 - Extrapolation: tree ensembles predict constants outside the training range.`,
     takeaways: [
@@ -1459,7 +1477,7 @@ def predict_boosting(f0, stumps, x_new, lr=0.1):
     return out
 `,
         hints: ['A stump\'s best leaf values are just the means of the residuals on each side.', 'Compare stumps by the sum of squared errors of residuals around those means.', 'Keep F as an array and add `lr * np.where(x <= t, left, right)` each round.'],
-        explain: `Each round fits the current residuals — the negative gradient of the squared error — with the best one-split function, then takes a small step (lr) in that direction. With many rounds, the sum of stumps approximates any 1-D curve as a staircase. Real gradient boosting uses deeper trees (capturing interactions), row/column subsampling and early stopping, but the loop is the same.`,
+        explain: `Each round fits the current residuals (the negative gradient of the squared error) with the best one-split function, then takes a small step (lr) in that direction. With many rounds, the sum of stumps approximates any 1-D curve as a staircase. Real gradient boosting uses deeper trees (capturing interactions), row/column subsampling and early stopping, but the loop is the same.`,
         tests: [
           { name: 'first stump on a step function', call: 'fit_stump(np.array([1.0, 2.0, 3.0, 4.0]), np.array([-1.0, -1.0, 1.0, 1.0]))', expect: '(2.5, -1.0, 1.0)' },
           { name: 'two rounds, exact', call: 'fit_boosting([1.0, 2.0, 3.0, 4.0], [1.0, 1.0, 3.0, 5.0], n_rounds=2, lr=0.5)' },
@@ -1469,9 +1487,9 @@ def predict_boosting(f0, stumps, x_new, lr=0.1):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Ensemble methods', url: 'https://scikit-learn.org/stable/modules/ensemble.html' },
-      { title: 'XGBoost — Introduction to boosted trees', url: 'https://xgboost.readthedocs.io/en/stable/tutorials/model.html' },
-      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
+      { title: 'scikit-learn, Ensemble methods', url: 'https://scikit-learn.org/stable/modules/ensemble.html' },
+      { title: 'XGBoost, Introduction to boosted trees', url: 'https://xgboost.readthedocs.io/en/stable/tutorials/model.html' },
+      { title: "Andreas Müller & Sarah Guido, Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   }
   ]);

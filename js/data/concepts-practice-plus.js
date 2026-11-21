@@ -7,7 +7,7 @@
   {
     id: 'calibration-uncertainty', branch: 'ml', title: 'Calibration, Uncertainty & Conformal Prediction', short: 'Calibration & Uncertainty', level: 3, minutes: 45, prereqs: ['evaluation-metrics', 'logistic-regression'],
     tags: ['calibration', 'reliability diagram', 'expected calibration error', 'ece', 'temperature scaling', 'platt scaling', 'isotonic regression', 'uncertainty', 'aleatoric', 'epistemic', 'deep ensembles', 'mc dropout', 'conformal prediction', 'prediction sets', 'coverage'],
-    summary: 'Can you trust a model\'s probabilities? Calibration and reliability diagrams, the expected calibration error, fixing overconfidence with temperature, Platt or isotonic scaling, aleatoric versus epistemic uncertainty and how ensembles estimate it, and conformal prediction — prediction sets and intervals with a guaranteed coverage rate for any model.',
+    summary: 'Can you trust a model\'s probabilities? Calibration and reliability diagrams, the expected calibration error, fixing overconfidence with temperature, Platt or isotonic scaling, aleatoric versus epistemic uncertainty and how ensembles estimate it, and conformal prediction: prediction sets and intervals with a guaranteed coverage rate for any model.',
     why: `A prediction is only useful for decisions if you know how much to trust it. A fraud model that says "90%" should be right about 90% of the time; a medical model should say "I don't know" for inputs unlike anything it has seen; an LLM application should know when to hand over to a human. Modern networks are often **overconfident**, so their raw probabilities mislead. This lesson shows how to measure that, fix it cheaply, separate the different kinds of uncertainty, and wrap any model in **conformal prediction** to get answers that come with a guaranteed error rate.`,
     objectives: [
       'Explain calibration and measure it with a reliability table and the expected calibration error',
@@ -73,9 +73,9 @@ z — the model's logits for one example
 T — the temperature, a single number fitted on held-out data; T > 1 softens overconfident predictions
 :::
 
-  Because dividing by T never changes which logit is largest, predictions and accuracy stay exactly the same — only the confidence changes. It is the standard first fix for neural networks.
+  Because dividing by T never changes which logit is largest, predictions and accuracy stay exactly the same, only the confidence changes. It is the standard first fix for neural networks.
 - **Platt scaling** fits a logistic regression σ(a·s + b) on the score s of a binary classifier (classically for SVMs).
-- **Isotonic regression** fits any increasing step function from score to probability — more flexible, but it needs more calibration data.` },
+- **Isotonic regression** fits any increasing step function from score to probability: more flexible, but it needs more calibration data.` },
       { type: 'code', title: 'Temperature scaling fixes it with one number', code: `
 import numpy as np
 rng = np.random.default_rng(0)                         # the same overconfident model as above
@@ -143,10 +143,10 @@ for name, P in [("original", softmax(model_logits)), (f"T = {best_T:.2f}", softm
     print(f"{name:<9}  accuracy {a:.3f}   Brier {b:.3f}   log loss {l:.3f}")
 acc = [v[0] for v in results.values()]
 print("accuracy unchanged:", acc[0] == acc[1])`, after: `Same accuracy, but a clearly better Brier score and a much better log loss: the original model's confident mistakes were costing it dearly. Proper scoring rules see the difference that accuracy cannot.`, predict: {"type":"mcq","q":"Temperature scaling divides every logit by the same T. Which of these will change?","options":["Only the accuracy","Only the Brier score and the log loss","All three","None of them"],"answer":1,"explain":"Dividing all logits by a positive T never changes which class has the largest logit, so the predictions and the accuracy stay the same; the probabilities, and therefore the scores, change.","expect":["accuracy unchanged: True"]} },
-      { type: 'text', title: 'Two kinds of uncertainty', md: `- **Aleatoric** uncertainty is noise in the data itself — a blurry photo, an ambiguous question, a coin flip. More data does not remove it.
-- **Epistemic** uncertainty is the model's lack of knowledge — inputs unlike anything in the training data. More (relevant) data reduces it, and it is what should make a model say "I don't know" on out-of-distribution inputs.
+      { type: 'text', title: 'Two kinds of uncertainty', md: `- **Aleatoric** uncertainty is noise in the data itself: a blurry photo, an ambiguous question, a coin flip. More data does not remove it.
+- **Epistemic** uncertainty is the model's lack of knowledge: inputs unlike anything in the training data. More (relevant) data reduces it, and it is what should make a model say "I don't know" on out-of-distribution inputs.
 
-Estimating epistemic uncertainty: exact Bayesian methods for small models (see *Bayesian Inference* and *Gaussian Processes*); **deep ensembles** — train several networks from different random initializations and measure how much they disagree (simple and strong); and **MC dropout** — keep dropout active at test time and average several stochastic passes. For an ensemble of M regressors, each predicting a mean and a noise variance, the total predictive variance splits neatly:
+Estimating epistemic uncertainty: exact Bayesian methods for small models (see *Bayesian Inference* and *Gaussian Processes*); **deep ensembles**, train several networks from different random initializations and measure how much they disagree (simple and strong); and **MC dropout** (keep dropout active at test time and average several stochastic passes). For an ensemble of M regressors, each predicting a mean and a noise variance, the total predictive variance splits neatly:
 
 $$ Var[y] ≈ (1/M) Σ_m σ_m²  +  (1/M) Σ_m ( μ_m − μ̄ )² $$
 :::where
@@ -158,7 +158,7 @@ the second term — epistemic, how much the models disagree with each other
 :::` },
       { type: 'text', title: 'Conformal prediction: coverage guarantees for any model', md: `**Split conformal prediction** turns any trained model into one that outputs sets or intervals with a guaranteed hit rate:
 
-1. Hold out a **calibration set** the model has not seen. For each calibration example compute a **nonconformity score** — for regression |y − ŷ|; for classification 1 − p̂(true class).
+1. Hold out a **calibration set** the model has not seen. For each calibration example compute a **nonconformity score**, for regression |y − ŷ|; for classification 1 − p̂(true class).
 2. Take the quantile q of those scores, and output every answer whose score would be at most q:
 
 $$ q = the ⌈(n + 1)(1 − α)⌉-th smallest calibration score          C(x) = { y : score(x, y) ≤ q } $$
@@ -169,7 +169,7 @@ n — the number of calibration examples
 C(x) — the prediction set for a new input x, an interval ŷ ± q in regression, or every class with 1 − p̂(class) ≤ q in classification
 :::
 
-**The guarantee:** if calibration and test examples are exchangeable (for instance i.i.d.), the set contains the true answer with probability at least 1 − α — however good or bad the model is. A bad model simply produces wide intervals or large sets. **The caveat:** the guarantee is *marginal*, an average over all inputs; it does not promise 90% coverage for every subgroup or region. Adaptive scores (for example conformalized quantile regression) produce intervals that widen where the data is noisier, and the guarantee breaks under distribution shift.` },
+**The guarantee:** if calibration and test examples are exchangeable (for instance i.i.d.), the set contains the true answer with probability at least 1 − α (however good or bad the model is). A bad model simply produces wide intervals or large sets. **The caveat:** the guarantee is *marginal*, an average over all inputs; it does not promise 90% coverage for every subgroup or region. Adaptive scores (for example conformalized quantile regression) produce intervals that widen where the data is noisier, and the guarantee breaks under distribution shift.` },
       { type: 'code', title: 'Split conformal intervals for regression', code: `
 import numpy as np
 rng = np.random.default_rng(1)
@@ -201,6 +201,9 @@ from sklearn.model_selection import train_test_split
 
 iris = load_iris()
 names = iris.target_names[iris.target]                 # use the species names as labels
+print("one flower of each species (sepal length, sepal width, petal length, petal width in cm):")
+for row, name in zip(iris.data[::50], names[::50]):
+    print("  ", row.tolist(), "->", name)
 X_train, X_test, y_train, y_test = train_test_split(iris.data, names, random_state=42)
 gbc = GradientBoostingClassifier(learning_rate=0.01, random_state=0).fit(X_train, y_train)
 
@@ -221,15 +224,15 @@ print("predict:                                  ", gbc.predict(X_test[:4]))`, a
 - Combining models or feeding probabilities into downstream systems (they must mean what they say).
 - Safety-critical or regulated settings that need error bars or guaranteed coverage (medicine, finance, autonomous systems).
 - Detecting inputs the model should not be trusted on (out-of-distribution data), using epistemic uncertainty.`,
-    pitfalls: `- Fitting calibration on the training set — use held-out data.
+    pitfalls: `- Fitting calibration on the training set: use held-out data.
 - Reporting ECE alone; it depends on the binning and can be gamed. Pair it with log loss or the Brier score.
-- Assuming calibration transfers to new data distributions — recalibrate after shifts.
+- Assuming calibration transfers to new data distributions: recalibrate after shifts.
 - Reading a conformal guarantee as conditional: 90% on average can mean much less for a hard subgroup.
-- Treating softmax confidence as a measure of epistemic uncertainty — networks can be confidently wrong far from the data.`,
+- Treating softmax confidence as a measure of epistemic uncertainty: networks can be confidently wrong far from the data.`,
     takeaways: [
       'Calibrated means confidence p is right a fraction p of the time; measure with reliability tables and ECE.',
       'Temperature scaling fits one number on held-out data and never changes accuracy.',
-      'Aleatoric uncertainty is noise in the data; epistemic uncertainty is lack of knowledge — ensembles estimate it.',
+      'Aleatoric uncertainty is noise in the data; epistemic uncertainty is lack of knowledge: ensembles estimate it.',
       'Split conformal: the ⌈(n + 1)(1 − α)⌉-th smallest calibration score gives sets with ≥ 1 − α coverage for any model.',
       'Conformal coverage is marginal, not per subgroup, and assumes exchangeable data.'
     ],
@@ -352,7 +355,7 @@ def prediction_sets(probs, q):
     return [[int(c) for c in range(P.shape[1]) if 1 - P[i, c] <= q] for i in range(P.shape[0])]
 `,
         hints: ['Sort the scores and index at rank − 1.', 'The +1 in (n + 1) accounts for the new test point itself.'],
-        explain: `The quantile with the (n + 1) correction is what makes the coverage guarantee exact in finite samples. With too few calibration points for the requested α the honest answer is an infinite interval — "anything is possible".`,
+        explain: `The quantile with the (n + 1) correction is what makes the coverage guarantee exact in finite samples. With too few calibration points for the requested α the honest answer is an infinite interval: "anything is possible".`,
         tests: [
           { call: 'conformal_quantile([0.1, 0.4, 0.2, 0.3], 0.5)', expect: '0.3' },
           { call: 'conformal_quantile([0.5, 0.1], 0.1)', expect: 'float("inf")' },
@@ -363,10 +366,10 @@ def prediction_sets(probs, q):
       }
     ],
     refs: [
-      { title: 'Guo et al. — On Calibration of Modern Neural Networks', url: 'https://arxiv.org/abs/1706.04599' },
-      { title: 'Angelopoulos & Bates — A Gentle Introduction to Conformal Prediction', url: 'https://arxiv.org/abs/2107.07511' },
-      { title: 'Lakshminarayanan et al. — Simple and Scalable Predictive Uncertainty Estimation using Deep Ensembles', url: 'https://arxiv.org/abs/1612.01474' },
-      { title: 'scikit-learn — Probability calibration', url: 'https://scikit-learn.org/stable/modules/calibration.html' }
+      { title: 'Guo et al., On Calibration of Modern Neural Networks', url: 'https://arxiv.org/abs/1706.04599' },
+      { title: 'Angelopoulos & Bates, A Gentle Introduction to Conformal Prediction', url: 'https://arxiv.org/abs/2107.07511' },
+      { title: 'Lakshminarayanan et al., Simple and Scalable Predictive Uncertainty Estimation using Deep Ensembles', url: 'https://arxiv.org/abs/1612.01474' },
+      { title: 'scikit-learn, Probability calibration', url: 'https://scikit-learn.org/stable/modules/calibration.html' }
     ]
   },
 
@@ -375,15 +378,15 @@ def prediction_sets(probs, q):
     id: 'data-centric', branch: 'ml', title: 'Data-Centric ML: Augmentation, Imbalance & Learning with Few Labels', short: 'Data-Centric ML', level: 2, minutes: 45, prereqs: ['evaluation-metrics', 'cross-validation'],
     tags: ['data-centric ai', 'data augmentation', 'mixup', 'class imbalance', 'class weights', 'resampling', 'smote', 'threshold moving', 'label noise', 'semi-supervised learning', 'pseudo-labeling', 'active learning', 'uncertainty sampling', 'weak supervision', 'synthetic data'],
     summary: 'Improving models by improving their data: label-preserving data augmentation and mixup, handling imbalanced classes with weights, resampling and threshold moving, finding noisy labels, and learning with few labels through semi-supervised learning, active learning, weak supervision and synthetic data.',
-    why: `On most real projects the model architecture is a solved problem and the **data** is the bottleneck: too few labels, rare classes, wrong labels, and training data that doesn't cover what the model will see. A data-centric approach holds the model fixed and improves the dataset — and often gains more than any model change. These techniques are everyday tools for practitioners, from image augmentation in every vision pipeline to class weights in fraud detection and active learning when labels cost money.`,
+    why: `On most real projects the model architecture is a solved problem and the **data** is the bottleneck: too few labels, rare classes, wrong labels, and training data that doesn't cover what the model will see. A data-centric approach holds the model fixed and improves the dataset, and often gains more than any model change. These techniques are everyday tools for practitioners, from image augmentation in every vision pipeline to class weights in fraud detection and active learning when labels cost money.`,
     objectives: [
       'Use data augmentation and mixup to teach invariances and regularize models',
-      'Handle class imbalance with class weights, resampling and threshold moving — and evaluate it correctly',
+      'Handle class imbalance with class weights, resampling and threshold moving, and evaluate it correctly',
       'Find likely label errors with out-of-fold predictions',
       'Choose between semi-supervised learning, active learning, weak supervision and synthetic data when labels are scarce'
     ],
     sections: [
-      { type: 'text', title: 'Better data often beats a better model', md: `**Data-centric AI** flips the usual loop: keep the model fixed and iterate on the data. The workflow is error analysis — look at the mistakes, slice the metrics by data source, class, length or region, and find *why* the model fails — followed by targeted fixes: correct wrong labels, add examples of the failing slice, clarify ambiguous labelling guidelines, remove duplicates and leakage. A few hundred carefully chosen or corrected examples routinely help more than a new architecture.` },
+      { type: 'text', title: 'Better data often beats a better model', md: `**Data-centric AI** flips the usual loop: keep the model fixed and iterate on the data. The workflow is error analysis: look at the mistakes, slice the metrics by data source, class, length or region, and find *why* the model fails, followed by targeted fixes: correct wrong labels, add examples of the failing slice, clarify ambiguous labelling guidelines, remove duplicates and leakage. A few hundred carefully chosen or corrected examples routinely help more than a new architecture.` },
       { type: 'text', title: 'Data augmentation', md: `**Augmentation** creates new training examples by transforming existing ones in ways that do not change the label:
 
 - images: flips, crops, small rotations and shifts, colour jitter, blur;
@@ -408,6 +411,9 @@ from sklearn.datasets import load_digits
 from sklearn.neighbors import KNeighborsClassifier
 
 digits = load_digits()
+print(f"{len(digits.images)} images of 8 x 8 grey levels (0 to 16). The first one, a {digits.target[0]}:")
+for row in digits.images[0].astype(int):
+    print("  ", " ".join(f"{v:2d}" for v in row))
 X, y = digits.images / 16.0, digits.target                 # 8 x 8 images of handwritten digits
 rng = np.random.default_rng(0)
 order = rng.permutation(len(X))
@@ -430,7 +436,7 @@ for name, (A, b) in [("original 300 images", (X[train], y[train])), ("with shift
     clf = KNeighborsClassifier(n_neighbors=1).fit(flat(A), b)
     print(f"{name:20s}  accuracy on centred test digits {clf.score(flat(X[test]), y[test]):.3f}   "
           f"on shifted test digits {clf.score(flat(X_test_shifted), y[test]):.3f}")
-`, after: `Nudging the test digits by a single pixel halves the accuracy of the model trained on the originals — nothing told it that position doesn't matter. Training on shifted copies teaches exactly that invariance and restores accuracy on shifted digits without hurting the centred ones. Convolutional networks build part of this invariance into their architecture; augmentation supplies the rest.` },
+`, after: `Nudging the test digits by a single pixel halves the accuracy of the model trained on the originals: nothing told it that position doesn't matter. Training on shifted copies teaches exactly that invariance and restores accuracy on shifted digits without hurting the centred ones. Convolutional networks build part of this invariance into their architecture; augmentation supplies the rest.` },
       { type: 'text', title: 'Imbalanced classes', md: `When one class is rare (fraud, disease, defects), a model can score high accuracy by ignoring it. First fix the **evaluation**: precision, recall, the precision–recall curve and costs, not accuracy. Then the main tools:
 
 - **Class weights** make each mistake on a rare example count more in the loss:
@@ -443,7 +449,7 @@ k — the number of classes
 n_c — the number of examples of class c, so rare classes get large weights
 :::
 
-- **Resampling**: oversample the minority class (repeat examples, or **SMOTE**, which synthesizes new points by interpolating between minority neighbours) or undersample the majority. Resample *only the training folds*, after splitting — never the validation or test data.
+- **Resampling**: oversample the minority class (repeat examples, or **SMOTE**, which synthesizes new points by interpolating between minority neighbours) or undersample the majority. Resample *only the training folds*, after splitting: never the validation or test data.
 - **Threshold moving**: keep the model, but choose the decision threshold on validation data to hit the precision/recall trade-off the application needs.
 - **Focal loss** down-weights easy, well-classified examples so training concentrates on hard ones.` },
       { type: 'code', title: 'Class weights versus moving the threshold', code: `
@@ -453,6 +459,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
 X, y = make_classification(n_samples=20000, n_features=10, n_informative=4, weights=[0.97, 0.03], class_sep=0.8, random_state=0)
+print(f"X: {X.shape[0]} rows x {X.shape[1]} features, {y.mean():.1%} positives. The first 3 rows (first 5 features) and labels:")
+for row, label in zip(X[:3], y[:3]):
+    print("  ", row[:5].round(2).tolist(), "->", label)
 X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.5, random_state=0, stratify=y)
 
 def report(name, pred):
@@ -470,7 +479,7 @@ report("plain, threshold 0.2", (plain.predict_proba(X_te)[:, 1] >= 0.2).astype(i
 report("plain, threshold 0.1", (plain.predict_proba(X_te)[:, 1] >= 0.1).astype(int))
 `, after: `At the default threshold the plain model never predicts the rare class, and its 96.6% accuracy is exactly what always answering "negative" would score. Class weights and lower thresholds both trade precision for recall; they mostly change where the model's ranking is cut, so choose the operating point from the real costs of misses and false alarms.`, predict: {"type":"mcq","q":"Only 3.4% of the test examples are positive. A plain logistic regression with threshold 0.5 reaches 96.6% accuracy. What is its recall on the positive class?","options":["About 97%","About 50%","About 3%","0%"],"answer":3,"explain":"Recall is 0.000: the model predicts \"negative\" for everyone, and that alone earns 96.6% accuracy. On imbalanced data accuracy hides failure, so look at recall and precision.","expect":["plain, threshold 0.5       accuracy 0.966   recall 0.000"]} },
       { type: 'check', question: { type: 'mcq', q: 'When should you oversample the minority class?', options: ['Before splitting into train and test sets', 'Only on the training folds, after splitting', 'Only on the test set', 'On all data, then split'], answer: 1, explain: 'Resampling before splitting leaks copies of training examples into the evaluation data.' } },
-      { type: 'text', title: 'Noisy labels', md: `Labels are wrong more often than people think — even widely used benchmark test sets contain label errors (Northcutt et al., 2021). Noisy labels cap accuracy and corrupt evaluation. To find them:
+      { type: 'text', title: 'Noisy labels', md: `Labels are wrong more often than people think, even widely used benchmark test sets contain label errors (Northcutt et al., 2021). Noisy labels cap accuracy and corrupt evaluation. To find them:
 
 1. Get **out-of-fold** predicted probabilities: with k-fold cross-validation, every example is scored by a model that never saw it.
 2. Flag examples where that model confidently predicts a different class than the label (the idea behind *confident learning*).
@@ -505,11 +514,11 @@ print("expected if we picked 50 at random:      ", 50 * 100 // 2000)
 print("most flagged labels are real errors:", bool(is_wrong[suspects].mean() > 0.6))`, after: `A random sample of 50 would contain about 2 or 3 of the corrupted labels; the 50 labels the out-of-fold model believes least are mostly real errors. Reviewing those first gives a human checker the most value per minute.`, predict: {"type":"mcq","q":"5% of the labels were flipped at random. Among the 50 labels the model finds least believable, roughly how many are real errors?","options":["About 2 or 3, as for a random pick","About 10","Most of them","Always exactly 50"],"answer":2,"explain":"A flipped label usually contradicts everything similar examples say, so a model that never saw it gives it a very low probability.","expect":["most flagged labels are real errors: True"]} },
       { type: 'text', title: 'Learning with few labels', md: `When labelled data is scarce but unlabelled data is plentiful:
 
-- **Transfer learning**: start from a pretrained model, or train a small classifier on embeddings from a foundation model — often the strongest first step.
+- **Transfer learning**: start from a pretrained model, or train a small classifier on embeddings from a foundation model, often the strongest first step.
 - **Semi-supervised learning**: **pseudo-labelling** trains a model, labels the unlabelled examples it is confident about, and retrains on both; **consistency regularization** asks for the same prediction on differently augmented versions of an unlabelled example.
-- **Active learning**: let the model choose which examples a human should label next — typically the ones it is most uncertain about (least confident, smallest margin between the top two classes, or highest entropy).
+- **Active learning**: let the model choose which examples a human should label next, typically the ones it is most uncertain about (least confident, smallest margin between the top two classes, or highest entropy).
 - **Weak supervision**: write several noisy labelling functions (keyword rules, heuristics, existing databases) and combine their votes into training labels.
-- **Synthetic data**: generate examples with simulators or LLMs (paraphrases, new instructions, rare cases). Filter for quality and diversity, and keep real data in the mix — models trained repeatedly on their own outputs degrade ("model collapse").` },
+- **Synthetic data**: generate examples with simulators or LLMs (paraphrases, new instructions, rare cases). Filter for quality and diversity, and keep real data in the mix: models trained repeatedly on their own outputs degrade ("model collapse").` },
       { type: 'code', title: 'Active learning: ask for the labels that teach the most', timeoutSec: 90, code: `
 import numpy as np
 from sklearn.datasets import make_classification
@@ -539,7 +548,7 @@ def run(strategy, seed, budget=80):
 for strategy in ("random", "uncertainty"):
     runs = [run(strategy, seed) for seed in range(5)]
     print(f"{strategy:12s}", "   ".join(f"{n} labels: {np.mean([r[n] for r in runs]):.3f}" for n in (20, 40, 80)))
-`, after: `Averaged over five runs, asking for the labels the model is least sure about gives clearly better accuracy for the same budget once a few dozen labels are in. With very few labels the advantage is small — the model's uncertainty is itself unreliable — which is why practical systems often mix in some random picks.` }
+`, after: `Averaged over five runs, asking for the labels the model is least sure about gives clearly better accuracy for the same budget once a few dozen labels are in. With very few labels the advantage is small (the model's uncertainty is itself unreliable) which is why practical systems often mix in some random picks.` }
     ],
     when: `- Small or expensive datasets: augmentation, transfer learning, active learning.
 - Rare-event problems (fraud, defects, disease): class weights, resampling and threshold moving with proper metrics.
@@ -547,8 +556,8 @@ for strategy in ("random", "uncertainty"):
 - Large unlabelled pools: semi-supervised learning, weak supervision, synthetic data.`,
     pitfalls: `- Augmentations that change the label, or augmenting the evaluation data.
 - Resampling or SMOTE before the train/test split (leakage), and reporting accuracy on imbalanced data.
-- Trusting pseudo-labels from a weak model — errors reinforce themselves.
-- Active-learning datasets that become biased towards the boundary and unrepresentative for evaluation — keep a random test set.
+- Trusting pseudo-labels from a weak model: errors reinforce themselves.
+- Active-learning datasets that become biased towards the boundary and unrepresentative for evaluation: keep a random test set.
 - Synthetic data without filtering, or without real data, drifting away from reality.`,
     takeaways: [
       'Hold the model fixed and improve the data: error analysis, label fixes and targeted examples.',
@@ -558,7 +567,7 @@ for strategy in ("random", "uncertainty"):
       'Few labels: transfer learning, pseudo-labelling, active learning, weak supervision and filtered synthetic data.'
     ],
     quiz: [
-      { type: 'mcq', q: 'A fraud model has 99% accuracy on data with 1% fraud. What should you check first?', options: ['Nothing, 99% is excellent', 'Recall and precision on the fraud class — it may never predict fraud', 'The learning rate', 'The number of features'], answer: 1, explain: 'Always answering "not fraud" scores 99% accuracy.' },
+      { type: 'mcq', q: 'A fraud model has 99% accuracy on data with 1% fraud. What should you check first?', options: ['Nothing, 99% is excellent', 'Recall and precision on the fraud class: it may never predict fraud', 'The learning rate', 'The number of features'], answer: 1, explain: 'Always answering "not fraud" scores 99% accuracy.' },
       { type: 'fill', q: 'A dataset has 1,000 examples: 900 of class A and 100 of class B. With balanced class weights w_c = n / (k · n_c), what is the weight of class B?', answer: ['5', '5.0'], explain: '1000 / (2 × 100) = 5.' },
       { type: 'tf', q: 'Data augmentation should also be applied to the test set so that it matches the training data.', answer: false, explain: 'Evaluation must reflect real inputs; augment only the training data.' },
       { type: 'mcq', q: 'Which active-learning strategy picks the example whose top two class probabilities are closest?', options: ['Random sampling', 'Margin sampling', 'Pseudo-labelling', 'SMOTE'], answer: 1, explain: 'A small margin means the model can hardly decide.' },
@@ -618,7 +627,7 @@ def threshold_for_precision(probs, y, min_precision):
     return None
 `,
         hints: ['`np.unique(y, return_counts=True)` gives the classes and their counts (it also works where `np.bincount` cannot).', '`np.resize(a, n)` repeats a cyclically to length n.', 'Recall only falls as the threshold rises, so the smallest qualifying threshold gives the best recall.'],
-        explain: `Weights and oversampling both make each class contribute equally to the loss; weights do it without duplicating rows. Choosing the smallest threshold that meets a precision target maximizes recall under that constraint — a common way to set operating points in fraud and safety systems.`,
+        explain: `Weights and oversampling both make each class contribute equally to the loss; weights do it without duplicating rows. Choosing the smallest threshold that meets a precision target maximizes recall under that constraint: a common way to set operating points in fraud and safety systems.`,
         tests: [
           { call: 'balanced_class_weights([0, 0, 0, 1])', expect: '{0: 4 / 6, 1: 2.0}' },
           { call: 'oversample_indices([0, 1, 0, 0, 1, 2])', expect: 'np.array([0, 2, 3, 1, 4, 1, 5, 5, 5])' },
@@ -680,10 +689,10 @@ def query(probs, k, strategy):
       }
     ],
     refs: [
-      { title: 'Zhang et al. — mixup: Beyond Empirical Risk Minimization', url: 'https://arxiv.org/abs/1710.09412' },
-      { title: 'Chawla et al. — SMOTE: Synthetic Minority Over-sampling Technique', url: 'https://arxiv.org/abs/1106.1813' },
-      { title: 'Northcutt, Athalye & Mueller — Pervasive Label Errors in Test Sets', url: 'https://arxiv.org/abs/2103.14749' },
-      { title: 'Settles — Active Learning Literature Survey', url: 'https://burrsettles.com/pub/settles.activelearning.pdf' }
+      { title: 'Zhang et al., mixup: Beyond Empirical Risk Minimization', url: 'https://arxiv.org/abs/1710.09412' },
+      { title: 'Chawla et al., SMOTE: Synthetic Minority Over-sampling Technique', url: 'https://arxiv.org/abs/1106.1813' },
+      { title: 'Northcutt, Athalye & Mueller, Pervasive Label Errors in Test Sets', url: 'https://arxiv.org/abs/2103.14749' },
+      { title: 'Settles, Active Learning Literature Survey', url: 'https://burrsettles.com/pub/settles.activelearning.pdf' }
     ]
   },
 
@@ -691,8 +700,8 @@ def query(probs, k, strategy):
   {
     id: 'sql-data-engineering', branch: 'code', title: 'SQL & Data Engineering for ML', short: 'SQL & Data Engineering', level: 2, minutes: 45, prereqs: ['pandas-eda'],
     tags: ['sql', 'select', 'where', 'group by', 'join', 'left join', 'window functions', 'cte', 'sqlite', 'data pipeline', 'etl', 'elt', 'parquet', 'data warehouse', 'data quality', 'point-in-time correctness', 'feature store'],
-    summary: 'Getting training data out of databases and into models: the relational model and SQL — SELECT, WHERE, GROUP BY, joins and their traps, window functions and CTEs — run from Python with sqlite3, then the engineering around it: ETL and ELT pipelines, columnar files, data validation, and point-in-time correct features that don\'t leak the future.',
-    why: `Most of the data that ML models learn from lives in databases and warehouses, not in CSV files. **SQL** is how you filter, join and aggregate it — often far faster than pulling everything into pandas — and it is asked in nearly every data and ML job interview. Just as important is the engineering around it: pipelines that are reproducible, validated and free of **leakage**, especially the subtle kind where a feature accidentally uses information from after the moment you want to predict.`,
+    summary: 'Getting training data out of databases and into models: the relational model and SQL (SELECT, WHERE, GROUP BY, joins and their traps, window functions and CTEs) run from Python with sqlite3, then the engineering around it: ETL and ELT pipelines, columnar files, data validation, and point-in-time correct features that don\'t leak the future.',
+    why: `Most of the data that ML models learn from lives in databases and warehouses, not in CSV files. **SQL** is how you filter, join and aggregate it (often far faster than pulling everything into pandas) and it is asked in nearly every data and ML job interview. Just as important is the engineering around it: pipelines that are reproducible, validated and free of **leakage**, especially the subtle kind where a feature accidentally uses information from after the moment you want to predict.`,
     objectives: [
       'Write SELECT queries with filtering, grouping, aggregation and ordering, and know their evaluation order',
       'Use inner, left and anti-joins correctly and detect join fan-out',
@@ -702,7 +711,7 @@ def query(probs, k, strategy):
     sections: [
       { type: 'text', title: 'Tables, keys and SQL', md: `A relational database stores data in **tables**: each row is a record, each column has a type. A **primary key** identifies each row (users.id); a **foreign key** points to a row in another table (orders.user_id → users.id). Keeping each fact in exactly one place avoids contradictions; **joins** bring the facts back together.
 
-SQL is **declarative**: you describe the result, and the database's query planner decides how to compute it — using indexes and running in parallel next to the data. That is why "push the computation to the database" usually beats downloading millions of rows into Python.` },
+SQL is **declarative**: you describe the result, and the database's query planner decides how to compute it (using indexes and running in parallel next to the data). That is why "push the computation to the database" usually beats downloading millions of rows into Python.` },
       { type: 'text', title: 'The shape of a query', md: `\`\`\`sql
 SELECT   u.country, COUNT(*) AS n_orders, SUM(o.amount) AS revenue   -- columns and aggregates
 FROM     orders AS o
@@ -745,13 +754,13 @@ print("users with no orders:", con.execute("""
     LEFT JOIN orders AS o ON o.user_id = u.id
     WHERE o.id IS NULL
 """).fetchall())
-`, after: `Each result row is a Python tuple. The LEFT JOIN keeps every user and fills the order columns with NULL when there is no match, so "WHERE o.id IS NULL" keeps exactly the users without orders — the standard **anti-join**.` },
+`, after: `Each result row is a Python tuple. The LEFT JOIN keeps every user and fills the order columns with NULL when there is no match, so "WHERE o.id IS NULL" keeps exactly the users without orders: the standard **anti-join**.` },
       { type: 'text', title: 'Joins and their traps', md: `- **INNER JOIN** keeps only rows with a match on both sides; **LEFT JOIN** keeps every row of the left table (NULLs where nothing matches). pandas' \`merge(how="inner" / "left")\` does the same.
-- **Fan-out**: if the key is not unique on the right side, each left row is repeated once per match — sums and counts silently inflate. Joining orders to a table with two addresses per user doubles revenue. Always check row counts before and after a join, and aggregate the "many" side *before* joining when you need one row per entity.
+- **Fan-out**: if the key is not unique on the right side, each left row is repeated once per match (sums and counts silently inflate). Joining orders to a table with two addresses per user doubles revenue. Always check row counts before and after a join, and aggregate the "many" side *before* joining when you need one row per entity.
 - **Filtering a LEFT JOIN in WHERE** (on a right-table column) quietly turns it into an inner join; put such conditions in the ON clause instead.
-- Pass values with **placeholders** — \`con.execute("SELECT * FROM users WHERE country = ?", (country,))\` — never by formatting strings into SQL, which invites SQL injection.` },
+- Pass values with **placeholders**: \`con.execute("SELECT * FROM users WHERE country = ?", (country,))\`: never by formatting strings into SQL, which invites SQL injection.` },
       { type: 'check', question: { type: 'mcq', q: 'You join 1,000 orders to a table that has two rows for some users. What can happen to SUM(amount)?', options: ['Nothing, joins never change sums', 'It can be inflated, because matching orders are duplicated (fan-out)', 'It always halves', 'The query fails'], answer: 1, explain: 'Each order is repeated once per matching row on the other side.' } },
-      { type: 'text', title: 'Window functions and CTEs', md: `**Window functions** compute values across related rows *without* collapsing them the way GROUP BY does — perfect for per-entity history features:
+      { type: 'text', title: 'Window functions and CTEs', md: `**Window functions** compute values across related rows *without* collapsing them the way GROUP BY does, perfect for per-entity history features:
 
 \`\`\`sql
 WITH user_orders AS (                                   -- a CTE: a named sub-query
@@ -787,7 +796,7 @@ print("user  day          amount  order#  running total  days since previous")
 for r in rows:
     print(f"{r[0]:4d}  {r[1]}  {r[2]:6.1f}  {r[3]:6d}  {r[4]:13.1f}  {r[5]}")
 `, after: `Every order keeps its own row and gains features computed from that user's earlier orders. The first order of each user has no previous one, so its gap is NULL (None in Python).` },
-      { type: 'text', title: 'Point-in-time correctness', md: `A model that predicts at time t may only use information available **before t**. A feature such as "total spend" computed over *all* of a user's orders includes purchases made after the prediction time — sometimes the very event being predicted. Offline the model looks brilliant; in production, where the future is not available, it fails.
+      { type: 'text', title: 'Point-in-time correctness', md: `A model that predicts at time t may only use information available **before t**. A feature such as "total spend" computed over *all* of a user's orders includes purchases made after the prediction time, sometimes the very event being predicted. Offline the model looks brilliant; in production, where the future is not available, it fails.
 
 The fix is an **as-of join**: when building the training row for (user, t), only aggregate events with timestamp < t. Feature stores (Feast, Tecton and the feature stores of the big cloud platforms) automate these point-in-time joins and serve the same feature definitions online, avoiding **training–serving skew**.` },
       { type: 'code', title: 'A leaky feature and its point-in-time fix', code: `
@@ -812,7 +821,7 @@ GROUP BY l.user_id ORDER BY l.user_id
 """).fetchall()
 print("leaky (all orders, even future ones):  ", leaky)
 print("point-in-time (orders before as_of):   ", point_in_time)
-`, after: `For user 1, the leaky version counts the order of 20 January — the very purchase the label says will happen. Moving the time condition into the ON clause keeps every label row while counting only the past.` },
+`, after: `For user 1, the leaky version counts the order of 20 January: the very purchase the label says will happen. Moving the time condition into the ON clause keeps every label row while counting only the past.` },
       { type: 'text', title: "Splitting data reproducibly", md: `How you split data into training and test sets is a data-engineering decision, and the wrong one quietly inflates every metric.
 
 - **Split by entity, not by row.** If one user has 50 rows, a random row split puts some of them in training and some in test, and the model is rewarded for recognising users rather than for generalising. Assign whole users (patients, devices, documents) to one side.
@@ -838,6 +847,7 @@ con = sqlite3.connect(":memory:")
 con.execute("CREATE TABLE events (user_id INTEGER, day INTEGER, clicks INTEGER)")
 rows = [(u, d, (u * 7 + d * 3) % 5) for u in range(1, 201) for d in range(1, 6)]
 con.executemany("INSERT INTO events VALUES (?, ?, ?)", rows)
+print("first rows of events (user_id, day, clicks):", con.execute("SELECT * FROM events LIMIT 3").fetchall())
 con.create_function("bucket", 1, bucket)         # make the Python function callable from SQL
 
 train = {u for (u,) in con.execute("SELECT DISTINCT user_id FROM events WHERE bucket(user_id) < 80")}
@@ -872,16 +882,16 @@ print("CSV lost the leading zeros:", back["zip"].tolist() == [2139, 94105])
 
 fixed = pd.read_csv(io.StringIO(csv_text), dtype={"user_id": str, "zip": str}, parse_dates=["signup"])
 print("fixed by declaring the types:", fixed["zip"].tolist(), str(fixed["signup"].dtype))`, after: `Read back with the default settings, the CSV's ids and zip codes become integers, losing their leading zeros (02139 becomes 2139, which is a different zip code), and the dates come back as plain text. JSON Lines keeps the strings as strings. Whatever the format, declare the types when you read data (\`dtype=\`, \`parse_dates=\`), and prefer typed formats such as Parquet for anything you will read many times.`, predict: {"type":"mcq","q":"A table with the zip code \"02139\" is saved to CSV and read back with pandas' default settings. What happens to the zip code?","options":["It stays \"02139\"","It becomes the number 2139, losing its leading zero","It becomes NaN","pandas refuses to read the file"],"answer":1,"explain":"CSV stores only text, and read_csv guesses that a column of digits is an integer column, so the leading zero disappears. Declaring dtype={\"zip\": str} keeps it.","expect":["CSV lost the leading zeros: True"]} },
-      { type: 'text', title: 'Pipelines and data quality', md: `- **ETL vs ELT**: extract, transform, load (transform before the warehouse) or load raw data first and transform inside the warehouse with SQL (dbt is a popular tool) — the modern default.
+      { type: 'text', title: 'Pipelines and data quality', md: `- **ETL vs ELT**: extract, transform, load (transform before the warehouse) or load raw data first and transform inside the warehouse with SQL (dbt is a popular tool) (the modern default).
 - **Batch vs streaming**: nightly jobs for most training data; streams (Kafka, Flink) for real-time features.
-- **Storage**: columnar formats such as **Parquet** are typed, compressed and let queries read only the needed columns — far better than CSV for analytics. Warehouses (BigQuery, Snowflake, Redshift) and lakehouse tables (Delta Lake, Iceberg) hold the data; engines such as DuckDB and Polars bring the same ideas to a laptop.
+- **Storage**: columnar formats such as **Parquet** are typed, compressed and let queries read only the needed columns (far better than CSV for analytics). Warehouses (BigQuery, Snowflake, Redshift) and lakehouse tables (Delta Lake, Iceberg) hold the data; engines such as DuckDB and Polars bring the same ideas to a laptop.
 - **Orchestration**: Airflow, Dagster or Prefect schedule pipelines as graphs of tasks with retries.
 - **Validation**: check schemas, null rates, ranges, uniqueness and row counts at every stage, and stop the pipeline when they fail (tools such as Great Expectations or dbt tests).
 - **Reproducibility**: make jobs idempotent (re-running gives the same result), version data snapshots alongside code, and record which data trained which model.` }
     ],
     when: `- Extracting and joining training data that lives in relational databases or warehouses.
 - Building per-entity history features (counts, sums, recency) with window functions.
-- Exploratory analysis on data too big for pandas — run SQL in the warehouse or in DuckDB.
+- Exploratory analysis on data too big for pandas: run SQL in the warehouse or in DuckDB.
 - Any time series of events feeds a model: enforce point-in-time correctness.`,
     pitfalls: `- Join fan-out inflating sums and counts; check row counts around every join.
 - WHERE conditions on the right table that turn a LEFT JOIN into an inner join.
@@ -996,8 +1006,8 @@ INSERT INTO orders VALUES
 `,
         prompt: `\`make_db()\` returns a connection with the table \`orders(id, user_id, amount, day)\`, days written as 'YYYY-MM-DD'. Implement:
 
-- \`order_features(con)\` → a list of tuples \`(order_id, user_id, order_number, running_total, days_since_previous)\`, sorted by order id, where — per user, ordered by day — order_number counts from 1, running_total is the user's total spend up to and including this order, and days_since_previous is the number of days since the user's previous order (None for a user's first order). Window functions make this short; \`julianday(day)\` converts a date to a day number.
-- \`spend_before(con, user_id, day)\` → the user's total spend on orders strictly **before** the given day (0.0 if there are none) — a point-in-time feature. Use placeholders.`,
+- \`order_features(con)\` → a list of tuples \`(order_id, user_id, order_number, running_total, days_since_previous)\`, sorted by order id, where (per user, ordered by day) order_number counts from 1, running_total is the user's total spend up to and including this order, and days_since_previous is the number of days since the user's previous order (None for a user's first order). Window functions make this short; \`julianday(day)\` converts a date to a day number.
+- \`spend_before(con, user_id, day)\` → the user's total spend on orders strictly **before** the given day (0.0 if there are none): a point-in-time feature. Use placeholders.`,
         starter: `
 def order_features(con):
     # TODO
@@ -1037,10 +1047,10 @@ def spend_before(con, user_id, day):
       }
     ],
     refs: [
-      { title: 'SQLite — SQL language reference', url: 'https://www.sqlite.org/lang.html' },
-      { title: 'SQLite — Window functions', url: 'https://www.sqlite.org/windowfunctions.html' },
-      { title: 'Python docs — sqlite3', url: 'https://docs.python.org/3/library/sqlite3.html' },
-      { title: 'Kleppmann — Designing Data-Intensive Applications', url: 'https://dataintensive.net/' }
+      { title: 'SQLite, SQL language reference', url: 'https://www.sqlite.org/lang.html' },
+      { title: 'SQLite, Window functions', url: 'https://www.sqlite.org/windowfunctions.html' },
+      { title: 'Python docs, sqlite3', url: 'https://docs.python.org/3/library/sqlite3.html' },
+      { title: 'Kleppmann, Designing Data-Intensive Applications', url: 'https://dataintensive.net/' }
     ]
   },
 
@@ -1048,7 +1058,7 @@ def spend_before(con, user_id, day):
   {
     id: 'learning-to-rank', branch: 'spec', title: 'Learning to Rank', short: 'Learning to Rank', level: 3, minutes: 40, prereqs: ['recommender-systems', 'ensembles'],
     tags: ['learning to rank', 'ranking', 'ndcg', 'dcg', 'mrr', 'precision at k', 'pointwise', 'pairwise', 'listwise', 'ranknet', 'lambdamart', 'bm25', 'two-stage retrieval', 'position bias', 'interleaving'],
-    summary: 'Ordering results so the best come first: ranking problems in search, feeds and RAG; metrics that care about position (precision@k, MRR, DCG and NDCG); pointwise, pairwise (RankNet) and listwise (LambdaMART) training; BM25 as the classic text score; and production concerns — two-stage retrieval and reranking, click data and position bias, and interleaving experiments.',
+    summary: 'Ordering results so the best come first: ranking problems in search, feeds and RAG; metrics that care about position (precision@k, MRR, DCG and NDCG); pointwise, pairwise (RankNet) and listwise (LambdaMART) training; BM25 as the classic text score; and production concerns, two-stage retrieval and reranking, click data and position bias, and interleaving experiments.',
     why: `Search engines, product listings, social feeds, job matching, recommendation carousels and the retrieval step of every RAG system share one problem: given a query (or a user), put the most relevant items **at the top**. Users look at the first few results, so mistakes near the top cost far more than mistakes further down. **Learning to rank** trains models directly for that goal and measures them with position-aware metrics.`,
     objectives: [
       'Compute precision@k, MRR, DCG and NDCG and explain why position matters',
@@ -1057,9 +1067,9 @@ def spend_before(con, user_id, day):
       'Explain two-stage retrieval, position bias in click data and interleaving'
     ],
     sections: [
-      { type: 'text', title: 'Ranking problems', md: `In learning to rank, data comes in **groups**: a query (or a user session) and a list of candidate items, each with features and a **graded relevance** label — for example 0 = irrelevant, 1 = somewhat, 2 = relevant, 3 = perfect — from human judges or from behaviour such as clicks and purchases. A model assigns each item a score; sorting by score gives the ranking. Only the order *within* a query matters, not the absolute scores, and comparing scores across different queries is meaningless.` },
+      { type: 'text', title: 'Ranking problems', md: `In learning to rank, data comes in **groups**: a query (or a user session) and a list of candidate items, each with features and a **graded relevance** label (for example 0 = irrelevant, 1 = somewhat, 2 = relevant, 3 = perfect) from human judges or from behaviour such as clicks and purchases. A model assigns each item a score; sorting by score gives the ranking. Only the order *within* a query matters, not the absolute scores, and comparing scores across different queries is meaningless.` },
       { type: 'text', title: 'Measuring a ranking', md: `- **Precision@k**: the fraction of the top k items that are relevant.
-- **MRR** (mean reciprocal rank): the average over queries of 1 / (position of the first relevant item) — good when one right answer is enough.
+- **MRR** (mean reciprocal rank): the average over queries of 1 / (position of the first relevant item) (good when one right answer is enough).
 - **DCG and NDCG**: graded relevance with a discount for lower positions:
 
 $$ DCG@k = Σ_{i=1}^{k} ( 2^{rel_i} − 1 ) / log₂(i + 1)          NDCG@k = DCG@k / IDCG@k $$
@@ -1091,7 +1101,7 @@ rankings = {
 for name, rels in rankings.items():
     first_relevant = next(i for i, r in enumerate(rels, start=1) if r > 0)
     print(f"{name:18s} NDCG@5 = {ndcg(rels, 5):.3f}   reciprocal rank = {1 / first_relevant:.2f}")
-`, after: `Swapping the top two items costs over 13% of NDCG, while swapping the 4th and 5th costs less than 1% — position matters most at the top. The reciprocal rank only notices the first relevant item, so it cannot tell the first three rankings apart.` },
+`, after: `Swapping the top two items costs over 13% of NDCG, while swapping the 4th and 5th costs less than 1%: position matters most at the top. The reciprocal rank only notices the first relevant item, so it cannot tell the first three rankings apart.` },
       { type: 'text', title: 'Pointwise, pairwise and listwise learning', md: `- **Pointwise**: predict each item's relevance with ordinary regression or classification, then sort. Simple, but it spends effort on getting absolute values right, which ranking doesn't need.
 - **Pairwise**: learn which of two items should come first. **RankNet** turns score differences into probabilities and uses cross-entropy:
 
@@ -1103,7 +1113,7 @@ i ≻ j — "i should be ranked above j"
 L — the pairwise loss, small when the more relevant item already scores higher by a margin
 :::
 
-- **Listwise**: optimize a whole-list objective. **LambdaRank** keeps RankNet's pair gradients but multiplies each by |ΔNDCG|, how much swapping the two items would change NDCG, so effort goes where the metric cares. **LambdaMART** — LambdaRank with gradient-boosted trees — has long been the strongest method on tabular ranking features (LightGBM's \`lambdarank\` objective, XGBoost's \`rank:ndcg\`).` },
+- **Listwise**: optimize a whole-list objective. **LambdaRank** keeps RankNet's pair gradients but multiplies each by |ΔNDCG|, how much swapping the two items would change NDCG, so effort goes where the metric cares. **LambdaMART** (LambdaRank with gradient-boosted trees) has long been the strongest method on tabular ranking features (LightGBM's \`lambdarank\` objective, XGBoost's \`rank:ndcg\`).` },
       { type: 'code', title: 'Training a pairwise ranker', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -1133,7 +1143,7 @@ mean_ndcg = lambda scorer: np.mean([ndcg_at(scorer(q), rel[q]) for q in test])
 print("learned weights:", w.round(2), "  true weights:", true_w)
 print(f"NDCG@5 on unseen queries: random order {mean_ndcg(lambda q: rng.normal(size=n_docs)):.3f}   "
       f"RankNet {mean_ndcg(lambda q: X[q] @ w):.3f}   true weights {mean_ndcg(lambda q: X[q] @ true_w):.3f}")
-`, after: `Trained only on which document beats which, the ranker recovers the direction of the true weights (scaled up — only the ordering matters) and ranks unseen queries about as well as the true scoring function.` },
+`, after: `Trained only on which document beats which, the ranker recovers the direction of the true weights (scaled up, only the ordering matters) and ranks unseen queries about as well as the true scoring function.` },
       { type: 'text', title: "Learning from clicks: position bias", md: `Human relevance labels are expensive, so most ranking systems learn from **clicks**. But a click needs two things: the user must **see** the item and find it relevant. Items near the top are seen far more often, so they collect more clicks whether or not they are better. Train on raw clicks and the model learns to repeat whatever the old ranking did: a feedback loop.
 
 $$ P(click at position k) = P(seen at k) · P(click once seen) $$
@@ -1166,7 +1176,7 @@ print("raw click rate:", raw.round(3), "-> ranking", np.argsort(-raw))
 print("IPW estimate:  ", ipw.round(3), "-> ranking", np.argsort(-ipw))
 print("true relevance:", true_relevance, "-> ranking", np.argsort(-true_relevance))
 print("IPW recovers the true order:", np.array_equal(np.argsort(-ipw), np.argsort(-true_relevance)))`, after: `Raw click rates crown item 0, which nearly always sits at the top, and rate item 2 above item 3, although item 3 is more than twice as relevant. Dividing each click by the chance that it was seen recovers the true relevances and the true order. Here the propensities were known; in practice the randomised share of traffic is how you measure them.`, predict: {"type":"mcq","q":"Item 1 is the most relevant item but is usually shown 4th; item 0 is less relevant and usually shown 1st. Which has the higher raw click rate?","options":["Item 1, because it is more relevant","Item 0, because it is seen far more often","They are equal","It is impossible to say"],"answer":1,"explain":"At position 4 an item is seen only 30% of the time, so even a very relevant item collects few clicks there. Inverse propensity weighting corrects for this.","expect":["IPW recovers the true order: True"]} },
-      { type: 'text', title: 'Ranking in production', md: `- **Two stages**: a cheap **retrieval** stage narrows millions of items to a few hundred candidates — lexical search with **BM25**, embedding search (see *Vector Search*) or both — and a heavier **reranker** (LambdaMART on many features, a cross-encoder, or an LLM) orders the top candidates.
+      { type: 'text', title: 'Ranking in production', md: `- **Two stages**: a cheap **retrieval** stage narrows millions of items to a few hundred candidates, lexical search with **BM25**, embedding search (see *Vector Search*) or both, and a heavier **reranker** (LambdaMART on many features, a cross-encoder, or an LLM) orders the top candidates.
 - **BM25**, the classic lexical relevance score, still a strong baseline and a common reranker feature:
 
 $$ BM25(q, d) = Σ_{t ∈ q} IDF(t) · f(t, d) · (k₁ + 1) / ( f(t, d) + k₁ · (1 − b + b · |d| / avgdl) ) $$
@@ -1180,8 +1190,8 @@ k₁ — saturation (typically 1.2–2), so extra occurrences of a term help les
 b — length normalization (typically 0.75), so long documents are not favoured just for containing more words
 :::
 
-- **Learning from clicks**: clicks are cheap labels but biased — people click higher positions more regardless of relevance (**position bias**). Correct it with inverse propensity weighting (see *Causal Inference*) or randomization experiments.
-- **Online evaluation**: **interleaving** mixes the results of two rankers in one list and credits whichever ranker's items get clicked — far more sensitive than a standard A/B test.` },
+- **Learning from clicks**: clicks are cheap labels but biased, people click higher positions more regardless of relevance (**position bias**). Correct it with inverse propensity weighting (see *Causal Inference*) or randomization experiments.
+- **Online evaluation**: **interleaving** mixes the results of two rankers in one list and credits whichever ranker's items get clicked (far more sensitive than a standard A/B test).` },
       { type: 'check', question: { type: 'tf', q: 'In a two-stage ranking system, the first stage optimizes recall (find the candidates) and the second precision at the top.', answer: true, explain: 'A cheap retriever casts a wide net; an expensive reranker orders the best few.' } }
     ],
     when: `- Search, e-commerce listings, feeds, ads, job and dating matches, recommendation carousels.
@@ -1192,7 +1202,7 @@ b — length normalization (typically 0.75), so long documents are not favoured 
 - Comparing scores across queries, or evaluating with accuracy instead of NDCG/MRR.
 - Training on raw clicks without correcting for position bias.
 - Tuning the reranker while ignoring the candidates the retriever never returns (recall is capped by stage one).
-- Offline NDCG gains that don't translate online — confirm with interleaving or A/B tests.`,
+- Offline NDCG gains that don't translate online: confirm with interleaving or A/B tests.`,
     takeaways: [
       'Ranking data comes in query groups with graded relevance; only the order within a query matters.',
       'NDCG discounts gains by position and normalizes by the ideal ranking; MRR looks at the first relevant item.',
@@ -1304,10 +1314,10 @@ def ranknet_loss_grad(scores, rels):
       }
     ],
     refs: [
-      { title: 'Burges — From RankNet to LambdaRank to LambdaMART: An Overview', url: 'https://www.microsoft.com/en-us/research/publication/from-ranknet-to-lambdarank-to-lambdamart-an-overview/' },
-      { title: 'Järvelin & Kekäläinen — Cumulated gain-based evaluation of IR techniques (NDCG)', url: 'https://doi.org/10.1145/582415.582418' },
-      { title: 'Robertson & Zaragoza — The Probabilistic Relevance Framework: BM25 and Beyond', url: 'https://doi.org/10.1561/1500000019' },
-      { title: 'LightGBM — learning-to-rank objectives', url: 'https://lightgbm.readthedocs.io/en/latest/Parameters.html#objective' }
+      { title: 'Burges, From RankNet to LambdaRank to LambdaMART: An Overview', url: 'https://www.microsoft.com/en-us/research/publication/from-ranknet-to-lambdarank-to-lambdamart-an-overview/' },
+      { title: 'Järvelin & Kekäläinen, Cumulated gain-based evaluation of IR techniques (NDCG)', url: 'https://doi.org/10.1145/582415.582418' },
+      { title: 'Robertson & Zaragoza, The Probabilistic Relevance Framework: BM25 and Beyond', url: 'https://doi.org/10.1561/1500000019' },
+      { title: 'LightGBM, learning-to-rank objectives', url: 'https://lightgbm.readthedocs.io/en/latest/Parameters.html#objective' }
     ]
   },
 
@@ -1315,8 +1325,8 @@ def ranknet_loss_grad(scores, rels):
   {
     id: 'vector-search', branch: 'apps', title: 'Vector Search & Approximate Nearest Neighbours', short: 'Vector Search', level: 3, minutes: 40, prereqs: ['text-embeddings', 'kmeans'],
     tags: ['vector search', 'nearest neighbour search', 'approximate nearest neighbours', 'ann', 'recall at k', 'ivf', 'inverted file index', 'product quantization', 'hnsw', 'vector database', 'faiss', 'hybrid search', 'reciprocal rank fusion', 'metadata filtering'],
-    summary: 'Finding the most similar embeddings among millions: exact search as a matrix product and when it stops scaling, recall@k and the speed–accuracy trade-off, IVF indexes that search only a few k-means clusters, product quantization that compresses vectors into a few bytes, HNSW graph indexes, and practical vector-database concerns — filtering, hybrid search with reciprocal rank fusion, and re-embedding.',
-    why: `Retrieval-augmented generation, semantic search, recommendations, deduplication and image search all reduce to the same operation: **find the stored vectors most similar to a query vector**. With a few thousand vectors a brute-force matrix product is perfect; with hundreds of millions it becomes too slow and too memory-hungry. **Approximate nearest-neighbour (ANN)** indexes trade a little accuracy for orders of magnitude in speed and memory — and understanding how they work tells you how to tune them and what can go wrong.`,
+    summary: 'Finding the most similar embeddings among millions: exact search as a matrix product and when it stops scaling, recall@k and the speed–accuracy trade-off, IVF indexes that search only a few k-means clusters, product quantization that compresses vectors into a few bytes, HNSW graph indexes, and practical vector-database concerns (filtering, hybrid search with reciprocal rank fusion, and re-embedding).',
+    why: `Retrieval-augmented generation, semantic search, recommendations, deduplication and image search all reduce to the same operation: **find the stored vectors most similar to a query vector**. With a few thousand vectors a brute-force matrix product is perfect; with hundreds of millions it becomes too slow and too memory-hungry. **Approximate nearest-neighbour (ANN)** indexes trade a little accuracy for orders of magnitude in speed and memory, and understanding how they work tells you how to tune them and what can go wrong.`,
     objectives: [
       'Implement exact top-k search and relate cosine similarity to Euclidean distance',
       'Measure ANN quality with recall@k and reason about speed, memory and accuracy trade-offs',
@@ -1324,7 +1334,7 @@ def ranknet_loss_grad(scores, rels):
       'Combine vector and keyword search with reciprocal rank fusion and handle filters and updates'
     ],
     sections: [
-      { type: 'text', title: 'Exact nearest-neighbour search', md: `Exact search compares the query with every stored vector — one matrix product for a batch of queries — and keeps the top k. For normalized vectors, the usual similarity measures agree:
+      { type: 'text', title: 'Exact nearest-neighbour search', md: `Exact search compares the query with every stored vector (one matrix product for a batch of queries) and keeps the top k. For normalized vectors, the usual similarity measures agree:
 
 $$ ‖a − b‖² = ‖a‖² + ‖b‖² − 2 a·b = 2 − 2 cos(a, b)     when ‖a‖ = ‖b‖ = 1 $$
 :::where
@@ -1335,7 +1345,7 @@ cos(a, b) — their cosine similarity, a·b / (‖a‖‖b‖), which equals a·
 
 So after normalizing, "smallest distance", "largest cosine" and "largest dot product" give the same ranking. (Unnormalized dot-product search, "maximum inner product search", is different and is what some recommendation models need.)
 
-Cost: n·d multiply-adds per query. With 100 million 768-dimensional float32 vectors that is about 300 GB of memory and roughly 77 billion operations per query — too slow for interactive search on a CPU, which is where approximate indexes come in.` },
+Cost: n·d multiply-adds per query. With 100 million 768-dimensional float32 vectors that is about 300 GB of memory and roughly 77 billion operations per query: too slow for interactive search on a CPU, which is where approximate indexes come in.` },
       { type: 'code', title: 'Exact top-k search with one matrix product', code: `
 import numpy as np, time
 rng = np.random.default_rng(0)
@@ -1353,7 +1363,7 @@ dist = ((queries[:, None, :] - base[None, :, :]) ** 2).sum(axis=2)       # squar
 print("top-5 by cosine:   ", top[0])
 print("top-5 by distance: ", np.argsort(dist, axis=1)[0, :5])
 print(f"searched {n} vectors for 5 queries in {elapsed * 1000:.1f} ms; nearest neighbour of query i is item i: {bool(np.all(top[:, 0] == np.arange(5)))}")
-`, after: `For unit vectors, ranking by cosine and by Euclidean distance gives the same neighbours. At this size brute force is fast and exact — approximate indexes only pay off with millions of vectors or very tight latency budgets.` },
+`, after: `For unit vectors, ranking by cosine and by Euclidean distance gives the same neighbours. At this size brute force is fast and exact: approximate indexes only pay off with millions of vectors or very tight latency budgets.` },
       { type: 'text', title: 'Recall@k and the trade-off', md: `An approximate index returns *almost* the right neighbours. Its quality is measured against exact search:
 
 $$ recall@k = | ANN top-k ∩ exact top-k | / k $$
@@ -1362,7 +1372,7 @@ ANN top-k — the k results returned by the approximate index
 exact top-k — the true k nearest neighbours from brute-force search
 :::
 
-Every index has knobs that trade recall against queries per second, memory and build time. Benchmarks (such as ann-benchmarks) plot recall against throughput; pick the operating point your application needs — and measure on your own data, because embeddings from different models behave differently.` },
+Every index has knobs that trade recall against queries per second, memory and build time. Benchmarks (such as ann-benchmarks) plot recall against throughput; pick the operating point your application needs, and measure on your own data, because embeddings from different models behave differently.` },
       { type: 'text', title: 'IVF: cluster first, then search a few clusters', md: `An **inverted file (IVF)** index runs k-means (see *Clustering with k-Means*) on the vectors to get n_list centroids, and stores each vector in the list of its nearest centroid. At query time it finds the n_probe centroids closest to the query and searches only their lists. With n_list = 1,000 and n_probe = 10, each query scans about 1% of the data.
 
 The failure mode: a true neighbour can sit in a list whose centroid is not among the n_probe closest, especially near cluster boundaries. Raising n_probe recovers recall at the cost of speed.` },
@@ -1394,7 +1404,7 @@ for n_probe in (1, 2, 4, 8, 16):
         recalls.append(len(set(found) & set(exact[qi])) / 10)
         scanned.append(len(cand) / n)
     print(f"n_probe = {n_probe:2d}: recall@10 = {np.mean(recalls):.3f}, scanning {np.mean(scanned):.1%} of the vectors")
-`, after: `Searching only the single closest list finds about half of the true neighbours — where clusters overlap, neighbours spill into adjacent lists. Each doubling of n_probe recovers more, and by 16 lists recall reaches about 96% while scanning roughly a quarter of the data. The right n_probe depends on how your own embeddings are distributed, so tune it on your data.` },
+`, after: `Searching only the single closest list finds about half of the true neighbours, where clusters overlap, neighbours spill into adjacent lists. Each doubling of n_probe recovers more, and by 16 lists recall reaches about 96% while scanning roughly a quarter of the data. The right n_probe depends on how your own embeddings are distributed, so tune it on your data.` },
       { type: 'chart', title: "IVF: recall against the share of vectors scanned", md: `20,000 clustered vectors in an IVF index with 100 lists, 200 queries:`, after: `Searching a single list scans about 1% of the database and finds about 80% of the true top 10: true neighbours often sit just across a list boundary. Each doubling of n_probe recovers more of them: with 4 lists recall is essentially 100% while scanning only about 4% of the vectors. That steep early rise is why ANN search is so effective: most of the recall comes from a small part of the data.`, chart: {"kind":"line","x":[1,2,4,8,16,32,64],"xLog":true,"series":[{"name":"recall@10 (versus exact search)","y":[0.801,0.95,0.999,1,1,1,1]},{"name":"share of the database scanned","y":[0.013,0.024,0.043,0.083,0.161,0.315,0.629]}],"xLabel":"n_probe: lists searched (of 100, log scale)","yLabel":"share","yMin":0,"yMax":1} },
       { type: 'text', title: 'Product quantization: compress the vectors', md: `Memory is often the real limit. **Product quantization (PQ)** splits each vector into m sub-vectors, runs k-means separately in each sub-space (typically 256 centroids, so each code fits in one byte), and stores every vector as m small codes:
 
@@ -1406,8 +1416,8 @@ j_s — the stored code for sub-vector s, the index of its nearest centroid
 q^s — the matching part of the query; the distances ‖q^s − c^s_j‖² are computed once per query into small lookup tables
 :::
 
-A 768-dimensional float32 vector (3,072 bytes) becomes 96 one-byte codes — 32× smaller — and each distance becomes 96 table lookups. **IVF-PQ** combines both ideas (the workhorse of the FAISS library); when accuracy matters, the top candidates are re-ranked with the exact vectors.` },
-      { type: 'text', title: 'Graph indexes: HNSW', md: `**Hierarchical Navigable Small World (HNSW)** graphs connect every vector to a few dozen near neighbours. A search starts at an entry point and greedily moves to whichever neighbour is closer to the query, until no neighbour improves. Upper layers contain only a sample of the points with long-range links — like an express train — so the search first jumps across the space, then descends to finer layers for the local walk.
+A 768-dimensional float32 vector (3,072 bytes) becomes 96 one-byte codes (32× smaller) and each distance becomes 96 table lookups. **IVF-PQ** combines both ideas (the workhorse of the FAISS library); when accuracy matters, the top candidates are re-ranked with the exact vectors.` },
+      { type: 'text', title: 'Graph indexes: HNSW', md: `**Hierarchical Navigable Small World (HNSW)** graphs connect every vector to a few dozen near neighbours. A search starts at an entry point and greedily moves to whichever neighbour is closer to the query, until no neighbour improves. Upper layers contain only a sample of the points with long-range links (like an express train) so the search first jumps across the space, then descends to finer layers for the local walk.
 
 Knobs: M (links per node: more means higher recall and more memory), efConstruction (build quality) and efSearch (how many candidates a query keeps; the main recall/speed knob). HNSW gives excellent recall and latency and supports inserts, but it keeps full vectors plus the graph in memory. It is the default index in many vector databases (pgvector, Qdrant, Weaviate, Milvus, Elasticsearch/OpenSearch).` },
       { type: 'check', question: { type: 'mcq', q: 'An IVF index has poor recall. What is the most direct fix?', options: ['Reduce n_probe', 'Increase n_probe, so more lists are searched', 'Use fewer training vectors', 'Remove normalization'], answer: 1, explain: 'Searching more lists recovers neighbours near cluster boundaries, at some cost in speed.' } },
@@ -1422,7 +1432,7 @@ k — a constant, usually 60, that damps the influence of the very top positions
 :::
 
 - **Updates and deletes**: graph indexes handle inserts, but heavy churn degrades them; many systems rebuild periodically.
-- **Re-embedding**: vectors from different embedding models (or versions) are not comparable — changing models means re-embedding the whole collection.
+- **Re-embedding**: vectors from different embedding models (or versions) are not comparable (changing models means re-embedding the whole collection).
 - **Evaluate end to end**: measure recall@k of the index *and* the quality of the final answers on your own queries.` },
       { type: 'text', title: "Choosing an index", md: `| Index | Memory | Speed | Recall | Good for |
 | --- | --- | --- | --- | --- |
@@ -1439,13 +1449,13 @@ Whatever you choose, measure recall@k against exact search on a sample of your o
 - IVF or IVF-PQ for very large or memory-constrained collections; HNSW for low-latency search with frequent inserts.
 - Hybrid keyword + vector search when queries contain names, codes or rare terms.`,
     pitfalls: `- Mixing normalized and unnormalized vectors, or cosine and dot-product metrics, between indexing and querying.
-- Reporting index speed without recall — an index that returns the wrong neighbours fast is useless.
+- Reporting index speed without recall: an index that returns the wrong neighbours fast is useless.
 - Mixing embeddings from different models or versions in one index.
 - Post-filtering that silently returns too few results.
 - Tuning on random vectors instead of your real embeddings and queries.`,
     takeaways: [
       'For unit vectors, cosine similarity, dot product and Euclidean distance give the same ranking.',
-      'Exact search is one matrix product — fine up to millions; beyond that, approximate indexes.',
+      'Exact search is one matrix product: fine up to millions; beyond that, approximate indexes.',
       'IVF searches the n_probe nearest k-means lists; PQ compresses vectors into byte codes with lookup-table distances.',
       'HNSW navigates a layered neighbour graph; efSearch trades recall for speed.',
       'Measure recall@k; combine keyword and vector search with reciprocal rank fusion; re-embed when models change.'
@@ -1505,7 +1515,7 @@ def rrf(rankings, k=60):
     return sorted(score, key=lambda doc: (-score[doc], doc))
 `,
         hints: ['Normalize rows with `np.linalg.norm(..., axis=1, keepdims=True)`.', 'Sets make the overlap easy: `len(set(a) & set(b))`.', 'Sort by a key of (−score, id).'],
-        explain: `Exact top-k is the ground truth every approximate index is judged against. RRF needs no score calibration between systems — documents that rank well in several lists rise to the top.`,
+        explain: `Exact top-k is the ground truth every approximate index is judged against. RRF needs no score calibration between systems: documents that rank well in several lists rise to the top.`,
         tests: [
           { call: 'top_k_cosine(np.array([[1.0, 0.0]]), np.array([[0.0, 1.0], [2.0, 0.1], [-1.0, 0.0], [1.0, 1.0]]), 2)', expect: 'np.array([[1, 3]])' },
           { call: 'recall_at_k(np.array([[1, 2, 3]]), np.array([[3, 4, 1]]))', expect: '2 / 3' },
@@ -1559,9 +1569,9 @@ def ivf_search(query, base, centroids, lists, n_probe, k):
       }
     ],
     refs: [
-      { title: 'Johnson, Douze & Jégou — Billion-scale similarity search with GPUs (FAISS)', url: 'https://arxiv.org/abs/1702.08734' },
-      { title: 'Malkov & Yashunin — Efficient and robust approximate nearest neighbor search using HNSW graphs', url: 'https://arxiv.org/abs/1603.09320' },
-      { title: 'Jégou, Douze & Schmid — Product Quantization for Nearest Neighbor Search', url: 'https://doi.org/10.1109/TPAMI.2010.57' },
+      { title: 'Johnson, Douze & Jégou, Billion-scale similarity search with GPUs (FAISS)', url: 'https://arxiv.org/abs/1702.08734' },
+      { title: 'Malkov & Yashunin, Efficient and robust approximate nearest neighbor search using HNSW graphs', url: 'https://arxiv.org/abs/1603.09320' },
+      { title: 'Jégou, Douze & Schmid, Product Quantization for Nearest Neighbor Search', url: 'https://doi.org/10.1109/TPAMI.2010.57' },
       { title: 'ANN-Benchmarks', url: 'https://ann-benchmarks.com/' }
     ]
   }

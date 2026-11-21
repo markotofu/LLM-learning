@@ -20,9 +20,9 @@
 
 Plots do three jobs in machine learning:
 
-1. **Exploration** — what is in the data? Are there errors, outliers, unexpected groups? Do the features separate the classes at all?
-2. **Diagnosis** — is the model overfitting (learning curves)? Which classes does it confuse (confusion matrix)? Where are its errors largest (residual plots)?
-3. **Communication** — a single clear chart convinces a colleague or a manager faster than a table.
+1. **Exploration**: what is in the data? Are there errors, outliers, unexpected groups? Do the features separate the classes at all?
+2. **Diagnosis**: is the model overfitting (learning curves)? Which classes does it confuse (confusion matrix)? Where are its errors largest (residual plots)?
+3. **Communication**: a single clear chart convinces a colleague or a manager faster than a table.
 
 The standard Python tools are **matplotlib**, the foundation everything else is built on, **pandas' plotting methods**, which call matplotlib with sensible defaults, and **seaborn**, which adds statistical charts.` },
       { type: 'code', title: "Same statistics, different stories: Anscombe's quartet", md: `In 1973 the statistician Francis Anscombe built four small datasets with nearly identical means, variances, correlations and regression lines. Only plotting them reveals how different they are.`, code: `import numpy as np
@@ -145,6 +145,7 @@ walks = pd.DataFrame(rng.standard_normal((100, 3)).cumsum(axis=0), columns=["A",
 party = pd.DataFrame({"1 person": [3, 2, 9, 6], "2 people": [39, 48, 70, 57], "3+ people": [10, 12, 40, 30]},
                      index=["Thu", "Fri", "Sat", "Sun"])
 tips = pd.Series(np.concatenate([rng.normal(12, 3, 300), rng.normal(24, 4, 120)]))
+print(walks.head(3).round(2))
 
 fig, axes = plt.subplots(2, 2, figsize=(10, 7))
 walks.plot(ax=axes[0, 0], title="DataFrame.plot: one line per column")
@@ -166,6 +167,7 @@ from sklearn.datasets import load_iris
 
 iris = load_iris()
 df = pd.DataFrame(iris.data, columns=["sepal length", "sepal width", "petal length", "petal width"])
+print(df.sample(5, random_state=0))                # five random rows
 
 df.plot.scatter(x="petal length", y="petal width", c=iris.target, colormap="viridis",
                 title="petals, coloured by species", figsize=(6, 4))
@@ -349,10 +351,10 @@ def row_percentages(counts):
       }
     ],
     refs: [
-      { title: 'Wes McKinney — Python for Data Analysis, chapter 9: Plotting and Visualization (free online edition)', url: 'https://wesmckinney.com/book/plotting-and-visualization' },
-      { title: 'matplotlib — Quick start guide', url: 'https://matplotlib.org/stable/users/explain/quick_start.html' },
-      { title: 'pandas — Chart visualization', url: 'https://pandas.pydata.org/docs/user_guide/visualization.html' },
-      { title: 'Claus O. Wilke — Fundamentals of Data Visualization (free online book)', url: 'https://clauswilke.com/dataviz/' }
+      { title: 'Wes McKinney, Python for Data Analysis, chapter 9: Plotting and Visualization (free online edition)', url: 'https://wesmckinney.com/book/plotting-and-visualization' },
+      { title: 'matplotlib, Quick start guide', url: 'https://matplotlib.org/stable/users/explain/quick_start.html' },
+      { title: 'pandas, Chart visualization', url: 'https://pandas.pydata.org/docs/user_guide/visualization.html' },
+      { title: 'Claus O. Wilke, Fundamentals of Data Visualization (free online book)', url: 'https://clauswilke.com/dataviz/' }
     ]
   }
   ]);

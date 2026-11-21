@@ -19,13 +19,13 @@ These terms apply to ML Atlas ("ML Atlas", "the app"), a free educational web ap
 
 ML Atlas is a free learning resource about machine learning, neural networks and large language models: lessons, runnable code samples, quizzes, flashcards and practice problems. It has no accounts and no paid features. It runs entirely in your web browser.
 
-### 2. Educational use only — no professional advice
+### 2. Educational use only: no professional advice
 
 The content is for learning. It is not professional, legal, medical, financial or security advice, and it may contain mistakes or become out of date. Check important information against authoritative sources before you rely on it, and test code before using it in real systems.
 
 ### 3. Your progress and your code
 
-Your progress, notes, settings and the code you write are stored **in your own browser**, not on our servers (see the [Privacy Policy](#/privacy)). You are responsible for keeping backups — use **Progress & Sync → Export** — because clearing your browser data or switching browsers or devices can delete them. You keep all rights to the code and notes you write. Import only progress files and sync codes that you created yourself or fully trust: importing adds their notes, code and settings to your own data.
+Your progress, notes, settings and the code you write are stored **in your own browser**, not on our servers (see the [Privacy Policy](#/privacy)). You are responsible for keeping backups (use **Progress & Sync → Export**) because clearing your browser data or switching browsers or devices can delete them. You keep all rights to the code and notes you write. Import only progress files and sync codes that you created yourself or fully trust: importing adds their notes, code and settings to your own data.
 
 ### 4. Running code
 
@@ -39,7 +39,7 @@ Do not misuse the app: do not try to disrupt or overload it or its hosting, do n
 
 The lessons, quizzes, practice problems, explanations, glossary, flashcards and other educational content of ML Atlas are © {year} {owner}. All rights reserved. You may use them for your own personal, non-commercial learning, and you may quote short passages with attribution. Do not republish, sell or redistribute the content, or use it to build a competing product, without written permission.
 
-The app's source code (its JavaScript, HTML and CSS) is released under the {codeLicense}; see the LICENSE file that accompanies it. Third-party software included in or loaded by the app — such as Vue and Pyodide with its Python packages — remains under its own licence; the [third-party notices](THIRD_PARTY_NOTICES.md) list each component and its licence. Names and trademarks of products, companies and projects mentioned in the lessons belong to their owners and are used only to identify them. Referenced papers, books and websites remain the work of their authors; the lessons explain ideas in their own words and point to these sources for further reading.
+The app's source code (its JavaScript, HTML and CSS) is released under the {codeLicense}; see the LICENSE file that accompanies it. Third-party software included in or loaded by the app (such as Vue and Pyodide with its Python packages) remains under its own licence; the [third-party notices](THIRD_PARTY_NOTICES.md) list each component and its licence. Names and trademarks of products, companies and projects mentioned in the lessons belong to their owners and are used only to identify them. Referenced papers, books and websites remain the work of their authors; the lessons explain ideas in their own words and point to these sources for further reading.
 
 ### 7. Third-party services and links
 
@@ -51,7 +51,7 @@ The app and its content are provided **"as is" and "as available"**, without war
 
 ### 9. Limitation of liability
 
-To the fullest extent permitted by law, we are not liable for any indirect, incidental or consequential damages, or for any loss of data, progress, profits or opportunities, arising from your use of — or inability to use — the app or its content. Nothing in these terms limits liability that cannot be limited under the law that applies to you.
+To the fullest extent permitted by law, we are not liable for any indirect, incidental or consequential damages, or for any loss of data, progress, profits or opportunities, arising from your use of (or inability to use) the app or its content. Nothing in these terms limits liability that cannot be limited under the law that applies to you.
 
 ### 10. Changes
 
@@ -75,7 +75,7 @@ This policy explains what happens to your information when you use ML Atlas, a f
 - **No accounts, no sign-up.** We never ask for your name, email address or password.
 - **Your data stays on your device.** Progress, code, notes and settings are saved in your browser's local storage. We do not have a server that receives them.
 - **No cookies, analytics, ads or tracking** are used by ML Atlas.
-- Like every website, the services that **deliver the app's files** — the web host and the content delivery network for the Python runtime — receive standard technical information such as your IP address.
+- Like every website, the services that **deliver the app's files** (the web host and the content delivery network for the Python runtime) receive standard technical information such as your IP address.
 
 ### 1. Information stored on your device
 
@@ -89,7 +89,7 @@ You can delete all of this at any time with **Progress & Sync → Danger zone �
 
 ### 2. Export, import and sync codes
 
-When you export your progress, the app creates a file or a "sync code" **on your device**. It contains your learning data, including your notes and code in readable form. You decide where it goes — treat it like any other personal file, and use it to move your own progress between your own devices rather than sharing it publicly. Importing reads such a file or code locally; nothing is uploaded. Import only files and codes you created yourself or fully trust: the app checks imported data and never runs anything it contains, but an import from someone else adds their notes, code and settings to yours.
+When you export your progress, the app creates a file or a "sync code" **on your device**. It contains your learning data, including your notes and code in readable form. You decide where it goes: treat it like any other personal file, and use it to move your own progress between your own devices rather than sharing it publicly. Importing reads such a file or code locally; nothing is uploaded. Import only files and codes you created yourself or fully trust: the app checks imported data and never runs anything it contains, but an import from someone else adds their notes, code and settings to yours.
 
 ### Security
 
@@ -115,7 +115,7 @@ ML Atlas does not knowingly collect personal information from anyone, including 
 
 ### 7. Your rights
 
-Because we do not receive or store your personal data, there is nothing for us to access, correct or delete on our side — you control everything stored by ML Atlas through your browser. For data held by the hosting or delivery services, use the contact options in their policies.
+Because we do not receive or store your personal data, there is nothing for us to access, correct or delete on our side: you control everything stored by ML Atlas through your browser. For data held by the hosting or delivery services, use the contact options in their policies.
 
 ### 8. Changes
 

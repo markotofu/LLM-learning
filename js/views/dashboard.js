@@ -40,7 +40,7 @@
 
       <div v-if="fresh" class="card hero-card">
         <div class="hero-text">
-          <h3 style="margin-top:0">Welcome to ML Atlas 👋</h3>
+          <h3 style="margin-top:0">Welcome to ML Atlas</h3>
           <p>This is a <b>map</b> of machine learning: {{ P.concepts().length }} concepts, from “what is a vector?” all the way to building and fine-tuning a GPT-style language model. Each concept is a short lesson with runnable code, an interactive demo or two, a quiz, and coding problems you solve right here in the browser.</p>
           <ol class="small"><li>Open the <a @click.prevent="go('/map')" href="#/map">concept map</a> and start at the centre, or pick a <a @click.prevent="go('/tracks')" href="#/tracks">learning track</a>.</li><li>Read a lesson, run the examples, play with the demos.</li><li>Pass the quiz and solve a problem to complete the concept and unlock what builds on it.</li></ol>
           <div class="btn-row"><button class="btn primary" @click="cont"><mla-icon name="play" :size="16"/> Start with “{{ rec.concept ? rec.concept.title : 'the map' }}”</button><button class="btn" @click="go('/tracks')"><mla-icon name="route" :size="16"/> Choose a track</button></div>
@@ -69,7 +69,7 @@
           </div>
         </div>
         <div class="card">
-          <div class="card-title"><h3><mla-icon name="bolt" :size="18"/> Problem of the day</h3><span v-if="potd && potd.done" class="chip green tiny">done ✓</span></div>
+          <div class="card-title"><h3><mla-icon name="bolt" :size="18"/> Problem of the day</h3><span v-if="potd && potd.done" class="chip green tiny">done</span></div>
           <template v-if="potd">
             <div style="font-weight:650">{{ potd.problem.title }}</div>
             <div class="small muted">{{ P.concept(potd.problem.concept).title }}</div>
@@ -77,7 +77,7 @@
             <button class="btn sm block mt" :class="potd.done?'':'primary'" @click="go('/problem/'+potd.problem.id)">{{ potd.done ? 'Review it' : 'Solve it' }}</button>
           </template>
           <div class="streak-days mt"><span v-for="d in days" :key="d.k" :class="{on:d.on, today:d.today}" :title="d.k"></span></div>
-          <div class="tiny dim mt-sm">Last 14 days — learn something daily to grow your streak.</div>
+          <div class="tiny dim mt-sm">Last 14 days: learn something daily to grow your streak.</div>
         </div>
       </div>
 
@@ -99,7 +99,7 @@
             <button class="btn sm block mt" @click="go('/track/'+goal.id)">View the path</button>
           </template>
           <template v-else>
-            <p class="small muted">Pick a destination — like “Build an LLM from scratch” — and ML Atlas will line up exactly the concepts you need, in order.</p>
+            <p class="small muted">Pick a destination (like “Build an LLM from scratch”) and ML Atlas will line up exactly the concepts you need, in order.</p>
             <button class="btn sm primary block" @click="go('/tracks')">Choose a learning track</button>
           </template>
           <hr>
@@ -117,12 +117,12 @@
           <div v-if="activity.length" class="activity">
             <div v-for="(a,i) in activity" :key="i" class="row between small act-row"><span>{{ a.label }}</span><span class="dim tiny">{{ ago(a.t) }}{{ a.xp ? ' · +' + a.xp + ' XP' : '' }}</span></div>
           </div>
-          <empty-state v-else icon="clock" text="Nothing yet — complete a quiz or solve a problem to get started." />
+          <empty-state v-else icon="clock" text="Nothing yet. Complete a quiz or solve a problem to get started." />
         </div>
         <div class="card">
           <div class="card-title"><h3><mla-icon name="cpu" :size="18"/> Python in your browser</h3><span class="chip tiny"><span class="py-dot" :class="py.state"></span> {{ py.ready ? 'ready' : py.state }}</span></div>
-          <p class="small muted">Code runs locally with Pyodide (real CPython compiled to WebAssembly) — nothing is sent to a server. The first run downloads about 15 MB from a CDN; after that it is cached and works offline.</p>
-          <div class="btn-row"><button class="btn sm" :disabled="py.ready || py.state==='loading'" @click="loadPy">{{ py.ready ? 'Loaded ✓' : py.state==='loading' ? (py.message || 'Loading…') : 'Load Python now' }}</button><button class="btn sm ghost" @click="go('/playground')">Open the playground</button></div>
+          <p class="small muted">Code runs locally with Pyodide (real CPython compiled to WebAssembly): nothing is sent to a server. The first run downloads about 15 MB from a CDN; after that it is cached and works offline.</p>
+          <div class="btn-row"><button class="btn sm" :disabled="py.ready || py.state==='loading'" @click="loadPy">{{ py.ready ? 'Loaded' : py.state==='loading' ? (py.message || 'Loading…') : 'Load Python now' }}</button><button class="btn sm ghost" @click="go('/playground')">Open the playground</button></div>
         </div>
       </div>
     </div>`

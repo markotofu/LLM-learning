@@ -46,8 +46,8 @@
           <div class="result-head">
             <score-ring :value="result.score" />
             <div>
-              <h2 style="margin:0">{{ result.score >= pass ? 'Passed!' : 'Not yet — keep going' }}</h2>
-              <p class="muted" style="margin:4px 0 10px">{{ result.correct }} of {{ result.total }} correct ({{ result.score }}%). Passing is {{ pass }}%. Read the explanations below — they are the fastest way to fix a misconception.</p>
+              <h2 style="margin:0">{{ result.score >= pass ? 'Passed' : 'Not yet. Keep going.' }}</h2>
+              <p class="muted" style="margin:4px 0 10px">{{ result.correct }} of {{ result.total }} correct ({{ result.score }}%). Passing is {{ pass }}%. Read the explanations below: they are the fastest way to fix a misconception.</p>
               <div class="btn-row"><button class="btn" @click="retry"><mla-icon name="refresh" :size="16"/> Try again</button><button class="btn ghost" @click="$emit('close')">Back to the lesson</button></div>
             </div>
           </div>
@@ -62,14 +62,14 @@
         <div class="q-num">Question {{ i+1 }} · {{ typeName(q.type) }}<span v-if="submitted" :class="res(i).correct?'ok-text':'bad-text'"> · {{ res(i).correct ? 'Correct' : (res(i).partial>0 ? 'Partly correct' : 'Incorrect') }}</span></div>
         <div class="q-text"><mla-md :src="q.q" /></div>
         <div v-if="q.type==='mcq'||q.type==='multi'" class="options">
-          <div v-for="(o,oi) in q.options" :key="oi" class="option" :class="optClass(i,oi)" @click="q.type==='multi'?toggleMulti(i,oi):setMcq(i,oi)" tabindex="0" @keydown.enter="q.type==='multi'?toggleMulti(i,oi):setMcq(i,oi)">
+          <div v-for="(o,oi) in q.options" :key="oi" class="option" :class="optClass(i,oi)" role="button" @click="q.type==='multi'?toggleMulti(i,oi):setMcq(i,oi)" tabindex="0" @keydown.enter.prevent="q.type==='multi'?toggleMulti(i,oi):setMcq(i,oi)" @keydown.space.prevent="q.type==='multi'?toggleMulti(i,oi):setMcq(i,oi)">
             <span class="opt-key">{{ String.fromCharCode(65+oi) }}</span><mla-md :src="o" inline />
           </div>
           <div v-if="q.type==='multi' && !submitted" class="tiny dim">Select all that apply.</div>
         </div>
         <div v-else-if="q.type==='tf'" class="options">
-          <div class="option" :class="optClass(i,true)" @click="setMcq(i,true)"><span class="opt-key">T</span>True</div>
-          <div class="option" :class="optClass(i,false)" @click="setMcq(i,false)"><span class="opt-key">F</span>False</div>
+          <div class="option" :class="optClass(i,true)" role="button" tabindex="0" @click="setMcq(i,true)" @keydown.enter.prevent="setMcq(i,true)" @keydown.space.prevent="setMcq(i,true)"><span class="opt-key">T</span>True</div>
+          <div class="option" :class="optClass(i,false)" role="button" tabindex="0" @click="setMcq(i,false)" @keydown.enter.prevent="setMcq(i,false)" @keydown.space.prevent="setMcq(i,false)"><span class="opt-key">F</span>False</div>
         </div>
         <div v-else-if="q.type==='fill'">
           <input type="text" placeholder="your answer…" @input="setFill(i,$event)" :value="answers[i]||''" spellcheck="false" :disabled="submitted" />
@@ -122,12 +122,12 @@
     template: `
     <div>
       <div v-if="q.type==='mcq'||q.type==='multi'" class="options">
-        <div v-for="(o,i) in q.options" :key="i" class="option" :class="optClass(i)" @click="q.type==='multi'?toggle(i):pick(i)" tabindex="0" @keydown.enter="q.type==='multi'?toggle(i):pick(i)"><span class="opt-key">{{ String.fromCharCode(65+i) }}</span><mla-md :src="o" inline /></div>
+        <div v-for="(o,i) in q.options" :key="i" class="option" :class="optClass(i)" role="button" @click="q.type==='multi'?toggle(i):pick(i)" tabindex="0" @keydown.enter.prevent="q.type==='multi'?toggle(i):pick(i)" @keydown.space.prevent="q.type==='multi'?toggle(i):pick(i)"><span class="opt-key">{{ String.fromCharCode(65+i) }}</span><mla-md :src="o" inline /></div>
         <button v-if="q.type==='multi' && !done" class="btn sm mt" @click="$emit('answer', multi.slice())">Check</button>
       </div>
       <div v-else-if="q.type==='tf'" class="options">
-        <div class="option" :class="done ? {correct: q.answer===true, wrong: pickedVal===true && !q.answer} : {}" @click="pick(true)"><span class="opt-key">T</span>True</div>
-        <div class="option" :class="done ? {correct: q.answer===false, wrong: pickedVal===false && q.answer} : {}" @click="pick(false)"><span class="opt-key">F</span>False</div>
+        <div class="option" :class="done ? {correct: q.answer===true, wrong: pickedVal===true && !q.answer} : {}" role="button" tabindex="0" @click="pick(true)" @keydown.enter.prevent="pick(true)" @keydown.space.prevent="pick(true)"><span class="opt-key">T</span>True</div>
+        <div class="option" :class="done ? {correct: q.answer===false, wrong: pickedVal===false && q.answer} : {}" role="button" tabindex="0" @click="pick(false)" @keydown.enter.prevent="pick(false)" @keydown.space.prevent="pick(false)"><span class="opt-key">F</span>False</div>
       </div>
       <div v-else-if="q.type==='fill'" class="inline-form">
         <input v-model="fillVal" :disabled="!!done" spellcheck="false" placeholder="your answer…" @keyup.enter="$emit('answer', fillVal)" />

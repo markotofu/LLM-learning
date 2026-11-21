@@ -8,7 +8,7 @@
     id: 'matrix-calculus', branch: 'math', title: 'Matrix Calculus: Gradients of Vectors & Matrices', short: 'Matrix Calculus', level: 2, minutes: 45, prereqs: ['derivatives', 'vectors-matrices'],
     tags: ['matrix calculus', 'gradient', 'jacobian', 'hessian', 'chain rule', 'vector-jacobian product', 'backpropagation', 'gradient check', 'shapes', 'softmax cross-entropy'],
     summary: 'Derivatives when inputs and outputs are vectors and matrices: gradients, Jacobians and Hessians and their shapes, a small table of identities, the chain rule as vector–Jacobian products (exactly what backpropagation computes), the gradients of a linear layer and of softmax cross-entropy, and checking any of them numerically.',
-    why: `Every model is trained with the gradient of one number — the loss — with respect to millions of parameters arranged in vectors and matrices. Differentiating one entry at a time is hopeless; **matrix calculus** lets you write the whole gradient of a layer in one line, such as ∂L/∂W = Xᵀ G, check it by its shape, and understand exactly what an autograd engine does for you. It is also the language of almost every machine-learning paper.`,
+    why: `Every model is trained with the gradient of one number (the loss) with respect to millions of parameters arranged in vectors and matrices. Differentiating one entry at a time is hopeless; **matrix calculus** lets you write the whole gradient of a layer in one line, such as ∂L/∂W = Xᵀ G, check it by its shape, and understand exactly what an autograd engine does for you. It is also the language of almost every machine-learning paper.`,
     objectives: [
       'Tell gradients, Jacobians and Hessians apart and predict their shapes',
       'Differentiate linear and quadratic expressions with a few identities',
@@ -31,7 +31,7 @@ J — the Jacobian of a function with m outputs: an m × n matrix whose row i is
 H — the Hessian of a single-number function: an n × n symmetric matrix of second derivatives
 :::
 
-**The shape rule.** In machine learning, the derivative of a scalar loss L with respect to any array has **the same shape as that array**: if W is 3 × 5, then ∂L/∂W is 3 × 5, holding one partial derivative per weight. Whenever you derive a gradient, check its shape first — most mistakes show up as a wrong shape or a missing transpose.` },
+**The shape rule.** In machine learning, the derivative of a scalar loss L with respect to any array has **the same shape as that array**: if W is 3 × 5, then ∂L/∂W is 3 × 5, holding one partial derivative per weight. Whenever you derive a gradient, check its shape first: most mistakes show up as a wrong shape or a missing transpose.` },
       { type: 'check', question: { type: 'mcq', q: 'A function maps vectors of length 5 to vectors of length 3. What is the shape of its Jacobian?', options: ['5 × 3', '3 × 5', '3', '5'], answer: 1, explain: 'One row per output (3), one column per input (5).' } },
       { type: 'text', title: 'Identities you will use constantly', md: `Most gradients in machine learning are built from a handful of rules. For a vector x:
 
@@ -43,13 +43,13 @@ H — the Hessian of a single-number function: an n × n symmetric matrix of sec
 | ‖A x − b‖² | 2 Aᵀ (A x − b) |
 | A x (a vector) | Jacobian A |
 :::where Symbols in the table
-x — the variable we differentiate with respect to (a vector)
-a, b — constant vectors
-A — a constant matrix; Aᵀ is its transpose
-‖v‖² — the squared length of v, the sum of its squared entries
+x: the variable we differentiate with respect to (a vector)
+a, b: constant vectors
+A: a constant matrix; Aᵀ is its transpose
+‖v‖²: the squared length of v, the sum of its squared entries
 :::
 
-And for a matrix variable W, the gradient of aᵀ W b is the outer product a bᵀ — a matrix with the same shape as W. You can always rederive these by writing the expression as a sum over indices, differentiating one entry, and recognizing the result as a matrix product.` },
+And for a matrix variable W, the gradient of aᵀ W b is the outer product a bᵀ: a matrix with the same shape as W. You can always rederive these by writing the expression as a sum over indices, differentiating one entry, and recognizing the result as a matrix product.` },
       { type: 'code', title: 'Checking gradient identities numerically', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -74,7 +74,7 @@ checks = {
 for name, (f, analytic) in checks.items():
     err = np.max(np.abs(numerical_grad(f, x) - analytic))
     print(f"{name:30s} largest difference {err:.1e}")
-`, after: `Each formula matches the numerical estimate to many decimal places. Comparing a hand-derived gradient with finite differences — a **gradient check** — catches most mistakes in custom layers and losses.` },
+`, after: `Each formula matches the numerical estimate to many decimal places. Comparing a hand-derived gradient with finite differences (a **gradient check**) catches most mistakes in custom layers and losses.` },
       { type: 'text', title: 'The chain rule with matrices', md: `If a computation goes x → y = f(x) → L, the multivariable chain rule says the gradient flowing back to x is the transposed Jacobian times the gradient arriving at y:
 
 $$ ∂L/∂x = Jᵀ · ∂L/∂y $$
@@ -86,7 +86,7 @@ J — the m × n Jacobian of f at x
 Jᵀ · ∂L/∂y — a vector–Jacobian product: the gradient passed further back (length n)
 :::
 
-Backpropagation is a chain of these **vector–Jacobian products**. It never builds a Jacobian explicitly — a layer with a million inputs and outputs would have a trillion entries — it only computes what the Jacobian does to the incoming gradient.
+Backpropagation is a chain of these **vector–Jacobian products**. It never builds a Jacobian explicitly (a layer with a million inputs and outputs would have a trillion entries) it only computes what the Jacobian does to the incoming gradient.
 
 For a **linear layer** applied to a batch, written the way code does it:
 
@@ -152,7 +152,7 @@ softmax(z) — the predicted probabilities
 e_y — the one-hot vector with a 1 at the true class y
 :::
 
-"Predicted minus true" — the same p − y you saw in logistic regression. It is why classifiers learn quickly when they are confidently wrong, and why frameworks fuse softmax and cross-entropy into one numerically stable operation.` },
+"Predicted minus true": the same p − y you saw in logistic regression. It is why classifiers learn quickly when they are confidently wrong, and why frameworks fuse softmax and cross-entropy into one numerically stable operation.` },
       { type: 'code', title: "The softmax Jacobian, derived and checked", md: `The softmax maps K logits to K probabilities, so its derivative is a K × K Jacobian:
 
 $$ ∂pᵢ/∂zⱼ = pᵢ (δᵢⱼ − pⱼ)          J = diag(p) − p pᵀ $$
@@ -197,7 +197,7 @@ $$ f(x + Δ) ≈ f(x) + ∇f(x)ᵀ Δ + ½ Δᵀ H Δ $$
 ½ Δᵀ H Δ — the second-order (curvature) term, with H the Hessian at x
 :::
 
-At a point where the gradient is zero, the Hessian's eigenvalues (see *Eigenvectors & the SVD*) classify it: all positive means a local minimum, all negative a local maximum, mixed signs a **saddle point** — the most common kind of critical point in high-dimensional neural-network losses. The ratio of the largest to the smallest eigenvalue, the condition number, determines how hard the problem is for gradient descent (see *Optimization Theory*). A network with a billion parameters has a Hessian with 10¹⁸ entries, so it is never formed; autograd can still compute **Hessian–vector products** with two backward passes.` },
+At a point where the gradient is zero, the Hessian's eigenvalues (see *Eigenvectors & the SVD*) classify it: all positive means a local minimum, all negative a local maximum, mixed signs a **saddle point** (the most common kind of critical point in high-dimensional neural-network losses). The ratio of the largest to the smallest eigenvalue, the condition number, determines how hard the problem is for gradient descent (see *Optimization Theory*). A network with a billion parameters has a Hessian with 10¹⁸ entries, so it is never formed; autograd can still compute **Hessian–vector products** with two backward passes.` },
       { type: 'text', title: "Forward mode, reverse mode and the cost of gradients", md: `The chain rule multiplies Jacobians, J = J_L ⋯ J₂ J₁ for a chain of L operations, and the order in which you multiply decides the cost.
 
 - **Forward mode** multiplies from the input side. It pushes one input direction v through the computation, producing a Jacobian–vector product J v: the derivative of every output with respect to *one* input direction. A full gradient over n parameters needs n such passes.
@@ -215,12 +215,12 @@ Training has n = millions or billions of parameters and m = 1 output, the scalar
 Forward mode still has its uses: functions with few inputs and many outputs, and Hessian–vector products (forward mode applied to a reverse-mode gradient), which second-order methods use without ever building the Hessian.` },
       { type: 'chart', title: "Cost of computing every partial derivative of one loss", after: `For a model with a billion parameters, finite differences would need two billion evaluations of the loss for a single gradient. Reverse mode gets all billion partial derivatives for the price of a few forward passes, which is the only reason training large networks is possible at all.`, chart: {"kind":"line","x":[10,100,1000,10000,100000,1000000,10000000,100000000,1000000000],"xLog":true,"yLog":true,"series":[{"name":"finite differences: 2n + 1 loss evaluations","y":[21,201,2001,20001,200001,2000001,20000001,200000001,2000000001]},{"name":"forward mode: one pass per parameter","y":[10,100,1000,10000,100000,1000000,10000000,100000000,1000000000]},{"name":"reverse mode (backpropagation): about 3 passes","y":[3,3,3,3,3,3,3,3,3]}],"xLabel":"number of parameters n (log scale)","yLabel":"cost in forward passes (log scale)"} }
     ],
-    when: `- Deriving gradients for a custom layer, loss or model — and checking them before trusting them.
+    when: `- Deriving gradients for a custom layer, loss or model, and checking them before trusting them.
 - Reading papers, where results are written in matrix form.
 - Writing efficient code: a derived matrix expression replaces slow Python loops.
 - Understanding optimizers and training difficulties through the Hessian (curvature, saddle points, conditioning).`,
     pitfalls: `- Mixing layout conventions from different textbooks (some write gradients as rows, some as columns); stick to "the gradient has the shape of the variable".
-- Forgetting a transpose or the sum over the batch for bias gradients — check every shape.
+- Forgetting a transpose or the sum over the batch for bias gradients: check every shape.
 - Building full Jacobians when a vector–Jacobian product is all you need (memory explodes).
 - Skipping the gradient check: finite differences with a step around 1e-6 and float64 catch most errors.
 - Computing softmax and log separately (overflow and log(0)); use the combined, stable form.`,
@@ -340,9 +340,9 @@ def softmax_ce_grad(Z, y):
       }
     ],
     refs: [
-      { title: 'Petersen & Pedersen — The Matrix Cookbook', url: 'https://www.math.uwaterloo.ca/~hwolkowi/matrixcookbook.pdf' },
-      { title: 'Parr & Howard — The Matrix Calculus You Need For Deep Learning', url: 'https://explained.ai/matrix-calculus/' },
-      { title: 'Stanford CS231n — Derivatives, backpropagation and vectorization', url: 'https://cs231n.stanford.edu/handouts/derivatives.pdf' }
+      { title: 'Petersen & Pedersen, The Matrix Cookbook', url: 'https://www.math.uwaterloo.ca/~hwolkowi/matrixcookbook.pdf' },
+      { title: 'Parr & Howard, The Matrix Calculus You Need For Deep Learning', url: 'https://explained.ai/matrix-calculus/' },
+      { title: 'Stanford CS231n, Derivatives, backpropagation and vectorization', url: 'https://cs231n.stanford.edu/handouts/derivatives.pdf' }
     ]
   },
 
@@ -350,8 +350,8 @@ def softmax_ce_grad(Z, y):
   {
     id: 'optimization-theory', branch: 'math', title: 'Optimization Theory: Convexity, Constraints & Second-Order Methods', short: 'Optimization Theory', level: 3, minutes: 45, prereqs: ['gradient-descent', 'matrix-calculus'],
     tags: ['optimization', 'convexity', 'convex function', 'global minimum', 'condition number', 'newton\'s method', 'quasi-newton', 'l-bfgs', 'lagrange multipliers', 'kkt conditions', 'duality', 'constrained optimization'],
-    summary: 'Why some problems are easy and others hard: convex functions and why convexity guarantees a global minimum, how curvature and the condition number set the speed of gradient descent, Newton\'s method and quasi-Newton methods such as L-BFGS, and constrained optimization with Lagrange multipliers and the KKT conditions — the tools behind PCA, SVMs and KL-constrained reinforcement learning.',
-    why: `Training a model is solving an optimization problem. Knowing which problems are **convex** (linear and logistic regression, SVMs) tells you that any solution you reach is the best one; knowing why neural networks are not — and still train well — explains much of deep-learning practice. Conditioning explains why feature scaling, normalization layers and Adam help. And **Lagrange multipliers** appear in derivations everywhere: PCA, SVMs, maximum-entropy models and the KL penalty in RLHF.`,
+    summary: 'Why some problems are easy and others hard: convex functions and why convexity guarantees a global minimum, how curvature and the condition number set the speed of gradient descent, Newton\'s method and quasi-Newton methods such as L-BFGS, and constrained optimization with Lagrange multipliers and the KKT conditions (the tools behind PCA, SVMs and KL-constrained reinforcement learning).',
+    why: `Training a model is solving an optimization problem. Knowing which problems are **convex** (linear and logistic regression, SVMs) tells you that any solution you reach is the best one; knowing why neural networks are not (and still train well) explains much of deep-learning practice. Conditioning explains why feature scaling, normalization layers and Adam help. And **Lagrange multipliers** appear in derivations everywhere: PCA, SVMs, maximum-entropy models and the KL penalty in RLHF.`,
     objectives: [
       'Define convex functions and explain why every local minimum of one is global',
       'Relate the condition number of the Hessian to the speed of gradient descent',
@@ -368,10 +368,10 @@ x, y — any two points (for us, two parameter vectors)
 The right-hand side is the chord, the straight line between the points (x, f(x)) and (y, f(y)).
 :::
 
-For smooth functions this is equivalent to the Hessian being positive semi-definite everywhere — curving upward (or staying flat) in every direction. The crucial consequence: **every local minimum of a convex function is a global minimum**, so gradient descent with a sensible step size reaches the best possible solution.
+For smooth functions this is equivalent to the Hessian being positive semi-definite everywhere: curving upward (or staying flat) in every direction. The main consequence: **every local minimum of a convex function is a global minimum**, so gradient descent with a sensible step size reaches the best possible solution.
 
-- **Convex in the weights**: linear regression with squared error, logistic regression with log loss, SVMs with the hinge loss — and adding L1 or L2 penalties keeps them convex.
-- **Not convex**: neural networks. Swapping two hidden units gives a different weight vector with exactly the same loss, so there are many separate minima, plus countless saddle points. That they still train well — overparameterized networks have many good minima reachable by SGD — is an empirical fact that theory is still catching up with.` },
+- **Convex in the weights**: linear regression with squared error, logistic regression with log loss, SVMs with the hinge loss, and adding L1 or L2 penalties keeps them convex.
+- **Not convex**: neural networks. Swapping two hidden units gives a different weight vector with exactly the same loss, so there are many separate minima, plus countless saddle points. That they still train well (overparameterized networks have many good minima reachable by SGD) is an empirical fact that theory is still catching up with.` },
       { type: 'code', title: 'Convex versus non-convex: where gradient descent ends up', code: `
 import numpy as np
 
@@ -390,9 +390,9 @@ for x0 in (-2.0, -0.5, 0.5, 2.0):
     a = descend(bowl_grad, x0, lr=0.1)
     b = descend(bumpy_grad, x0, lr=0.01)
     print(f"start {x0:+.1f}:  convex -> x = {a:.3f} (f = {bowl(a):.3f})    non-convex -> x = {b:+.3f} (f = {bumpy(b):+.3f})")
-`, after: `On the bowl every start reaches the same answer. On the bumpy function the starting point decides which valley you end in, and the valley at x ≈ +1.13 (f ≈ −1.07) is only a local minimum — the global one is at x ≈ −1.30 (f ≈ −3.51).` },
+`, after: `On the bowl every start reaches the same answer. On the bumpy function the starting point decides which valley you end in, and the valley at x ≈ +1.13 (f ≈ −1.07) is only a local minimum: the global one is at x ≈ −1.30 (f ≈ −3.51).` },
       { type: 'check', question: { type: 'tf', q: 'For a convex loss, any local minimum that gradient descent finds is also a global minimum.', answer: true, explain: 'That is the defining benefit of convexity.' } },
-      { type: 'text', title: 'Curvature and the condition number', md: `Near a minimum, most losses look like a quadratic bowl ½ xᵀA x whose Hessian A has eigenvalues from λ_min to λ_max. Gradient descent is only stable if the step size η < 2 / λ_max — the steepest direction sets the speed limit — while progress along the flattest direction is proportional to η · λ_min. Their ratio decides how slow it is:
+      { type: 'text', title: 'Curvature and the condition number', md: `Near a minimum, most losses look like a quadratic bowl ½ xᵀA x whose Hessian A has eigenvalues from λ_min to λ_max. Gradient descent is only stable if the step size η < 2 / λ_max (the steepest direction sets the speed limit) while progress along the flattest direction is proportional to η · λ_min. Their ratio decides how slow it is:
 
 $$ κ = λ_max / λ_min          error after k steps ≤ ( (κ − 1) / (κ + 1) )^k · initial error $$
 :::where
@@ -401,7 +401,7 @@ $$ κ = λ_max / λ_min          error after k steps ≤ ( (κ − 1) / (κ + 1)
 k — the number of gradient-descent steps, taken with the best fixed step size η = 2 / (λ_max + λ_min)
 :::
 
-With κ = 1 (a perfectly round bowl) a single step is enough; with κ = 100 each step removes only about 2% of the remaining error. In a long, narrow valley gradient descent zigzags across the steep direction while crawling along the flat one. Remedies: **standardize the features** (which reduces κ for linear models enormously), normalization layers, momentum, adaptive methods such as Adam (which rescale each parameter — a cheap, diagonal approximation of curvature) and second-order methods.` },
+With κ = 1 (a perfectly round bowl) a single step is enough; with κ = 100 each step removes only about 2% of the remaining error. In a long, narrow valley gradient descent zigzags across the steep direction while crawling along the flat one. Remedies: **standardize the features** (which reduces κ for linear models enormously), normalization layers, momentum, adaptive methods such as Adam (which rescale each parameter, a cheap, diagonal approximation of curvature) and second-order methods.` },
       { type: 'demo', title: 'Interactive: gradient descent in a narrow valley', demo: 'conditioning' },
       { type: 'code', title: 'Iterations needed on round and narrow bowls', code: `
 import numpy as np
@@ -415,7 +415,7 @@ for lam_min, lam_max in [(1, 1), (1, 10), (1, 100), (1, 1000)]:
     x0 = np.array([1.0, 1.0])
     newton = x0 - np.linalg.solve(A, A @ x0)              # one Newton step: divide by the curvature
     print(f"kappa = {lam_max / lam_min:5.0f}:  gradient descent needs {steps:5d} steps;  one Newton step reaches {newton}")
-`, after: `The number of gradient-descent steps grows in proportion to κ, while Newton's method — which divides each direction by its own curvature — solves any quadratic in a single step.` },
+`, after: `The number of gradient-descent steps grows in proportion to κ, while Newton's method (which divides each direction by its own curvature) solves any quadratic in a single step.` },
       { type: 'text', title: 'Newton\'s method and quasi-Newton methods', md: `Newton's method uses the Hessian to rescale the gradient:
 
 $$ x_{k+1} = x_k − H(x_k)⁻¹ ∇f(x_k) $$
@@ -427,10 +427,10 @@ H(x_k) — the Hessian there; multiplying by its inverse divides each direction 
 
 Near a minimum it converges extremely fast (the number of correct digits roughly doubles every step) and the condition number no longer matters. But:
 
-- for d parameters the Hessian has d² entries and solving with it costs about d³ operations — impossible for a network with billions of weights;
+- for d parameters the Hessian has d² entries and solving with it costs about d³ operations: impossible for a network with billions of weights;
 - far from a minimum the Hessian may not be positive definite, and a raw Newton step can head for a maximum or a saddle, so practical versions add line searches or damping.
 
-**Quasi-Newton** methods (BFGS) build an approximation of H⁻¹ from how the gradient changes between steps. **L-BFGS** keeps only the last few (≈ 10) pairs of changes, so its memory is linear in d; it is the standard solver for small and medium smooth problems — scikit-learn's \`LogisticRegression\` uses it by default. Deep learning relies on first-order methods with cheap preconditioning: Adam's per-parameter scaling, and matrix-aware optimizers such as Shampoo and Muon that precondition each weight matrix as a whole.` },
+**Quasi-Newton** methods (BFGS) build an approximation of H⁻¹ from how the gradient changes between steps. **L-BFGS** keeps only the last few (≈ 10) pairs of changes, so its memory is linear in d; it is the standard solver for small and medium smooth problems: scikit-learn's \`LogisticRegression\` uses it by default. Deep learning relies on first-order methods with cheap preconditioning: Adam's per-parameter scaling, and matrix-aware optimizers such as Shampoo and Muon that precondition each weight matrix as a whole.` },
       { type: 'text', title: "Convergence rates: how fast is fast?", md: `Optimisation methods are compared by how quickly their error e_k (the distance to the optimum, or the excess loss) shrinks with the number of iterations k:
 
 $$ linear:  e_{k+1} ≤ ρ · e_k          quadratic:  e_{k+1} ≤ C · e_k² $$
@@ -449,7 +449,7 @@ C — a constant that depends on the function; once C · e_k < 1, squaring makes
 
 By these numbers, stochastic gradient descent is the slowest method on the list, yet it trains nearly every large model. Two reasons. Each SGD step costs one mini-batch instead of a pass over the whole dataset, so per second of computation it is far from slow. And machine learning never needs the training loss to six decimals: the model saw only a finite sample, so its statistical error is far larger than any optimisation error below it. Optimising much further than that buys nothing on new data.` },
       { type: 'chart', title: "Gradient descent against Newton's method on logistic regression", md: `L2-regularised logistic regression with two features, minimised from w = 0:`, after: `Gradient descent improves by a constant factor per step (a straight line on this log scale: linear convergence). Newton's method needs a few steps to get close, then the number of correct digits roughly doubles each step (quadratic convergence) until it hits the limits of floating-point precision. Stretching one feature by 10 multiplies that direction's curvature by 100, and the same gradient descent slows to a crawl; Newton's method is unaffected by such rescaling.`, chart: {"kind":"line","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40],"yLog":true,"points":false,"series":[{"name":"gradient descent (step 1/L)","y":[0.2135,0.02542,0.008821,0.003645,0.001628,0.0007591,0.0003633,0.0001768,0.00008699,0.00004313,0.00002149,0.00001075,0.00000539,0.000002708,0.000001362,6.855e-7,3.453e-7,1.74e-7,8.77e-8,4.422e-8,2.23e-8,1.125e-8,5.672e-9,2.861e-9,1.443e-9,7.279e-10,3.672e-10,1.852e-10,9.343e-11,4.713e-11,2.378e-11,1.199e-11,6.05e-12,3.052e-12,1.54e-12,7.768e-13,3.919e-13,1.977e-13,9.975e-14,5.035e-14,2.537e-14]},{"name":"Newton's method","y":[0.2135,0.01704,0.0006224,0.000001181,4.588e-12,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16,1e-16]},{"name":"gradient descent, one feature ×10 (step 1/L)","y":[0.2183,0.1732,0.1702,0.1676,0.165,0.1624,0.1599,0.1575,0.1551,0.1527,0.1504,0.1481,0.1459,0.1437,0.1415,0.1394,0.1373,0.1353,0.1333,0.1313,0.1294,0.1275,0.1256,0.1238,0.122,0.1202,0.1185,0.1168,0.1151,0.1135,0.1119,0.1103,0.1087,0.1072,0.1057,0.1042,0.1027,0.1013,0.09991,0.09852,0.09716]}],"xLabel":"iteration","yLabel":"loss − best possible loss (log scale)","yMin":1e-16} },
-      { type: 'text', title: 'Constrained optimization and Lagrange multipliers', md: `Many problems come with constraints: a direction of unit length, probabilities that sum to one, a policy that must stay close to a reference model. To minimize f(x) subject to g(x) = 0, notice that at the optimum you cannot decrease f without leaving the constraint — the gradients of f and g must be parallel. A **Lagrange multiplier** λ turns this into an equation:
+      { type: 'text', title: 'Constrained optimization and Lagrange multipliers', md: `Many problems come with constraints: a direction of unit length, probabilities that sum to one, a policy that must stay close to a reference model. To minimize f(x) subject to g(x) = 0, notice that at the optimum you cannot decrease f without leaving the constraint: the gradients of f and g must be parallel. A **Lagrange multiplier** λ turns this into an equation:
 
 $$ ℒ(x, λ) = f(x) + λ · g(x)          ∇ₓℒ = ∇f(x) + λ ∇g(x) = 0,     g(x) = 0 $$
 :::where
@@ -459,7 +459,7 @@ g(x) = 0 — the constraint
 ℒ — the Lagrangian, which folds the objective and the constraint into one function
 :::
 
-**Example — PCA.** Find the unit direction w that maximizes the variance of the data projected onto it:
+**Example, PCA.** Find the unit direction w that maximizes the variance of the data projected onto it:
 
 $$ maximize wᵀΣw subject to wᵀw = 1     ⇒     ∇_w [ wᵀΣw − λ(wᵀw − 1) ] = 2Σw − 2λw = 0     ⇒     Σw = λw $$
 :::where
@@ -469,9 +469,9 @@ wᵀΣw — the variance of the data projected onto w
 Σw = λw — the eigenvector equation, so the best direction is an eigenvector, and the variance it captures, wᵀΣw = λ, is its eigenvalue
 :::
 
-With **inequality** constraints g_i(x) ≤ 0, the optimum satisfies the **KKT conditions**: the gradient condition, feasibility, multipliers λ_i ≥ 0, and **complementary slackness** λ_i · g_i(x) = 0 — a multiplier can be non-zero only for a constraint that is active (exactly tight). In an SVM the training points with non-zero multipliers are the ones on or inside the margin: the **support vectors**. Every Lagrangian also defines a **dual problem**; for convex problems it usually has the same optimal value, and the SVM's dual depends on the data only through dot products — which is what makes the kernel trick possible.
+With **inequality** constraints g_i(x) ≤ 0, the optimum satisfies the **KKT conditions**: the gradient condition, feasibility, multipliers λ_i ≥ 0, and **complementary slackness** λ_i · g_i(x) = 0, a multiplier can be non-zero only for a constraint that is active (exactly tight). In an SVM the training points with non-zero multipliers are the ones on or inside the margin: the **support vectors**. Every Lagrangian also defines a **dual problem**; for convex problems it usually has the same optimal value, and the SVM's dual depends on the data only through dot products, which is what makes the kernel trick possible.
 
-**Penalties are constraints in disguise.** Minimizing loss + λ‖w‖² gives the same solution as minimizing the loss subject to ‖w‖² ≤ t for a matching t. The KL penalty in RLHF is, in the same way, the Lagrangian of "maximize reward while staying within a KL budget of the reference model" — the trust-region idea behind TRPO and PPO.` },
+**Penalties are constraints in disguise.** Minimizing loss + λ‖w‖² gives the same solution as minimizing the loss subject to ‖w‖² ≤ t for a matching t. The KL penalty in RLHF is, in the same way, the Lagrangian of "maximize reward while staying within a KL budget of the reference model": the trust-region idea behind TRPO and PPO.` },
       { type: 'code', title: 'Lagrange multipliers find the principal component', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -488,18 +488,18 @@ eigvals, eigvecs = np.linalg.eigh(S)
 top = eigvecs[:, -1] * np.sign(eigvecs[0, -1])
 print("best direction by brute force:  ", best.round(3), "  variance captured:", variance.max().round(4))
 print("top eigenvector of the covariance:", top.round(3), "  eigenvalue:       ", eigvals[-1].round(4))
-`, after: `Searching every direction on the unit circle and solving Σw = λw give the same answer: the constrained maximum is the top eigenvector, and the largest variance equals its eigenvalue — exactly what the Lagrange condition predicted.` },
+`, after: `Searching every direction on the unit circle and solving Σw = λw give the same answer: the constrained maximum is the top eigenvector, and the largest variance equals its eigenvalue, exactly what the Lagrange condition predicted.` },
       { type: 'check', question: { type: 'mcq', q: 'In a trained SVM, which training points have non-zero Lagrange multipliers?', options: ['All of them', 'Only misclassified points', 'The support vectors: points on or inside the margin', 'None of them'], answer: 2, explain: 'Complementary slackness: only active constraints get non-zero multipliers.' } }
     ],
     when: `- Recognizing convex problems (linear and logistic regression, lasso, SVMs): a solver that reaches zero gradient is done.
 - Diagnosing slow or unstable training through conditioning: scale features, normalize, lower the learning rate.
 - L-BFGS for small and medium smooth problems; momentum or Adam for deep networks.
 - Lagrange multipliers to derive PCA, SVMs, maximum-entropy models and constrained or KL-penalized policies.`,
-    pitfalls: `- Assuming deep-learning losses are convex — initialization and randomness change where you end up.
+    pitfalls: `- Assuming deep-learning losses are convex: initialization and randomness change where you end up.
 - Unscaled features that create huge condition numbers and painfully slow training.
 - Learning rates above 2 / λ_max, which make training diverge.
 - Raw Newton steps far from a minimum, without a line search or damping.
-- Forgetting that a penalty weight implicitly fixes a constraint level — changing λ changes the problem.`,
+- Forgetting that a penalty weight implicitly fixes a constraint level: changing λ changes the problem.`,
     takeaways: [
       'Convex functions have no bad local minima; linear models with standard losses are convex, neural networks are not.',
       'The condition number κ = λ_max / λ_min sets how slowly gradient descent converges.',
@@ -510,7 +510,7 @@ print("top eigenvector of the covariance:", top.round(3), "  eigenvalue:       "
     quiz: [
       { type: 'mcq', q: 'Which of these losses is convex in the model\'s weights?', options: ['A two-layer neural network with MSE', 'Logistic regression with log loss', 'A transformer language model', 'The k-means objective over centroids and assignments'], answer: 1, explain: 'Linear models with standard losses are convex; networks are not.' },
       { type: 'fill', q: 'The Hessian at a minimum has eigenvalues 2 and 200. What is the condition number?', answer: ['100'], explain: 'κ = 200 / 2 = 100.' },
-      { type: 'mcq', q: 'Why isn\'t Newton\'s method used to train large language models?', options: ['It needs labelled data', 'The Hessian has (number of parameters)² entries — impossible to store or invert', 'It only works for linear models', 'It always diverges'], answer: 1, explain: 'A billion parameters means 10¹⁸ Hessian entries.' },
+      { type: 'mcq', q: 'Why isn\'t Newton\'s method used to train large language models?', options: ['It needs labelled data', 'The Hessian has (number of parameters)² entries: impossible to store or invert', 'It only works for linear models', 'It always diverges'], answer: 1, explain: 'A billion parameters means 10¹⁸ Hessian entries.' },
       { type: 'tf', q: 'At a constrained optimum, the gradient of the objective is parallel to the gradient of an active constraint.', answer: true, explain: 'Otherwise you could move along the constraint and improve the objective.' },
       { type: 'mcq', q: 'What does complementary slackness say?', options: ['Every multiplier is positive', 'A multiplier can be non-zero only if its constraint is active', 'The objective equals the constraint', 'The dual problem is always easier'], answer: 1, explain: 'λ_i · g_i(x) = 0 at the optimum.' },
       {"type":"mcq","q":"An optimiser's error goes 10⁻², 10⁻⁴, 10⁻⁸, 10⁻¹⁶ on successive iterations. What kind of convergence is this?","options":["Sublinear","Linear","Quadratic","Divergent"],"answer":2,"explain":"Each error is roughly the square of the previous one, so the number of correct digits doubles every step: quadratic convergence, typical of Newton's method near the optimum."},
@@ -564,7 +564,7 @@ def gd_steps(A, x0, tol=1e-6, lr=None, max_steps=100000):
     return steps
 `,
         hints: ['`np.linalg.eigvalsh` returns the eigenvalues of a symmetric matrix in ascending order.', 'Count updates in a while loop and stop at max_steps.'],
-        explain: `With the best step size, each update shrinks the error by at least (κ − 1)/(κ + 1), so the step count grows roughly in proportion to κ. A learning rate above 2/λ_max makes the steepest direction grow instead of shrink — the run never reaches the tolerance.`,
+        explain: `With the best step size, each update shrinks the error by at least (κ − 1)/(κ + 1), so the step count grows roughly in proportion to κ. A learning rate above 2/λ_max makes the steepest direction grow instead of shrink: the run never reaches the tolerance.`,
         tests: [
           { call: 'condition_number(np.diag([1.0, 100.0]))', expect: '100.0' },
           { call: 'best_step(np.diag([1.0, 3.0]))', expect: '0.5' },
@@ -578,7 +578,7 @@ def gd_steps(A, x0, tol=1e-6, lr=None, max_steps=100000):
         prompt: `Implement:
 
 - \`newton(grad, hess, x0, steps=10)\` → apply the update x ← x − H(x)⁻¹ ∇f(x) \`steps\` times and return x. \`grad(x)\` returns a vector and \`hess(x)\` a matrix; use \`np.linalg.solve\` rather than an explicit inverse.
-- \`top_component(S)\` → \`(lam, w)\`: the solution of "maximize wᵀS w subject to wᵀw = 1" for a symmetric matrix S — the largest eigenvalue and its unit eigenvector. Choose the sign of w so that its entry with the largest absolute value is positive.`,
+- \`top_component(S)\` → \`(lam, w)\`: the solution of "maximize wᵀS w subject to wᵀw = 1" for a symmetric matrix S (the largest eigenvalue and its unit eigenvector). Choose the sign of w so that its entry with the largest absolute value is positive.`,
         starter: `
 import numpy as np
 
@@ -618,9 +618,9 @@ def top_component(S):
       }
     ],
     refs: [
-      { title: 'Boyd & Vandenberghe — Convex Optimization (free book)', url: 'https://web.stanford.edu/~boyd/cvxbook/' },
-      { title: 'Nocedal & Wright — Numerical Optimization', url: 'https://link.springer.com/book/10.1007/978-0-387-40065-5' },
-      { title: 'Goh — Why Momentum Really Works (Distill)', url: 'https://distill.pub/2017/momentum/' }
+      { title: 'Boyd & Vandenberghe, Convex Optimization (free book)', url: 'https://web.stanford.edu/~boyd/cvxbook/' },
+      { title: 'Nocedal & Wright, Numerical Optimization', url: 'https://link.springer.com/book/10.1007/978-0-387-40065-5' },
+      { title: 'Goh, Why Momentum Really Works (Distill)', url: 'https://distill.pub/2017/momentum/' }
     ]
   },
 
@@ -628,7 +628,7 @@ def top_component(S):
   {
     id: 'learning-theory', branch: 'ml', title: 'Generalization Theory: PAC Learning, VC Dimension & Double Descent', short: 'Generalization Theory', level: 3, minutes: 45, prereqs: ['overfitting', 'stat-inference'],
     tags: ['generalization', 'learning theory', 'empirical risk', 'hoeffding inequality', 'union bound', 'pac learning', 'sample complexity', 'vc dimension', 'shattering', 'double descent', 'implicit regularization', 'benign overfitting', 'grokking'],
-    summary: 'When does a model that fits its training data also do well on new data? True versus empirical risk, Hoeffding\'s inequality for a single model, the union bound and PAC learning for a finite set of models, VC dimension for infinite ones — and what classical theory misses about deep learning: double descent, implicit regularization, benign overfitting and grokking.',
+    summary: 'When does a model that fits its training data also do well on new data? True versus empirical risk, Hoeffding\'s inequality for a single model, the union bound and PAC learning for a finite set of models, VC dimension for infinite ones, and what classical theory misses about deep learning: double descent, implicit regularization, benign overfitting and grokking.',
     why: `Every time you trust a validation score, choose between models or wonder how much data you need, you are making a generalization argument. **Learning theory** makes those arguments precise: it explains why testing many models on the same validation set makes the winner look better than it is, why more data shrinks the gap like 1/√n, and why model capacity matters. It also shows where classical intuition breaks: huge neural networks generalize even though they can memorize random labels.`,
     objectives: [
       'Define true and empirical risk and explain why the training error of a selected model is optimistic',
@@ -637,7 +637,7 @@ def top_component(S):
       'Describe double descent, implicit regularization and why classical bounds fail for deep networks'
     ],
     sections: [
-      { type: 'text', title: 'Training error is an optimistic estimate', md: `A model h has a **true risk** — its expected loss on new data from the same distribution — and an **empirical risk**, its average loss on the n training examples:
+      { type: 'text', title: 'Training error is an optimistic estimate', md: `A model h has a **true risk** (its expected loss on new data from the same distribution) and an **empirical risk**, its average loss on the n training examples:
 
 $$ R(h) = E_(x,y)~D [ ℓ(h(x), y) ]          R̂(h) = (1/n) Σ_i ℓ(h(x_i), y_i) $$
 :::where
@@ -648,7 +648,7 @@ R(h) — the true risk: the expected loss on new examples
 R̂(h) — "R hat": the empirical risk, the average loss on the training set
 :::
 
-Learning usually picks the hypothesis with the smallest R̂ (**empirical risk minimization**). For one *fixed* h, R̂ is an unbiased estimate of R. But we chose h *because* its R̂ was small, so for the chosen model R̂ is optimistic — and the more models we choose among, the more optimistic it is. **Generalization theory** bounds the gap R(h) − R̂(h).` },
+Learning usually picks the hypothesis with the smallest R̂ (**empirical risk minimization**). For one *fixed* h, R̂ is an unbiased estimate of R. But we chose h *because* its R̂ was small, so for the chosen model R̂ is optimistic, and the more models we choose among, the more optimistic it is. **Generalization theory** bounds the gap R(h) − R̂(h).` },
       { type: 'text', title: 'One model: Hoeffding\'s inequality', md: `For a single model fixed before seeing the data, the empirical risk is an average of n independent losses, and averages concentrate around their mean:
 
 $$ P( |R̂(h) − R(h)| > ε ) ≤ 2 · exp( −2 n ε² ) $$
@@ -659,8 +659,8 @@ exp — the exponential function
 The losses must lie between 0 and 1 (such as the 0/1 classification error), and h must not depend on the sample.
 :::
 
-Solving for ε: with probability at least 1 − δ, the gap is at most √( ln(2/δ) / 2n ). The gap shrinks like 1/√n — quadrupling the data halves it. This is also the honest error bar on a **test set**, which is exactly a fixed model evaluated on fresh data.` },
-      { type: 'code', title: 'Hoeffding\'s bound holds — loosely', code: `
+Solving for ε: with probability at least 1 − δ, the gap is at most √( ln(2/δ) / 2n ). The gap shrinks like 1/√n: quadrupling the data halves it. This is also the honest error bar on a **test set**, which is exactly a fixed model evaluated on fresh data.` },
+      { type: 'code', title: 'Hoeffding\'s bound holds: loosely', code: `
 import numpy as np
 rng = np.random.default_rng(0)
 true_error, eps = 0.3, 0.05
@@ -671,7 +671,7 @@ for n in (50, 200, 500, 1000, 2000):
     bound = min(1.0, 2 * np.exp(-2 * n * eps ** 2))
     print(f"{n:5d}   {observed:33.4f}   {bound:15.4f}")
 `, after: `The bound is never violated, but it is loose: real deviations are rarer than it allows, and for small n it says nothing at all (a bound of 1). Bounds like this hold for every possible distribution, so they are guarantees rather than predictions.` },
-      { type: 'text', title: 'Many models: the union bound and PAC learning', md: `If we choose among a finite set of |H| models, the chance that *any* of them has a large gap is at most |H| times the chance for one (the **union bound**). So with probability at least 1 − δ, every model in H — including the one we pick — satisfies:
+      { type: 'text', title: 'Many models: the union bound and PAC learning', md: `If we choose among a finite set of |H| models, the chance that *any* of them has a large gap is at most |H| times the chance for one (the **union bound**). So with probability at least 1 − δ, every model in H (including the one we pick) satisfies:
 
 $$ R(h) ≤ R̂(h) + √( ( ln|H| + ln(2/δ) ) / (2n) ) $$
 :::where
@@ -682,9 +682,9 @@ ln — the natural logarithm; the number of models enters only logarithmically
 
 This is the core of **PAC learning** ("probably approximately correct"): with enough data, the chosen model is *approximately* as good as it looks (within ε), *probably* (with probability 1 − δ). Rearranged, it gives a **sample complexity**: n ≥ (ln|H| + ln(2/δ)) / (2ε²).
 
-Practical lesson: every configuration you try on a validation set enlarges H. Trying a thousand configurations costs only ln 1000 ≈ 7 in the numerator — but it is not free, which is why a heavily tuned validation score is optimistic and a final, untouched test set matters.` },
+Practical lesson: every configuration you try on a validation set enlarges H. Trying a thousand configurations costs only ln 1000 ≈ 7 in the numerator, but it is not free, which is why a heavily tuned validation score is optimistic and a final, untouched test set matters.` },
       { type: 'chart', title: "How far can the training error be from the true error?", after: `All three bounds shrink like 1 / √n: ten times more data cuts the gap by about 3. Choosing the best of many models costs extra, but only logarithmically: picking from a million models instead of one needs roughly five times as much data for the same guarantee, not a million times.`, chart: {"kind":"line","x":[100,300,1000,3000,10000,30000,100000],"xLog":true,"yLog":true,"series":[{"name":"one fixed model (Hoeffding)","y":[0.1358,0.0784,0.0429,0.0248,0.0136,0.0078,0.0043]},{"name":"best of 1,000 models (union bound)","y":[0.2302,0.1329,0.0728,0.042,0.023,0.0133,0.0073]},{"name":"best of 1,000,000 models (union bound)","y":[0.2958,0.1708,0.0936,0.054,0.0296,0.0171,0.0094]}],"xLabel":"number of training examples n (log scale)","yLabel":"guaranteed gap ε (95% confidence)"} },
-      { type: 'text', title: 'Infinite classes: the VC dimension', md: `A linear classifier has infinitely many settings, so ln|H| is useless. The **Vapnik–Chervonenkis (VC) dimension** measures capacity instead: the largest number of points that the class can **shatter** — label in all 2^m possible ways.
+      { type: 'text', title: 'Infinite classes: the VC dimension', md: `A linear classifier has infinitely many settings, so ln|H| is useless. The **Vapnik–Chervonenkis (VC) dimension** measures capacity instead: the largest number of points that the class can **shatter** (label in all 2^m possible ways).
 
 - Thresholds on a line (predict 1 when x ≥ t): VC dimension 1.
 - Intervals on a line (predict 1 when a ≤ x ≤ b): 2.
@@ -724,7 +724,7 @@ for name, pts in [("3 points", three), ("4 points", four)]:
     print(f"{name}: a line can produce {len(ok)} of the {2 ** len(pts)} labellings")
 fails = [lab for lab in product([0, 1], repeat=4) if not linearly_separable(four, lab)]
 print("labellings of the square that no line can produce:", fails)
-`, after: `Three points in general position can be split every possible way, but the two XOR labellings of the four corners cannot — lines in the plane have VC dimension 3 = d + 1.`, predict: {"type":"mcq","q":"Four points sit at the corners of a square. Of the 16 ways to label them positive or negative, how many can a straight line separate?","options":["All 16","14","8","4"],"answer":1,"explain":"14: the two diagonal (XOR-style) labellings are impossible. A line can shatter 3 points but no set of 4, so its VC dimension is 3.","expect":["4 points: a line can produce 14 of the 16 labellings"]} },
+`, after: `Three points in general position can be split every possible way, but the two XOR labellings of the four corners cannot: lines in the plane have VC dimension 3 = d + 1.`, predict: {"type":"mcq","q":"Four points sit at the corners of a square. Of the 16 ways to label them positive or negative, how many can a straight line separate?","options":["All 16","14","8","4"],"answer":1,"explain":"14: the two diagonal (XOR-style) labellings are impossible. A line can shatter 3 points but no set of 4, so its VC dimension is 3.","expect":["4 points: a line can produce 14 of the 16 labellings"]} },
       { type: 'check', question: { type: 'mcq', q: 'What is the VC dimension of intervals on the real line (predict 1 inside [a, b])?', options: ['1', '2', '3', 'Infinite'], answer: 1, explain: 'Any 2 points can be labelled every way, but the labelling 1, 0, 1 of three points cannot.' } },
       { type: 'text', title: "No free lunch: why every learner needs assumptions", md: `The bounds above say when a training error can be trusted. A deeper result says what learning cannot do at all without assumptions. The **no-free-lunch theorem** states that, averaged over *all* possible labelling rules, every learning algorithm has exactly the same expected accuracy on unseen points: 50% for two classes. Whatever an algorithm gains on some problems, it loses on others.
 
@@ -740,7 +740,7 @@ The training data alone never determines how to label a point you have not seen;
 | regularisation, Bayesian priors | simpler (smaller, sparser) explanations are more likely |
 
 Learning works in practice because real problems are not random labelling rules: they have smoothness, locality and structure that some biases match. Choosing a model is choosing a bias, and the right choice depends on the problem. That is why no algorithm wins every benchmark, and why validation data, not theory, makes the final call.` },
-      { type: 'text', title: 'What classical theory misses', md: `Modern networks have far more parameters than training examples. They can even memorize completely **random** labels (Zhang et al., 2017), so their capacity is enormous and the classical bounds above say nothing — yet the same networks generalize well on real labels. Several ideas help explain this:
+      { type: 'text', title: 'What classical theory misses', md: `Modern networks have far more parameters than training examples. They can even memorize completely **random** labels (Zhang et al., 2017), so their capacity is enormous and the classical bounds above say nothing, yet the same networks generalize well on real labels. Several ideas help explain this:
 
 - **Implicit regularization**: the training algorithm prefers some solutions over others. Gradient descent on linear least squares, started at zero, converges to the **minimum-norm** solution that fits the data; the noise in SGD favours flat minima.
 - **Double descent**: as models grow, test error first follows the classical U-shape, peaks where the model can *just barely* fit the training data exactly (the **interpolation threshold**), then *decreases again* as the model keeps growing.
@@ -763,7 +763,7 @@ for p in (10, 25, 40, 45, 50, 55, 60, 100, 200, 1000):
     F_train, F_test = np.maximum(0, X_train @ W[:, :p]), np.maximum(0, X_test @ W[:, :p])
     coef = np.linalg.pinv(F_train) @ y_train              # least squares; the minimum-norm exact fit once p >= n
     print(f"{p:9d} {np.mean((F_train @ coef - y_train) ** 2):11.4f} {np.mean((F_test @ coef - y_test) ** 2):10.3f} {np.linalg.norm(coef):13.1f}")
-`, after: `Training error reaches zero once there are as many features as examples (p = n = 50). Exactly there the test error explodes — the only exact fit needs huge, noise-chasing weights — and then it falls again as features are added, because the minimum-norm fit among the many exact fits gets smoother (watch the weight norm). Classical theory predicts the first half of this curve, not the second. In this small, noisy example the smallest model is still the best one.` },
+`, after: `Training error reaches zero once there are as many features as examples (p = n = 50). Exactly there the test error explodes (the only exact fit needs huge, noise-chasing weights) and then it falls again as features are added, because the minimum-norm fit among the many exact fits gets smoother (watch the weight norm). Classical theory predicts the first half of this curve, not the second. In this small, noisy example the smallest model is still the best one.` },
       { type: 'chart', title: "Double descent: test error against the number of random features", md: `The experiment above, with more feature counts:`, after: `Left of the line, more features lower the training error and the test error first improves, then worsens: the classical U. At p = n the training error hits zero (it is plotted at the floor of the chart from there on) and the test error peaks at about 84. Beyond it the test error comes down again as the minimum-norm fit gets smoother: the second descent.`, chart: {"kind":"line","x":[5,10,15,20,25,30,35,40,44,47,49,50,51,53,56,60,70,80,100,150,200,300,500,1000],"xLog":true,"yLog":true,"series":[{"name":"test MSE","y":[0.5524,0.2747,0.2679,0.3608,0.3993,0.574,1.205,1.776,3.185,7.586,9.356,83.91,13.84,9.291,2.048,1.591,1.057,0.9833,0.756,0.7426,0.6318,0.6717,0.5939,0.5574]},{"name":"training MSE","y":[0.5991,0.3471,0.2766,0.1752,0.1513,0.1296,0.0702,0.06504,0.04802,0.03194,0.02896,0.000001,0.000001,0.000001,0.000001,0.000001,0.000001,0.000001,0.000001,0.000001,0.000001,0.000001,0.000001,0.000001]}],"xLabel":"number of random features p (log scale)","yLabel":"mean squared error (log scale)","vlines":[{"x":50,"label":"p = n = 50"}],"yMin":0.000001} }
     ],
     when: `- Judging how far to trust a validation or test score, and how much it is inflated by model selection.
@@ -772,12 +772,12 @@ for p in (10, 25, 40, 45, 50, 55, 60, 100, 200, 1000):
 - Interpreting surprising deep-learning behaviour: double descent, interpolation, grokking.`,
     pitfalls: `- Reporting the validation score of the configuration you selected as if it were an unbiased estimate.
 - Re-using the test set for decisions, which turns it into another validation set.
-- Treating classical capacity bounds as predictions for deep networks — they are usually vacuous.
+- Treating classical capacity bounds as predictions for deep networks: they are usually vacuous.
 - Concluding "bigger is always better" from double descent: near the interpolation threshold, a slightly bigger model can be much worse, and regularization still matters.`,
     takeaways: [
       'Generalization gap = true risk − empirical risk; selection on the same data makes it optimistic.',
       'Hoeffding: for one fixed model the gap shrinks like √(ln(2/δ) / 2n).',
-      'Union bound / PAC: choosing among |H| models adds ln|H| — validation tuning is not free.',
+      'Union bound / PAC: choosing among |H| models adds ln|H| (validation tuning is not free).',
       'The VC dimension (largest shattered set) measures capacity; lines in d dimensions have d + 1.',
       'Deep networks defy classical bounds: implicit regularization, double descent and benign overfitting.'
     ],
@@ -878,7 +878,7 @@ def shatters(labelings, m):
     return len(set(labelings)) == 2 ** m
 `,
         hints: ['Only thresholds at the data points (plus one beyond the largest) give different labellings.', 'An interval is determined by which consecutive run of sorted points it covers.'],
-        explain: `n points produce n + 1 ray labellings and n(n + 1)/2 + 1 interval labellings — polynomially many, far fewer than 2^n. That polynomial growth is exactly what the VC dimension captures: rays shatter 1 point, intervals 2.`,
+        explain: `n points produce n + 1 ray labellings and n(n + 1)/2 + 1 interval labellings: polynomially many, far fewer than 2^n. That polynomial growth is exactly what the VC dimension captures: rays shatter 1 point, intervals 2.`,
         tests: [
           { call: 'ray_labelings([1, 2])', expect: '{(0, 0), (0, 1), (1, 1)}' },
           { call: 'len(interval_labelings([3, 1, 2]))', expect: '7' },
@@ -889,10 +889,10 @@ def shatters(labelings, m):
       }
     ],
     refs: [
-      { title: 'Shalev-Shwartz & Ben-David — Understanding Machine Learning: From Theory to Algorithms (free book)', url: 'https://www.cs.huji.ac.il/~shais/UnderstandingMachineLearning/' },
-      { title: 'Zhang et al. — Understanding deep learning requires rethinking generalization', url: 'https://arxiv.org/abs/1611.03530' },
-      { title: 'Belkin et al. — Reconciling modern machine learning practice and the bias–variance trade-off', url: 'https://arxiv.org/abs/1812.11118' },
-      { title: 'Nakkiran et al. — Deep Double Descent', url: 'https://arxiv.org/abs/1912.02292' }
+      { title: 'Shalev-Shwartz & Ben-David, Understanding Machine Learning: From Theory to Algorithms (free book)', url: 'https://www.cs.huji.ac.il/~shais/UnderstandingMachineLearning/' },
+      { title: 'Zhang et al., Understanding deep learning requires rethinking generalization', url: 'https://arxiv.org/abs/1611.03530' },
+      { title: 'Belkin et al., Reconciling modern machine learning practice and the bias–variance trade-off', url: 'https://arxiv.org/abs/1812.11118' },
+      { title: 'Nakkiran et al., Deep Double Descent', url: 'https://arxiv.org/abs/1912.02292' }
     ]
   },
 
@@ -900,8 +900,8 @@ def shatters(labelings, m):
   {
     id: 'bayesian-methods', branch: 'ml', title: 'Bayesian Inference: Priors, Posteriors, MCMC & Variational Inference', short: 'Bayesian Inference', level: 3, minutes: 50, prereqs: ['mle-map'],
     tags: ['bayesian inference', 'prior', 'posterior', 'conjugate prior', 'beta distribution', 'credible interval', 'posterior predictive', 'bayesian linear regression', 'mcmc', 'metropolis-hastings', 'variational inference', 'elbo', 'probabilistic programming'],
-    summary: 'Treating unknown parameters as random variables: from MAP\'s single best guess to the whole posterior distribution, conjugate priors (Beta–Binomial), credible intervals and the posterior predictive, Bayesian linear regression with honest error bars, sampling posteriors with Markov chain Monte Carlo (Metropolis–Hastings), and approximating them with variational inference and the ELBO — the idea behind VAEs.',
-    why: `MLE and MAP give one best guess for the parameters. But with little data, many parameter values explain the data almost equally well, and a single guess hides that uncertainty. **Bayesian inference** keeps the whole distribution of plausible parameters, so predictions come with honest error bars, prior knowledge enters explicitly, and decisions can weigh risks ("there is a 17% chance the click rate is above 5%"). It powers A/B-test analysis, Bayesian optimization, uncertainty estimates for models, and — through variational inference — VAEs.`,
+    summary: 'Treating unknown parameters as random variables: from MAP\'s single best guess to the whole posterior distribution, conjugate priors (Beta–Binomial), credible intervals and the posterior predictive, Bayesian linear regression with honest error bars, sampling posteriors with Markov chain Monte Carlo (Metropolis–Hastings), and approximating them with variational inference and the ELBO (the idea behind VAEs).',
+    why: `MLE and MAP give one best guess for the parameters. But with little data, many parameter values explain the data almost equally well, and a single guess hides that uncertainty. **Bayesian inference** keeps the whole distribution of plausible parameters, so predictions come with honest error bars, prior knowledge enters explicitly, and decisions can weigh risks ("there is a 17% chance the click rate is above 5%"). It powers A/B-test analysis, Bayesian optimization, uncertainty estimates for models, and (through variational inference) VAEs.`,
     objectives: [
       'Compute posteriors with conjugate priors and summarize them with means and credible intervals',
       'Derive Bayesian linear regression and explain why its error bars grow away from the data',
@@ -922,8 +922,8 @@ p(D) — the evidence: a normalizing constant that makes the posterior integrate
 p(x_new | D) — the posterior predictive: a prediction that averages over all plausible parameters instead of trusting one
 :::
 
-MLE maximizes the likelihood and MAP maximizes the posterior; both keep a single point. The Bayesian answer keeps the whole distribution. The catch is computational: the evidence p(D) is an integral over all parameters, which rarely has a formula. Three strategies follow — conjugate priors (exact), MCMC (sampling) and variational inference (optimization).` },
-      { type: 'text', title: 'Conjugate priors: the Beta–Binomial model', md: `For a success probability θ (a click rate, a coin's bias), the Beta distribution is a natural prior. With a Beta(a, b) prior and k successes in n trials, the posterior is again a Beta — the prior is **conjugate** to the likelihood:
+MLE maximizes the likelihood and MAP maximizes the posterior; both keep a single point. The Bayesian answer keeps the whole distribution. The catch is computational: the evidence p(D) is an integral over all parameters, which rarely has a formula. Three strategies follow: conjugate priors (exact), MCMC (sampling) and variational inference (optimization).` },
+      { type: 'text', title: 'Conjugate priors: the Beta–Binomial model', md: `For a success probability θ (a click rate, a coin's bias), the Beta distribution is a natural prior. With a Beta(a, b) prior and k successes in n trials, the posterior is again a Beta, the prior is **conjugate** to the likelihood:
 
 $$ prior Beta(a, b)  +  k successes, n − k failures   ⇒   posterior Beta(a + k, b + n − k)          mean = (a + k) / (a + b + n) $$
 :::where
@@ -933,7 +933,7 @@ n — the number of trials
 Beta(1, 1) is the uniform prior, saying that every rate between 0 and 1 is equally plausible.
 :::
 
-Updating is just adding counts. A **95% credible interval** is the range that contains the parameter with 95% posterior probability — the statement people usually (wrongly) read into a confidence interval. Other conjugate pairs: Normal–Normal for means, Gamma–Poisson for rates, Dirichlet–Multinomial for category probabilities (the basis of Laplace smoothing in Naive Bayes).` },
+Updating is just adding counts. A **95% credible interval** is the range that contains the parameter with 95% posterior probability: the statement people usually (wrongly) read into a confidence interval. Other conjugate pairs: Normal–Normal for means, Gamma–Poisson for rates, Dirichlet–Multinomial for category probabilities (the basis of Laplace smoothing in Naive Bayes).` },
       { type: 'demo', title: 'Interactive: prior + data = posterior', demo: 'beta' },
       { type: 'code', title: 'Updating beliefs about a click-through rate', code: `
 import numpy as np
@@ -946,7 +946,7 @@ for clicks, views in batches:
     lo, hi = np.percentile(draws, [2.5, 97.5])
     print(f"after {a + b - 2:4d} views: Beta({a}, {b})  mean {a / (a + b):.4f}  "
           f"95% credible interval [{lo:.4f}, {hi:.4f}]  P(rate > 5%) = {np.mean(draws > 0.05):.3f}")
-`, after: `Early on the interval is wide: the data leans towards a rate above 5% (about a 75–80% probability) but cannot rule out much lower rates. With 1,000 views the posterior concentrates around 4.4%, and the probability that the true rate is above 5% falls to about 17% — a direct answer to the business question that a p-value cannot give.` },
+`, after: `Early on the interval is wide: the data leans towards a rate above 5% (about a 75–80% probability) but cannot rule out much lower rates. With 1,000 views the posterior concentrates around 4.4%, and the probability that the true rate is above 5% falls to about 17%: a direct answer to the business question that a p-value cannot give.` },
       { type: 'chart', title: "The posterior of a click rate as views accumulate", after: `Starting from a flat prior, 5 views leave almost every rate between 0.05 and 0.75 plausible. After 20 views the curve has a clear peak near 0.3, and after 100 views the rate is pinned down to roughly 0.22 to 0.40. The posterior always concentrates, at a speed of about 1/√n, around the rate that generated the data.`, chart: {"kind":"line","x":[0.002,0.006,0.01,0.014,0.018,0.022,0.026,0.03,0.034,0.038,0.042,0.046,0.05,0.054,0.058,0.062,0.066,0.07,0.074,0.078,0.082,0.086,0.09,0.094,0.098,0.102,0.106,0.11,0.114,0.118,0.122,0.126,0.13,0.134,0.138,0.142,0.146,0.15,0.154,0.158,0.162,0.166,0.17,0.174,0.178,0.182,0.186,0.19,0.194,0.198,0.202,0.206,0.21,0.214,0.218,0.222,0.226,0.23,0.234,0.238,0.242,0.246,0.25,0.254,0.258,0.262,0.266,0.27,0.274,0.278,0.282,0.286,0.29,0.294,0.298,0.302,0.306,0.31,0.314,0.318,0.322,0.326,0.33,0.334,0.338,0.342,0.346,0.35,0.354,0.358,0.362,0.366,0.37,0.374,0.378,0.382,0.386,0.39,0.394,0.398,0.402,0.406,0.41,0.414,0.418,0.422,0.426,0.43,0.434,0.438,0.442,0.446,0.45,0.454,0.458,0.462,0.466,0.47,0.474,0.478,0.482,0.486,0.49,0.494,0.498,0.502,0.506,0.51,0.514,0.518,0.522,0.526,0.53,0.534,0.538,0.542,0.546,0.55,0.554,0.558,0.562,0.566,0.57,0.574,0.578,0.582,0.586,0.59,0.594,0.598,0.602,0.606,0.61,0.614,0.618,0.622,0.626,0.63,0.634,0.638,0.642,0.646,0.65,0.654,0.658,0.662,0.666,0.67,0.674,0.678,0.682,0.686,0.69,0.694,0.698,0.702,0.706,0.71,0.714,0.718,0.722,0.726,0.73,0.734,0.738,0.742,0.746,0.75,0.754,0.758,0.762,0.766,0.77,0.774,0.778,0.782,0.786,0.79,0.794,0.798,0.802,0.806,0.81,0.814,0.818,0.822,0.826,0.83,0.834,0.838,0.842,0.846,0.85,0.854,0.858,0.862,0.866,0.87,0.874,0.878,0.882,0.886,0.89,0.894,0.898,0.902,0.906,0.91,0.914,0.918,0.922,0.926,0.93,0.934,0.938,0.942,0.946,0.95,0.954,0.958,0.962,0.966,0.97,0.974,0.978,0.982,0.986,0.99,0.994,0.998],"points":false,"series":[{"name":"prior Beta(1, 1)","y":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"dash":true},{"name":"after 2 clicks in 5 views","y":[0,0.002,0.006,0.011,0.018,0.027,0.037,0.049,0.063,0.077,0.093,0.11,0.129,0.148,0.169,0.19,0.213,0.236,0.261,0.286,0.312,0.339,0.366,0.394,0.423,0.452,0.482,0.512,0.542,0.573,0.604,0.636,0.668,0.7,0.732,0.764,0.797,0.829,0.862,0.894,0.927,0.959,0.991,1.024,1.056,1.088,1.12,1.151,1.182,1.213,1.244,1.275,1.305,1.334,1.364,1.393,1.421,1.449,1.477,1.504,1.53,1.556,1.582,1.607,1.632,1.655,1.679,1.702,1.724,1.745,1.766,1.786,1.806,1.825,1.843,1.861,1.878,1.894,1.91,1.925,1.939,1.952,1.965,1.977,1.989,1.999,2.009,2.018,2.027,2.035,2.042,2.048,2.054,2.059,2.063,2.067,2.069,2.071,2.073,2.074,2.074,2.073,2.071,2.069,2.067,2.063,2.059,2.055,2.049,2.043,2.037,2.029,2.021,2.013,2.004,1.994,1.984,1.973,1.962,1.95,1.937,1.924,1.911,1.897,1.882,1.867,1.852,1.836,1.82,1.803,1.786,1.768,1.75,1.731,1.713,1.693,1.674,1.654,1.634,1.613,1.592,1.571,1.55,1.528,1.506,1.484,1.462,1.439,1.417,1.394,1.371,1.348,1.324,1.301,1.277,1.254,1.23,1.206,1.182,1.159,1.135,1.111,1.087,1.063,1.039,1.015,0.992,0.968,0.944,0.921,0.897,0.874,0.851,0.828,0.805,0.782,0.76,0.738,0.716,0.694,0.672,0.651,0.629,0.608,0.588,0.567,0.547,0.527,0.508,0.489,0.47,0.451,0.433,0.415,0.397,0.38,0.363,0.347,0.331,0.315,0.3,0.285,0.27,0.256,0.242,0.229,0.216,0.203,0.191,0.179,0.168,0.157,0.146,0.136,0.126,0.117,0.108,0.1,0.092,0.084,0.077,0.07,0.063,0.057,0.051,0.046,0.041,0.036,0.032,0.028,0.024,0.021,0.018,0.015,0.013,0.01,0.008,0.007,0.005,0.004,0.003,0.002,0.002,0.001,0.001,0,0,0,0,0]},{"name":"after 6 clicks in 20 views","y":[0,0,0,0,0,0,0,0,0.001,0.001,0.002,0.004,0.006,0.009,0.013,0.019,0.026,0.035,0.046,0.059,0.075,0.094,0.116,0.141,0.17,0.203,0.241,0.282,0.328,0.379,0.434,0.494,0.559,0.629,0.703,0.782,0.865,0.953,1.045,1.14,1.239,1.341,1.447,1.555,1.665,1.777,1.89,2.004,2.119,2.234,2.348,2.462,2.575,2.685,2.794,2.9,3.003,3.103,3.2,3.292,3.38,3.463,3.541,3.614,3.681,3.743,3.799,3.849,3.892,3.93,3.961,3.986,4.005,4.017,4.024,4.024,4.018,4.006,3.988,3.964,3.935,3.901,3.861,3.817,3.768,3.715,3.657,3.596,3.531,3.463,3.391,3.317,3.24,3.161,3.08,2.998,2.914,2.829,2.743,2.656,2.569,2.482,2.395,2.308,2.221,2.135,2.05,1.966,1.884,1.802,1.722,1.643,1.567,1.492,1.418,1.347,1.278,1.211,1.146,1.083,1.022,0.964,0.907,0.853,0.801,0.752,0.704,0.659,0.616,0.574,0.535,0.498,0.463,0.43,0.398,0.369,0.341,0.315,0.29,0.267,0.245,0.225,0.206,0.189,0.172,0.157,0.143,0.13,0.118,0.107,0.097,0.088,0.079,0.071,0.064,0.057,0.051,0.046,0.041,0.036,0.032,0.029,0.025,0.022,0.02,0.017,0.015,0.013,0.012,0.01,0.009,0.008,0.007,0.006,0.005,0.004,0.004,0.003,0.003,0.002,0.002,0.002,0.001,0.001,0.001,0.001,0.001,0.001,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"name":"after 31 clicks in 100 views","y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.001,0.001,0.002,0.003,0.004,0.007,0.011,0.016,0.024,0.036,0.052,0.074,0.103,0.142,0.193,0.257,0.339,0.44,0.564,0.713,0.89,1.098,1.338,1.612,1.921,2.263,2.639,3.045,3.478,3.934,4.406,4.889,5.375,5.855,6.323,6.768,7.183,7.56,7.892,8.171,8.394,8.555,8.653,8.686,8.653,8.558,8.402,8.19,7.927,7.618,7.271,6.893,6.49,6.069,5.638,5.203,4.771,4.346,3.933,3.537,3.161,2.807,2.476,2.171,1.892,1.639,1.411,1.207,1.026,0.867,0.728,0.608,0.504,0.416,0.341,0.278,0.225,0.181,0.145,0.115,0.091,0.071,0.056,0.043,0.033,0.026,0.019,0.015,0.011,0.008,0.006,0.005,0.003,0.002,0.002,0.001,0.001,0.001,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}],"xLabel":"click-through rate θ","yLabel":"posterior density","yMin":0} },
       { type: 'check', question: { type: 'fill', q: 'Prior Beta(2, 2); you observe 8 successes in 10 trials. What is the posterior mean? (fraction or decimal)', answer: ['10/14', '5/7', '0.714', '0.71'], explain: 'Posterior Beta(10, 4): mean 10 / 14 ≈ 0.714.' } },
       { type: 'text', title: 'Bayesian linear regression', md: `With a Gaussian prior w ~ N(0, τ²I) on the weights and Gaussian noise of variance σ², the posterior over the weights is also Gaussian, with a closed form:
@@ -961,7 +961,7 @@ x_new — the features of a new input
 Var[y_new] — the predictive variance: irreducible noise σ² plus the uncertainty about the weights
 :::
 
-The posterior mean is exactly the **ridge regression** solution with λ = σ²/τ² — the same link you saw between MAP and L2 regularization. What the Bayesian view adds is the second term of the predictive variance: it is small near the training data and grows as x_new moves away, so the model says when it is extrapolating.` },
+The posterior mean is exactly the **ridge regression** solution with λ = σ²/τ²: the same link you saw between MAP and L2 regularization. What the Bayesian view adds is the second term of the predictive variance: it is small near the training data and grows as x_new moves away, so the model says when it is extrapolating.` },
       { type: 'code', title: 'Bayesian linear regression knows what it doesn\'t know', code: `
 import numpy as np
 rng = np.random.default_rng(1)
@@ -1015,7 +1015,7 @@ a, b = 1 + heads, 1 + flips - heads                  # the exact posterior is Be
 print(f"acceptance rate {accepted / 20000:.2f}")
 print(f"MCMC:  mean {samples.mean():.3f}  sd {samples.std():.3f}")
 print(f"exact: mean {a / (a + b):.3f}  sd {np.sqrt(a * b / ((a + b) ** 2 * (a + b + 1))):.3f}")
-`, after: `Without ever normalizing the posterior, the chain reproduces its mean and spread. The same few lines work for posteriors that have no formula at all — which is the whole point of MCMC.` },
+`, after: `Without ever normalizing the posterior, the chain reproduces its mean and spread. The same few lines work for posteriors that have no formula at all, which is the whole point of MCMC.` },
       { type: 'chart', title: "A Metropolis trace: the sampler's path", md: `One chain started deliberately badly, at θ = 0.02:`, after: `The first few iterations climb out of the unlikely region (the burn-in, usually discarded). After that the chain wanders around the posterior, flat stretches are rejected proposals, and a histogram of the visited values approximates the posterior. A healthy trace looks like this "hairy caterpillar"; a trace that drifts slowly or stays stuck for long stretches signals poor mixing.`, chart: {"kind":"line","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255,256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,281,282,283,284,285,286,287,288,289,290,291,292,293,294,295,296,297,298,299,300,301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319,320,321,322,323,324,325,326,327,328,329,330,331,332,333,334,335,336,337,338,339,340,341,342,343,344,345,346,347,348,349,350,351,352,353,354,355,356,357,358,359,360,361,362,363,364,365,366,367,368,369,370,371,372,373,374,375,376,377,378,379,380,381,382,383,384,385,386,387,388,389,390,391,392,393,394,395,396,397,398,399,400,401,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,419,420,421,422,423,424,425,426,427,428,429,430,431,432,433,434,435,436,437,438,439,440,441,442,443,444,445,446,447,448,449,450,451,452,453,454,455,456,457,458,459,460,461,462,463,464,465,466,467,468,469,470,471,472,473,474,475,476,477,478,479,480,481,482,483,484,485,486,487,488,489,490,491,492,493,494,495,496,497,498,499,500,501,502,503,504,505,506,507,508,509,510,511,512,513,514,515,516,517,518,519,520,521,522,523,524,525,526,527,528,529,530,531,532,533,534,535,536,537,538,539,540,541,542,543,544,545,546,547,548,549,550,551,552,553,554,555,556,557,558,559,560,561,562,563,564,565,566,567,568,569,570,571,572,573,574,575,576,577,578,579,580,581,582,583,584,585,586,587,588,589,590,591,592,593,594,595,596,597,598,599],"points":false,"series":[{"name":"θ at each iteration (7 heads in 10, uniform prior)","y":[0.055,0.088,0.178,0.178,0.215,0.217,0.217,0.217,0.221,0.221,0.222,0.352,0.352,0.334,0.356,0.343,0.343,0.548,0.614,0.449,0.46,0.392,0.392,0.401,0.401,0.49,0.49,0.44,0.44,0.438,0.407,0.434,0.434,0.434,0.51,0.535,0.506,0.581,0.67,0.67,0.626,0.645,0.526,0.594,0.594,0.64,0.666,0.64,0.64,0.644,0.677,0.763,0.83,0.868,0.717,0.706,0.72,0.805,0.807,0.854,0.854,0.701,0.763,0.663,0.722,0.671,0.724,0.752,0.668,0.573,0.573,0.718,0.713,0.671,0.713,0.597,0.597,0.507,0.67,0.686,0.686,0.662,0.685,0.685,0.706,0.694,0.705,0.722,0.805,0.688,0.688,0.704,0.704,0.704,0.712,0.729,0.852,0.581,0.581,0.598,0.598,0.8,0.8,0.797,0.797,0.768,0.703,0.647,0.529,0.509,0.514,0.59,0.576,0.523,0.575,0.575,0.616,0.616,0.642,0.719,0.606,0.588,0.588,0.528,0.59,0.622,0.616,0.542,0.495,0.502,0.502,0.564,0.564,0.428,0.423,0.331,0.365,0.675,0.602,0.598,0.66,0.66,0.709,0.753,0.685,0.663,0.763,0.841,0.867,0.867,0.836,0.821,0.75,0.721,0.721,0.816,0.816,0.736,0.724,0.721,0.721,0.656,0.618,0.618,0.599,0.693,0.695,0.561,0.558,0.718,0.744,0.804,0.754,0.815,0.736,0.825,0.656,0.698,0.664,0.664,0.615,0.716,0.711,0.83,0.708,0.782,0.614,0.748,0.628,0.729,0.783,0.783,0.783,0.765,0.765,0.69,0.767,0.741,0.572,0.595,0.669,0.614,0.614,0.67,0.708,0.708,0.708,0.676,0.781,0.709,0.721,0.727,0.788,0.753,0.692,0.734,0.684,0.701,0.634,0.639,0.526,0.526,0.664,0.7,0.705,0.705,0.677,0.629,0.61,0.794,0.794,0.802,0.802,0.828,0.805,0.805,0.717,0.717,0.779,0.807,0.741,0.792,0.832,0.822,0.822,0.74,0.757,0.784,0.746,0.532,0.535,0.753,0.645,0.756,0.823,0.849,0.788,0.658,0.642,0.667,0.561,0.618,0.772,0.695,0.695,0.695,0.638,0.699,0.574,0.762,0.762,0.86,0.86,0.86,0.751,0.873,0.817,0.667,0.667,0.691,0.715,0.805,0.805,0.822,0.806,0.806,0.824,0.863,0.863,0.863,0.682,0.67,0.739,0.834,0.764,0.673,0.567,0.567,0.567,0.418,0.364,0.401,0.401,0.591,0.622,0.619,0.619,0.837,0.838,0.851,0.827,0.827,0.827,0.796,0.712,0.68,0.68,0.68,0.491,0.586,0.539,0.605,0.645,0.648,0.648,0.648,0.593,0.61,0.503,0.503,0.503,0.605,0.581,0.599,0.599,0.781,0.781,0.781,0.739,0.818,0.765,0.678,0.678,0.678,0.703,0.621,0.705,0.598,0.645,0.614,0.614,0.614,0.559,0.559,0.506,0.448,0.448,0.448,0.604,0.604,0.489,0.489,0.584,0.545,0.466,0.404,0.502,0.586,0.713,0.741,0.626,0.652,0.711,0.693,0.64,0.735,0.735,0.606,0.606,0.725,0.664,0.683,0.697,0.641,0.656,0.656,0.676,0.576,0.667,0.591,0.584,0.547,0.52,0.493,0.463,0.463,0.463,0.454,0.454,0.457,0.635,0.635,0.764,0.694,0.694,0.783,0.792,0.846,0.718,0.669,0.665,0.665,0.665,0.654,0.59,0.692,0.66,0.682,0.699,0.739,0.739,0.763,0.736,0.612,0.601,0.66,0.775,0.776,0.727,0.727,0.686,0.693,0.693,0.693,0.653,0.725,0.658,0.66,0.66,0.66,0.683,0.708,0.748,0.613,0.636,0.615,0.741,0.664,0.698,0.663,0.663,0.668,0.74,0.626,0.538,0.649,0.634,0.627,0.627,0.627,0.627,0.748,0.608,0.608,0.622,0.724,0.683,0.668,0.686,0.659,0.616,0.536,0.545,0.618,0.696,0.696,0.696,0.766,0.854,0.643,0.677,0.743,0.746,0.646,0.597,0.654,0.738,0.74,0.714,0.599,0.473,0.56,0.625,0.625,0.625,0.713,0.823,0.798,0.698,0.698,0.662,0.626,0.626,0.626,0.646,0.643,0.643,0.814,0.785,0.695,0.551,0.551,0.548,0.579,0.832,0.826,0.8,0.807,0.807,0.75,0.75,0.796,0.796,0.747,0.716,0.705,0.734,0.792,0.887,0.763,0.678,0.759,0.704,0.724,0.573,0.573,0.71,0.761,0.7,0.7,0.687,0.702,0.623,0.781,0.639,0.639,0.614,0.614,0.614,0.698,0.698,0.698,0.673,0.633,0.576,0.58,0.558,0.558,0.472,0.508,0.598,0.728,0.649,0.658,0.603,0.666,0.664,0.754,0.804,0.805,0.813,0.823,0.823,0.804,0.847,0.75,0.776,0.743,0.768,0.7,0.7,0.539,0.539,0.539,0.539,0.618,0.677,0.677,0.677,0.649,0.8,0.752,0.864,0.861,0.861,0.678,0.678,0.567,0.584,0.534]}],"xLabel":"iteration","yLabel":"θ","yMin":0,"yMax":1,"hlines":[{"y":0.667,"label":"posterior mean 0.67"}]} },
       { type: 'text', title: 'Variational inference', md: `MCMC can be slow for big models and big data. **Variational inference (VI)** turns integration into optimization: choose a simple family of distributions q(θ) (for example independent Gaussians with their own means and variances) and tune it to be as close as possible to the posterior. Since the posterior is unknown, VI maximizes a quantity it can compute, the **evidence lower bound**:
 
@@ -1028,7 +1028,7 @@ KL( q ‖ p(θ | D) ) — how far q is from the true posterior; it is never nega
 ELBO — the evidence lower bound; because log p(D) is fixed, raising the ELBO lowers the KL divergence
 :::
 
-VI scales to huge models with stochastic gradients, and **amortized** VI — one network that outputs q for every input — is exactly the encoder of a VAE (see *Generative Models*). The trade-off: VI is fast but biased (it typically underestimates uncertainty), while MCMC is asymptotically exact but slower. In deep learning, practical approximations to Bayesian uncertainty include deep ensembles and MC dropout (see *Calibration & Uncertainty*).` },
+VI scales to huge models with stochastic gradients, and **amortized** VI (one network that outputs q for every input) is exactly the encoder of a VAE (see *Generative Models*). The trade-off: VI is fast but biased (it typically underestimates uncertainty), while MCMC is asymptotically exact but slower. In deep learning, practical approximations to Bayesian uncertainty include deep ensembles and MC dropout (see *Calibration & Uncertainty*).` },
       { type: 'text', title: "Bayesian A/B testing", md: `The A/B test in [Statistical Inference](#/concept/stat-inference) asks "if there were no difference, how surprising would this data be?". A Bayesian analysis asks the question decision-makers usually mean: **given the data, how likely is it that B is better, and by how much?**
 
 With a Beta prior on each conversion rate, each posterior is again a Beta distribution (conjugacy, above). Drawing many samples from both posteriors answers every question by counting:
@@ -1072,11 +1072,11 @@ print("B very likely better, yet not significant at 5%:", bool(p_b_better > 0.9 
     when: `- Small or expensive data where uncertainty matters: A/B tests, medical studies, early-stage metrics.
 - When prior knowledge is real and should be used (physical constraints, earlier experiments).
 - Decisions that need probabilities of outcomes, not just point estimates.
-- Hierarchical models that share strength across groups (many stores, many products) — with probabilistic programming tools such as PyMC, Stan or NumPyro.`,
-    pitfalls: `- Priors chosen carelessly — with little data they dominate; always check sensitivity to the prior.
+- Hierarchical models that share strength across groups (many stores, many products), with probabilistic programming tools such as PyMC, Stan or NumPyro.`,
+    pitfalls: `- Priors chosen carelessly: with little data they dominate; always check sensitivity to the prior.
 - Reading MCMC output without convergence checks (one chain, no burn-in, no effective sample size).
 - Random-walk proposals that are far too small (everything accepted, chain barely moves) or too large (nothing accepted).
-- Trusting variational posteriors' variances too much — VI tends to be overconfident.
+- Trusting variational posteriors' variances too much: VI tends to be overconfident.
 - Calling something Bayesian while still reporting only a single point estimate.`,
     takeaways: [
       'Posterior ∝ likelihood × prior; predictions average over the whole posterior.',
@@ -1181,7 +1181,7 @@ def metropolis(log_p, x0, n_steps, step, seed=0):
     return samples, accepted / n_steps
 `,
         hints: ['Remember log_p of the current point so you do not recompute it every step.', 'Proposals outside the support have log_p = −inf and are rejected automatically.'],
-        explain: `Working with log-densities avoids underflow, and comparing log(u) with the log ratio is the same as comparing u with the ratio. Because rejected steps repeat the current value, the chain spends more time in high-probability regions — exactly in proportion to the target density.`,
+        explain: `Working with log-densities avoids underflow, and comparing log(u) with the log ratio is the same as comparing u with the ratio. Because rejected steps repeat the current value, the chain spends more time in high-probability regions, exactly in proportion to the target density.`,
         tests: [
           { name: 'reference run', call: 'metropolis(lambda x: -0.5 * x ** 2, 0.0, 50, 1.0, seed=3)' },
           { name: 'samples a standard normal', code: 's, rate = metropolis(lambda x: -0.5 * x ** 2, 0.0, 20000, 2.4, seed=1)\nassert abs(s[1000:].mean()) < 0.1 and abs(s[1000:].std() - 1) < 0.1, (s.mean(), s.std())\nassert 0.2 < rate < 0.7', hidden: false },
@@ -1191,9 +1191,9 @@ def metropolis(log_p, x0, n_steps, step, seed=0):
       }
     ],
     refs: [
-      { title: 'Gelman et al. — Bayesian Data Analysis (free PDF)', url: 'http://www.stat.columbia.edu/~gelman/book/' },
-      { title: 'McElreath — Statistical Rethinking', url: 'https://xcelab.net/rm/' },
-      { title: 'Blei, Kucukelbir & McAuliffe — Variational Inference: A Review for Statisticians', url: 'https://arxiv.org/abs/1601.00670' },
+      { title: 'Gelman et al., Bayesian Data Analysis (free PDF)', url: 'http://www.stat.columbia.edu/~gelman/book/' },
+      { title: 'McElreath, Statistical Rethinking', url: 'https://xcelab.net/rm/' },
+      { title: 'Blei, Kucukelbir & McAuliffe, Variational Inference: A Review for Statisticians', url: 'https://arxiv.org/abs/1601.00670' },
       { title: 'PyMC documentation', url: 'https://www.pymc.io/' }
     ]
   },
@@ -1202,8 +1202,8 @@ def metropolis(log_p, x0, n_steps, step, seed=0):
   {
     id: 'gaussian-processes', branch: 'ml', title: 'Gaussian Processes & Bayesian Optimization', short: 'Gaussian Processes', level: 3, minutes: 45, prereqs: ['bayesian-methods', 'svm'],
     tags: ['gaussian process', 'kernel', 'rbf kernel', 'length scale', 'posterior mean', 'posterior variance', 'marginal likelihood', 'bayesian optimization', 'acquisition function', 'expected improvement', 'upper confidence bound', 'hyperparameter tuning'],
-    summary: 'A distribution over functions: Gaussian processes defined by a kernel, exact predictions with error bars, how the length scale and noise shape the fit, choosing kernel hyperparameters by marginal likelihood — and Bayesian optimization, which uses a GP to find the best hyperparameters (or any expensive setting) in a handful of trials.',
-    why: `Some functions are expensive to evaluate: one training run for one hyperparameter setting can take hours. **Gaussian processes** model an unknown function from a few observations and say how uncertain they are everywhere else; **Bayesian optimization** uses that uncertainty to decide what to try next. GPs are also the cleanest example of a model with calibrated uncertainty, a workhorse for small-data regression in science and engineering, and the place where kernels — first met in SVMs — become a prior over functions.`,
+    summary: 'A distribution over functions: Gaussian processes defined by a kernel, exact predictions with error bars, how the length scale and noise shape the fit, choosing kernel hyperparameters by marginal likelihood, and Bayesian optimization, which uses a GP to find the best hyperparameters (or any expensive setting) in a handful of trials.',
+    why: `Some functions are expensive to evaluate: one training run for one hyperparameter setting can take hours. **Gaussian processes** model an unknown function from a few observations and say how uncertain they are everywhere else; **Bayesian optimization** uses that uncertainty to decide what to try next. GPs are also the cleanest example of a model with calibrated uncertainty, a workhorse for small-data regression in science and engineering, and the place where kernels (first met in SVMs) become a prior over functions.`,
     objectives: [
       'Explain a GP as a prior over functions defined by a mean and a kernel',
       'Compute the GP posterior mean and variance, and interpret the length scale and noise',
@@ -1211,7 +1211,7 @@ def metropolis(log_p, x0, n_steps, step, seed=0):
       'Run Bayesian optimization with an acquisition function such as UCB or expected improvement'
     ],
     sections: [
-      { type: 'text', title: 'A prior over functions', md: `A **Gaussian process** says: for any finite set of inputs, the function values there are jointly Gaussian, with covariances given by a **kernel** k(x, x′) — a measure of how similar two inputs are. Similar inputs get strongly correlated outputs, which is what makes the functions smooth. The most common kernel is the RBF (squared-exponential) kernel:
+      { type: 'text', title: 'A prior over functions', md: `A **Gaussian process** says: for any finite set of inputs, the function values there are jointly Gaussian, with covariances given by a **kernel** k(x, x′) (a measure of how similar two inputs are). Similar inputs get strongly correlated outputs, which is what makes the functions smooth. The most common kernel is the RBF (squared-exponential) kernel:
 
 $$ k(x, x′) = σ_f² · exp( −‖x − x′‖² / (2ℓ²) ) $$
 :::where
@@ -1236,7 +1236,7 @@ for length in (0.3, 1.0, 3.0):
     f = L @ rng.normal(size=(len(x), 3))                    # three random functions with covariance K
     crossings = np.mean(np.sum(np.diff(np.sign(f), axis=0) != 0, axis=0))
     print(f"length scale {length:3.1f}: values between {f.min():+.2f} and {f.max():+.2f}; each curve crosses zero {crossings:4.1f} times on average")
-`, after: `Multiplying a matrix square root of K (the Cholesky factor) by independent normal noise produces values with covariance K. Short length scales give wiggly functions that cross zero often; long ones give smooth, slowly varying curves — the kernel is the GP's entire set of assumptions about the function.` },
+`, after: `Multiplying a matrix square root of K (the Cholesky factor) by independent normal noise produces values with covariance K. Short length scales give wiggly functions that cross zero often; long ones give smooth, slowly varying curves: the kernel is the GP's entire set of assumptions about the function.` },
       { type: 'text', title: 'Conditioning on data: the GP posterior', md: `Given noisy observations y at training inputs X, the function values at test inputs X* are still Gaussian, with a mean and covariance that have closed forms:
 
 $$ μ* = K*ᵀ ( K + σ_n² I )⁻¹ y          Σ* = K** − K*ᵀ ( K + σ_n² I )⁻¹ K* $$
@@ -1249,7 +1249,7 @@ y — the observed training targets
 μ*, Σ* — the posterior mean and covariance of the function at the test inputs
 :::
 
-The mean is a weighted combination of the training targets, with weights decided by kernel similarity. The variance starts at the prior variance and is reduced by every nearby observation — so it is small near the data and returns to the prior far away. Exact GPs cost O(n³) time (solving with an n × n matrix, done via a Cholesky factorization), which limits them to roughly ten thousand points; sparse "inducing point" approximations go further.` },
+The mean is a weighted combination of the training targets, with weights decided by kernel similarity. The variance starts at the prior variance and is reduced by every nearby observation, so it is small near the data and returns to the prior far away. Exact GPs cost O(n³) time (solving with an n × n matrix, done via a Cholesky factorization), which limits them to roughly ten thousand points; sparse "inducing point" approximations go further.` },
       { type: 'chart', title: "A GP posterior: mean and 95% band", md: `RBF kernel with length scale ℓ = 1, noise σ_n = 0.1, eight observations of sin(x):`, after: `Near the observations the band is narrow and the mean passes close to the data. In the gap between x = 0.5 and 2.5 it widens, and beyond the last points (x > 3.5 or x < −4) it opens up towards the prior's ±2 while the mean falls back towards the prior mean, 0. The model knows where it has no evidence.`, chart: {"kind":"line","points":false,"series":[{"name":"posterior mean","x":[-5,-4.9,-4.8,-4.7,-4.6,-4.5,-4.4,-4.3,-4.2,-4.1,-4,-3.9,-3.8,-3.7,-3.6,-3.5,-3.4,-3.3,-3.2,-3.1,-3,-2.9,-2.8,-2.7,-2.6,-2.5,-2.4,-2.3,-2.2,-2.1,-2,-1.9,-1.8,-1.7,-1.6,-1.5,-1.4,-1.3,-1.2,-1.1,-1,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,4,4.1,4.2,4.3,4.4,4.5,4.6,4.7,4.8,4.9,5],"y":[0.665,0.718,0.766,0.806,0.838,0.858,0.867,0.862,0.844,0.81,0.763,0.702,0.628,0.543,0.449,0.348,0.242,0.133,0.025,-0.082,-0.185,-0.283,-0.374,-0.459,-0.535,-0.605,-0.667,-0.724,-0.774,-0.82,-0.863,-0.902,-0.939,-0.974,-1.006,-1.036,-1.061,-1.082,-1.097,-1.103,-1.099,-1.083,-1.052,-1.006,-0.944,-0.864,-0.766,-0.65,-0.519,-0.374,-0.217,-0.051,0.12,0.293,0.465,0.63,0.787,0.931,1.061,1.174,1.269,1.345,1.402,1.439,1.457,1.456,1.438,1.403,1.353,1.289,1.213,1.125,1.028,0.923,0.811,0.696,0.578,0.459,0.343,0.23,0.122,0.023,-0.067,-0.147,-0.216,-0.272,-0.316,-0.349,-0.369,-0.379,-0.38,-0.372,-0.358,-0.337,-0.313,-0.286,-0.258,-0.23,-0.201,-0.174,-0.149]},{"name":"95% band (mean ± 2σ)","x":[-5,-4.9,-4.8,-4.7,-4.6,-4.5,-4.4,-4.3,-4.2,-4.1,-4,-3.9,-3.8,-3.7,-3.6,-3.5,-3.4,-3.3,-3.2,-3.1,-3,-2.9,-2.8,-2.7,-2.6,-2.5,-2.4,-2.3,-2.2,-2.1,-2,-1.9,-1.8,-1.7,-1.6,-1.5,-1.4,-1.3,-1.2,-1.1,-1,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,4,4.1,4.2,4.3,4.4,4.5,4.6,4.7,4.8,4.9,5,null,-5,-4.9,-4.8,-4.7,-4.6,-4.5,-4.4,-4.3,-4.2,-4.1,-4,-3.9,-3.8,-3.7,-3.6,-3.5,-3.4,-3.3,-3.2,-3.1,-3,-2.9,-2.8,-2.7,-2.6,-2.5,-2.4,-2.3,-2.2,-2.1,-2,-1.9,-1.8,-1.7,-1.6,-1.5,-1.4,-1.3,-1.2,-1.1,-1,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,4,4.1,4.2,4.3,4.4,4.5,4.6,4.7,4.8,4.9,5],"y":[2.142,2.08,2,1.901,1.784,1.652,1.506,1.352,1.198,1.058,0.961,0.919,0.894,0.856,0.791,0.698,0.577,0.435,0.281,0.132,0.013,-0.054,-0.079,-0.084,-0.084,-0.088,-0.102,-0.131,-0.179,-0.246,-0.332,-0.435,-0.55,-0.669,-0.775,-0.837,-0.834,-0.788,-0.728,-0.669,-0.614,-0.567,-0.527,-0.492,-0.457,-0.42,-0.375,-0.317,-0.241,-0.144,-0.022,0.121,0.282,0.455,0.635,0.825,1.022,1.224,1.423,1.612,1.783,1.93,2.047,2.13,2.177,2.186,2.158,2.095,2,1.877,1.732,1.569,1.397,1.22,1.048,0.887,0.744,0.619,0.508,0.402,0.298,0.197,0.1,0.015,-0.05,-0.081,-0.073,-0.029,0.046,0.146,0.266,0.402,0.548,0.699,0.852,1.001,1.144,1.277,1.398,1.506,1.601,null,-0.812,-0.644,-0.468,-0.288,-0.109,0.065,0.228,0.373,0.489,0.562,0.565,0.485,0.362,0.23,0.107,-0.002,-0.093,-0.168,-0.232,-0.296,-0.383,-0.512,-0.67,-0.833,-0.987,-1.122,-1.233,-1.316,-1.37,-1.395,-1.394,-1.37,-1.328,-1.279,-1.238,-1.234,-1.289,-1.376,-1.465,-1.537,-1.583,-1.598,-1.577,-1.521,-1.43,-1.307,-1.157,-0.984,-0.797,-0.604,-0.411,-0.223,-0.041,0.132,0.294,0.435,0.551,0.638,0.699,0.737,0.756,0.761,0.757,0.748,0.736,0.726,0.717,0.711,0.706,0.701,0.694,0.681,0.659,0.625,0.575,0.505,0.412,0.299,0.178,0.058,-0.053,-0.151,-0.235,-0.309,-0.382,-0.464,-0.56,-0.668,-0.784,-0.904,-1.026,-1.146,-1.263,-1.374,-1.478,-1.574,-1.66,-1.736,-1.801,-1.855,-1.899],"dash":true},{"name":"true function sin(x)","x":[-5,-4.9,-4.8,-4.7,-4.6,-4.5,-4.4,-4.3,-4.2,-4.1,-4,-3.9,-3.8,-3.7,-3.6,-3.5,-3.4,-3.3,-3.2,-3.1,-3,-2.9,-2.8,-2.7,-2.6,-2.5,-2.4,-2.3,-2.2,-2.1,-2,-1.9,-1.8,-1.7,-1.6,-1.5,-1.4,-1.3,-1.2,-1.1,-1,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,4,4.1,4.2,4.3,4.4,4.5,4.6,4.7,4.8,4.9,5],"y":[0.959,0.982,0.996,1,0.994,0.978,0.952,0.916,0.872,0.818,0.757,0.688,0.612,0.53,0.443,0.351,0.256,0.158,0.058,-0.042,-0.141,-0.239,-0.335,-0.427,-0.516,-0.598,-0.675,-0.746,-0.808,-0.863,-0.909,-0.946,-0.974,-0.992,-1,-0.997,-0.985,-0.964,-0.932,-0.891,-0.841,-0.783,-0.717,-0.644,-0.565,-0.479,-0.389,-0.296,-0.199,-0.1,0,0.1,0.199,0.296,0.389,0.479,0.565,0.644,0.717,0.783,0.841,0.891,0.932,0.964,0.985,0.997,1,0.992,0.974,0.946,0.909,0.863,0.808,0.746,0.675,0.598,0.516,0.427,0.335,0.239,0.141,0.042,-0.058,-0.158,-0.256,-0.351,-0.443,-0.53,-0.612,-0.688,-0.757,-0.818,-0.872,-0.916,-0.952,-0.978,-0.994,-1,-0.996,-0.982,-0.959],"dash":true},{"name":"8 noisy observations","x":[-4,-3,-1.5,0,0.5,2.5,3,3.5],"y":[0.776,-0.193,-1.039,-0.244,0.659,0.713,0.109,-0.273],"scatter":true}],"xLabel":"x","yLabel":"f(x)"} },
       { type: 'code', title: 'GP regression from scratch (and with scikit-learn)', code: `
 import numpy as np
@@ -1274,7 +1274,7 @@ kernel = ConstantKernel(var, "fixed") * RBF(length, "fixed") + WhiteKernel(noise
 sk_mean = GaussianProcessRegressor(kernel, optimizer=None).fit(X[:, None], y).predict(Xs[:, None])
 for x, m, s, sm in zip(Xs, mean, std, sk_mean):
     print(f"x = {x:4.1f}: mean {m:+.3f} ± {2 * s:.3f}   (sin x = {np.sin(x):+.3f})   scikit-learn mean {sm:+.3f}")
-`, after: `Close to the training points (x = 1) the mean is near sin(x) and the band is tight; in the gaps between points (x = 3 and 5) the band widens, and the true value stays inside it. At x = 8 and 15, far from all data, the mean falls back to the prior mean of 0 and the band widens to the prior's ±2 — the GP knows it is guessing. scikit-learn computes the same mean.` },
+`, after: `Close to the training points (x = 1) the mean is near sin(x) and the band is tight; in the gaps between points (x = 3 and 5) the band widens, and the true value stays inside it. At x = 8 and 15, far from all data, the mean falls back to the prior mean of 0 and the band widens to the prior's ±2: the GP knows it is guessing. scikit-learn computes the same mean.` },
       { type: 'text', title: 'Choosing the kernel: the marginal likelihood', md: `How should ℓ, σ_f and σ_n be chosen? A GP can score each setting by how probable it makes the observed data, integrating over all functions:
 
 $$ log p(y | X) = −½ yᵀ(K + σ_n² I)⁻¹ y − ½ log det(K + σ_n² I) − (n/2) log 2π $$
@@ -1351,13 +1351,13 @@ random_x = rng.uniform(0, 5, 12)
 print(f"Bayesian optimization, 12 evaluations: best {y.max():.3f} at x = {X[np.argmax(y)]:.2f}")
 print(f"random search, 12 evaluations:         best {objective(random_x).max():.3f}")
 print(f"true maximum on the grid:              {objective(grid).max():.3f} at x = {grid[np.argmax(objective(grid))]:.2f}")
-`, after: `After a few exploratory evaluations — including the edge x = 5, where the uncertainty was largest — the GP homes in on the peak near x = 1.6 and finds the true maximum by the 9th evaluation, while random search with the same budget gets nowhere near it. Once the optimum is found, UCB keeps proposing the same point; real implementations notice repeats and explore elsewhere instead.` }
+`, after: `After a few exploratory evaluations (including the edge x = 5, where the uncertainty was largest) the GP homes in on the peak near x = 1.6 and finds the true maximum by the 9th evaluation, while random search with the same budget gets nowhere near it. Once the optimum is found, UCB keeps proposing the same point; real implementations notice repeats and explore elsewhere instead.` }
     ],
     when: `- Expensive black-box optimization: hyperparameters, experimental design, A/B-test parameters, chemistry and materials searches.
 - Small-data regression where calibrated error bars matter (science, engineering, sensor data).
 - Interpolating smooth functions and modelling spatial or temporal correlation (kriging in geostatistics).
 - Not for large datasets without approximations (exact GPs scale as n³), or for very high-dimensional inputs.`,
-    pitfalls: `- Forgetting to scale inputs and outputs — length scales and variances then mean nothing.
+    pitfalls: `- Forgetting to scale inputs and outputs: length scales and variances then mean nothing.
 - Numerical failures in the Cholesky factorization; add a small jitter to the diagonal.
 - Trusting a GP's uncertainty when the kernel is wrong for the function (e.g. RBF for a function with jumps).
 - Running Bayesian optimization in dozens of dimensions, where random search or Hyperband often do as well.
@@ -1468,7 +1468,7 @@ def propose(xs, mu, sigma, best):
     return xs[int(np.argmax(expected_improvement(mu, sigma, best)))]
 `,
         hints: ['`math.erf` works on single numbers; loop over the entries (or use `np.vectorize`).', 'With sigma = 0 there is no uncertainty: the improvement is simply max(mu − best, 0).'],
-        explain: `Expected improvement is never negative, rewards points whose mean beats the incumbent, and also rewards uncertain points — even one with a mediocre mean can have a decent chance of a large improvement. UCB makes the same trade-off with an explicit knob, kappa.`,
+        explain: `Expected improvement is never negative, rewards points whose mean beats the incumbent, and also rewards uncertain points, even one with a mediocre mean can have a decent chance of a large improvement. UCB makes the same trade-off with an explicit knob, kappa.`,
         tests: [
           { call: 'expected_improvement(np.array([0.0]), np.array([1.0]), 0.0)', expect: 'np.array([1 / np.sqrt(2 * np.pi)])' },
           { call: 'expected_improvement(np.array([1.0, 0.0]), np.array([0.0, 0.0]), 0.5)', expect: 'np.array([0.5, 0.0])' },
@@ -1479,9 +1479,9 @@ def propose(xs, mu, sigma, best):
       }
     ],
     refs: [
-      { title: 'Rasmussen & Williams — Gaussian Processes for Machine Learning (free book)', url: 'https://gaussianprocess.org/gpml/' },
-      { title: 'Görtler, Kehlbeck & Deussen — A Visual Exploration of Gaussian Processes (Distill)', url: 'https://distill.pub/2019/visual-exploration-gaussian-processes/' },
-      { title: 'Snoek, Larochelle & Adams — Practical Bayesian Optimization of Machine Learning Algorithms', url: 'https://arxiv.org/abs/1206.2944' },
+      { title: 'Rasmussen & Williams, Gaussian Processes for Machine Learning (free book)', url: 'https://gaussianprocess.org/gpml/' },
+      { title: 'Görtler, Kehlbeck & Deussen, A Visual Exploration of Gaussian Processes (Distill)', url: 'https://distill.pub/2019/visual-exploration-gaussian-processes/' },
+      { title: 'Snoek, Larochelle & Adams, Practical Bayesian Optimization of Machine Learning Algorithms', url: 'https://arxiv.org/abs/1206.2944' },
       { title: 'Optuna documentation', url: 'https://optuna.org/' }
     ]
   }

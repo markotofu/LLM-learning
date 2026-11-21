@@ -8,7 +8,7 @@
     id: 'supervised-learning', branch: 'ml', title: 'Supervised Learning: The Big Picture', short: 'Supervised Learning', level: 1, minutes: 30, prereqs: ['what-is-ml', 'vectors-matrices'],
     tags: ['regression', 'classification', 'baseline', 'decision boundary', 'generalization'],
     summary: 'Learning a function from labelled examples: regression vs classification, model families, decision boundaries, baselines and what "generalization" really requires.',
-    why: `Most deployed machine learning is supervised: predict a price, a diagnosis, a click, a translation, the next token. Before diving into specific algorithms it pays to understand the shared frame — inputs and labels, a family of candidate functions, the fit/predict workflow, and the assumption that tomorrow's data looks like today's. With that frame, every later model is just a different answer to "which family of functions, and how do we pick the best member?"`,
+    why: `Most deployed machine learning is supervised: predict a price, a diagnosis, a click, a translation, the next token. Before diving into specific algorithms it pays to understand the shared frame: inputs and labels, a family of candidate functions, the fit/predict workflow, and the assumption that tomorrow's data looks like today's. With that frame, every later model is just a different answer to "which family of functions, and how do we pick the best member?"`,
     objectives: [
       'Distinguish regression from classification and recognise each in real problems',
       'Describe a model family, its parameters and its inductive bias',
@@ -17,7 +17,7 @@
       'State the i.i.d. assumption and when it breaks (distribution shift)'
     ],
     sections: [
-      { type: 'text', title: 'The setup', md: `In supervised learning we have **n** labelled examples (x⁽¹⁾, y⁽¹⁾), …, (x⁽ⁿ⁾, y⁽ⁿ⁾). Each **x** is a feature vector; each **y** is the correct answer. We want a function **f** so that f(x) ≈ y — not just for these examples, but for **new** ones.
+      { type: 'text', title: 'The setup', md: `In supervised learning we have **n** labelled examples (x⁽¹⁾, y⁽¹⁾), …, (x⁽ⁿ⁾, y⁽ⁿ⁾). Each **x** is a feature vector; each **y** is the correct answer. We want a function **f** so that f(x) ≈ y, not just for these examples, but for **new** ones.
 
 The type of y decides the task:
 
@@ -29,11 +29,11 @@ The type of y decides the task:
 | **Multi-label** | any subset of labels | tags on a photo | an independent probability per label |
 
 Classifiers usually output **probabilities**, and you choose a threshold to turn them into decisions. An LLM is a multi-class classifier whose classes are the ~100,000 tokens of its vocabulary.` },
-      { type: 'text', title: 'Model families and inductive bias', md: `We never search over *all* possible functions. We pick a **model family** — a set of functions described by parameters — and learning picks the best member:
+      { type: 'text', title: 'Model families and inductive bias', md: `We never search over *all* possible functions. We pick a **model family** (a set of functions described by parameters) and learning picks the best member:
 
 - **Linear models**: f(x) = w·x + b. Parameters w, b. Assume effects add up.
 - **Decision trees**: a cascade of if/else questions. Parameters: the questions and thresholds.
-- **k-nearest neighbours**: "look like your closest training examples". Almost no parameters — it stores the data.
+- **k-nearest neighbours**: "look like your closest training examples". Almost no parameters: it stores the data.
 - **Neural networks**: stacked linear maps and non-linear functions. Millions of parameters.
 
 The assumptions baked into a family are its **inductive bias**. A linear model assumes straight-line relationships; a CNN assumes nearby pixels matter together; a transformer assumes any token may be relevant to any other. With a good bias you learn from less data; with a wrong bias no amount of data helps (a straight line can never fit a circle).
@@ -66,7 +66,7 @@ When a model overfits, ask first "can I get more (varied) data?", then "can I si
 - A **linear classifier** (logistic regression, a perceptron, a linear SVM) has a straight-line boundary in 2-D, a flat plane in 3-D, a hyperplane in general: the points where w·x + b = 0.
 - **Non-linear** models (trees, kNN, neural networks, kernel SVMs) can draw curved or jagged boundaries.
 
-More flexible boundaries can fit more patterns — but also more noise. Balancing that trade-off (*Overfitting*) is the central skill of the field. Play with the boundary of k-nearest neighbours below: k = 1 traces every point; larger k smooths it.` },
+More flexible boundaries can fit more patterns, but also more noise. Balancing that trade-off (*Overfitting*) is the central skill of the field. Play with the boundary of k-nearest neighbours below: k = 1 traces every point; larger k smooths it.` },
       { type: 'demo', title: 'Interactive: decision regions of k-nearest neighbours', demo: 'knn' },
       { type: 'text', title: 'Always start with a baseline', md: `A **baseline** is the score of a trivial strategy. Any real model must beat it to be worth anything:
 
@@ -74,8 +74,8 @@ More flexible boundaries can fit more patterns — but also more noise. Balancin
 - **Classification**: predict the most frequent training class.
 - **Simple heuristic**: "tomorrow's sales = today's sales"; "flag a transaction if amount > €5,000".
 
-Why it matters: on a dataset with 95% legitimate transactions, a model with 95% accuracy may have learned *nothing* — the majority baseline gets 95% too.` },
-      { type: 'code', title: 'Fit, predict and compare with a baseline', md: `Almost every ML library uses the same two-method interface: \`fit(X, y)\` learns from data, \`predict(X)\` answers new questions. Here is a tiny nearest-centroid classifier — it represents each class by the average of its examples — compared with the majority-class baseline.`, code: `
+Why it matters: on a dataset with 95% legitimate transactions, a model with 95% accuracy may have learned *nothing* (the majority baseline gets 95% too).` },
+      { type: 'code', title: 'Fit, predict and compare with a baseline', md: `Almost every ML library uses the same two-method interface: \`fit(X, y)\` learns from data, \`predict(X)\` answers new questions. Here is a tiny nearest-centroid classifier (it represents each class by the average of its examples) compared with the majority-class baseline.`, code: `
 import numpy as np
 rng = np.random.default_rng(0)
 
@@ -117,6 +117,9 @@ from sklearn.neural_network import MLPClassifier
 warnings.filterwarnings("ignore")
 
 X, y = load_breast_cancer(return_X_y=True)
+print(f"X: {X.shape[0]} tumours x {X.shape[1]} measurements. The first 3 rows (first 5 columns) and labels (0 = malignant, 1 = benign):")
+for row, label in zip(X[:3], y[:3]):
+    print("  ", row[:5].round(2).tolist(), "->", label)
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=0)
 scaled = lambda model: make_pipeline(StandardScaler(), model)
 models = {
@@ -155,21 +158,21 @@ for name, model in models.items():
 :::tip A sensible order
 Start with a baseline, then a simple model (linear model, naive Bayes or k-NN). Look at the data and the errors. Only then move to random forests, gradient boosting, SVMs or neural networks, and keep the simple model as a yardstick.
 :::` },
-      { type: 'check', question: { type: 'mcq', q: 'A fraud detector reaches 99% accuracy on a dataset where 99% of transactions are legitimate. What can you conclude?', options: ['It is an excellent model', 'Nothing yet — always predicting "legitimate" also gets 99%', 'It must be overfitting', 'It has 1% false positives'], answer: 1, explain: 'Compare against the majority baseline. Here accuracy alone says nothing; look at precision and recall on the fraud class.' } },
-      { type: 'text', title: 'The i.i.d. assumption and distribution shift', md: `Supervised learning silently assumes that training and future data are **i.i.d.** — *independent and identically distributed*: drawn from the same underlying distribution. Then good performance on held-out data predicts good performance in production.
+      { type: 'check', question: { type: 'mcq', q: 'A fraud detector reaches 99% accuracy on a dataset where 99% of transactions are legitimate. What can you conclude?', options: ['It is an excellent model', 'Nothing yet: always predicting "legitimate" also gets 99%', 'It must be overfitting', 'It has 1% false positives'], answer: 1, explain: 'Compare against the majority baseline. Here accuracy alone says nothing; look at precision and recall on the fraud class.' } },
+      { type: 'text', title: 'The i.i.d. assumption and distribution shift', md: `Supervised learning silently assumes that training and future data are **i.i.d.**, *independent and identically distributed*: drawn from the same underlying distribution. Then good performance on held-out data predicts good performance in production.
 
-Reality breaks this all the time — **distribution shift**:
-- **Covariate shift** — inputs change (a new camera, a new customer segment, a new slang word).
-- **Label/concept shift** — the relationship itself changes (what counts as spam evolves; fraudsters adapt).
-- **Feedback loops** — your model's decisions change the data you collect next.
+Reality breaks this all the time, **distribution shift**:
+- **Covariate shift**: inputs change (a new camera, a new customer segment, a new slang word).
+- **Label/concept shift**: the relationship itself changes (what counts as spam evolves; fraudsters adapt).
+- **Feedback loops**: your model's decisions change the data you collect next.
 
 That's why deployed models are monitored and retrained (see *MLOps*), and why test sets should be as close as possible to the data the model will really face.` },
       { type: 'check', question: { type: 'mcq', q: 'Predicting the number of bikes rented tomorrow (e.g. 312) is which kind of task?', options: ['Binary classification', 'Regression', 'Clustering', 'Reinforcement learning'], answer: 1, explain: 'The target is a quantity, so it is regression (even though it happens to be an integer).' } }
     ],
-    when: `- Use **supervised learning** when you have — or can collect — labelled examples of the exact decision you want to automate.
+    when: `- Use **supervised learning** when you have (or can collect) labelled examples of the exact decision you want to automate.
 - Frame the task carefully: regression vs classification, the unit of prediction (per user? per day?), and what information exists *at prediction time*.
 - If labels are scarce, consider transfer learning, self-supervised pretraining or active labelling before collecting thousands of labels by hand.`,
-    pitfalls: `- Skipping the baseline — and celebrating a model that is no better than predicting the majority class.
+    pitfalls: `- Skipping the baseline: and celebrating a model that is no better than predicting the majority class.
 - Treating classification outputs as certain; use probabilities and choose thresholds deliberately.
 - Assuming the future looks like the past without monitoring for shift.
 - Framing the wrong target (predicting what is easy to measure instead of what matters).`,
@@ -183,8 +186,8 @@ That's why deployed models are monitored and retrained (see *MLOps*), and why te
     quiz: [
       { type: 'mcq', q: 'Which is a multi-class classification task?', options: ['Predicting tomorrow\'s rainfall in mm', 'Recognising which of 10 digits is in an image', 'Grouping songs without labels', 'Estimating a house price'], answer: 1, explain: 'Ten possible categories → multi-class classification.' },
       { type: 'mcq', q: 'What is a decision boundary?', options: ['The maximum value a feature can take', 'The border in feature space where the predicted class changes', 'The size of the training set', 'The learning rate limit'], answer: 1, explain: 'It separates the regions assigned to different classes.' },
-      { type: 'tf', q: 'A linear classifier\'s decision boundary in 2-D is always a straight line.', answer: true, explain: 'The boundary is the set of points with w·x + b = 0 — a line in 2-D (a hyperplane in general).' },
-      { type: 'mcq', q: 'What does "inductive bias" mean?', options: ['A bug in the training data', 'The assumptions a model family makes about the kind of function it can represent', 'Prejudice in model predictions', 'The bias term b'], answer: 1, explain: 'It is the built-in preference that lets a model generalize — e.g. linearity, locality, smoothness.' },
+      { type: 'tf', q: 'A linear classifier\'s decision boundary in 2-D is always a straight line.', answer: true, explain: 'The boundary is the set of points with w·x + b = 0: a line in 2-D (a hyperplane in general).' },
+      { type: 'mcq', q: 'What does "inductive bias" mean?', options: ['A bug in the training data', 'The assumptions a model family makes about the kind of function it can represent', 'Prejudice in model predictions', 'The bias term b'], answer: 1, explain: 'It is the built-in preference that lets a model generalize, e.g. linearity, locality, smoothness.' },
       { type: 'mcq', q: 'A model trained on photos from one hospital performs badly at another hospital with different scanners. This is…', options: ['Underfitting', 'Distribution (covariate) shift', 'A learning-rate problem', 'Label leakage'], answer: 1, explain: 'The input distribution changed between training and deployment.' },
       {"type":"mcq","q":"A model scores 99% on its training data but 74% on the test set. What is the most likely diagnosis?","options":["Underfitting: the model is too simple","Overfitting: the model memorized the training data","The test set is too large","The model generalizes well"],"answer":1,"explain":"A large gap between a high training score and a much lower test score is the signature of overfitting."},
       {"type":"mcq","q":"Which change usually lets you use a more flexible model without overfitting?","options":["Duplicating every training example","Collecting more varied training data","Evaluating on the training set instead","Removing the test set"],"answer":1,"explain":"More varied data makes coincidences in the training sample less likely, so flexible models can be checked against many more cases. Duplicates add no new information."}
@@ -239,7 +242,7 @@ class NearestCentroid:
         return self.classes_[np.argmin(dists, axis=1)]
 `,
         hints: ['`X[y == c]` selects the rows of class c; `.mean(axis=0)` averages them.', 'Pairwise distances: `np.linalg.norm(X[:, None, :] - self.centroids_[None, :, :], axis=-1)` has shape (n, n_classes).', '`self.classes_[np.argmin(dists, axis=1)]` maps the closest column back to its label.'],
-        explain: `Nearest-centroid is a fast, surprisingly strong baseline: each class becomes one prototype point. Its decision boundaries are straight lines halfway between centroids. It struggles when a class is spread out or has several clusters — which motivates k-nearest neighbours (many prototypes) and learned models.`,
+        explain: `Nearest-centroid is a fast, surprisingly strong baseline: each class becomes one prototype point. Its decision boundaries are straight lines halfway between centroids. It struggles when a class is spread out or has several clusters, which motivates k-nearest neighbours (many prototypes) and learned models.`,
         tests: [
           { call: 'NearestCentroid().fit(np.array([[0, 0], [0, 2], [10, 10]]), np.array([0, 0, 1])).centroids_', expect: 'np.array([[0.0, 1.0], [10.0, 10.0]])' },
           { call: 'NearestCentroid().fit(np.array([[0, 0], [0, 2], [10, 10]]), np.array([0, 0, 1])).predict(np.array([[1, 1], [9, 8]]))', expect: 'np.array([0, 1])' },
@@ -276,7 +279,7 @@ def majority_baseline_accuracy(y_train, y_test):
     majority = values[np.argmax(counts)]          # np.unique is sorted, argmax takes the first max
     return float(np.mean(np.asarray(y_test) == majority))
 `,
-        hints: ['`values, counts = np.unique(y_train, return_counts=True)` gives sorted labels and their counts.', '`np.argmax(counts)` returns the first maximum — which is the smallest label on ties because `values` is sorted.'],
+        hints: ['`values, counts = np.unique(y_train, return_counts=True)` gives sorted labels and their counts.', '`np.argmax(counts)` returns the first maximum, which is the smallest label on ties because `values` is sorted.'],
         explain: `\`np.unique\` returns labels in sorted order, so \`argmax\` (which picks the first maximum) automatically breaks ties toward the smallest label. Comparing \`y_test == majority\` gives booleans whose mean is the accuracy.`,
         tests: [
           { call: 'majority_baseline_accuracy([0, 0, 1], [0, 1, 0, 0])', expect: '0.75' },
@@ -287,9 +290,9 @@ def majority_baseline_accuracy(y_train, y_test):
       }
     ],
     refs: [
-      { title: 'Google ML Crash Course — Framing', url: 'https://developers.google.com/machine-learning/crash-course' },
-      { title: "Stanford CS229 — Machine Learning lecture notes", url: "https://cs229.stanford.edu/main_notes.pdf" },
-      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
+      { title: 'Google ML Crash Course, Framing', url: 'https://developers.google.com/machine-learning/crash-course' },
+      { title: "Stanford CS229, Machine Learning lecture notes", url: "https://cs229.stanford.edu/main_notes.pdf" },
+      { title: "Andreas Müller & Sarah Guido, Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 
@@ -297,8 +300,8 @@ def majority_baseline_accuracy(y_train, y_test):
   {
     id: 'loss-functions', branch: 'ml', title: 'Loss Functions: Measuring Mistakes', short: 'Loss Functions', level: 1, minutes: 35, prereqs: ['supervised-learning', 'statistics'],
     tags: ['mse', 'mae', 'huber', 'log loss', 'cross-entropy', 'hinge'],
-    summary: 'The single number a model tries to minimise: squared, absolute and Huber errors for regression, log loss and hinge loss for classification — and why the choice matters.',
-    why: `A model only learns what its loss function rewards. Choose mean squared error and a few outliers will dominate training; choose absolute error and the model predicts medians instead of means; choose cross-entropy and a classifier learns calibrated probabilities. The loss is also what gradient descent differentiates, so it must be smooth enough to give useful gradients. Understanding loss functions means understanding *what your model is actually optimising* — which is often subtly different from what you care about.`,
+    summary: 'The single number a model tries to minimise: squared, absolute and Huber errors for regression, log loss and hinge loss for classification, and why the choice matters.',
+    why: `A model only learns what its loss function rewards. Choose mean squared error and a few outliers will dominate training; choose absolute error and the model predicts medians instead of means; choose cross-entropy and a classifier learns calibrated probabilities. The loss is also what gradient descent differentiates, so it must be smooth enough to give useful gradients. Understanding loss functions means understanding *what your model is actually optimising*, which is often subtly different from what you care about.`,
     objectives: [
       'Compute MSE, MAE and Huber loss and explain how each treats outliers',
       'Explain why accuracy (0-1 loss) is not used for training',
@@ -320,7 +323,7 @@ L(θ) — the training loss (also called the cost or objective): the single numb
 A good training loss is:
 1. **Aligned** with what you care about (small when predictions are good);
 2. **Differentiable** (or nearly), so gradient descent can follow its slope;
-3. **Well-behaved** — not dominated by a few weird examples unless you want it to be.
+3. **Well-behaved**: not dominated by a few weird examples unless you want it to be.
 
 The **evaluation metric** you report (accuracy, F1, revenue…) can differ from the training loss. We train on smooth surrogates and evaluate on what matters.` },
       { type: 'text', title: 'Regression losses', md: `For a single prediction with error e = ŷ − y:
@@ -329,7 +332,7 @@ The **evaluation metric** you report (accuracy, F1, revenue…) can differ from 
 | --- | --- | --- |
 | **Squared error** (MSE when averaged) | e² | big errors dominate; optimal constant prediction = the **mean** |
 | **Absolute error** (MAE) | \|e\| | every unit of error costs the same; optimal constant = the **median**; robust to outliers |
-| **Huber** | e²/2 if \|e\| ≤ δ, else δ(\|e\| − δ/2) | quadratic for small errors, linear for large — the best of both |
+| **Huber** | e²/2 if \|e\| ≤ δ, else δ(\|e\| − δ/2) | quadratic for small errors, linear for large: the best of both |
 
 Why squared error is so popular: it is smooth, its gradient 2e is proportional to the error (big mistakes get big corrections), it gives closed-form solutions for linear models, and it corresponds to assuming Gaussian noise. Its weakness: one wildly wrong label (a mistyped price of €10,000,000) can drag the whole model toward it, because 1000² = 1,000,000.` },
       { type: 'chart', title: "Regression losses as a function of the error", after: `Squared error grows quadratically, so a single large error dominates the total: great when errors are Gaussian, bad with outliers. Absolute error grows linearly and is robust, but has a kink at 0. Huber is quadratic near zero and linear far away: the best of both.`, chart: {"kind":"line","x":[-3,-2.95,-2.9,-2.85,-2.8,-2.75,-2.7,-2.65,-2.6,-2.55,-2.5,-2.45,-2.4,-2.35,-2.3,-2.25,-2.2,-2.15,-2.1,-2.05,-2,-1.95,-1.9,-1.85,-1.8,-1.75,-1.7,-1.65,-1.6,-1.55,-1.5,-1.45,-1.4,-1.35,-1.3,-1.25,-1.2,-1.15,-1.1,-1.05,-1,-0.95,-0.9,-0.85,-0.8,-0.75,-0.7,-0.65,-0.6,-0.55,-0.5,-0.45,-0.4,-0.35,-0.3,-0.25,-0.2,-0.15,-0.1,-0.05,0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1,1.05,1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75,1.8,1.85,1.9,1.95,2,2.05,2.1,2.15,2.2,2.25,2.3,2.35,2.4,2.45,2.5,2.55,2.6,2.65,2.7,2.75,2.8,2.85,2.9,2.95,3],"points":false,"series":[{"name":"squared error e²","y":[9,8.7025,8.41,8.1225,7.84,7.5625,7.29,7.0225,6.76,6.5025,6.25,6.0025,5.76,5.5225,5.29,5.0625,4.84,4.6225,4.41,4.2025,4,3.8025,3.61,3.4225,3.24,3.0625,2.89,2.7225,2.56,2.4025,2.25,2.1025,1.96,1.8225,1.69,1.5625,1.44,1.3225,1.21,1.1025,1,0.9025,0.81,0.7225,0.64,0.5625,0.49,0.4225,0.36,0.3025,0.25,0.2025,0.16,0.1225,0.09,0.0625,0.04,0.0225,0.01,0.0025,0,0.0025,0.01,0.0225,0.04,0.0625,0.09,0.1225,0.16,0.2025,0.25,0.3025,0.36,0.4225,0.49,0.5625,0.64,0.7225,0.81,0.9025,1,1.1025,1.21,1.3225,1.44,1.5625,1.69,1.8225,1.96,2.1025,2.25,2.4025,2.56,2.7225,2.89,3.0625,3.24,3.4225,3.61,3.8025,4,4.2025,4.41,4.6225,4.84,5.0625,5.29,5.5225,5.76,6.0025,6.25,6.5025,6.76,7.0225,7.29,7.5625,7.84,8.1225,8.41,8.7025,9]},{"name":"absolute error |e|","y":[3,2.95,2.9,2.85,2.8,2.75,2.7,2.65,2.6,2.55,2.5,2.45,2.4,2.35,2.3,2.25,2.2,2.15,2.1,2.05,2,1.95,1.9,1.85,1.8,1.75,1.7,1.65,1.6,1.55,1.5,1.45,1.4,1.35,1.3,1.25,1.2,1.15,1.1,1.05,1,0.95,0.9,0.85,0.8,0.75,0.7,0.65,0.6,0.55,0.5,0.45,0.4,0.35,0.3,0.25,0.2,0.15,0.1,0.05,0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1,1.05,1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75,1.8,1.85,1.9,1.95,2,2.05,2.1,2.15,2.2,2.25,2.3,2.35,2.4,2.45,2.5,2.55,2.6,2.65,2.7,2.75,2.8,2.85,2.9,2.95,3]},{"name":"Huber (δ = 1)","y":[2.5,2.45,2.4,2.35,2.3,2.25,2.2,2.15,2.1,2.05,2,1.95,1.9,1.85,1.8,1.75,1.7,1.65,1.6,1.55,1.5,1.45,1.4,1.35,1.3,1.25,1.2,1.15,1.1,1.05,1,0.95,0.9,0.85,0.8,0.75,0.7,0.65,0.6,0.55,0.5,0.4512,0.405,0.3613,0.32,0.2812,0.245,0.2112,0.18,0.1512,0.125,0.1012,0.08,0.0612,0.045,0.0312,0.02,0.0112,0.005,0.0012,0,0.0013,0.005,0.0113,0.02,0.0312,0.045,0.0613,0.08,0.1013,0.125,0.1513,0.18,0.2113,0.245,0.2812,0.32,0.3613,0.405,0.4513,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1,1.05,1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75,1.8,1.85,1.9,1.95,2,2.05,2.1,2.15,2.2,2.25,2.3,2.35,2.4,2.45,2.5]}],"xLabel":"error e = prediction − target","yLabel":"loss","yMax":9} },
@@ -357,11 +360,11 @@ print("best constant under MSE:", round(best_mse, 2), " (the mean is", y_out.mea
 print("best constant under MAE:", round(best_mae, 2), " (the median is", np.median(y_out), ")")
 `, predict: {"type":"mcq","q":"One of five labels is corrupted from 10 to 100. Which loss jumps the most compared with the clean data?","options":["MSE","MAE","Huber","All three jump by about the same factor"],"answer":0,"explain":"MSE goes from 0.028 to about 1,613 because the error of 90 is squared; MAE and Huber grow only linearly (to about 18). That is why models trained with MSE chase outliers.","expect":["with an outlier MSE 1612.828"]} },
       { type: 'check', question: { type: 'mcq', q: 'Your house-price data contains a few wildly mistyped prices you cannot remove. Which loss is the most robust choice?', options: ['Mean squared error', 'Mean absolute error or Huber loss', 'Squared error with a larger learning rate', 'Cubic error'], answer: 1, explain: 'Squared error amplifies large errors; absolute/Huber losses grow only linearly, so outliers have bounded influence.' } },
-      { type: 'text', title: 'Classification losses', md: `The obvious classification loss is the **0-1 loss**: 1 for a wrong prediction, 0 for a right one — that is just (1 − accuracy). We don't train on it because it is **flat almost everywhere**: nudging a weight slightly rarely flips a prediction, so its gradient is zero and gives no direction.
+      { type: 'text', title: 'Classification losses', md: `The obvious classification loss is the **0-1 loss**: 1 for a wrong prediction, 0 for a right one, that is just (1 − accuracy). We don't train on it because it is **flat almost everywhere**: nudging a weight slightly rarely flips a prediction, so its gradient is zero and gives no direction.
 
 Instead we use smooth surrogates on the model's *scores* or *probabilities*:
 
-**Binary cross-entropy (log loss)** — for a predicted probability p that y = 1:
+**Binary cross-entropy (log loss)**: for a predicted probability p that y = 1:
 
 $$ ℓ(p, y) = −[ y·log p + (1 − y)·log(1 − p) ] $$
 :::where
@@ -373,7 +376,7 @@ y·log p — only switched on when y = 1, while (1 − y)·log(1 − p) is only 
 
 If y = 1 the loss is −log p; if y = 0 it is −log(1 − p). This is exactly the cross-entropy from information theory. It rewards confident correct answers, punishes confident wrong ones heavily, and produces **calibrated probabilities** (when the model says 70%, it is right about 70% of the time).
 
-**Hinge loss** — used by SVMs, on a raw score s and a label y ∈ {−1, +1}:
+**Hinge loss**: used by SVMs, on a raw score s and a label y ∈ {−1, +1}:
 
 $$ ℓ(s, y) = max(0, 1 − y·s) $$
 :::where
@@ -424,7 +427,7 @@ p_t — the probability the model assigns to the true class
 
 **Label smoothing** trains on softened targets: instead of 1 for the correct class and 0 for the rest, use 1 − ε and spread ε over the other classes (ε = 0.1 is typical). The model can no longer drive its loss to zero by becoming infinitely confident, which tends to improve calibration and generalisation. Many image classifiers and transformers are trained this way.` },
       { type: 'chart', title: "Focal loss against cross-entropy", after: `For an easy example (p_t = 0.9) the γ = 2 focal loss is 100 times smaller than cross-entropy, while for a badly misclassified one (p_t = 0.1) it is only about 20% smaller. Thousands of easy examples no longer drown out the few hard ones.`, chart: {"kind":"line","x":[0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1,0.11,0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.19,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.31,0.32,0.33,0.34,0.35,0.36,0.37,0.38,0.39,0.4,0.41,0.42,0.43,0.44,0.45,0.46,0.47,0.48,0.49,0.5,0.51,0.52,0.53,0.54,0.55,0.56,0.57,0.58,0.59,0.6,0.61,0.62,0.63,0.64,0.65,0.66,0.67,0.68,0.69,0.7,0.71,0.72,0.73,0.74,0.75,0.76,0.77,0.78,0.79,0.8,0.81,0.82,0.83,0.84,0.85,0.86,0.87,0.88,0.89,0.9,0.91,0.92,0.93,0.94,0.95,0.96,0.97,0.98,0.99,1],"points":false,"series":[{"name":"cross-entropy (γ = 0)","y":[4.6052,3.912,3.5066,3.2189,2.9957,2.8134,2.6593,2.5257,2.4079,2.3026,2.2073,2.1203,2.0402,1.9661,1.8971,1.8326,1.772,1.7148,1.6607,1.6094,1.5606,1.5141,1.4697,1.4271,1.3863,1.3471,1.3093,1.273,1.2379,1.204,1.1712,1.1394,1.1087,1.0788,1.0498,1.0217,0.9943,0.9676,0.9416,0.9163,0.8916,0.8675,0.844,0.821,0.7985,0.7765,0.755,0.734,0.7133,0.6931,0.6733,0.6539,0.6349,0.6162,0.5978,0.5798,0.5621,0.5447,0.5276,0.5108,0.4943,0.478,0.462,0.4463,0.4308,0.4155,0.4005,0.3857,0.3711,0.3567,0.3425,0.3285,0.3147,0.3011,0.2877,0.2744,0.2614,0.2485,0.2357,0.2231,0.2107,0.1985,0.1863,0.1744,0.1625,0.1508,0.1393,0.1278,0.1165,0.1054,0.0943,0.0834,0.0726,0.0619,0.0513,0.0408,0.0305,0.0202,0.0101,0]},{"name":"focal, γ = 1","y":[4.5591,3.8338,3.4014,3.0901,2.8459,2.6446,2.4731,2.3237,2.1912,2.0723,1.9645,1.8658,1.775,1.6909,1.6126,1.5394,1.4707,1.4061,1.3452,1.2876,1.2329,1.181,1.1317,1.0846,1.0397,0.9968,0.9558,0.9165,0.8789,0.8428,0.8081,0.7748,0.7428,0.712,0.6824,0.6539,0.6264,0.5999,0.5744,0.5498,0.526,0.5032,0.4811,0.4597,0.4392,0.4193,0.4002,0.3817,0.3638,0.3466,0.3299,0.3139,0.2984,0.2834,0.269,0.2551,0.2417,0.2288,0.2163,0.2043,0.1928,0.1817,0.171,0.1607,0.1508,0.1413,0.1322,0.1234,0.115,0.107,0.0993,0.092,0.085,0.0783,0.0719,0.0659,0.0601,0.0547,0.0495,0.0446,0.04,0.0357,0.0317,0.0279,0.0244,0.0211,0.0181,0.0153,0.0128,0.0105,0.0085,0.0067,0.0051,0.0037,0.0026,0.0016,0.0009,0.0004,0.0001,0]},{"name":"focal, γ = 2","y":[4.5135,3.7571,3.2993,2.9665,2.7036,2.4859,2.3,2.1378,1.994,1.8651,1.7484,1.6419,1.5442,1.4541,1.3707,1.2931,1.2207,1.153,1.0896,1.03,0.974,0.9212,0.8714,0.8243,0.7798,0.7377,0.6977,0.6599,0.624,0.5899,0.5576,0.5269,0.4977,0.4699,0.4435,0.4185,0.3946,0.3719,0.3504,0.3299,0.3104,0.2918,0.2742,0.2575,0.2415,0.2264,0.2121,0.1985,0.1855,0.1733,0.1617,0.1507,0.1402,0.1304,0.1211,0.1123,0.1039,0.0961,0.0887,0.0817,0.0752,0.069,0.0633,0.0578,0.0528,0.048,0.0436,0.0395,0.0357,0.0321,0.0288,0.0258,0.0229,0.0204,0.018,0.0158,0.0138,0.012,0.0104,0.0089,0.0076,0.0064,0.0054,0.0045,0.0037,0.003,0.0024,0.0018,0.0014,0.0011,0.0008,0.0005,0.0004,0.0002,0.0001,0.0001,0,0,0,0]}],"xLabel":"p_t, the probability given to the true class","yLabel":"loss","yMin":0} },
-      { type: 'check', question: { type: 'mcq', q: 'Why don\'t we train classifiers by directly minimising the 0-1 loss (error rate)?', options: ['It is too slow to compute', 'Its gradient is zero almost everywhere, so gradient descent gets no direction', 'It is always larger than log loss', 'It only works for regression'], answer: 1, explain: 'Small parameter changes rarely flip any prediction, so the 0-1 loss is piecewise constant — no useful slope.' } },
+      { type: 'check', question: { type: 'mcq', q: 'Why don\'t we train classifiers by directly minimising the 0-1 loss (error rate)?', options: ['It is too slow to compute', 'Its gradient is zero almost everywhere, so gradient descent gets no direction', 'It is always larger than log loss', 'It only works for regression'], answer: 1, explain: 'Small parameter changes rarely flip any prediction, so the 0-1 loss is piecewise constant: no useful slope.' } },
       { type: 'text', title: 'Choosing a loss', md: `| Situation | Good choice |
 | --- | --- |
 | Regression, roughly Gaussian noise | MSE |
@@ -469,14 +472,14 @@ for xv in (1.0, 5.0, 9.0):
     print(f"x = {xv}: median {m:+.2f}, 80% interval [{l:+.2f}, {h:+.2f}], width {h - l:.2f}")`, after: `About three quarters of the unseen points land inside the interval, with similar misses on each side: close to the 80% target, but a little short. Quantile models fitted on training data are often slightly overconfident on new data, which is why intervals should be checked, or adjusted with conformal prediction (see [Calibration & Uncertainty](#/concept/calibration-uncertainty)), on held-out data. The interval widens as x grows because the noise does; a single MSE model would give only the middle line. \`HistGradientBoostingRegressor(loss="quantile", quantile=…)\` and LightGBM's \`objective="quantile"\` do the same on large datasets.`, predict: {"type":"mcq","q":"Two models are trained with the quantile loss at τ = 0.1 and τ = 0.9. What share of new points should fall between their predictions?","options":["About 10%","About 50%","About 80%","About 90%"],"answer":2,"explain":"About 10% of outcomes should fall below the τ = 0.1 prediction and 10% above the τ = 0.9 one, leaving about 80% in between. In practice the share is often a little lower on new data.","expect":["coverage roughly 80% (between 70% and 90%): True"]} }
     ],
     when: `- **MSE** is the default for regression; switch to **MAE/Huber** when outliers or heavy-tailed noise appear.
-- **Cross-entropy** is the default for classification and language modelling — it gives good gradients and calibrated probabilities.
+- **Cross-entropy** is the default for classification and language modelling: it gives good gradients and calibrated probabilities.
 - Use **weighted losses** when classes are imbalanced or mistakes differ in cost.
 - Evaluate with the **business metric**, train with a smooth loss that correlates with it.`,
-    pitfalls: `- Using MSE on data with corrupted labels — the outliers take over.
-- Computing log(0) — clip probabilities or compute losses from logits.
+    pitfalls: `- Using MSE on data with corrupted labels: the outliers take over.
+- Computing log(0): clip probabilities or compute losses from logits.
 - Reporting the training loss as if it were the evaluation metric.
 - Optimising a loss that ignores what you care about (e.g. accuracy on imbalanced data).
-- Forgetting the loss scale changes with units — MSE in € vs k€ differs by a factor of a million.`,
+- Forgetting the loss scale changes with units: MSE in € vs k€ differs by a factor of a million.`,
     takeaways: [
       'The loss is the single number training minimises; models learn what it rewards.',
       'MSE punishes large errors heavily (→ mean); MAE treats errors linearly (→ median); Huber blends both.',
@@ -488,7 +491,7 @@ for xv in (1.0, 5.0, 9.0):
       { type: 'fill', q: 'Targets [2, 4] and predictions [3, 1]. What is the mean squared error?', answer: ['5', '5.0'], explain: 'Errors 1 and −3 → squares 1 and 9 → mean 5.' },
       { type: 'fill', q: 'Same data (targets [2, 4], predictions [3, 1]). What is the mean absolute error?', answer: ['2', '2.0'], explain: '|1| and |−3| → mean (1 + 3)/2 = 2.' },
       { type: 'mcq', q: 'If you must predict one constant value for a dataset, which constant minimises the MAE?', options: ['The mean', 'The median', 'The mode', 'The maximum'], answer: 1, explain: 'The median minimises the sum of absolute deviations; the mean minimises the sum of squared deviations.' },
-      { type: 'mcq', q: 'For a positive example (y = 1), the model predicts p = 0.01. The binary cross-entropy is about…', options: ['0.01', '0.99', '4.6', '0'], answer: 2, explain: '−ln(0.01) ≈ 4.6 — a confident mistake is heavily penalised.' },
+      { type: 'mcq', q: 'For a positive example (y = 1), the model predicts p = 0.01. The binary cross-entropy is about…', options: ['0.01', '0.99', '4.6', '0'], answer: 2, explain: '−ln(0.01) ≈ 4.6: a confident mistake is heavily penalised.' },
       { type: 'tf', q: 'Hinge loss is zero for a correctly classified point that lies beyond the margin.', answer: true, explain: 'max(0, 1 − y·s) = 0 when y·s ≥ 1.' },
       { type: 'mcq', q: 'Which loss is standard for training large language models?', options: ['Mean squared error between token ids', 'Cross-entropy on the next token', 'Hinge loss', 'Mean absolute error'], answer: 1, explain: 'LLMs minimise the cross-entropy of the true next token under the predicted distribution.' },
       {"type":"mcq","q":"With the quantile loss at τ = 0.9, under-predicting by 1 costs 0.9. What does over-predicting by 1 cost?","options":["0.9","0.1","1.0","9"],"answer":1,"explain":"Over-predictions cost (1 − τ) per unit, here 0.1, so the model is pushed upwards until only about 10% of outcomes lie above its prediction."},
@@ -500,9 +503,9 @@ for xv in (1.0, 5.0, 9.0):
         id: 'mse-mae', title: 'MSE, MAE and Huber Loss', difficulty: 'easy',
         prompt: `Implement three regression losses. Each takes equal-length arrays (or lists) of targets \`y\` and predictions \`y_hat\` and returns a Python float, averaged over the examples:
 
-1. \`mse(y, y_hat)\` — mean of (ŷ − y)²
-2. \`mae(y, y_hat)\` — mean of |ŷ − y|
-3. \`huber(y, y_hat, delta=1.0)\` — mean of 0.5·e² where |e| ≤ δ, and δ·(|e| − 0.5·δ) elsewhere (e = ŷ − y)
+1. \`mse(y, y_hat)\`: mean of (ŷ − y)²
+2. \`mae(y, y_hat)\`: mean of |ŷ − y|
+3. \`huber(y, y_hat, delta=1.0)\`: mean of 0.5·e² where |e| ≤ δ, and δ·(|e| − 0.5·δ) elsewhere (e = ŷ − y)
 
 \`\`\`text
 mse([2, 4], [3, 1])    ->  5.0
@@ -588,8 +591,8 @@ def binary_cross_entropy(y, p, eps=1e-12):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Metrics and scoring', url: 'https://scikit-learn.org/stable/modules/model_evaluation.html' },
-      { title: "PyTorch — Loss functions reference", url: "https://pytorch.org/docs/stable/nn.html#loss-functions" }
+      { title: 'scikit-learn, Metrics and scoring', url: 'https://scikit-learn.org/stable/modules/model_evaluation.html' },
+      { title: "PyTorch, Loss functions reference", url: "https://pytorch.org/docs/stable/nn.html#loss-functions" }
     ]
   },
 
@@ -598,7 +601,7 @@ def binary_cross_entropy(y, p, eps=1e-12):
     id: 'gradient-descent', branch: 'ml', title: 'Gradient Descent', level: 1, minutes: 40, prereqs: ['loss-functions', 'derivatives'],
     tags: ['optimization', 'learning rate', 'sgd', 'mini-batch', 'convergence'],
     summary: 'The algorithm that trains almost every model: repeatedly step against the gradient. Learning rates, convergence, local minima, and stochastic mini-batch training.',
-    why: `Gradient descent is the engine of modern machine learning. Linear regression can be solved with a formula, but logistic regression, neural networks and every LLM cannot — they are trained by gradient descent or one of its descendants (momentum, Adam). GPT-style models take hundreds of thousands of gradient steps over trillions of tokens. If you understand what one step does, why the learning rate matters so much, and why we use small random mini-batches, you understand the heartbeat of every training run.`,
+    why: `Gradient descent is the engine of modern machine learning. Linear regression can be solved with a formula, but logistic regression, neural networks and every LLM cannot: they are trained by gradient descent or one of its descendants (momentum, Adam). GPT-style models take hundreds of thousands of gradient steps over trillions of tokens. If you understand what one step does, why the learning rate matters so much, and why we use small random mini-batches, you understand the heartbeat of every training run.`,
     objectives: [
       'Write the gradient-descent update rule and explain each symbol',
       'Predict the effect of too-small, good and too-large learning rates',
@@ -620,7 +623,7 @@ $$ θ ← θ − η · ∇L(θ) $$
 Each repetition is a **step** or **iteration**. Near a minimum the gradient shrinks towards zero, so the steps naturally get smaller and the parameters settle.
 
 :::analogy The blindfolded hiker
-Blindfolded on a hillside, you feel the slope with your feet and take a step downhill — a small one if you are careful, a big one if you are in a hurry. Too big and you may leap over the valley entirely.
+Blindfolded on a hillside, you feel the slope with your feet and take a step downhill: a small one if you are careful, a big one if you are in a hurry. Too big and you may leap over the valley entirely.
 :::` },
       { type: 'demo', title: 'Interactive: gradient descent on a 1-D loss', md: `Try learning rates 0.05, 0.3, 0.95 and 1.05 on the bowl. Then switch to the bumpy curve and start from different places.`, demo: 'gradient-descent' },
       { type: 'text', title: 'The learning rate', md: `The learning rate is the most important **hyperparameter** (a setting you choose, not learned):
@@ -704,25 +707,25 @@ for name, X in [("raw features", raw), ("standardised", scaled)]:
     print(f"{name:<13} condition number {cond:>12,.1f}   converged: {result}")
 s_raw, s_scaled = steps["raw features"], steps["standardised"]
 print("scaling needs far fewer steps:", s_scaled is not None and (s_raw is None or s_raw > 10 * s_scaled))`, after: `With raw features the curvature differs enormously between directions (the area column is in the hundreds, the intercept column is 1), so the condition number is in the hundreds of thousands and gradient descent does not get there within 5,000 steps. Standardised features make the bowl nearly round and a couple of steps suffice. Closed-form solvers don't care about scaling, but every gradient-based learner does.`, predict: {"type":"mcq","q":"One feature is an area in m² (40 to 200), the other a room count (1 to 5). Compared with standardised features, plain gradient descent on the raw features will need…","options":["About the same number of steps","Far more steps","Fewer steps","Exactly one step"],"answer":1,"explain":"Very different feature scales stretch the loss bowl, so the safe learning rate is set by the steep direction and the flat directions crawl.","expect":["scaling needs far fewer steps: True"]} },
-      { type: 'text', title: 'Minima, saddle points and when to stop', md: `For a **convex** loss — a single bowl, as in linear and logistic regression — gradient descent with a sensible learning rate reaches the global minimum.
+      { type: 'text', title: 'Minima, saddle points and when to stop', md: `For a **convex** loss (a single bowl, as in linear and logistic regression) gradient descent with a sensible learning rate reaches the global minimum.
 
 Neural network losses are **non-convex**: many valleys, plateaus and **saddle points** (minimum in some directions, maximum in others). In very high dimensions, true bad local minima turn out to be rare; saddle points and flat plateaus are the bigger nuisance, and the noise of mini-batch training helps escape them. Remarkably, the many different minima found in big networks tend to perform similarly well.
 
 When to stop:
 - after a fixed number of steps/epochs (most common in deep learning);
 - when the improvement becomes tiny;
-- when the **validation** loss stops improving (**early stopping** — also a regularizer).` },
+- when the **validation** loss stops improving (**early stopping**: also a regularizer).` },
       { type: 'text', title: 'Batch, stochastic and mini-batch', md: `The true gradient averages over **all** n training examples. That is expensive when n is millions.
 
 | Variant | Gradient computed on | Pros | Cons |
 | --- | --- | --- | --- |
-| **Batch GD** | the whole training set | exact, smooth | one step per full pass — slow for big data |
+| **Batch GD** | the whole training set | exact, smooth | one step per full pass: slow for big data |
 | **Stochastic GD (SGD)** | one random example | many cheap steps | very noisy |
 | **Mini-batch GD** | a random batch of B examples (e.g. 32–4096) | fast on GPUs, moderate noise | batch size is another hyperparameter |
 
 Mini-batch is the standard. An **epoch** is one full pass through the training data: with n = 50,000 and B = 100 an epoch is 500 steps. Shuffle the data every epoch so batches differ.
 
-The mini-batch gradient is a noisy but unbiased estimate of the full gradient. The noise is not just tolerable — it helps escape saddle points and tends to find solutions that generalize well.` },
+The mini-batch gradient is a noisy but unbiased estimate of the full gradient. The noise is not just tolerable: it helps escape saddle points and tends to find solutions that generalize well.` },
       { type: 'code', title: 'Mini-batch SGD for linear regression', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -792,17 +795,17 @@ print("error ratio about 4:", 3.5 < err1 / err2 < 4.5)`, after: `The analytic an
     when: `- Use gradient descent whenever the loss is differentiable and there is no closed-form solution (logistic regression, neural networks, anything large).
 - Use **mini-batches** for anything beyond tiny datasets; full-batch only for small, convex problems.
 - For linear regression with modest feature counts, the closed-form solution is simpler; for huge datasets SGD still wins.
-- In deep learning use an improved variant — momentum or **Adam** — rather than plain SGD as a first choice.`,
+- In deep learning use an improved variant (momentum or **Adam**) rather than plain SGD as a first choice.`,
     pitfalls: `- A learning rate that is too large (divergence, NaN) or too small (no progress).
-- Forgetting to shuffle between epochs — batches stay correlated with the file order.
-- Unscaled features — a narrow, elongated loss valley forces a tiny learning rate (standardize first).
+- Forgetting to shuffle between epochs: batches stay correlated with the file order.
+- Unscaled features: a narrow, elongated loss valley forces a tiny learning rate (standardize first).
 - Judging convergence on the training loss alone; watch the validation loss.
 - Mixing up gradient *ascent* and *descent* signs.`,
     takeaways: [
       'Update rule: θ ← θ − η·∇L(θ); repeat until the loss stops improving.',
       'The learning rate is the key hyperparameter: too small is slow, too large diverges.',
       'Convex losses have one minimum; deep-network losses are non-convex but GD works well in practice.',
-      'Mini-batch SGD estimates the gradient from a random batch — fast and helpfully noisy.',
+      'Mini-batch SGD estimates the gradient from a random batch: fast and helpfully noisy.',
       'An epoch is one full pass over the training data.'
     ],
     quiz: [
@@ -854,7 +857,7 @@ def gradient_descent(grad, x0, lr=0.1, steps=100):
     return np.array(history)
 `,
         hints: ['Loop `for _ in range(steps):` and update `x = x - lr * grad(x)`.', 'Append `x.copy()` after each update so later changes cannot alter stored points.'],
-        explain: `That loop *is* gradient descent. Recording the history lets you plot the path or the loss curve — exactly what training dashboards show. Using \`x = x - ...\` (which creates a new array) rather than \`x -= ...\` also guarantees the caller's \`x0\` is untouched.`,
+        explain: `That loop *is* gradient descent. Recording the history lets you plot the path or the loss curve, exactly what training dashboards show. Using \`x = x - ...\` (which creates a new array) rather than \`x -= ...\` also guarantees the caller's \`x0\` is untouched.`,
         tests: [
           { call: 'gradient_descent(lambda x: 2 * (x - 3), [0.0], lr=0.1, steps=3)', expect: 'np.array([[0.0], [0.6], [1.08], [1.464]])' },
           { name: 'converges to the minimum', call: 'gradient_descent(lambda x: 2 * (x - 3), [0.0], lr=0.1, steps=100)[-1]', expect: 'np.array([3.0])' },
@@ -904,8 +907,8 @@ def minibatches(n, batch_size, seed=0):
       }
     ],
     refs: [
-      { title: 'Distill — Why Momentum Really Works', url: 'https://distill.pub/2017/momentum/', note: 'beautiful interactive look at gradient descent dynamics' },
-      { title: 'CS231n — Optimization', url: 'https://cs231n.github.io/optimization-1/' }
+      { title: 'Distill, Why Momentum Really Works', url: 'https://distill.pub/2017/momentum/', note: 'an interactive look at gradient descent dynamics' },
+      { title: 'CS231n, Optimization', url: 'https://cs231n.github.io/optimization-1/' }
     ]
   },
 
@@ -913,8 +916,8 @@ def minibatches(n, batch_size, seed=0):
   {
     id: 'linear-regression', branch: 'ml', title: 'Linear Regression', level: 1, minutes: 45, prereqs: ['gradient-descent', 'numpy'],
     tags: ['regression', 'least squares', 'normal equation', 'r squared', 'ols'],
-    summary: 'Fit a straight line (or plane) to data — the "hello world" of ML. Two ways to solve it, how to interpret the weights, and how to measure the fit.',
-    why: `Linear regression is the first model every practitioner learns, and for good reason. It shows the whole recipe in its simplest form — a model, a loss, an optimizer — and it can be solved both with a formula and with gradient descent, so you can check one against the other. It is also genuinely useful: fast, interpretable, hard to overfit when features are few, and the right baseline for any regression problem. And it lives on inside every neural network: each layer is a linear regression (Xw + b) followed by a non-linearity.`,
+    summary: 'Fit a straight line (or plane) to data: the "hello world" of ML. Two ways to solve it, how to interpret the weights, and how to measure the fit.',
+    why: `Linear regression is the first model every practitioner learns, and for good reason. It shows the whole recipe in its simplest form (a model, a loss, an optimizer) and it can be solved both with a formula and with gradient descent, so you can check one against the other. It is also genuinely useful: fast, interpretable, hard to overfit when features are few, and the right baseline for any regression problem. And it lives on inside every neural network: each layer is a linear regression (Xw + b) followed by a non-linearity.`,
     objectives: [
       'Write the linear model ŷ = Xw + b and interpret its weights',
       'Fit it with the closed-form least-squares solution',
@@ -968,7 +971,7 @@ y — the vector of the n true targets
 
 In code you should *not* compute that inverse explicitly (it is slow and numerically fragile). Use a least-squares solver: \`np.linalg.lstsq(X_tilde, y)\`. It works even when features are redundant.
 
-Cost: roughly O(n·d²) — fine for thousands of features, impractical for millions, which is when gradient descent takes over.` },
+Cost: roughly O(n·d²), fine for thousands of features, impractical for millions, which is when gradient descent takes over.` },
       { type: 'chart', title: "Least squares minimises the squared vertical distances", after: `Each dashed segment is one residual. Least squares picks the line that makes the sum of their squares as small as possible; any other line, tilted or shifted, would make that sum larger. Note that the distances are vertical (errors in y), not perpendicular to the line: the model predicts y from x, it does not treat the two symmetrically.`, chart: {"kind":"line","points":false,"series":[{"name":"data","x":[0.015,0.856,0.941,1.137,1.597,2.368,2.842,2.927,2.984,3.14,3.912,4.306,4.331,4.791,5.167,5.822,5.868,6.485,6.962,7.346,7.378,8.013,8.917,9.563,9.735],"y":[2.161,4.507,1.929,2.117,3.981,2.331,3.424,4.901,4.584,4.122,5.434,1.551,6.191,4.181,3.632,6.489,7.035,6.155,5.778,7.408,7.339,9.597,9.531,9.383,10.622],"scatter":true},{"name":"least-squares line ŷ = 1.61 + 0.80x","x":[0,10],"y":[1.611,9.626]},{"name":"residuals yᵢ − ŷᵢ","x":[0.015,0.015,null,0.856,0.856,null,0.941,0.941,null,1.137,1.137,null,1.597,1.597,null,2.368,2.368,null,2.842,2.842,null,2.927,2.927,null,2.984,2.984,null,3.14,3.14,null,3.912,3.912,null,4.306,4.306,null,4.331,4.331,null,4.791,4.791,null,5.167,5.167,null,5.822,5.822,null,5.868,5.868,null,6.485,6.485,null,6.962,6.962,null,7.346,7.346,null,7.378,7.378,null,8.013,8.013,null,8.917,8.917,null,9.563,9.563,null,9.735,9.735,null],"y":[2.161,1.623,null,4.507,2.298,null,1.929,2.366,null,2.117,2.523,null,3.981,2.892,null,2.331,3.509,null,3.424,3.889,null,4.901,3.957,null,4.584,4.003,null,4.122,4.128,null,5.434,4.747,null,1.551,5.063,null,6.191,5.083,null,4.181,5.451,null,3.632,5.753,null,6.489,6.277,null,7.035,6.314,null,6.155,6.809,null,5.778,7.191,null,7.408,7.499,null,7.339,7.525,null,9.597,8.033,null,9.531,8.758,null,9.383,9.275,null,10.622,9.413,null],"dash":true}],"xLabel":"feature x","yLabel":"target y"} },
       { type: 'code', title: 'Closed-form fit and R²', code: `
 import numpy as np
@@ -1028,8 +1031,8 @@ yᵢ — the true value for example i
 :::
 
 - R² = 1: perfect predictions.
-- R² = 0: no better than always predicting the mean (the baseline!).
-- R² < 0: worse than the mean — possible on test data with a bad model.
+- R² = 0: no better than always predicting the mean (the baseline).
+- R² < 0: worse than the mean (possible on test data with a bad model).
 
 R² on the training set never decreases when you add features, even useless ones, so judge it on validation data.` },
       { type: 'text', title: "Linear models with many features", md: `With one feature, a linear model is a line; with two, a plane; with many, a flat "hyperplane" in a high-dimensional space. Written out for p features:
@@ -1043,7 +1046,7 @@ b — the intercept (bias), stored in \`intercept_\`
 p — the number of features
 :::
 
-A straight line sounds restrictive, and with one or two features it is. With many features, linear models become remarkably powerful: if there are at least as many features as training examples, a linear model can fit **any** training targets perfectly, noise included. That is exactly when it overfits, and why the next lesson, [regularization](#/concept/regularization), exists.
+A straight line sounds restrictive, and with one or two features it is. With many features, linear models become very flexible: if there are at least as many features as training examples, a linear model can fit **any** training targets perfectly, noise included. That is exactly when it overfits, and why the next lesson, [regularization](#/concept/regularization), exists.
 
 :::note The trailing underscore
 In scikit-learn, attributes that are *learned from the data* end with an underscore: \`coef_\`, \`intercept_\`, \`classes_\`, \`feature_importances_\`. Settings you choose yourself, such as \`alpha\`, do not. You can only read the underscore attributes after calling \`fit\`.
@@ -1053,6 +1056,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 
 X, y = make_regression(n_samples=150, n_features=80, n_informative=10, noise=25, random_state=0)
+print(f"X: {X.shape[0]} rows x {X.shape[1]} features (only 10 of them matter). The first 3 rows (first 5 features) and targets:")
+for row, target in zip(X[:3], y[:3]):
+    print("  ", row[:5].round(2).tolist(), "->", round(float(target), 1))
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=70, random_state=0)
 
 ols = LinearRegression().fit(X_train, y_train)
@@ -1078,7 +1084,7 @@ print(f"test R2:     {ols.score(X_test, y_test):.3f}")`, after: `With more featu
 
 For predictions alone, mild violations are often harmless. For **inference** (standard errors, p-values and confidence intervals of the coefficients) they matter a lot, because those calculations assume independent errors with constant variance.` },
       { type: 'chart', title: "Residuals against fitted values", md: `The data follows a curve. Two linear models, one with a straight line and one with an added x² feature:`, after: `The straight-line model's residuals form a U: positive at both ends and negative in the middle, so the errors are predictable from the fitted value and the model is missing structure. With the x² feature the residuals are a shapeless band around 0, which is what a well-specified model leaves behind.`, chart: {"kind":"scatter","series":[{"name":"straight-line model","x":[-0.446,-0.24,-0.226,-0.029,0.024,0.229,0.238,0.363,0.507,0.58,0.664,0.684,0.693,0.739,0.742,0.793,0.794,1.048,1.099,1.186,1.292,1.323,1.457,1.616,1.65,1.655,1.779,1.785,1.857,1.909,1.936,1.941,1.979,2.496,2.497,2.504,2.574,2.589,2.766,2.796,2.85,2.906,2.917,2.968,3.014,3.021,3.047,3.076,3.192,3.301,3.34,3.408,3.698,3.701,3.767,3.885,3.933,3.947,4.158,4.175,4.176,4.194,4.228,4.368,4.45,4.469,4.617,4.662,4.802,4.849,4.858,4.907,4.987,5.232,5.306,5.308,5.472,5.582,5.587,5.621],"y":[4.604,3.334,3.666,1.614,1.993,1.066,2.435,1.611,0.69,0.439,0.817,0.063,-0.095,0.658,1.84,0.113,-0.076,-0.919,-1.103,-0.129,-0.095,-0.644,-0.634,-0.956,-0.979,-1.984,-1.469,-1.134,-1.735,-1.595,-1.823,-1.535,-0.852,-1.848,-1.696,-1.117,-1.229,-0.6,-2.871,-1.099,-1.894,-1.512,-1.087,-0.925,-0.937,-1.465,-0.582,-1.706,-1.564,-0.933,-1.718,-0.039,-0.454,0.243,-1.005,-1.074,-0.681,-0.322,-0.806,-0.199,-0.436,0.573,-0.739,0.527,-0.335,-0.49,-0.046,-0.241,0.867,1.505,1.006,1.397,2.194,2.009,2.168,1.892,1.565,3.318,1.825,3.376]},{"name":"model with an x² term","x":[3.175,2.725,2.696,2.312,2.214,1.868,1.855,1.667,1.47,1.38,1.281,1.259,1.249,1.2,1.197,1.146,1.145,0.928,0.893,0.839,0.784,0.771,0.722,0.69,0.687,0.686,0.685,0.685,0.692,0.7,0.706,0.707,0.716,0.993,0.993,0.999,1.059,1.072,1.249,1.283,1.345,1.413,1.427,1.492,1.552,1.561,1.597,1.638,1.809,1.984,2.048,2.168,2.724,2.73,2.869,3.13,3.241,3.273,3.79,3.833,3.835,3.882,3.971,4.349,4.582,4.635,5.074,5.21,5.654,5.806,5.837,6.001,6.271,7.141,7.417,7.426,8.058,8.497,8.52,8.659],"y":[0.984,0.369,0.744,-0.727,-0.197,-0.573,0.818,0.307,-0.272,-0.362,0.199,-0.512,-0.65,0.197,1.386,-0.241,-0.426,-0.798,-0.897,0.218,0.413,-0.092,0.101,-0.03,-0.017,-1.016,-0.375,-0.033,-0.57,-0.387,-0.592,-0.301,0.411,-0.345,-0.193,0.388,0.286,0.917,-1.354,0.415,-0.389,-0.018,0.404,0.551,0.525,-0.005,0.868,-0.268,-0.182,0.384,-0.426,1.202,0.52,1.214,-0.107,-0.319,0.012,0.352,-0.438,0.143,-0.095,0.885,-0.482,0.546,-0.466,-0.656,-0.503,-0.79,0.015,0.547,0.027,0.304,0.911,0.099,0.056,-0.226,-1.021,0.402,-1.107,0.339]}],"xLabel":"fitted value ŷ","yLabel":"residual y − ŷ"} },
-      { type: 'code', title: 'The same model in scikit-learn', md: `In practice you would use a library. (Running this downloads scikit-learn the first time — it is a big package.)`, code: `
+      { type: 'code', title: 'The same model in scikit-learn', md: `In practice you would use a library. (Running this downloads scikit-learn the first time: it is a big package.)`, code: `
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
@@ -1096,15 +1102,15 @@ print("R^2:", round(r2_score(y, model.predict(X)), 4))
     when: `- **Use it** as the first model and baseline for any regression task; when the relationship is roughly additive; when you need interpretable effects or very fast predictions.
 - **Extend it** with feature engineering (logs, interactions, polynomial terms) and regularization (ridge/lasso) before reaching for complex models.
 - **Avoid it** when the relationship is strongly non-linear with interactions you can't engineer, or when outliers dominate (use a robust loss).`,
-    pitfalls: `- Interpreting weights when features are highly correlated (multicollinearity) — individual weights become unstable.
+    pitfalls: `- Interpreting weights when features are highly correlated (multicollinearity): individual weights become unstable.
 - Comparing weight magnitudes across unscaled features.
-- Extrapolating far outside the training range — a line keeps going forever.
+- Extrapolating far outside the training range: a line keeps going forever.
 - Reading high training R² as proof of a good model.
 - Computing matrix inverses explicitly instead of using \`lstsq\` or \`solve\`.`,
     takeaways: [
       'Linear regression predicts ŷ = Xw + b and minimises the mean squared error.',
       'Closed form: least squares via np.linalg.lstsq on [1, X].',
-      'Gradient: ∂L/∂w = (2/n)·Xᵀ(ŷ − y) — the "features × errors" pattern reused everywhere.',
+      'Gradient: ∂L/∂w = (2/n)·Xᵀ(ŷ − y) (the "features × errors" pattern reused everywhere).',
       'R² = 1 − SS_res / SS_tot measures fit relative to the mean baseline.',
       'Every dense layer of a neural network is a linear model followed by a non-linearity.'
     ],
@@ -1112,7 +1118,7 @@ print("R^2:", round(r2_score(y, model.predict(X)), 4))
       { type: 'mcq', q: 'A model predicts salary = 2000·years_experience + 30000. What does 2000 mean?', options: ['The average salary', 'Each extra year of experience adds 2000 to the predicted salary', 'The model\'s error', 'The starting salary'], answer: 1, explain: 'A weight is the change in prediction per unit change of its feature (others held fixed).' },
       { type: 'mcq', q: 'Why add a column of ones to X before solving least squares?', options: ['To avoid division by zero', 'So the bias b is learned as an ordinary weight', 'To scale the features', 'It is required by NumPy'], answer: 1, explain: 'The ones column multiplies the extra weight, which then plays the role of b.' },
       { type: 'fill', q: 'Residual sum of squares is 20 and total sum of squares is 80. What is R²?', answer: ['0.75', '.75', '3/4'], explain: '1 − 20/80 = 0.75.' },
-      { type: 'tf', q: 'You should compute (XᵀX)⁻¹ explicitly with np.linalg.inv in production code.', answer: false, explain: 'Use lstsq or solve — they are faster and numerically far more stable.' },
+      { type: 'tf', q: 'You should compute (XᵀX)⁻¹ explicitly with np.linalg.inv in production code.', answer: false, explain: 'Use lstsq or solve: they are faster and numerically far more stable.' },
       { type: 'mcq', q: 'When does gradient descent beat the closed-form solution for linear regression?', options: ['Never', 'With huge numbers of examples or features, or streaming data', 'Only with one feature', 'When R² is low'], answer: 1, explain: 'The closed form costs O(n·d²) and needs all data at once; SGD scales to massive or streaming data.' },
       {"type":"mcq","q":"A linear regression has 200 features and is trained on 150 examples. What is most likely to happen?","options":["It underfits because a linear model is too simple","It fits the training data (almost) perfectly and generalizes worse","It ignores half of the features automatically","It cannot be trained at all"],"answer":1,"explain":"With at least as many features as examples, least squares can match every training target, noise included, which is classic overfitting. Regularization (ridge or lasso) is the usual remedy."},
       {"type":"mcq","q":"The residual plot of a linear regression shows a clear U shape. What does it suggest?","options":["The model is perfect","The relationship is curved: add a feature such as x², or use a non-linear model","The noise variance is constant","There are too many features"],"answer":1,"explain":"Systematic structure in the residuals means the model is missing a pattern; a U shape is the signature of an unmodelled curve."},
@@ -1121,7 +1127,7 @@ print("R^2:", round(r2_score(y, model.predict(X)), 4))
     problems: [
       {
         id: 'normal-equation', title: 'Closed-Form Linear Regression', difficulty: 'easy',
-        prompt: `Implement \`fit_closed_form(X, y)\` returning \`(w, b)\` — the least-squares weights (a 1-D array of length d) and bias (a float).
+        prompt: `Implement \`fit_closed_form(X, y)\` returning \`(w, b)\`: the least-squares weights (a 1-D array of length d) and bias (a float).
 
 Steps:
 1. Build \`X_tilde\` by adding a column of ones in front of X: \`np.column_stack([np.ones(n), X])\`.
@@ -1172,7 +1178,7 @@ def fit_closed_form(X, y):
   - update **both** using the gradients computed from the same e: \`w -= lr * grad_w\`, \`b -= lr * grad_b\`.
 - Return \`w\` (array) and \`b\` (float).
 
-Follow this exactly — the tests compare against the same procedure, and also check that with enough epochs you reach the closed-form solution.`,
+Follow this exactly: the tests compare against the same procedure, and also check that with enough epochs you reach the closed-form solution.`,
         starter: `
 import numpy as np
 
@@ -1203,7 +1209,7 @@ def train_linear_gd(X, y, lr=0.1, epochs=100):
     return w, float(b)
 `,
         hints: ['Compute the error vector once per epoch: `e = X @ w + b - y`.', 'Compute both gradients **before** updating either parameter.', 'Return `float(b)` so the bias is a plain number.'],
-        explain: `Each epoch computes all predictions, the error vector, and the two gradients, then steps downhill. Updating w before computing grad_b from a *new* error would subtly change the algorithm — always compute every gradient from the same forward pass, as deep-learning frameworks do.`,
+        explain: `Each epoch computes all predictions, the error vector, and the two gradients, then steps downhill. Updating w before computing grad_b from a *new* error would subtly change the algorithm: always compute every gradient from the same forward pass, as deep-learning frameworks do.`,
         tests: [
           { name: 'three epochs, exact trajectory', call: 'train_linear_gd([[0.0], [1.0], [2.0]], [1.0, 3.0, 5.0], lr=0.1, epochs=3)' },
           { name: 'converges on y = 2x + 1', call: 'train_linear_gd([[0.0], [1.0], [2.0]], [1.0, 3.0, 5.0], lr=0.1, epochs=2000)', expect: '(np.array([2.0]), 1.0)', tol: 1e-4 },
@@ -1250,7 +1256,7 @@ def r2_score(y, y_hat):
     return float(1 - ss_res / ss_tot)
 `,
         hints: ['SS_tot is the squared error of the mean baseline.', 'Handle the constant-target case before dividing.'],
-        explain: `R² rescales the model's squared error by the baseline's. It is 0 for the "predict the mean" baseline and negative for anything worse — a handy sanity check on test data.`,
+        explain: `R² rescales the model's squared error by the baseline's. It is 0 for the "predict the mean" baseline and negative for anything worse: a handy sanity check on test data.`,
         tests: [
           { call: 'r2_score([1, 2, 3], [1, 2, 3])', expect: '1.0' },
           { call: 'r2_score([1, 2, 3], [2, 2, 2])', expect: '0.0' },
@@ -1261,9 +1267,9 @@ def r2_score(y, y_hat):
       }
     ],
     refs: [
-      { title: 'Google ML Crash Course — Linear regression', url: 'https://developers.google.com/machine-learning/crash-course/linear-regression' },
-      { title: "scikit-learn — Linear models", url: "https://scikit-learn.org/stable/modules/linear_model.html" },
-      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
+      { title: 'Google ML Crash Course, Linear regression', url: 'https://developers.google.com/machine-learning/crash-course/linear-regression' },
+      { title: "scikit-learn, Linear models", url: "https://scikit-learn.org/stable/modules/linear_model.html" },
+      { title: "Andreas Müller & Sarah Guido, Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 
@@ -1271,7 +1277,7 @@ def r2_score(y, y_hat):
   {
     id: 'logistic-regression', branch: 'ml', title: 'Logistic Regression & Classification', short: 'Logistic Regression', level: 1, minutes: 45, prereqs: ['linear-regression'],
     tags: ['classification', 'sigmoid', 'log loss', 'probability', 'decision boundary', 'softmax'],
-    summary: 'Turn a linear score into a probability with the sigmoid, train it with log loss, and get the most widely used classifier — and the building block of neural networks.',
+    summary: 'Turn a linear score into a probability with the sigmoid, train it with log loss, and get the most widely used classifier, and the building block of neural networks.',
     why: `Logistic regression is the workhorse classifier of industry: credit scoring, medicine, ad click prediction and countless baselines. It outputs **probabilities**, trains quickly, and its weights are interpretable. It is also, quite literally, a single artificial neuron: a weighted sum followed by a sigmoid. Once you understand it, a neural network is "many logistic regressions stacked and trained together", and the softmax output layer of an LLM is its multi-class generalisation.`,
     objectives: [
       'Map a linear score to a probability with the sigmoid function',
@@ -1300,7 +1306,7 @@ e — Euler's number ≈ 2.718; e^(−z) is tiny for large z and huge for very n
 
 So logistic regression predicts **p = σ(w·x + b)** = the probability that y = 1.
 
-**Log-odds view.** Inverting the sigmoid, z = log(p / (1 − p)) — the *log-odds*. A weight wⱼ means: increasing xⱼ by 1 adds wⱼ to the log-odds, i.e. multiplies the odds by e^(wⱼ). That's how doctors read logistic models: "smoking multiplies the odds of the disease by 2.3".` },
+**Log-odds view.** Inverting the sigmoid, z = log(p / (1 − p)): the *log-odds*. A weight wⱼ means: increasing xⱼ by 1 adds wⱼ to the log-odds, i.e. multiplies the odds by e^(wⱼ). That's how doctors read logistic models: "smoking multiplies the odds of the disease by 2.3".` },
       { type: 'text', title: 'Decision boundary and threshold', md: `To make a decision, compare p with a **threshold**, usually 0.5. Since σ(z) ≥ 0.5 exactly when z ≥ 0, the decision boundary is
 
 $$ w · x + b = 0 $$
@@ -1312,10 +1318,10 @@ w · x + b — the score z; the boundary is where z = 0, which is where σ(z) = 
 Points with a positive score are classified positive, the rest negative.
 :::
 
-— a straight line (hyperplane): logistic regression is a **linear classifier**.
+This boundary is a straight line (a hyperplane in more dimensions), so logistic regression is a **linear classifier**.
 
 The threshold is a business decision, not part of training. A cancer screen might flag anything above p = 0.1 (missing a case is costly); a spam filter might require p > 0.99 before deleting mail (a false positive is costly). See *Evaluation Metrics* for choosing it.` },
-      { type: 'text', title: 'Training with log loss', md: `Why not MSE? With a sigmoid, the MSE becomes non-convex and its gradients vanish when the model is confidently wrong — learning stalls exactly when it should be fastest. Instead we use **log loss** (binary cross-entropy), which comes from maximising the likelihood of the labels:
+      { type: 'text', title: 'Training with log loss', md: `Why not MSE? With a sigmoid, the MSE becomes non-convex and its gradients vanish when the model is confidently wrong: learning stalls exactly when it should be fastest. Instead we use **log loss** (binary cross-entropy), which comes from maximising the likelihood of the labels:
 
 $$ L = −(1/n) Σ [ yᵢ log pᵢ + (1 − yᵢ) log(1 − pᵢ) ] $$
 :::where
@@ -1326,7 +1332,7 @@ n — the number of examples
 L — the average binary cross-entropy (log loss)
 :::
 
-Its gradient is astonishingly simple — the sigmoid's derivative cancels out:
+Its gradient is astonishingly simple, the sigmoid's derivative cancels out:
 
 $$ ∂L/∂w = (1/n) Xᵀ (p − y)          ∂L/∂b = (1/n) Σ (pᵢ − yᵢ) $$
 :::where
@@ -1365,6 +1371,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 
 X, y = load_breast_cancer(return_X_y=True)
+print(f"X: {X.shape[0]} tumours x {X.shape[1]} measurements. The first 3 rows (first 5 columns) and labels (0 = malignant, 1 = benign):")
+for row, label in zip(X[:3], y[:3]):
+    print("  ", row[:5].round(2).tolist(), "->", label)
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
 scaler = StandardScaler().fit(X_train)
 X_train, X_test = scaler.transform(X_train), scaler.transform(X_test)
@@ -1410,11 +1419,11 @@ for step in range(301):
 print("weights:", w.round(3), " bias:", round(b, 3))
 print("P(class 1) at the point (0, 0):", round(float(sigmoid(np.array([0.0, 0.0]) @ w + b)), 3))
 ` },
-      { type: 'check', question: { type: 'mcq', q: 'In logistic regression, what is the predicted probability when w·x + b = 0?', options: ['0', '0.5', '1', 'It depends on the learning rate'], answer: 1, explain: 'σ(0) = 1 / (1 + e⁰) = 0.5 — points on the decision boundary are maximally uncertain.' } },
+      { type: 'check', question: { type: 'mcq', q: 'In logistic regression, what is the predicted probability when w·x + b = 0?', options: ['0', '0.5', '1', 'It depends on the learning rate'], answer: 1, explain: 'σ(0) = 1 / (1 + e⁰) = 0.5: points on the decision boundary are maximally uncertain.' } },
       { type: 'text', title: 'Numerical stability', md: `For a large negative z, \`np.exp(-z)\` overflows: e^1000 is too big for a float. The usual trick evaluates the sigmoid differently on each side of zero:
 
-- for z ≥ 0: σ(z) = 1 / (1 + e^(−z)) — safe, e^(−z) ≤ 1;
-- for z < 0: σ(z) = e^z / (1 + e^z) — safe, e^z < 1.
+- for z ≥ 0: σ(z) = 1 / (1 + e^(−z)), safe, e^(−z) ≤ 1;
+- for z < 0: σ(z) = e^z / (1 + e^z) (safe, e^z < 1).
 
 Both formulas are mathematically identical; each is used where it cannot overflow. Libraries also compute log loss directly from z ("from logits") to avoid log(0). You will implement the stable sigmoid in the practice problems.` },
       { type: 'text', title: 'More than two classes: softmax', md: `For K classes, compute one score per class, z_k = w_k·x + b_k, and turn the scores into a probability distribution with **softmax**:
@@ -1428,24 +1437,24 @@ e^(z_k) — exponentiating makes every score positive and exaggerates the differ
 p_k — the predicted probability of class k
 :::
 
-All p_k are positive and sum to 1; the largest score gets the largest probability. The loss is the categorical cross-entropy, −log p_(true class), and the gradient keeps the same friendly form, (p − one_hot(y))·x. This is **multinomial logistic regression** — and it is precisely the output layer of every neural classifier and every LLM (with K = vocabulary size).` },
+All p_k are positive and sum to 1; the largest score gets the largest probability. The loss is the categorical cross-entropy, −log p_(true class), and the gradient keeps the same friendly form, (p − one_hot(y))·x. This is **multinomial logistic regression**, and it is precisely the output layer of every neural classifier and every LLM (with K = vocabulary size).` },
       { type: 'check', question: { type: 'tf', q: 'Logistic regression can only produce straight-line (linear) decision boundaries in the original feature space.', answer: true, explain: 'The boundary is w·x + b = 0. Curved boundaries need engineered features (x², x₁x₂…) or a non-linear model.' } }
     ],
     when: `- **First choice** for binary classification on tabular data, and the baseline for any classifier.
 - When you need **probabilities**, interpretability (odds ratios) or very fast inference.
 - With many sparse features (text bag-of-words, one-hot categories) it is hard to beat.
-- **Move on** when the boundary is clearly non-linear and feature engineering doesn't fix it — try trees/boosting or neural networks.`,
+- **Move on** when the boundary is clearly non-linear and feature engineering doesn't fix it: try trees/boosting or neural networks.`,
     pitfalls: `- Unscaled features slow training and make regularization uneven.
-- Perfectly separable data makes weights grow without bound — use regularization (scikit-learn does by default).
+- Perfectly separable data makes weights grow without bound: use regularization (scikit-learn does by default).
 - Assuming 0.5 is the right threshold for every application.
-- Naively computing \`log(sigmoid(z))\` — use stable formulas.
+- Naively computing \`log(sigmoid(z))\`: use stable formulas.
 - Reading weights as importances without scaling the features.`,
     takeaways: [
       'p = σ(w·x + b): a linear score squashed into a probability.',
       'The decision boundary w·x + b = 0 is linear; the threshold is chosen per application.',
       'Train with log loss (convex); the gradient is Xᵀ(p − y)/n.',
       'Weights act on the log-odds: e^w is an odds ratio.',
-      'Softmax + cross-entropy generalise it to K classes — the output layer of neural nets and LLMs.'
+      'Softmax + cross-entropy generalise it to K classes: the output layer of neural nets and LLMs.'
     ],
     quiz: [
       { type: 'mcq', q: 'What does the sigmoid function do?', options: ['Sorts the inputs', 'Maps any real number to a value between 0 and 1', 'Computes the gradient', 'Normalizes features'], answer: 1, explain: 'σ(z) = 1 / (1 + e^−z) ∈ (0, 1), usable as a probability.' },
@@ -1492,8 +1501,8 @@ def sigmoid(z):
     out[~pos] = ez / (1.0 + ez)
     return out
 `,
-        hints: ['Boolean masks: `out[pos] = ...` only touches the elements where pos is True.', 'For the negative part compute `ez = np.exp(z[~pos])` — every value there is negative, so ez < 1.'],
-        explain: `Each branch only ever exponentiates a non-positive number, so \`np.exp\` stays between 0 and 1 and can't overflow. \`np.where\` would *also* give the right values but evaluates both formulas on every element — which overflows (and raises under \`np.errstate(over="raise")\`), so masks are the clean solution.`,
+        hints: ['Boolean masks: `out[pos] = ...` only touches the elements where pos is True.', 'For the negative part compute `ez = np.exp(z[~pos])`, every value there is negative, so ez < 1.'],
+        explain: `Each branch only ever exponentiates a non-positive number, so \`np.exp\` stays between 0 and 1 and can't overflow. \`np.where\` would *also* give the right values but evaluates both formulas on every element, which overflows (and raises under \`np.errstate(over="raise")\`), so masks are the clean solution.`,
         tests: [
           { call: 'sigmoid(np.array([-1000.0, 0.0, 1000.0]))', expect: 'np.array([0.0, 0.5, 1.0])' },
           { call: 'sigmoid(np.array([-2.0, 2.0]))', expect: '1 / (1 + np.exp(np.array([2.0, -2.0])))' },
@@ -1554,7 +1563,7 @@ def predict(X, w, b, threshold=0.5):
     return (p >= threshold).astype(int)
 `,
         hints: ['Compute `p` once per epoch, then both gradients from it.', '`(p >= threshold).astype(int)` converts booleans to 0/1.'],
-        explain: `The loop is linear regression's loop with one change — predictions pass through the sigmoid — and the gradient keeps the same Xᵀ(prediction − target) form. Because the loss is convex, longer training only gets closer to the unique optimum (unless the data is perfectly separable, where the weights keep growing).`,
+        explain: `The loop is linear regression's loop with one change (predictions pass through the sigmoid) and the gradient keeps the same Xᵀ(prediction − target) form. Because the loss is convex, longer training only gets closer to the unique optimum (unless the data is perfectly separable, where the weights keep growing).`,
         tests: [
           { name: 'exact trajectory (5 epochs)', call: 'train_logistic([[0.0, 1.0], [1.0, 0.0], [2.0, 2.0], [3.0, 1.0]], [0, 0, 1, 1], lr=0.5, epochs=5)' },
           { name: 'predict uses the threshold', call: 'predict(np.array([[-2.0], [0.0], [2.0]]), np.array([1.0]), 0.0)', expect: 'np.array([0, 1, 1])' },
@@ -1565,9 +1574,9 @@ def predict(X, w, b, threshold=0.5):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Logistic regression', url: 'https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression' },
-      { title: "Stanford CS229 — Machine Learning lecture notes", url: "https://cs229.stanford.edu/main_notes.pdf" },
-      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
+      { title: 'scikit-learn, Logistic regression', url: 'https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression' },
+      { title: "Stanford CS229, Machine Learning lecture notes", url: "https://cs229.stanford.edu/main_notes.pdf" },
+      { title: "Andreas Müller & Sarah Guido, Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 
@@ -1575,8 +1584,8 @@ def predict(X, w, b, threshold=0.5):
   {
     id: 'overfitting', branch: 'ml', title: 'Overfitting, Underfitting & the Bias–Variance Trade-off', short: 'Overfitting & Bias–Variance', level: 1, minutes: 40, prereqs: ['linear-regression'],
     tags: ['overfitting', 'underfitting', 'bias', 'variance', 'generalization', 'capacity'],
-    summary: 'The central tension of machine learning: models too simple to capture the pattern, or so flexible they memorise the noise — and how to find the sweet spot.',
-    why: `Every model you will ever train faces this tension. Too little flexibility and the model misses real structure (**underfitting**); too much and it memorises noise in the training data and fails on new data (**overfitting**). Recognising which situation you are in — from training and validation curves — tells you what to do next: add capacity, add data, regularize, or stop training earlier. Getting this right matters more than choosing between fashionable algorithms.`,
+    summary: 'The central tension of machine learning: models too simple to capture the pattern, or so flexible they memorise the noise, and how to find the sweet spot.',
+    why: `Every model you will ever train faces this tension. Too little flexibility and the model misses real structure (**underfitting**); too much and it memorises noise in the training data and fails on new data (**overfitting**). Recognising which situation you are in (from training and validation curves) tells you what to do next: add capacity, add data, regularize, or stop training earlier. Getting this right matters more than choosing between fashionable algorithms.`,
     objectives: [
       'Define training error, validation error and the generalization gap',
       'Diagnose underfitting and overfitting from train/validation errors and learning curves',
@@ -1586,22 +1595,22 @@ def predict(X, w, b, threshold=0.5):
     sections: [
       { type: 'text', title: 'Two errors, one gap', md: `Every model has two errors that matter:
 
-- **Training error** — how wrong it is on the data it learned from.
-- **Validation (or test) error** — how wrong it is on data it has never seen.
+- **Training error**: how wrong it is on the data it learned from.
+- **Validation (or test) error**: how wrong it is on data it has never seen.
 
 The difference is the **generalization gap**. Training error is almost always lower, because the model was tuned to that data. What matters is the validation error.
 
 | Training error | Validation error | Diagnosis |
 | --- | --- | --- |
-| high | high (similar) | **underfitting** — the model is too simple |
-| low | much higher | **overfitting** — the model memorised noise |
+| high | high (similar) | **underfitting**: the model is too simple |
+| low | much higher | **overfitting**: the model memorised noise |
 | low | low (similar) | a good fit |` },
       { type: 'demo', title: 'Interactive: polynomial degree vs. train and test error', md: `Fit polynomials of increasing degree to 12 noisy points from a sine curve. Watch the training error keep falling while the test error forms a U.`, demo: 'overfit-poly' },
       { type: 'chart', title: "Training and test error against model complexity", md: `Forty noisy points from a sine wave, fitted with polynomials of increasing degree. This is the most important picture in machine learning:`, after: `Training error only ever goes down as the model gets more flexible. Test error falls while the model is still underfitting (low degrees cannot bend like a sine), bottoms out at the sweet spot, then climbs as the polynomial starts fitting the noise. The dashed line is the noise level (σ² = 0.0625): no model can do better on new data.`, chart: {"kind":"line","x":[0,1,2,3,4,5,6,7,8,9,10,11,12],"yLog":true,"series":[{"name":"training error","y":[0.4403,0.1492,0.1488,0.0291,0.0291,0.0241,0.0236,0.0235,0.0234,0.0235,0.0235,0.0235,0.0235]},{"name":"test error","y":[0.5684,0.2702,0.2694,0.0843,0.0841,0.0809,0.0824,0.0824,0.0825,0.0824,0.0824,0.0825,0.0824]}],"xLabel":"polynomial degree (model complexity)","yLabel":"mean squared error (log scale)","hlines":[{"y":0.0625,"label":"noise level"}],"vlines":[{"x":5,"label":"sweet spot"}]} },
       { type: 'text', title: 'Bias and variance', md: `Imagine training the same model type on many different training sets drawn from the same source, and look at the predictions for one fixed input:
 
-- **Bias** — how far the *average* prediction is from the truth. High when the model family can't represent the true pattern (a line for a sine curve).
-- **Variance** — how much the predictions *jump around* between training sets. High when the model is so flexible that it follows each sample's noise.
+- **Bias**: how far the *average* prediction is from the truth. High when the model family can't represent the true pattern (a line for a sine curve).
+- **Variance**: how much the predictions *jump around* between training sets. High when the model is so flexible that it follows each sample's noise.
 
 For squared error there is an exact decomposition:
 
@@ -1613,10 +1622,10 @@ variance — how much the predictions change when the model is trained on a diff
 irreducible noise — randomness in the targets themselves that no model can predict
 :::
 
-Simple models: high bias, low variance. Flexible models: low bias, high variance. The best model balances the two for the amount of data you have — more data lets you afford more flexibility, because it reduces variance.
+Simple models: high bias, low variance. Flexible models: low bias, high variance. The best model balances the two for the amount of data you have: more data lets you afford more flexibility, because it reduces variance.
 
 :::analogy Darts
-High bias: every dart lands in a tight cluster — but off-centre. High variance: darts are centred on average but scattered all over the board. You want a tight cluster on the bullseye.
+High bias: every dart lands in a tight cluster, but off-centre. High variance: darts are centred on average but scattered all over the board. You want a tight cluster on the bullseye.
 :::` },
       { type: 'demo', title: 'Interactive: bias and variance across many training sets', demo: 'bias-variance' },
       { type: 'code', title: 'Train vs validation error as complexity grows', code: `
@@ -1633,15 +1642,15 @@ for degree in [0, 1, 3, 5, 8, 11]:
     val_mse = np.mean((np.polyval(coefs, x_val) - y_val) ** 2)
     print(f"degree {degree:2d}:  train MSE {train_mse:8.4f}   validation MSE {val_mse:12.4f}")
 ` },
-      { type: 'check', question: { type: 'mcq', q: 'Training accuracy 99%, validation accuracy 71%. What is happening, and what helps?', options: ['Underfitting — use a bigger model', 'Overfitting — get more data, regularize, simplify or stop earlier', 'The learning rate is too small', 'Nothing is wrong'], answer: 1, explain: 'A large gap between training and validation performance is the signature of overfitting.' } },
+      { type: 'check', question: { type: 'mcq', q: 'Training accuracy 99%, validation accuracy 71%. What is happening, and what helps?', options: ['Underfitting: use a bigger model', 'Overfitting: get more data, regularize, simplify or stop earlier', 'The learning rate is too small', 'Nothing is wrong'], answer: 1, explain: 'A large gap between training and validation performance is the signature of overfitting.' } },
       { type: 'text', title: 'Learning curves', md: `Plot training and validation error against the **number of training examples** (or against training epochs):
 
 - **Underfitting**: both curves plateau close together at a high error. More data won't help; more capacity or better features will.
 - **Overfitting**: a big gap that narrows slowly as data grows. More data helps; so do regularization and simpler models.
-- **Over training epochs**: validation loss falls, then starts rising while training loss keeps falling — the moment to stop (**early stopping**).
+- **Over training epochs**: validation loss falls, then starts rising while training loss keeps falling, the moment to stop (**early stopping**).
 
 :::real Deep learning's twist
-Very large neural networks can fit random labels perfectly, yet generalize well on real data — and sometimes test error falls again as models grow past the point of interpolating the training data ("double descent"). Regularization, data augmentation, the implicit bias of SGD and huge datasets all play a role. The classical U-curve is still the right instinct for most problems you will meet.
+Very large neural networks can fit random labels perfectly, yet generalize well on real data, and sometimes test error falls again as models grow past the point of interpolating the training data ("double descent"). Regularization, data augmentation, the implicit bias of SGD and huge datasets all play a role. The classical U-curve is still the right instinct for most problems you will meet.
 :::` },
       { type: 'chart', title: "Learning curves for a simple and a flexible model", after: `Dashed lines are training error, solid lines test error. The **simple** model (a straight line) converges quickly to a high error: more data cannot fix high bias. The **flexible** model is terrible with little data (high variance) but keeps improving as data grows, until it beats the simple model by a wide margin. That is the practical meaning of "more data lets you afford more complex models".`, chart: {"kind":"line","x":[10,15,20,30,45,70,100,150,250,400],"xLog":true,"yLog":true,"yMax":2,"series":[{"name":"simple (degree 1) train","y":[0.2745,0.3575,0.3206,0.2778,0.275,0.2779,0.269,0.2977,0.281,0.2808],"dash":true},{"name":"simple (degree 1) test","y":[0.3049,0.2699,0.2876,0.2784,0.2994,0.2827,0.2842,0.277,0.2734,0.2698],"dash":false},{"name":"flexible (degree 9) train","y":[0.0158,0.0193,0.0392,0.0454,0.0567,0.0604,0.0674,0.0756,0.0742,0.0702],"dash":true},{"name":"flexible (degree 9) test","y":[0.4817,0.139,0.0931,0.0971,0.0843,0.0781,0.078,0.0756,0.0733,0.0732],"dash":false}],"xLabel":"number of training examples (log scale)","yLabel":"mean squared error (log scale)"} },
       { type: 'text', title: 'Remedies', md: `| If you are… | Try |
@@ -1650,21 +1659,21 @@ Very large neural networks can fit random labels perfectly, yet generalize well 
 | **Overfitting** | more training data; data augmentation; regularization (L1/L2, dropout); a simpler model; fewer features; early stopping; ensembles |
 
 And always: diagnose with a **validation set** (or cross-validation), never with the training set.` },
-      { type: 'check', question: { type: 'tf', q: 'Adding more training data is a good remedy for high bias (underfitting).', answer: false, explain: 'More data reduces variance. If the model family is too simple, more data won\'t fix it — increase capacity or improve features.' } }
+      { type: 'check', question: { type: 'tf', q: 'Adding more training data is a good remedy for high bias (underfitting).', answer: false, explain: 'More data reduces variance. If the model family is too simple, more data won\'t fix it: increase capacity or improve features.' } }
     ],
     when: `- Check for under/overfitting **every time** you train: compare training and validation metrics.
 - Use **learning curves** to decide whether to collect more data (helps overfitting) or change the model (needed for underfitting).
 - Use **early stopping** by default for iterative training.`,
     pitfalls: `- Judging a model by training error alone.
 - Tuning hyperparameters on the test set (it becomes overfit too).
-- Assuming a bigger model is always better — or always worse.
+- Assuming a bigger model is always better, or always worse.
 - Confusing a bad learning rate (training loss not decreasing) with underfitting.`,
     takeaways: [
       'Overfitting = low training error, high validation error; underfitting = both high.',
       'Error = bias² + variance + noise: flexibility trades bias for variance.',
       'More data reduces variance; more capacity or features reduce bias.',
       'Learning curves and train/validation gaps tell you what to fix.',
-      'Validation data — not training data — is the judge.'
+      'Validation data (not training data) is the judge.'
     ],
     quiz: [
       { type: 'mcq', q: 'A degree-15 polynomial fits 16 training points perfectly. On new data it is wildly off. This is…', options: ['high bias', 'high variance (overfitting)', 'irreducible noise', 'underfitting'], answer: 1, explain: 'It memorised the training noise; tiny changes in the data would change it drastically.' },
@@ -1703,7 +1712,7 @@ def poly_features(x, degree):
     return np.column_stack([x ** k for k in range(1, degree + 1)])
 `,
         hints: ['`range(1, degree + 1)` gives the powers 1..degree.', '`np.column_stack([...])` stacks 1-D arrays as columns.'],
-        explain: `With these columns, "linear regression" fits ŷ = w₁x + w₂x² + … + b — a curve in x, but still linear in the weights, so the same solvers work. The catch: high degrees make it easy to overfit, and the columns have wildly different scales (x¹⁰ vs x), so standardize them before gradient descent.`,
+        explain: `With these columns, "linear regression" fits ŷ = w₁x + w₂x² + … + b: a curve in x, but still linear in the weights, so the same solvers work. The catch: high degrees make it easy to overfit, and the columns have wildly different scales (x¹⁰ vs x), so standardize them before gradient descent.`,
         tests: [
           { call: 'poly_features(np.array([1.0, 2.0, 3.0]), 3)', expect: 'np.array([[1.0, 1.0, 1.0], [2.0, 4.0, 8.0], [3.0, 9.0, 27.0]])' },
           { call: 'poly_features(np.array([-1.0, 0.5]), 2)', expect: 'np.array([[-1.0, 1.0], [0.5, 0.25]])' },
@@ -1722,7 +1731,7 @@ For each degree d = 1, 2, …, max_degree:
 
 Return the degree (an int) with the lowest validation MSE; on ties return the smaller degree.
 
-The hidden tests use data from a cubic curve plus noise — the best degree should not be the largest one!`,
+The hidden tests use data from a cubic curve plus noise: the best degree should not be the largest one.`,
         starter: `
 import numpy as np
 
@@ -1762,8 +1771,8 @@ def choose_degree(x_train, y_train, x_val, y_val, max_degree):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Underfitting vs. overfitting example', url: 'https://scikit-learn.org/stable/auto_examples/model_selection/plot_underfitting_overfitting.html' },
-      { title: "Hastie, Tibshirani & Friedman — The Elements of Statistical Learning (free book)", url: "https://hastie.su.domains/ElemStatLearn/" }
+      { title: 'scikit-learn, Underfitting vs. overfitting example', url: 'https://scikit-learn.org/stable/auto_examples/model_selection/plot_underfitting_overfitting.html' },
+      { title: "Hastie, Tibshirani & Friedman, The Elements of Statistical Learning (free book)", url: "https://hastie.su.domains/ElemStatLearn/" }
     ]
   },
 
@@ -1772,7 +1781,7 @@ def choose_degree(x_train, y_train, x_val, y_val, max_degree):
     id: 'regularization', branch: 'ml', title: 'Regularization: L1, L2 & Early Stopping', short: 'Regularization', level: 2, minutes: 40, prereqs: ['overfitting'],
     tags: ['ridge', 'lasso', 'l1', 'l2', 'weight decay', 'early stopping', 'sparsity'],
     summary: 'Fighting overfitting by preferring simpler models: L2 (ridge) shrinks weights, L1 (lasso) zeroes them out, and early stopping halts training at the right time.',
-    why: `Collecting more data is the best cure for overfitting, but it is often expensive or impossible. **Regularization** is the next best thing: it adds a preference for simpler models directly into training. L2 regularization (called *weight decay* in deep learning) is used when training virtually every neural network including LLMs; L1 performs automatic feature selection; early stopping is the cheapest regularizer of all. Knowing how they work — and how strength λ trades bias for variance — is essential for getting models that generalize.`,
+    why: `Collecting more data is the best cure for overfitting, but it is often expensive or impossible. **Regularization** is the next best thing: it adds a preference for simpler models directly into training. L2 regularization (called *weight decay* in deep learning) is used when training virtually every neural network including LLMs; L1 performs automatic feature selection; early stopping is the cheapest regularizer of all. Knowing how they work (and how strength λ trades bias for variance) is essential for getting models that generalize.`,
     objectives: [
       'Write the L2 (ridge) and L1 (lasso) regularized objectives',
       'Compute ridge regression in closed form, leaving the bias unpenalized',
@@ -1812,7 +1821,7 @@ I — the identity matrix (d × d): ones on the diagonal, zeros everywhere else
 (…)⁻¹ — the matrix inverse
 :::
 
-Adding λI also makes the matrix invertible even when features are redundant — a numerical bonus.
+Adding λI also makes the matrix invertible even when features are redundant: a numerical bonus.
 
 In gradient descent the penalty adds 2λw to the gradient, so every step also multiplies the weights by (1 − 2ηλ): they **decay** a little each step. That's why deep-learning libraries call it **weight decay** (AdamW applies it in a slightly different, decoupled way).` },
       { type: 'code', title: 'Ridge shrinks the weights of an overfit polynomial', code: `
@@ -1838,7 +1847,7 @@ for lam in [0.0, 1e-4, 1e-2, 1.0, 100.0]:
 ‖w‖₁ — the L1 norm: the sum of the absolute values of all the weights
 :::
 
-L1 pushes many weights to **exactly zero**, performing **feature selection** automatically — great when you suspect only a few of many features matter, and for interpretability.
+L1 pushes many weights to **exactly zero**, performing **feature selection** automatically: great when you suspect only a few of many features matter, and for interpretability.
 
 Why the difference? The L1 penalty's slope stays constant (±λ) all the way down to zero, so a weight that is only weakly useful is pushed all the way to 0. The L2 penalty's slope (2λw) fades as the weight shrinks, so weights get small but never quite zero. Geometrically, the L1 constraint region is a diamond with corners on the axes, and the optimum tends to land on a corner (some weights 0); the L2 region is a circle with no corners.
 
@@ -1849,6 +1858,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 
 X, y = make_regression(n_samples=150, n_features=80, n_informative=10, noise=25, random_state=0)
+print(f"X: {X.shape[0]} rows x {X.shape[1]} features (only 10 of them matter). The first 3 rows (first 5 features) and targets:")
+for row, target in zip(X[:3], y[:3]):
+    print("  ", row[:5].round(2).tolist(), "->", round(float(target), 1))
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=70, random_state=0)
 
 ols = LinearRegression().fit(X_train, y_train)
@@ -1894,7 +1906,7 @@ for n in [40, 80, 160, 320, 640]:
 Penalties treat all weights alike, so a feature measured in large units (salary in euros) needs only a tiny weight and is hardly penalized, while one measured in small units is penalized heavily. Standardize the features first, inside a [pipeline](#/concept/sklearn-workflow).
 :::` },
       { type: 'check', question: { type: 'mcq', q: 'You have 500 features and suspect only about 20 matter. Which regularizer helps identify them?', options: ['L2 (ridge)', 'L1 (lasso)', 'No regularization', 'A larger learning rate'], answer: 1, explain: 'L1 drives the weights of unhelpful features to exactly zero.' } },
-      { type: 'text', title: 'Choosing λ and early stopping', md: `λ is a hyperparameter: try values on a log scale (1e-4, 1e-3, …, 10) and pick the one with the best **validation** score (or cross-validation score). Remember to **standardize features first** — otherwise the penalty hits features unevenly simply because of their units.
+      { type: 'text', title: 'Choosing λ and early stopping', md: `λ is a hyperparameter: try values on a log scale (1e-4, 1e-3, …, 10) and pick the one with the best **validation** score (or cross-validation score). Remember to **standardize features first**; otherwise the penalty hits features unevenly simply because of their units.
 
 **Early stopping** is regularization by time: with gradient descent, weights start small and grow as training proceeds. Monitor the validation loss each epoch; keep the parameters from the best epoch and stop once it hasn't improved for a while ("patience"). It is free, effective, and standard in deep learning.
 
@@ -1904,7 +1916,7 @@ Other regularizers you'll meet later: **dropout** (randomly disabling neurons), 
     when: `- **L2 / weight decay**: the default for linear models with many features and for neural networks.
 - **L1**: when you want a sparse, interpretable model or automatic feature selection.
 - **Elastic net**: many correlated features *and* a desire for sparsity.
-- **Early stopping**: any iterative training — essentially always in deep learning.
+- **Early stopping**: any iterative training (essentially always in deep learning).
 - Skip heavy regularization when you have abundant data relative to model size (but some weight decay rarely hurts).`,
     pitfalls: `- Regularizing unscaled features.
 - Penalising the bias term.
@@ -1921,7 +1933,7 @@ Other regularizers you'll meet later: **dropout** (randomly disabling neurons), 
     quiz: [
       { type: 'mcq', q: 'In ridge regression, what happens to the weights as λ → ∞?', options: ['They grow without bound', 'They shrink towards zero', 'They become exactly the least-squares solution', 'They become random'], answer: 1, explain: 'An infinitely strong L2 penalty forces all (penalized) weights to zero, leaving only the bias.' },
       { type: 'mcq', q: 'Which regularizer tends to produce exactly-zero weights?', options: ['L2', 'L1', 'Early stopping', 'Data augmentation'], answer: 1, explain: 'L1\'s constant-slope penalty pushes weak weights all the way to zero.' },
-      { type: 'fill', q: 'With plain gradient descent and L2 penalty λ‖w‖², each step multiplies the weights by (1 − 2ηλ) before the data-gradient update. With η = 0.1 and λ = 0.05, what is that factor?', answer: ['0.99'], explain: '1 − 2 · 0.1 · 0.05 = 0.99 — the weights "decay" by 1% each step.' },
+      { type: 'fill', q: 'With plain gradient descent and L2 penalty λ‖w‖², each step multiplies the weights by (1 − 2ηλ) before the data-gradient update. With η = 0.1 and λ = 0.05, what is that factor?', answer: ['0.99'], explain: '1 − 2 · 0.1 · 0.05 = 0.99: the weights "decay" by 1% each step.' },
       { type: 'tf', q: 'You should choose the regularization strength using the test set.', answer: false, explain: 'Use a validation set or cross-validation; the test set stays untouched until the end.' },
       { type: 'mcq', q: 'Why standardize features before applying L1/L2 regularization?', options: ['It makes training deterministic', 'So the penalty treats features equally instead of depending on their units', 'Regularization only works on integers', 'It removes outliers'], answer: 1, explain: 'A feature measured in millimetres needs a tiny weight and would barely be penalized compared with one in kilometres.' },
       {"type":"mcq","q":"You train lasso and many coefficients come out **exactly** zero. What does that mean?","options":["The training failed","Those features are ignored by the model","The features have negative effects","The data must be standardized again"],"answer":1,"explain":"The L1 penalty drives some weights exactly to zero, which removes those features from the model: built-in feature selection."},
@@ -2023,9 +2035,9 @@ def ridge_step(X, y, w, b, lr, lam):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Ridge, Lasso and Elastic-Net', url: 'https://scikit-learn.org/stable/modules/linear_model.html' },
-      { title: "Hastie, Tibshirani & Friedman — The Elements of Statistical Learning (free book)", url: "https://hastie.su.domains/ElemStatLearn/" },
-      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
+      { title: 'scikit-learn, Ridge, Lasso and Elastic-Net', url: 'https://scikit-learn.org/stable/modules/linear_model.html' },
+      { title: "Hastie, Tibshirani & Friedman, The Elements of Statistical Learning (free book)", url: "https://hastie.su.domains/ElemStatLearn/" },
+      { title: "Andreas Müller & Sarah Guido, Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   }
   ]);

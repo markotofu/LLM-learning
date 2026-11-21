@@ -200,9 +200,9 @@ def backoff_delays(retries, base=1.0, cap=30.0):
       }
     ],
     refs: [
-      { title: 'Chip Huyen — AI Engineering (book, 2025): resources and notes', url: 'https://github.com/chiphuyen/aie-book' },
-      { title: 'Hugging Face — Hub documentation', url: 'https://huggingface.co/docs/hub' },
-      { title: 'Ollama — run open models locally', url: 'https://ollama.com' }
+      { title: 'Chip Huyen, AI Engineering (book, 2025): resources and notes', url: 'https://github.com/chiphuyen/aie-book' },
+      { title: 'Hugging Face, Hub documentation', url: 'https://huggingface.co/docs/hub' },
+      { title: 'Ollama, run open models locally', url: 'https://ollama.com' }
     ]
   },
 
@@ -417,9 +417,9 @@ def summarize(spans):
       }
     ],
     refs: [
-      { title: 'OpenTelemetry — Semantic conventions for generative AI systems', url: 'https://opentelemetry.io/docs/specs/semconv/gen-ai/' },
-      { title: 'Langfuse — open-source LLM observability (documentation)', url: 'https://langfuse.com/docs' },
-      { title: 'OWASP — Top 10 for Large Language Model Applications', url: 'https://owasp.org/www-project-top-10-for-large-language-model-applications/' }
+      { title: 'OpenTelemetry, Semantic conventions for generative AI systems', url: 'https://opentelemetry.io/docs/specs/semconv/gen-ai/' },
+      { title: 'Langfuse, open-source LLM observability (documentation)', url: 'https://langfuse.com/docs' },
+      { title: 'OWASP, Top 10 for Large Language Model Applications', url: 'https://owasp.org/www-project-top-10-for-large-language-model-applications/' }
     ]
   },
 
@@ -710,8 +710,8 @@ def check_arguments(schema, args):
       }
     ],
     refs: [
-      { title: 'Model Context Protocol — specification and documentation', url: 'https://modelcontextprotocol.io' },
-      { title: 'Anthropic — Introducing the Model Context Protocol (2024)', url: 'https://www.anthropic.com/news/model-context-protocol' },
+      { title: 'Model Context Protocol, specification and documentation', url: 'https://modelcontextprotocol.io' },
+      { title: 'Anthropic, Introducing the Model Context Protocol (2024)', url: 'https://www.anthropic.com/news/model-context-protocol' },
       { title: 'MCP Python SDK', url: 'https://github.com/modelcontextprotocol/python-sdk' }
     ]
   },
@@ -977,8 +977,8 @@ def bfs_distances(graph, start):
       }
     ],
     refs: [
-      { title: 'MIT OpenCourseWare — Mathematics for Computer Science (6.042J)', url: 'https://ocw.mit.edu/courses/6-042j-mathematics-for-computer-science-fall-2010/' },
-      { title: 'Python documentation — itertools (permutations, combinations, product)', url: 'https://docs.python.org/3/library/itertools.html' }
+      { title: 'MIT OpenCourseWare, Mathematics for Computer Science (6.042J)', url: 'https://ocw.mit.edu/courses/6-042j-mathematics-for-computer-science-fall-2010/' },
+      { title: 'Python documentation, itertools (permutations, combinations, product)', url: 'https://docs.python.org/3/library/itertools.html' }
     ]
   }
   ]);

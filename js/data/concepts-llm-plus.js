@@ -7,8 +7,8 @@
   {
     id: 'seq2seq', branch: 'dl', title: 'Sequence-to-Sequence Models & the Origin of Attention', short: 'Seq2seq & Attention Origins', level: 3, minutes: 40, prereqs: ['rnn', 'embeddings'],
     tags: ['seq2seq', 'encoder-decoder', 'machine translation', 'teacher forcing', 'bottleneck', 'bahdanau attention', 'luong attention', 'alignment'],
-    summary: 'Mapping one sequence to another: the RNN encoder–decoder used for translation, teacher forcing and step-by-step decoding, the fixed-size bottleneck problem, and how Bahdanau attention solved it by letting the decoder look back at every input word — the direct ancestor of the transformer.',
-    why: `Before transformers, translation, summarization and speech recognition used **sequence-to-sequence** models: one RNN reads the input, another writes the output. Their weakness — squeezing a whole sentence into one fixed-size vector — is exactly the problem attention was invented to fix in 2014. Seeing that history makes attention feel inevitable rather than magical, and the encoder–decoder pattern lives on in T5, Whisper and every model that uses cross-attention.`,
+    summary: 'Mapping one sequence to another: the RNN encoder–decoder used for translation, teacher forcing and step-by-step decoding, the fixed-size bottleneck problem, and how Bahdanau attention solved it by letting the decoder look back at every input word (the direct ancestor of the transformer).',
+    why: `Before transformers, translation, summarization and speech recognition used **sequence-to-sequence** models: one RNN reads the input, another writes the output. Their weakness (squeezing a whole sentence into one fixed-size vector) is exactly the problem attention was invented to fix in 2014. Seeing that history makes attention feel inevitable rather than magical, and the encoder–decoder pattern lives on in T5, Whisper and every model that uses cross-attention.`,
     objectives: [
       'Describe the encoder–decoder architecture and teacher forcing',
       'Explain the information bottleneck of a single fixed-size context vector',
@@ -26,7 +26,7 @@ decoder:  <bos> -> le, le -> chat, chat -> noir, noir -> <eos>
 \`\`\`
 
 - **Training** uses **teacher forcing**: at every step the decoder is fed the *true* previous word, not its own guess, and the loss is the cross-entropy of the next word. It is fast and stable, but the model never practises recovering from its own mistakes.
-- **Inference** decodes step by step — greedily or with beam search — until it produces an end-of-sequence token.
+- **Inference** decodes step by step (greedily or with beam search) until it produces an end-of-sequence token.
 
 Input and output lengths can differ freely, which is what makes the design fit translation, summarization, question answering and speech recognition.` },
       { type: 'text', title: 'The bottleneck', md: `The decoder sees the input only through **one fixed-size vector** c, whether the sentence has 5 words or 50. Long inputs must be crammed into the same space, early words fade from the final hidden state, and translation quality drops sharply with sentence length. Tricks such as reversing the input order and using LSTMs helped, but did not remove the bottleneck.
@@ -45,7 +45,7 @@ e_tj — the alignment score between output step t and input word j
 c_t — the context vector for step t, a weighted average of the encoder states
 :::
 
-Luong et al. (2015) simplified the score to a **dot product**, e_tj = s · h_j — exactly the form transformers use. Plotting the weights shows learned **alignments**: when producing "chat" the decoder attends to "cat"; for "noir" it attends to "black", even though the word order differs.` },
+Luong et al. (2015) simplified the score to a **dot product**, e_tj = s · h_j, exactly the form transformers use. Plotting the weights shows learned **alignments**: when producing "chat" the decoder attends to "cat"; for "noir" it attends to "black", even though the word order differs.` },
       { type: 'code', title: 'One decoder step of attention', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -167,7 +167,7 @@ print("short candidate penalised only by brevity:", min(p) == 1.0 and bp < 1)`, 
     pitfalls: `- Exposure bias: teacher forcing means the model never trains on its own mistakes; scheduled sampling or sequence-level training can help.
 - Forgetting the end-of-sequence token, so decoding never stops.
 - Mismatched special tokens or padding between encoder and decoder vocabularies.
-- Attending to padding positions — mask them out before the softmax.`,
+- Attending to padding positions: mask them out before the softmax.`,
     takeaways: [
       'Seq2seq: an encoder reads the input, a decoder generates the output token by token.',
       'Teacher forcing feeds the true previous token during training.',
@@ -222,7 +222,7 @@ def additive_attention(s, H, Ws, Wh, v):
     return alpha, alpha @ H
 `,
         hints: ['`Ws @ s` has shape (d_a,) and broadcasts against `H @ Wh.T` of shape (T, d_a).', 'Subtract the maximum score before `np.exp`.', 'The context is `alpha @ H`.'],
-        explain: `Vectorizing over all T encoder states makes one decoder step a couple of matrix products. Swapping the tanh scorer for a plain dot product gives Luong attention — and, with scaling and learned projections, transformer attention.`,
+        explain: `Vectorizing over all T encoder states makes one decoder step a couple of matrix products. Swapping the tanh scorer for a plain dot product gives Luong attention, and, with scaling and learned projections, transformer attention.`,
         tests: [
           { name: 'zero scorer gives uniform weights', setup: 'H = np.array([[1.0, 0.0], [0.0, 2.0], [3.0, 1.0]])\nWs = np.ones((4, 2)); Wh = np.ones((4, 2)); v = np.zeros(4)', call: 'additive_attention(np.array([0.5, -0.5]), H, Ws, Wh, v)', expect: '(np.full(3, 1 / 3), H.mean(axis=0))' },
           { name: 'random parameters vs reference', setup: 'rng = np.random.default_rng(0)\ns = rng.normal(size=3); H = rng.normal(size=(5, 4))\nWs = rng.normal(size=(6, 3)); Wh = rng.normal(size=(6, 4)); v = rng.normal(size=6)', call: 'additive_attention(s, H, Ws, Wh, v)' },
@@ -234,7 +234,7 @@ def additive_attention(s, H, Ws, Wh, v):
         id: 'seq2seq-decoding', title: 'Teacher Forcing and Greedy Decoding', difficulty: 'easy',
         prompt: `Implement two pieces of a seq2seq pipeline:
 
-- \`make_decoder_io(target, bos, eos)\` → \`(decoder_input, decoder_target)\`: the input is \`[bos] + target\` and the target is \`target + [eos]\` — at step t the decoder reads token t and must predict token t + 1.
+- \`make_decoder_io(target, bos, eos)\` → \`(decoder_input, decoder_target)\`: the input is \`[bos] + target\` and the target is \`target + [eos]\`: at step t the decoder reads token t and must predict token t + 1.
 - \`greedy_decode(step, state, bos, eos, max_len)\`: start from \`bos\`; repeat at most \`max_len\` times: \`logits, state = step(state, token)\`, choose \`token = int(np.argmax(logits))\`; stop **without** adding it when it equals \`eos\`, otherwise append it. Return the list of generated tokens.
 
 \`\`\`text
@@ -279,9 +279,9 @@ def greedy_decode(step, state, bos, eos, max_len):
       }
     ],
     refs: [
-      { title: 'Sutskever et al. — Sequence to Sequence Learning with Neural Networks', url: 'https://arxiv.org/abs/1409.3215' },
-      { title: 'Bahdanau et al. — Neural Machine Translation by Jointly Learning to Align and Translate', url: 'https://arxiv.org/abs/1409.0473' },
-      { title: 'Jay Alammar — Visualizing a Neural Machine Translation Model', url: 'https://jalammar.github.io/visualizing-neural-machine-translation-mechanics-of-seq2seq-models-with-attention/' }
+      { title: 'Sutskever et al., Sequence to Sequence Learning with Neural Networks', url: 'https://arxiv.org/abs/1409.3215' },
+      { title: 'Bahdanau et al., Neural Machine Translation by Jointly Learning to Align and Translate', url: 'https://arxiv.org/abs/1409.0473' },
+      { title: 'Jay Alammar, Visualizing a Neural Machine Translation Model', url: 'https://jalammar.github.io/visualizing-neural-machine-translation-mechanics-of-seq2seq-models-with-attention/' }
     ]
   },
 
@@ -290,7 +290,7 @@ def greedy_decode(step, state, bos, eos, max_len):
     id: 'bert-encoders', branch: 'llm', title: 'Encoder Models: BERT & Masked Language Modeling', short: 'BERT & Encoders', level: 3, minutes: 40, prereqs: ['transformer-block', 'language-models'],
     tags: ['bert', 'encoder', 'masked language modeling', 'mlm', 'cls token', 'bidirectional', 'fine-tuning', 'classification', 'ner', 'roberta'],
     summary: 'The other half of the transformer family: bidirectional encoders such as BERT, pretrained by masking words and predicting them, then fine-tuned for classification, tagging and search. How masking works, the [CLS] token and task heads, and when an encoder beats a GPT.',
-    why: `GPT-style decoders generate text, but many tasks are about **understanding**: classifying support tickets, finding names and dates in documents, matching questions to answers. Encoder models like BERT read the whole input at once — every token sees both its left and its right context — which makes them small, fast and excellent at these tasks. They are also the starting point of most text-embedding models used in search and RAG.`,
+    why: `GPT-style decoders generate text, but many tasks are about **understanding**: classifying support tickets, finding names and dates in documents, matching questions to answers. Encoder models like BERT read the whole input at once (every token sees both its left and its right context) which makes them small, fast and excellent at these tasks. They are also the starting point of most text-embedding models used in search and RAG.`,
     objectives: [
       'Contrast bidirectional encoders with causal decoders',
       'Explain masked language modeling, including the 80/10/10 rule, and why it allows bidirectional context',
@@ -300,7 +300,7 @@ def greedy_decode(step, state, bos, eos, max_len):
     sections: [
       { type: 'text', title: 'Bidirectional context', md: `A GPT predicts the next token, so each position may only see what came **before** it (the causal mask). But to understand "bank" in "I sat on the bank of the river", the words *after* it matter too.
 
-An **encoder** runs self-attention **without** a causal mask: every token attends to every other token, left and right. The catch: you can no longer train it to predict the next word — it would simply look at it. Encoders need a different pretraining objective.` },
+An **encoder** runs self-attention **without** a causal mask: every token attends to every other token, left and right. The catch: you can no longer train it to predict the next word (it would simply look at it). Encoders need a different pretraining objective.` },
       { type: 'text', title: 'Masked language modeling', md: `BERT (2018) hides some tokens and asks the model to recover them from both sides. For each sequence, 15% of the token positions are selected; of those:
 
 - 80% are replaced by a special [MASK] token,
@@ -317,7 +317,7 @@ x̃ — the corrupted input sequence the model actually sees
 p( x_i | x̃ ) — the probability the model gives to the original token at position i
 :::
 
-Why not always use [MASK]? That token never appears when the model is later fine-tuned on real text; the random and unchanged cases force it to build good representations for every token, not just masked ones. BERT also used a "next sentence prediction" task, which RoBERTa later showed was unnecessary. Successors: RoBERTa (more data, longer training), ELECTRA (detect replaced tokens — every position gives a training signal), DeBERTa, ModernBERT.` },
+Why not always use [MASK]? That token never appears when the model is later fine-tuned on real text; the random and unchanged cases force it to build good representations for every token, not just masked ones. BERT also used a "next sentence prediction" task, which RoBERTa later showed was unnecessary. Successors: RoBERTa (more data, longer training), ELECTRA (detect replaced tokens, every position gives a training signal), DeBERTa, ModernBERT.` },
       { type: 'code', title: 'Masking a batch for MLM', code: `
 import numpy as np
 rng = np.random.default_rng(7)
@@ -338,7 +338,7 @@ labels = np.where(selected, ids, -100)                                       # -
 print("original:", " ".join(vocab[i] for i in ids))
 print("input:   ", " ".join(vocab[i] for i in inputs))
 print("predict: ", [vocab[i] for i in labels if i >= 0])
-`, after: `Every selected position must be predicted — including any that kept their original token (the 10% case), so the model can't simply learn "only [MASK] needs a guess". Special tokens are never selected.` },
+`, after: `Every selected position must be predicted, including any that kept their original token (the 10% case), so the model can't simply learn "only [MASK] needs a guess". Special tokens are never selected.` },
       { type: 'check', question: { type: 'mcq', q: 'Why can\'t an encoder like BERT be trained with plain next-token prediction?', options: ['It has no output layer', 'Without a causal mask every position can see the next token, so the task would be trivial', 'It is too small', 'It uses a different tokenizer'], answer: 1, explain: 'Bidirectional attention requires a different objective, such as masking.' } },
       { type: 'text', title: 'Special tokens and task heads', md: `BERT-style inputs look like \`[CLS] first text [SEP] second text [SEP]\`, and the encoder outputs one vector per token. Small **task heads** sit on top:
 
@@ -349,7 +349,7 @@ print("predict: ", [vocab[i] for i in labels if i >= 0])
 | Sentence pairs (entailment, duplicate questions) | both texts in one input, classify [CLS] |
 | Extractive question answering | predict the start and end positions of the answer span |
 
-**Fine-tuning** adds the head and trains the whole network with a small learning rate (≈ 2e-5) for a few epochs. A model with ~100M parameters, fine-tuned on a few thousand labelled examples, is often as accurate as a prompted LLM — at a tiny fraction of the cost and latency.` },
+**Fine-tuning** adds the head and trains the whole network with a small learning rate (≈ 2e-5) for a few epochs. A model with ~100M parameters, fine-tuned on a few thousand labelled examples, is often as accurate as a prompted LLM: at a tiny fraction of the cost and latency.` },
       { type: 'code', title: 'Fine-tuning a BERT-style classifier with Hugging Face', lang: 'pytorch', code: `
 # pip install torch transformers
 import torch
@@ -406,7 +406,7 @@ Large decoders can do classification too (by prompting), and are the right tool 
 - As the backbone of embedding models for semantic search and RAG.
 - When latency and cost matter more than generative flexibility.
 - Prefer a prompted decoder when you have almost no labelled data or need free-form outputs.`,
-    pitfalls: `- Using a raw pretrained BERT's [CLS] vector as a sentence embedding without contrastive fine-tuning — similarities are poor.
+    pitfalls: `- Using a raw pretrained BERT's [CLS] vector as a sentence embedding without contrastive fine-tuning: similarities are poor.
 - Exceeding the maximum input length (often 512 tokens) and silently truncating important text.
 - Too high a learning rate when fine-tuning (catastrophic forgetting); too many epochs on small data.
 - Mismatched tokenizers between pretraining and fine-tuning.
@@ -464,7 +464,7 @@ def mask_tokens(ids, mask_id, vocab_size, rng, p=0.15, special_ids=()):
     return inputs, labels
 `,
         hints: ['Combine boolean masks with `&` and `~`.', '`np.isin(ids, list(special_ids))` marks special tokens.', '`np.where(sel, ids, -100)` builds the labels.'],
-        explain: `Drawing full-length random arrays (rather than looping) keeps the procedure vectorized and reproducible. Only selected positions carry a label, so the loss ignores the other 85% of tokens — one reason MLM needs a lot of data.`,
+        explain: `Drawing full-length random arrays (rather than looping) keeps the procedure vectorized and reproducible. Only selected positions carry a label, so the loss ignores the other 85% of tokens: one reason MLM needs a lot of data.`,
         tests: [
           { name: 'reference run with a fixed seed', setup: 'ids = np.array([1, 5, 6, 7, 8, 9, 10, 11, 12, 2])', call: 'mask_tokens(ids, 3, 20, np.random.default_rng(0), p=0.5, special_ids=(1, 2))' },
           { name: 'labels only where something was selected', setup: 'ids = np.arange(4, 60)', code: 'inputs, labels = mask_tokens(ids, 3, 100, np.random.default_rng(1), p=0.3)\nchanged = inputs != ids\nassert np.all(labels[changed] == ids[changed]), "every changed token must have a label"\nassert np.all((labels == -100) | (labels == ids))' },
@@ -526,9 +526,9 @@ def classify(vector, W, b):
       }
     ],
     refs: [
-      { title: 'Devlin et al. — BERT: Pre-training of Deep Bidirectional Transformers', url: 'https://arxiv.org/abs/1810.04805' },
-      { title: 'Liu et al. — RoBERTa: A Robustly Optimized BERT Pretraining Approach', url: 'https://arxiv.org/abs/1907.11692' },
-      { title: 'Jay Alammar — The Illustrated BERT', url: 'https://jalammar.github.io/illustrated-bert/' }
+      { title: 'Devlin et al., BERT: Pre-training of Deep Bidirectional Transformers', url: 'https://arxiv.org/abs/1810.04805' },
+      { title: 'Liu et al., RoBERTa: A Robustly Optimized BERT Pretraining Approach', url: 'https://arxiv.org/abs/1907.11692' },
+      { title: 'Jay Alammar, The Illustrated BERT', url: 'https://jalammar.github.io/illustrated-bert/' }
     ]
   },
 
@@ -537,7 +537,7 @@ def classify(vector, W, b):
     id: 'text-embeddings', branch: 'llm', title: 'Text Embedding Models & Semantic Search', short: 'Text Embeddings', level: 3, minutes: 40, prereqs: ['bert-encoders', 'embeddings'],
     tags: ['sentence embeddings', 'semantic search', 'contrastive learning', 'infonce', 'in-batch negatives', 'hard negatives', 'bi-encoder', 'cross-encoder', 'mteb', 'pooling'],
     summary: 'How the sentence-embedding models behind search and RAG are built: pooling an encoder into one vector, contrastive training with in-batch and hard negatives, bi-encoders versus cross-encoders, and how to choose, evaluate and fine-tune an embedding model for your data.',
-    why: `RAG, semantic search, deduplication, clustering and recommendations all start with an **embedding model** that turns text into a vector. Its quality caps everything downstream: if the right passage doesn't land near the question, no LLM can save the answer. Knowing how these models are trained explains their strengths and blind spots, and how to choose — or fine-tune — the right one for your data.`,
+    why: `RAG, semantic search, deduplication, clustering and recommendations all start with an **embedding model** that turns text into a vector. Its quality caps everything downstream: if the right passage doesn't land near the question, no LLM can save the answer. Knowing how these models are trained explains their strengths and blind spots, and how to choose (or fine-tune) the right one for your data.`,
     objectives: [
       'Turn an encoder\'s token vectors into one normalized sentence vector by pooling',
       'Explain contrastive training with in-batch and hard negatives (the InfoNCE loss)',
@@ -555,7 +555,7 @@ normalize — divide by the vector's length, so every embedding has length 1 and
 e — the sentence embedding
 :::
 
-Mean pooling is the most common choice; the [CLS] vector or a learned attention-pooling layer are alternatives. A raw pretrained BERT, pooled this way, gives surprisingly **poor** similarities — its vectors all point in similar directions. Good embedding models are trained specifically so that similarity in vector space means similarity in meaning.` },
+Mean pooling is the most common choice; the [CLS] vector or a learned attention-pooling layer are alternatives. A raw pretrained BERT, pooled this way, gives surprisingly **poor** similarities: its vectors all point in similar directions. Good embedding models are trained specifically so that similarity in vector space means similarity in meaning.` },
       { type: 'text', title: 'Contrastive training', md: `Training data consists of **pairs that belong together**: a search query and the page that was clicked, a question and its answer, a title and its article, a sentence and its paraphrase, or synthetic questions generated by an LLM for each passage. In a batch of B pairs, each query's positive is its own passage, and the other B − 1 passages serve as **in-batch negatives**:
 
 $$ L = −(1/B) Σ_i log [ exp( sim(q_i, p_i) / τ ) / Σ_j exp( sim(q_i, p_j) / τ ) ] $$
@@ -566,9 +566,9 @@ sim — cosine similarity
 Σ_j — a sum over all passages in the batch; every p_j with j ≠ i acts as a negative
 :::
 
-This **InfoNCE** loss is a softmax classification: "which of these B passages answers my query?" — the same idea as CLIP's image–text loss. Two levers matter most:
+This **InfoNCE** loss is a softmax classification: "which of these B passages answers my query?": the same idea as CLIP's image–text loss. Two levers matter most:
 - **Bigger batches** give more negatives per step.
-- **Hard negatives** — passages that look relevant but aren't, mined with keyword search or an earlier model — teach fine distinctions that random negatives never require.` },
+- **Hard negatives**: passages that look relevant but aren't, mined with keyword search or an earlier model (teach fine distinctions that random negatives never require).` },
       { type: 'code', title: 'In-batch contrastive loss', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -590,22 +590,22 @@ print("a uniform guess scores ln B =", round(float(np.log(B)), 3))
 print("random 'passages':        ", round(info_nce(queries, rng.normal(size=(B, d))), 3))
 print("true positives:           ", round(info_nce(queries, positives), 3))
 print("positives + hard negatives:", round(info_nce(queries, np.vstack([positives, hard])), 3))
-`, after: `With true positives the loss is near zero: random passages are easy to rule out. Adding look-alike hard negatives makes the task harder and the loss larger — that difficulty is exactly what pushes a model to learn finer distinctions.` },
+`, after: `With true positives the loss is near zero: random passages are easy to rule out. Adding look-alike hard negatives makes the task harder and the loss larger: that difficulty is exactly what pushes a model to learn finer distinctions.` },
       { type: 'check', question: { type: 'mcq', q: 'What are in-batch negatives?', options: ['Tokens with negative embeddings', 'The other pairs\' passages in the same batch, used as wrong answers for each query', 'Examples with negative labels from humans', 'Gradients below zero'], answer: 1, explain: 'They come for free: B pairs give B − 1 negatives per query.' } },
       { type: 'text', title: 'Bi-encoders and cross-encoders', md: `| | Bi-encoder | Cross-encoder |
 | --- | --- | --- |
 | How it scores | embeds query and document **separately**, compares vectors | reads query and document **together** in one transformer pass |
 | Speed | document vectors precomputed; search millions in milliseconds | one full forward pass per (query, document) pair |
-| Accuracy | good | better — full attention between the two texts |
+| Accuracy | good | better: full attention between the two texts |
 | Typical role | first-stage **retrieval** | **reranking** the top 20–100 candidates |
 
 Late-interaction models such as ColBERT keep one vector per token and sit in between. A strong RAG pipeline usually combines them: hybrid retrieval (keywords + bi-encoder), then a cross-encoder reranker.` },
       { type: 'text', title: 'Choosing, evaluating and fine-tuning', md: `- **Benchmarks**: the MTEB leaderboard compares models by task (retrieval, clustering, classification, reranking) and language. Look at the *retrieval* scores for your languages.
 - **Practical constraints**: vector size (storage and speed), maximum input length, inference cost, licence.
 - **Evaluate on your own data**: collect 50–200 (question, relevant passage) pairs and measure recall@k and MRR (see *RAG*). Benchmark winners don't always win on legal, medical or code text.
-- **Tricks**: some models expect prefixes such as "query: " and "passage: "; normalize vectors; *Matryoshka* models let you truncate vectors to fewer dimensions with little loss; int8 or binary quantization cuts storage dramatically.
+- **Tricks**: some models expect prefixes such as "query: " and "passage: "; normalize vectors; *Matryoshka* models let you truncate vectors to fewer dimensions with little loss; int8 or binary quantization cuts storage by 4 to 32 times.
 - **Fine-tune** when your domain differs: a few thousand in-domain pairs plus mined hard negatives often give large gains.
-- Always embed queries and documents with the **same** model — and re-embed everything when you change models.` },
+- Always embed queries and documents with the **same** model, and re-embed everything when you change models.` },
       { type: 'text', title: "Vector size, precision and the cost of an index", md: `An index of embeddings costs memory in proportion to the number of vectors, their dimension and the bytes per number:
 
 $$ index size = N · d · b $$
@@ -658,7 +658,7 @@ for i, s in sorted(zip(candidates, scores), key=lambda t: -t[1]):
 - Forgetting required prefixes or normalization.
 - Choosing a model only by overall leaderboard rank instead of retrieval quality on your data.
 - Embedding chunks longer than the model's maximum input (silently truncated).
-- Training with "negatives" that are actually relevant (false negatives) — they teach the wrong lesson.`,
+- Training with "negatives" that are actually relevant (false negatives): they teach the wrong lesson.`,
     takeaways: [
       'Sentence embedding = pool token vectors (usually the mean) and normalize.',
       'Contrastive InfoNCE training: pull each query towards its positive, away from in-batch and hard negatives.',
@@ -774,9 +774,9 @@ def info_nce(q, p, tau=0.05, hard=None):
       }
     ],
     refs: [
-      { title: 'Reimers & Gurevych — Sentence-BERT', url: 'https://arxiv.org/abs/1908.10084' },
-      { title: 'Karpukhin et al. — Dense Passage Retrieval for Open-Domain QA', url: 'https://arxiv.org/abs/2004.04906' },
-      { title: 'MTEB — Massive Text Embedding Benchmark leaderboard', url: 'https://huggingface.co/spaces/mteb/leaderboard' },
+      { title: 'Reimers & Gurevych, Sentence-BERT', url: 'https://arxiv.org/abs/1908.10084' },
+      { title: 'Karpukhin et al., Dense Passage Retrieval for Open-Domain QA', url: 'https://arxiv.org/abs/2004.04906' },
+      { title: 'MTEB, Massive Text Embedding Benchmark leaderboard', url: 'https://huggingface.co/spaces/mteb/leaderboard' },
       { title: 'Sentence Transformers documentation', url: 'https://www.sbert.net/' }
     ]
   },
@@ -785,8 +785,8 @@ def info_nce(q, p, tau=0.05, hard=None):
   {
     id: 'training-at-scale', branch: 'llm', title: 'Training at Scale: GPUs, Mixed Precision & Parallelism', short: 'Training at Scale', level: 3, minutes: 50, prereqs: ['pretraining', 'pytorch'],
     tags: ['gpu', 'training memory', 'mixed precision', 'bf16', 'gradient accumulation', 'activation checkpointing', 'data parallel', 'ddp', 'fsdp', 'zero', 'tensor parallel', 'pipeline parallel', 'mfu'],
-    summary: 'What it takes to train big models: where GPU memory goes (weights, gradients, optimizer states, activations), mixed precision, gradient accumulation and activation checkpointing, the parallelism strategies — data, sharded (ZeRO/FSDP), tensor and pipeline — and measuring efficiency with MFU.',
-    why: `A 7B-parameter model doesn't fit on one GPU for training, and even a 124M model trains several times faster with the right tricks. Scaling up is mostly **memory and communication engineering**: knowing where every byte goes tells you which technique to reach for — bf16, gradient accumulation, checkpointing, sharding — and lets you estimate how many GPUs and how much time a run needs. This is the practical heart of "how to build an LLM".`,
+    summary: 'What it takes to train big models: where GPU memory goes (weights, gradients, optimizer states, activations), mixed precision, gradient accumulation and activation checkpointing, the parallelism strategies, data, sharded (ZeRO/FSDP), tensor and pipeline, and measuring efficiency with MFU.',
+    why: `A 7B-parameter model doesn't fit on one GPU for training, and even a 124M model trains several times faster with the right tricks. Scaling up is mostly **memory and communication engineering**: knowing where every byte goes tells you which technique to reach for (bf16, gradient accumulation, checkpointing, sharding) and lets you estimate how many GPUs and how much time a run needs. This is the practical heart of "how to build an LLM".`,
     objectives: [
       'Compute training memory: weights, gradients, optimizer states and activations',
       'Use mixed precision, gradient accumulation and activation checkpointing, and know their trade-offs',
@@ -803,10 +803,10 @@ N — the number of model parameters
 activations — grow with batch size × sequence length × number of layers × width (and with sequence length squared for naive attention)
 :::
 
-A 7B model needs ≈ 112 GB just for its parameter-related state — more than one 80 GB GPU before a single activation is stored. The techniques below attack each term.` },
+A 7B model needs ≈ 112 GB just for its parameter-related state: more than one 80 GB GPU before a single activation is stored. The techniques below attack each term.` },
       { type: 'text', title: 'Mixed precision', md: `GPUs multiply 16-bit numbers many times faster than 32-bit ones. **Mixed precision** runs the forward and backward passes in **bf16** (or fp16) while keeping an fp32 master copy of the weights for the optimizer update, so tiny updates aren't rounded away.
 
-- **bf16** has the same exponent range as fp32, so values rarely overflow or underflow — the modern default.
+- **bf16** has the same exponent range as fp32, so values rarely overflow or underflow: the modern default.
 - **fp16** has more mantissa precision but a small range; it needs **loss scaling** (multiply the loss before backward, divide the gradients after) to keep small gradients from becoming zero.
 - The newest GPUs also support **fp8** matrix multiplies with per-tensor scaling for even faster training.
 
@@ -820,7 +820,7 @@ accumulation_steps — how many micro-batches are summed before each optimizer s
 n_gpus — the number of data-parallel GPUs
 :::
 
-**Activation checkpointing** (rematerialization): store only some activations — for example at the boundary of each transformer block — and recompute the rest during the backward pass. It costs roughly 30% extra compute and saves most of the activation memory, which often makes the difference between fitting and not fitting.` },
+**Activation checkpointing** (rematerialization): store only some activations (for example at the boundary of each transformer block) and recompute the rest during the backward pass. It costs roughly 30% extra compute and saves most of the activation memory, which often makes the difference between fitting and not fitting.` },
       { type: 'code', title: 'A training memory calculator', code: `
 def gib(x):
     return x / 2 ** 30
@@ -841,7 +841,7 @@ n_params, tokens_per_sec, n_gpus, peak = 8e9, 2.0e6, 256, 989e12    # H100 bf16 
 print(f"MFU = 6 x N x tokens/s / (GPUs x peak) = {6 * n_params * tokens_per_sec / (n_gpus * peak):.1%}")
 ` },
       { type: 'check', question: { type: 'fill', q: 'Micro-batch 4, 8 accumulation steps, 16 GPUs: what is the effective batch size (in sequences)?', answer: ['512'], explain: '4 × 8 × 16 = 512.' } },
-      { type: 'text', title: 'Data parallelism and sharding', md: `**Data parallelism (DDP)**: every GPU holds a full copy of the model and processes a different slice of the batch; after the backward pass the gradients are averaged across GPUs (an *all-reduce*), so all copies stay identical. Easy and efficient — but each GPU still needs the full 16·N bytes.
+      { type: 'text', title: 'Data parallelism and sharding', md: `**Data parallelism (DDP)**: every GPU holds a full copy of the model and processes a different slice of the batch; after the backward pass the gradients are averaged across GPUs (an *all-reduce*), so all copies stay identical. Easy and efficient, but each GPU still needs the full 16·N bytes.
 
 **ZeRO / FSDP** (fully sharded data parallel) removes that redundancy by splitting the state across the G GPUs:
 - stage 1 shards the optimizer states, stage 2 also the gradients, stage 3 also the parameters;
@@ -853,7 +853,7 @@ N — the number of parameters
 G — the number of GPUs sharing the state
 :::
 
-The price is more communication — which fast interconnects (NVLink, InfiniBand) make affordable.` },
+The price is more communication, which fast interconnects (NVLink, InfiniBand) make affordable.` },
       { type: 'chart', title: "Memory per GPU for a 7B model on 8 GPUs", md: `Mixed-precision Adam: 2 bytes of bf16 weights, 2 of gradients and 12 of fp32 optimizer state (master weights and two moments) per parameter:`, after: `Plain data parallelism keeps a full copy of all 16 bytes per parameter on every GPU: about 108 GB, more than an 80 GB GPU holds. Sharding the optimizer states across the 8 GPUs (ZeRO-1) brings that to 37 GB, sharding the gradients too (ZeRO-2) to 25 GB, and sharding the weights as well (ZeRO-3, PyTorch's FSDP) to 13.5 GB, at the price of gathering each layer's weights over the network just before it runs.`, chart: {"kind":"bar","x":["data parallel","ZeRO-1","ZeRO-2","ZeRO-3 / FSDP"],"series":[{"name":"weights + gradients + Adam states per GPU (GB, before activations)","y":[107.8,37.1,25.3,13.5]}],"xLabel":"strategy","yLabel":"GB per GPU","yMin":0} },
       { type: 'text', title: "Communication: the hidden cost", md: `Every data-parallel step ends with an **all-reduce**: each GPU contributes its gradients and receives the average. With the standard ring algorithm, each GPU sends and receives about twice the size of the gradients, whatever the number of GPUs:
 
@@ -880,9 +880,9 @@ print("crossing servers is about 10 times slower:", 8 < across / inside < 12)`, 
 
 | Strategy | What is split | Main cost | Typical use |
 | --- | --- | --- | --- |
-| **Data parallel (DDP)** | the batch | gradient all-reduce | always — the outer layer |
+| **Data parallel (DDP)** | the batch | gradient all-reduce | always: the outer layer |
 | **Sharded (ZeRO / FSDP)** | optimizer states, gradients, parameters | gathering parameters per layer | models whose state doesn't fit on one GPU |
-| **Tensor parallel** | each matrix multiply (e.g. attention heads, FFN columns) | communication inside every layer — needs NVLink within a node | very wide layers |
+| **Tensor parallel** | each matrix multiply (e.g. attention heads, FFN columns) | communication inside every layer: needs NVLink within a node | very wide layers |
 | **Pipeline parallel** | consecutive layers on different GPUs | idle "bubbles" while the pipeline fills | very deep models across nodes |
 | **Sequence / context parallel** | the sequence dimension | attention communication | very long contexts |
 
@@ -932,7 +932,7 @@ def train(model, loader, steps, accum_steps=8, lr=3e-4):
 - Averaging micro-batch losses incorrectly with uneven micro-batch sizes.
 - Using fp16 without loss scaling (gradients underflow to zero).
 - Tensor parallelism across slow network links.
-- Not checkpointing often enough — hardware failures are routine at scale.`,
+- Not checkpointing often enough: hardware failures are routine at scale.`,
     takeaways: [
       'Training state ≈ 16 bytes per parameter with Adam in mixed precision, plus activations.',
       'bf16 mixed precision: fast 16-bit compute with fp32 master weights.',
@@ -943,7 +943,7 @@ def train(model, loader, steps, accum_steps=8, lr=3e-4):
     quiz: [
       { type: 'fill', q: 'About how many GB does the parameter state (16 bytes per parameter) of a 13B model take?', answer: ['208', '208 gb', '208gb'], explain: '13·10⁹ × 16 bytes = 208 GB.' },
       { type: 'mcq', q: 'Why keep an fp32 master copy of the weights in mixed-precision training?', options: ['GPUs require it', 'Small updates would be rounded away in 16-bit weights', 'It doubles the speed', 'For checkpointing only'], answer: 1, explain: 'lr × gradient can be smaller than bf16 can represent relative to the weight.' },
-      { type: 'mcq', q: 'What does ZeRO stage 3 / FSDP shard across GPUs?', options: ['Only the data', 'Optimizer states, gradients and parameters', 'Only the activations', 'Nothing — it replicates everything'], answer: 1, explain: 'Each GPU holds roughly 1/G of the state.' },
+      { type: 'mcq', q: 'What does ZeRO stage 3 / FSDP shard across GPUs?', options: ['Only the data', 'Optimizer states, gradients and parameters', 'Only the activations', 'Nothing: it replicates everything'], answer: 1, explain: 'Each GPU holds roughly 1/G of the state.' },
       { type: 'tf', q: 'Activation checkpointing reduces memory by recomputing some activations during the backward pass.', answer: true, explain: 'About 30% more compute for much less memory.' },
       { type: 'mcq', q: 'Which parallelism strategy needs very fast communication inside every layer?', options: ['Data parallelism', 'Tensor parallelism', 'Gradient accumulation', 'Pipeline parallelism'], answer: 1, explain: 'Each matrix multiply is split, so GPUs exchange partial results constantly.' },
       {"type":"mcq","q":"Which ZeRO stage also shards the model weights across GPUs?","options":["ZeRO-1","ZeRO-2","ZeRO-3 (FSDP)","None of them"],"answer":2,"explain":"ZeRO-1 shards optimizer states, ZeRO-2 adds gradients, and ZeRO-3 (PyTorch's FSDP) shards the weights as well, gathering each layer just before it runs."},
@@ -1063,10 +1063,10 @@ def effective_batch(micro, accum, gpus):
       }
     ],
     refs: [
-      { title: 'Rajbhandari et al. — ZeRO: Memory Optimizations Toward Training Trillion Parameter Models', url: 'https://arxiv.org/abs/1910.02054' },
-      { title: 'Shoeybi et al. — Megatron-LM: Training Multi-Billion Parameter Models Using Model Parallelism', url: 'https://arxiv.org/abs/1909.08053' },
-      { title: 'Hugging Face — The Ultra-Scale Playbook: Training LLMs on GPU Clusters', url: 'https://huggingface.co/spaces/nanotron/ultrascale-playbook' },
-      { title: 'PyTorch — Getting started with Fully Sharded Data Parallel', url: 'https://pytorch.org/tutorials/intermediate/FSDP_tutorial.html' }
+      { title: 'Rajbhandari et al., ZeRO: Memory Optimizations Toward Training Trillion Parameter Models', url: 'https://arxiv.org/abs/1910.02054' },
+      { title: 'Shoeybi et al., Megatron-LM: Training Multi-Billion Parameter Models Using Model Parallelism', url: 'https://arxiv.org/abs/1909.08053' },
+      { title: 'Hugging Face, The Ultra-Scale Playbook: Training LLMs on GPU Clusters', url: 'https://huggingface.co/spaces/nanotron/ultrascale-playbook' },
+      { title: 'PyTorch, Getting started with Fully Sharded Data Parallel', url: 'https://pytorch.org/tutorials/intermediate/FSDP_tutorial.html' }
     ]
   },
 
@@ -1074,8 +1074,8 @@ def effective_batch(micro, accum, gpus):
   {
     id: 'reasoning-models', branch: 'llm', title: 'Reasoning Models & Test-Time Compute', short: 'Reasoning Models', level: 3, minutes: 40, prereqs: ['alignment', 'decoding'],
     tags: ['reasoning', 'chain of thought', 'test-time compute', 'self-consistency', 'majority vote', 'best-of-n', 'verifier', 'pass@k', 'rlvr', 'grpo', 'process reward model', 'thinking budget'],
-    summary: 'Why letting a model think longer makes it smarter: chain-of-thought, sampling many answers with majority voting or a verifier (best-of-n), training reasoning with reinforcement learning on verifiable rewards (GRPO), process versus outcome rewards, thinking budgets — and the trade-offs in cost and latency.',
-    why: `Recent jumps in LLM capability have come not only from bigger pretraining but from **test-time compute**: models that write out long reasoning before answering, trained with reinforcement learning on problems whose answers can be checked. Understanding how this works — and how to spend extra inference compute with voting and verifiers — explains modern "thinking" models and helps you decide when the extra cost and latency are worth paying.`,
+    summary: 'Why letting a model think longer makes it smarter: chain-of-thought, sampling many answers with majority voting or a verifier (best-of-n), training reasoning with reinforcement learning on verifiable rewards (GRPO), process versus outcome rewards, thinking budgets, and the trade-offs in cost and latency.',
+    why: `Recent jumps in LLM capability have come not only from bigger pretraining but from **test-time compute**: models that write out long reasoning before answering, trained with reinforcement learning on problems whose answers can be checked. Understanding how this works (and how to spend extra inference compute with voting and verifiers) explains modern "thinking" models and helps you decide when the extra cost and latency are worth paying.`,
     objectives: [
       'Explain why intermediate reasoning tokens improve multi-step problem solving',
       'Use self-consistency (majority voting) and best-of-n with a verifier, and estimate pass@k',
@@ -1083,16 +1083,16 @@ def effective_batch(micro, accum, gpus):
       'Decide when to use a reasoning model and how to set its thinking budget'
     ],
     sections: [
-      { type: 'text', title: 'Thinking with tokens', md: `A transformer performs a fixed amount of computation for each token it produces. A hard problem — a long calculation, a proof, a tricky bug — needs more serial steps than one token's worth. Writing out intermediate steps (**chain of thought**) gives the model scratch space: every new token can build on the results written before it.
+      { type: 'text', title: 'Thinking with tokens', md: `A transformer performs a fixed amount of computation for each token it produces. A hard problem (a long calculation, a proof, a tricky bug) needs more serial steps than one token's worth. Writing out intermediate steps (**chain of thought**) gives the model scratch space: every new token can build on the results written before it.
 
 - 2022: *prompted* chain of thought ("let's think step by step") improved math and logic benchmarks.
-- 2024 onwards: models **trained** to produce long internal reasoning — exploring approaches, checking intermediate results, backtracking — before giving a final answer. On math and coding benchmarks, accuracy keeps improving as the model is allowed to think longer.
+- 2024 onwards: models **trained** to produce long internal reasoning (exploring approaches, checking intermediate results, backtracking) before giving a final answer. On math and coding benchmarks, accuracy keeps improving as the model is allowed to think longer.
 
 This is called **test-time (inference-time) compute**: spending more computation per question at inference instead of only making the model bigger.` },
       { type: 'text', title: 'Spending compute at inference: voting and verifiers', md: `Even without special training you can trade compute for accuracy by **sampling several answers**:
 
 - **Self-consistency (majority voting)**: sample k reasoning paths at a moderate temperature and return the most common final answer. If the right answer is more likely than any *single* wrong one, voting amplifies it.
-- **Best-of-n with a verifier**: generate n candidates and let a checker pick — unit tests for code, a symbolic checker for math, or a learned reward model.
+- **Best-of-n with a verifier**: generate n candidates and let a checker pick (unit tests for code, a symbolic checker for math, or a learned reward model).
 
 With a perfect verifier, you succeed whenever at least one of the n samples is right:
 
@@ -1126,7 +1126,7 @@ for k in (1, 3, 5, 11, 21):
       { type: 'check', question: { type: 'fill', q: 'Each sample is correct with probability 0.5. With a perfect verifier, what is the chance that best-of-3 succeeds? (3 decimals)', answer: ['0.875', '.875', '7/8'], explain: '1 − 0.5³ = 0.875.' } },
       { type: 'text', title: 'Training reasoning with reinforcement learning', md: `**Reinforcement learning with verifiable rewards (RLVR)** trains on problems whose answers can be checked automatically: math with known results, code with unit tests, logic puzzles. For each prompt, sample a **group** of G responses, give each a reward (1 if the final answer is correct, often plus a small format reward), and increase the probability of the better-than-average responses.
 
-**GRPO** (group relative policy optimization) uses the group itself as the baseline — no separate value network as in PPO:
+**GRPO** (group relative policy optimization) uses the group itself as the baseline, no separate value network as in PPO:
 
 $$ A_i = ( r_i − mean(r_1, …, r_G) ) / std(r_1, …, r_G) $$
 :::where
@@ -1135,7 +1135,7 @@ G — the number of responses sampled for the same prompt
 A_i — the advantage: how much better response i did than its siblings; every token of response i is pushed up (A_i > 0) or down (A_i < 0)
 :::
 
-A KL penalty to a reference model keeps the policy from drifting too far. With enough RL, models learn to reason at length, verify their own steps and backtrack — without being shown how.
+A KL penalty to a reference model keeps the policy from drifting too far. With enough RL, models learn to reason at length, verify their own steps and backtrack, without being shown how.
 
 - **Outcome rewards** check only the final answer: cheap and hard to game, but sparse.
 - **Process reward models** score each intermediate step: denser feedback, but expensive to label and easier to exploit.
@@ -1148,7 +1148,7 @@ def group_advantages(rewards, eps=1e-8):
 
 for rewards in ([1, 0, 0, 1, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0, 0, 0]):
     print(rewards, "->", group_advantages(rewards).round(2))
-`, after: `A rare success earns a large positive advantage. When every response in a group gets the same reward — all right or all wrong — every advantage is zero and the prompt teaches nothing, which is why training data must be neither too easy nor too hard for the current model.` },
+`, after: `A rare success earns a large positive advantage. When every response in a group gets the same reward (all right or all wrong) every advantage is zero and the prompt teaches nothing, which is why training data must be neither too easy nor too hard for the current model.` },
       { type: 'text', title: "How far does thinking go?", md: `Reasoning models show a second kind of scaling: accuracy on hard problems rises roughly with the logarithm of the compute spent *at inference*, by thinking longer or sampling more. Doubling the thinking budget gives a steady gain, but each doubling buys less, and some problems stay out of reach at any budget the model can use well.
 
 Limits worth knowing:
@@ -1157,7 +1157,7 @@ Limits worth knowing:
 - **Verification is the bottleneck**: test-time compute pays off most where answers can be checked (tests, proofs, exact results); for open-ended questions, more samples mainly need a better judge.
 - **Distillation**: reasoning traces from a large model can teach a small one to reason far better than its size suggests, which is how many small reasoning models are made.` },
       { type: 'text', title: 'Using reasoning models in practice', md: `- **Good fit**: math, code, data analysis, planning, multi-step agentic tasks, careful reading of long documents.
-- **Poor fit**: simple lookups, classification, chit-chat, latency-critical steps — the extra thinking only adds cost and delay.
+- **Poor fit**: simple lookups, classification, chit-chat, latency-critical steps (the extra thinking only adds cost and delay).
 - **Control the budget**: most APIs expose an effort level or a thinking-token budget; tune it per task rather than globally.
 - **Prompting changes**: give a clear goal, constraints and success criteria; avoid long step-by-step recipes, which can make a reasoning model worse.
 - **Verify** with tools when you can: run the code, check the arithmetic, cite the source.
@@ -1226,7 +1226,7 @@ def vote_accuracy(samples, truths):
     return hits / len(truths)
 `,
         hints: ['Count with a dict (insertion order follows first appearance).', 'Scan the answers in order and return the first one with the maximum count.'],
-        explain: `Real implementations first normalize answers — extracting the final number, stripping units and whitespace — so that "12", "12.0" and "twelve" are counted as the same vote.`,
+        explain: `Real implementations first normalize answers (extracting the final number, stripping units and whitespace) so that "12", "12.0" and "twelve" are counted as the same vote.`,
         tests: [
           { call: 'majority_vote(["12", "15", "12", "9"])', expect: '"12"' },
           { call: 'majority_vote(["a", "b", "b", "a"])', expect: '"a"' },
@@ -1236,7 +1236,7 @@ def vote_accuracy(samples, truths):
       },
       {
         id: 'pass-at-k', title: 'Estimating pass@k', difficulty: 'medium',
-        prompt: `You generated n samples for a problem and c of them are correct. The unbiased estimate of pass@k — the chance that at least one of k samples drawn from these n is correct — is
+        prompt: `You generated n samples for a problem and c of them are correct. The unbiased estimate of pass@k (the chance that at least one of k samples drawn from these n is correct) is
 
 $$ pass@k = 1 − C(n − c, k) / C(n, k) $$
 :::where
@@ -1276,7 +1276,7 @@ def best_of_n(p, n):
     return 1.0 - (1.0 - p) ** n
 `,
         hints: ['`math.comb(a, b)` counts combinations.', 'If there are fewer wrong samples than k, every draw of k must include a correct one.'],
-        explain: `Generating n > k samples and using this formula gives a much lower-variance estimate than literally drawing k samples once — which is why code benchmarks report pass@k this way.`,
+        explain: `Generating n > k samples and using this formula gives a much lower-variance estimate than literally drawing k samples once, which is why code benchmarks report pass@k this way.`,
         tests: [
           { call: '[pass_at_k(10, 3, 1), pass_at_k(5, 2, 2)]', expect: '[0.3, 0.7]' },
           { name: 'edge cases', call: '[pass_at_k(10, 0, 5), pass_at_k(10, 10, 1), pass_at_k(4, 2, 3)]', expect: '[0.0, 1.0, 1.0]' },
@@ -1335,10 +1335,10 @@ def pg_loss(logprobs, advantages):
       }
     ],
     refs: [
-      { title: 'Wei et al. — Chain-of-Thought Prompting Elicits Reasoning in Large Language Models', url: 'https://arxiv.org/abs/2201.11903' },
-      { title: 'Wang et al. — Self-Consistency Improves Chain of Thought Reasoning', url: 'https://arxiv.org/abs/2203.11171' },
-      { title: 'Chen et al. — Evaluating Large Language Models Trained on Code (pass@k)', url: 'https://arxiv.org/abs/2107.03374' },
-      { title: 'Shao et al. — DeepSeekMath (introduces GRPO)', url: 'https://arxiv.org/abs/2402.03300' }
+      { title: 'Wei et al., Chain-of-Thought Prompting Elicits Reasoning in Large Language Models', url: 'https://arxiv.org/abs/2201.11903' },
+      { title: 'Wang et al., Self-Consistency Improves Chain of Thought Reasoning', url: 'https://arxiv.org/abs/2203.11171' },
+      { title: 'Chen et al., Evaluating Large Language Models Trained on Code (pass@k)', url: 'https://arxiv.org/abs/2107.03374' },
+      { title: 'Shao et al., DeepSeekMath (introduces GRPO)', url: 'https://arxiv.org/abs/2402.03300' }
     ]
   },
 
@@ -1347,7 +1347,7 @@ def pg_loss(logprobs, advantages):
     id: 'efficient-attention', branch: 'llm', title: 'Efficient Attention & Long Context', short: 'Long Context', level: 3, minutes: 40, prereqs: ['gpt', 'positional-encoding'],
     tags: ['flashattention', 'online softmax', 'kv cache', 'long context', 'sliding window attention', 'paged attention', 'context extension', 'rope scaling', 'state space models', 'linear attention'],
     summary: 'Why attention gets expensive and how modern models handle long inputs: the quadratic cost, FlashAttention\'s tiling with an online softmax, taming the KV cache (GQA, sliding windows, paging, prefix caching), extending the context by rescaling RoPE positions, and alternatives such as state-space models.',
-    why: `Context windows grew from 2,048 tokens (GPT-3) to hundreds of thousands and beyond. That required attacking attention's **quadratic cost** and the **KV cache's memory** from every angle. These techniques explain why long prompts cost what they do, why some models handle long documents better than others, and how ideas from earlier lessons — RoPE, grouped-query attention, quantization — fit together.`,
+    why: `Context windows grew from 2,048 tokens (GPT-3) to hundreds of thousands and beyond. That required attacking attention's **quadratic cost** and the **KV cache's memory** from every angle. These techniques explain why long prompts cost what they do, why some models handle long documents better than others, and how ideas from earlier lessons (RoPE, grouped-query attention, quantization) fit together.`,
     objectives: [
       'Quantify attention\'s compute and memory as a function of context length',
       'Explain FlashAttention: tiling plus an online softmax that never stores the full T × T matrix',
@@ -1365,7 +1365,7 @@ d — the model width (d_model)
 16 · T · d² — the two feed-forward matrices of width 4d
 :::
 
-The attention share is T / (T + 4d): small for short prompts, dominant for long ones. Naive attention also **stores** the T × T score matrix — 16 billion numbers per head at 128k tokens. And during generation the **KV cache** grows linearly with T.` },
+The attention share is T / (T + 4d): small for short prompts, dominant for long ones. Naive attention also **stores** the T × T score matrix: 16 billion numbers per head at 128k tokens. And during generation the **KV cache** grows linearly with T.` },
       { type: 'code', title: 'How the cost shifts with context length', code: `
 d, layers = 4096, 32
 for T in (2_048, 8_192, 32_768, 131_072):
@@ -1417,7 +1417,7 @@ print(f"scores held in memory at once: {block} instead of {T}")
 - **KV-cache quantization** to 8 or 4 bits.
 - **Sliding-window attention**: each token attends only to the previous W tokens, so the cache never exceeds W entries; stacking layers still lets information travel further.
 - **Attention sinks**: keep the first few tokens plus a recent window, which stabilizes streaming generation.
-- **PagedAttention** (vLLM): store the cache in fixed-size pages like virtual memory — no fragmentation, and requests can share pages.
+- **PagedAttention** (vLLM): store the cache in fixed-size pages like virtual memory (no fragmentation, and requests can share pages).
 - **Prefix caching**: reuse the cache of a repeated prefix such as a long system prompt across requests.
 - **Latent attention**: compress keys and values into a small low-rank latent vector (DeepSeek's multi-head latent attention).` },
       { type: 'text', title: 'Extending the context window', md: `A model trained on 8k-token sequences fails beyond that length: rotary embeddings produce angles it has never seen. **Position interpolation** squeezes the new, longer range of positions into the trained range:
@@ -1430,7 +1430,7 @@ L_new — the longer target context length
 pos′ — the rescaled position fed into RoPE, which stays within the trained range
 :::
 
-Refinements such as NTK-aware scaling and YaRN rescale different RoPE frequencies by different amounts, preserving fine local detail. A short fine-tune on long documents then adapts the model. Test long-context ability with realistic tasks, not only "needle in a haystack" retrieval — models often use the middle of long contexts less reliably than the beginning and end.` },
+Refinements such as NTK-aware scaling and YaRN rescale different RoPE frequencies by different amounts, preserving fine local detail. A short fine-tune on long documents then adapts the model. Test long-context ability with realistic tasks, not only "needle in a haystack" retrieval: models often use the middle of long contexts less reliably than the beginning and end.` },
       { type: 'text', title: "Local, global and sparse attention patterns", md: `Not every token needs to see every other token. Restricting which keys each query attends to cuts both the compute and the KV cache:
 
 | Pattern | Each token attends to | Used in |
@@ -1452,7 +1452,7 @@ The trade-off: full attention can retrieve any earlier token exactly; compressed
 - FlashAttention-style kernels: always, for training and inference.
 - Sliding windows, paging and prefix caching for serving many long requests.
 - Context extension when an existing model must handle longer inputs than it was trained on.`,
-    pitfalls: `- Assuming a model uses its whole advertised context equally well — test on realistic long tasks.
+    pitfalls: `- Assuming a model uses its whole advertised context equally well: test on realistic long tasks.
 - Sending enormous prompts when retrieval (RAG) would be cheaper and more accurate.
 - Applying RoPE scaling without a short long-context fine-tune.
 - Forgetting that cost and latency grow quickly with prompt length.
@@ -1559,7 +1559,7 @@ def attended_pairs(T, W):
     return int(sliding_window_mask(T, W).sum())
 `,
         hints: ['Build index grids with `np.arange(T)[:, None]` and `np.arange(T)[None, :]`.', 'Combine the two conditions with `&`.'],
-        explain: `With a window, each row has at most W True entries, so the total work is about T·W instead of T²/2 — linear in the sequence length. Information still flows further than W through stacked layers.`,
+        explain: `With a window, each row has at most W True entries, so the total work is about T·W instead of T²/2: linear in the sequence length. Information still flows further than W through stacked layers.`,
         tests: [
           { call: 'sliding_window_mask(4, 2)', expect: 'np.array([[True, False, False, False], [True, True, False, False], [False, True, True, False], [False, False, True, True]])' },
           { call: '[kv_cache_len(0, 4096), kv_cache_len(10000, 4096)]', expect: '[1, 4096]' },
@@ -1569,10 +1569,10 @@ def attended_pairs(T, W):
       }
     ],
     refs: [
-      { title: 'Dao et al. — FlashAttention: Fast and Memory-Efficient Exact Attention', url: 'https://arxiv.org/abs/2205.14135' },
-      { title: 'Chen et al. — Extending Context Window of LLMs via Positional Interpolation', url: 'https://arxiv.org/abs/2306.15595' },
-      { title: 'Kwon et al. — Efficient Memory Management for LLM Serving with PagedAttention', url: 'https://arxiv.org/abs/2309.06180' },
-      { title: 'Gu & Dao — Mamba: Linear-Time Sequence Modeling with Selective State Spaces', url: 'https://arxiv.org/abs/2312.00752' }
+      { title: 'Dao et al., FlashAttention: Fast and Memory-Efficient Exact Attention', url: 'https://arxiv.org/abs/2205.14135' },
+      { title: 'Chen et al., Extending Context Window of LLMs via Positional Interpolation', url: 'https://arxiv.org/abs/2306.15595' },
+      { title: 'Kwon et al., Efficient Memory Management for LLM Serving with PagedAttention', url: 'https://arxiv.org/abs/2309.06180' },
+      { title: 'Gu & Dao, Mamba: Linear-Time Sequence Modeling with Selective State Spaces', url: 'https://arxiv.org/abs/2312.00752' }
     ]
   },
 
@@ -1581,7 +1581,7 @@ def attended_pairs(T, W):
     id: 'mixture-of-experts', branch: 'llm', title: 'Mixture of Experts (MoE)', short: 'Mixture of Experts', level: 3, minutes: 35, prereqs: ['transformer-block', 'pretraining'],
     tags: ['mixture of experts', 'moe', 'router', 'top-k gating', 'sparse model', 'load balancing', 'capacity factor', 'expert parallelism', 'active parameters'],
     summary: 'How models grow to hundreds of billions of parameters while spending the compute of a much smaller model: replacing the feed-forward layer with many expert networks and a router that sends each token to only a few, plus load balancing, capacity limits and the memory and serving trade-offs.',
-    why: `Scaling laws say bigger models are better, but every parameter used for a token costs compute. **Mixture of Experts** decouples the two: total parameters — the model's capacity to store knowledge — grow with the number of experts, while the compute per token depends only on the few experts each token visits. Many frontier and open models use MoE, so "total versus active parameters" is essential vocabulary for reading model cards and planning hardware.`,
+    why: `Scaling laws say bigger models are better, but every parameter used for a token costs compute. **Mixture of Experts** decouples the two: total parameters (the model's capacity to store knowledge) grow with the number of experts, while the compute per token depends only on the few experts each token visits. Many frontier and open models use MoE, so "total versus active parameters" is essential vocabulary for reading model cards and planning hardware.`,
     objectives: [
       'Describe an MoE layer: experts, router, top-k gating and the weighted combination',
       'Distinguish total from active parameters and compute their compute and memory implications',
@@ -1589,7 +1589,7 @@ def attended_pairs(T, W):
       'Weigh MoE\'s benefits against its memory, communication and training challenges'
     ],
     sections: [
-      { type: 'text', title: 'Experts and a router', md: `In an MoE transformer, the feed-forward network of (some) blocks is replaced by **E expert** feed-forward networks plus a small **router** — a single linear layer that scores the experts for each token. Only the top-k experts run for that token, and their outputs are mixed with gate weights:
+      { type: 'text', title: 'Experts and a router', md: `In an MoE transformer, the feed-forward network of (some) blocks is replaced by **E expert** feed-forward networks plus a small **router**: a single linear layer that scores the experts for each token. Only the top-k experts run for that token, and their outputs are mixed with gate weights:
 
 $$ g = softmax( top_k( x W_r ) )          y = Σ_{e ∈ top-k} g_e · FFN_e(x) $$
 :::where
@@ -1656,7 +1656,7 @@ P_e — the average router probability assigned to expert e
 The loss reaches its minimum of 1 when both are uniform (1/E for every expert).
 :::
 
-Experts also have a **capacity**: each can process at most C × (tokens × k / E) tokens per batch (C is the capacity factor, e.g. 1.25). Overflowing tokens are dropped from that layer and simply pass through the residual connection. Newer models balance load without an auxiliary loss — for example by adjusting a per-expert bias in the router (DeepSeek-V3).` },
+Experts also have a **capacity**: each can process at most C × (tokens × k / E) tokens per batch (C is the capacity factor, e.g. 1.25). Overflowing tokens are dropped from that layer and simply pass through the residual connection. Newer models balance load without an auxiliary loss, for example by adjusting a per-expert bias in the router (DeepSeek-V3).` },
       { type: 'code', title: "Measuring load balance", code: `import numpy as np
 rng = np.random.default_rng(0)
 E, tokens = 8, 10_000
@@ -1681,7 +1681,7 @@ print("the loss rises as routing collapses:", losses["collapsing"] > 2 * losses[
 - Fast inference relative to total size.
 
 **Challenges**
-- All experts must be in memory — MoE needs as much GPU memory as a dense model of its total size.
+- All experts must be in memory: MoE needs as much GPU memory as a dense model of its total size.
 - **Expert parallelism** spreads experts over GPUs and needs all-to-all communication to send tokens to their experts and back.
 - Training instabilities (router collapse, loss spikes) and trickier fine-tuning.
 - Small inference batches leave many experts idle, which reduces hardware efficiency.
@@ -1693,7 +1693,7 @@ For local use the rule of thumb: an MoE needs the *memory* of its total size but
 - Serving at scale on clusters with plenty of memory and fast interconnects.
 - Less attractive for memory-constrained local inference or tiny batch sizes.
 - Dense models remain simpler to train, fine-tune and deploy at small and medium scale.`,
-    pitfalls: `- Judging a model's cost by active parameters alone — memory follows total parameters.
+    pitfalls: `- Judging a model's cost by active parameters alone: memory follows total parameters.
 - Router collapse when load balancing is missing or too weak.
 - Capacity factors set too low (many dropped tokens) or too high (wasted compute).
 - Fine-tuning that destabilizes the router; many recipes freeze or regularize it.`,
@@ -1757,7 +1757,7 @@ def moe_forward(x, W_r, experts, k):
     return out
 `,
         hints: ['`np.take_along_axis(scores, idx, axis=1)` gathers the chosen scores.', 'The softmax runs over the k selected scores only.', 'Loop over tokens and their k experts, accumulating the weighted outputs.'],
-        explain: `Real implementations avoid the Python loop: they sort tokens by expert, run each expert once on its whole group of tokens (a batched matrix multiply), and scatter the results back — which is where all-to-all communication comes in when experts live on different GPUs.`,
+        explain: `Real implementations avoid the Python loop: they sort tokens by expert, run each expert once on its whole group of tokens (a batched matrix multiply), and scatter the results back, which is where all-to-all communication comes in when experts live on different GPUs.`,
         tests: [
           { call: 'route(np.array([[1.0, 0.0]]), np.array([[3.0, 1.0, 2.0], [0.0, 0.0, 0.0]]), 2)', expect: '(np.array([[0, 2]]), np.exp([[3.0, 2.0]]) / np.exp([[3.0, 2.0]]).sum())' },
           { name: 'k = 1 picks one expert with gate 1', setup: 'experts = [lambda v: v * 0, lambda v: v * 10, lambda v: v + 1]\nW_r = np.array([[0.0, 5.0, 1.0], [0.0, 0.0, 9.0]])', call: 'moe_forward(np.array([[1.0, 0.0], [0.0, 1.0]]), W_r, experts, 1)', expect: 'np.array([[10.0, 0.0], [1.0, 2.0]])' },
@@ -1811,10 +1811,10 @@ def moe_params(shared, per_expert, n_experts, k):
       }
     ],
     refs: [
-      { title: 'Shazeer et al. — Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer', url: 'https://arxiv.org/abs/1701.06538' },
-      { title: 'Fedus et al. — Switch Transformers', url: 'https://arxiv.org/abs/2101.03961' },
-      { title: 'Jiang et al. — Mixtral of Experts', url: 'https://arxiv.org/abs/2401.04088' },
-      { title: 'DeepSeek-AI — DeepSeek-V3 Technical Report', url: 'https://arxiv.org/abs/2412.19437' }
+      { title: 'Shazeer et al., Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer', url: 'https://arxiv.org/abs/1701.06538' },
+      { title: 'Fedus et al., Switch Transformers', url: 'https://arxiv.org/abs/2101.03961' },
+      { title: 'Jiang et al., Mixtral of Experts', url: 'https://arxiv.org/abs/2401.04088' },
+      { title: 'DeepSeek-AI, DeepSeek-V3 Technical Report', url: 'https://arxiv.org/abs/2412.19437' }
     ]
   }
   ]);

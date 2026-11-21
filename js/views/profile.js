@@ -6,7 +6,7 @@
   function codeBundle() {
     const s = MLA.store.state; const P = MLA.progress; const L = [];
     const bar = '# ' + '='.repeat(72);
-    L.push('# ML Atlas — all my code (exported ' + new Date().toISOString().slice(0, 16).replace('T', ' ') + ')');
+    L.push('# ML Atlas: all my code (exported ' + new Date().toISOString().slice(0, 16).replace('T', ' ') + ')');
     L.push('# Practice problems (your latest draft, plus your last accepted solution if it differs), then playground files.');
     L.push('# This file is for reading/keeping. To move progress between devices use "Export progress" instead.');
     L.push('');
@@ -14,7 +14,7 @@
       const c = P.concept(id);
       for (const p of c.problems) {
         const st = s.problems[p.id]; if (!st || (st.draft == null && !st.accepted)) continue;
-        L.push(bar, '# Problem: ' + p.title + '  [' + p.difficulty + ']  —  concept: ' + c.title, '# Status: ' + (st.solved ? 'solved' + (st.assisted ? ' (with solution)' : '') : 'in progress') + '   id: ' + p.id, bar);
+        L.push(bar, '# Problem: ' + p.title + '  [' + p.difficulty + ']  ·  concept: ' + c.title, '# Status: ' + (st.solved ? 'solved' + (st.assisted ? ' (with solution)' : '') : 'in progress') + '   id: ' + p.id, bar);
         L.push((st.draft != null ? st.draft : st.accepted.code).replace(/\s+$/, ''), '');
         if (st.accepted && st.draft != null && st.accepted.code !== st.draft) L.push('# --- last accepted solution ---', st.accepted.code.replace(/\s+$/, ''), '');
       }
@@ -42,7 +42,7 @@
       exportFile() {
         this.state.stats.exports = (this.state.stats.exports || 0) + 1; MLA.gamification.checkAchievements();
         const name = 'ml-atlas-progress-' + MLA.util.todayKey() + '.json';
-        if (MLA.util.download(name, MLA.store.exportJSON())) MLA.ui.toast('Saved ' + name + ' — import it on your other device.', 'success', 4500);
+        if (MLA.util.download(name, MLA.store.exportJSON())) MLA.ui.toast('Saved ' + name + ': import it on your other device.', 'success', 4500);
       },
       exportCode() { MLA.util.download('ml-atlas-code-' + MLA.util.todayKey() + '.py', codeBundle(), 'text/x-python'); },
       pickFile() { this.$refs.file.click(); },
@@ -56,7 +56,7 @@
       },
       async makeSync() {
         this.busy = true;
-        try { this.syncOut = await MLA.store.exportSyncCode(); this.state.stats.exports = (this.state.stats.exports || 0) + 1; const ok = await MLA.util.copyText(this.syncOut); MLA.ui.toast(ok ? 'Sync code copied (' + MLA.util.formatBytes(this.syncOut.length) + '). Paste it on your other device.' : 'Sync code created — select and copy it below.', 'success', 5000); }
+        try { this.syncOut = await MLA.store.exportSyncCode(); this.state.stats.exports = (this.state.stats.exports || 0) + 1; const ok = await MLA.util.copyText(this.syncOut); MLA.ui.toast(ok ? 'Sync code copied (' + MLA.util.formatBytes(this.syncOut.length) + '). Paste it on your other device.' : 'Sync code created: select and copy it below.', 'success', 5000); }
         catch (e) { MLA.ui.toast('Could not create a sync code: ' + e.message, 'error'); }
         this.busy = false;
       },
@@ -83,7 +83,7 @@
             <div class="center"><score-ring :value="level.pct" :size="110" color="var(--accent)" /><div class="small muted mt-sm">Level {{ level.level }} · {{ G.title(level.level) }}</div></div>
             <div style="flex:1;min-width:220px">
               <div class="field"><label>Display name</label><div class="inline-form"><input type="text" v-model="nameEdit" maxlength="24" @keyup.enter="saveName"/><button class="btn sm" @click="saveName">Save</button></div></div>
-              <div class="field"><label>Learning goal</label><select v-model="state.profile.goal"><option :value="null">No goal — follow the whole map</option><option v-for="t in tracks" :key="t.id" :value="t.id">{{ t.title }}</option><option v-if="state.profile.goal==='custom'" value="custom">{{ P.track('custom').title }}</option></select></div>
+              <div class="field"><label>Learning goal</label><select v-model="state.profile.goal"><option :value="null">No goal: follow the whole map</option><option v-for="t in tracks" :key="t.id" :value="t.id">{{ t.title }}</option><option v-if="state.profile.goal==='custom'" value="custom">{{ P.track('custom').title }}</option></select></div>
               <div class="small"><div class="row between"><span class="muted">XP</span><b>{{ state.xp.toLocaleString() }}</b></div><div class="row between"><span class="muted">Concepts completed</span><b>{{ overall.conceptsDone }} / {{ overall.concepts }}</b></div><div class="row between"><span class="muted">Problems solved</span><b>{{ overall.solved }} / {{ overall.problems }}</b></div><div class="row between"><span class="muted">Best streak</span><b>{{ streak.best }} days</b></div></div>
             </div>
           </div>
@@ -112,7 +112,7 @@
           </div>
         </div>
         <div class="row between mt"><div class="small muted">Just want your code? Download every draft, solution and playground file as one readable Python file.</div><button class="btn sm" @click="exportCode"><mla-icon name="file" :size="14"/> Export all my code (.py)</button></div>
-        <div v-if="storage.error" class="callout danger mt"><div class="callout-title">Storage problem</div>This browser refused to save ({{ storage.error }}). Your work is only in memory — export it now.</div>
+        <div v-if="storage.error" class="callout danger mt"><div class="callout-title">Storage problem</div>This browser refused to save ({{ storage.error }}). Your work is only in memory: export it now.</div>
       </div>
 
       <div class="grid cols-2">
@@ -125,8 +125,8 @@
         </div>
         <div class="card">
           <div class="card-title"><h3><mla-icon name="cpu" :size="18"/> Python runtime</h3><span class="chip tiny"><span class="py-dot" :class="py.state"></span> {{ py.state }}</span></div>
-          <p class="small muted">Pyodide {{ MLA.python.VERSION }} — CPython 3.12 compiled to WebAssembly, running in a background worker. Loaded from cdn.jsdelivr.net on first use and cached for offline use. {{ py.message }}</p>
-          <div class="btn-row"><button class="btn sm" :disabled="py.ready || py.state==='loading'" @click="loadPy">{{ py.ready ? 'Loaded ✓' : 'Download now' }}</button><button class="btn sm ghost" @click="restartPy">Restart</button><button class="btn sm ghost" @click="go('/selftest')">Run self-test</button></div>
+          <p class="small muted">Pyodide {{ MLA.python.VERSION }}: CPython 3.12 compiled to WebAssembly, running in a background worker. Loaded from cdn.jsdelivr.net on first use and cached for offline use. {{ py.message }}</p>
+          <div class="btn-row"><button class="btn sm" :disabled="py.ready || py.state==='loading'" @click="loadPy">{{ py.ready ? 'Loaded' : 'Download now' }}</button><button class="btn sm ghost" @click="restartPy">Restart</button><button class="btn sm ghost" @click="go('/selftest')">Run self-test</button></div>
         </div>
       </div>
 
@@ -149,7 +149,7 @@
       shownSamples() { return this.only === 'fail' ? this.samples.filter(s => !s.ok) : this.samples; }
     },
     methods: {
-      firstFail(res) { if (!res.ok) return res.kind + ': ' + res.message; const r = res.result; if (r.error) return r.error.message; const t = r.tests.find(x => !x.passed); return t ? t.name + ' — got ' + t.got + ' expected ' + t.expected + (t.error ? ' — ' + t.error.message : '') : ''; },
+      firstFail(res) { if (!res.ok) return res.kind + ': ' + res.message; const r = res.result; if (r.error) return r.error.message; const t = r.tests.find(x => !x.passed); return t ? t.name + ': got ' + t.got + ' expected ' + t.expected + (t.error ? ': ' + t.error.message : '') : ''; },
       async runProblems() {
         this.running = true; this.rows = []; this.done = 0; this.total = this.problems.length;
         for (const p of this.problems) {
@@ -173,7 +173,7 @@
           if (r.ok && r.result && r.result.value) out += String.fromCharCode(10) + r.result.value;
           // A "predict first" question names output text that confirms its answer: check it in this runtime too.
           const missing = r.ok && !r.result.error && it.s.predict ? [].concat(it.s.predict.expect || []).filter(e => !out.includes(e)) : [];
-          this.samples.push({ key: it.c.id + '#' + it.i, title: it.c.title + ' — ' + (it.s.title || 'sample'), ok: r.ok && !r.result.error && !missing.length, detail: r.ok ? (r.result.error ? r.result.error.message : missing.length ? 'the output no longer confirms the prediction answer: ' + missing.join(' | ') : '') : r.message });
+          this.samples.push({ key: it.c.id + '#' + it.i, title: it.c.title + ': ' + (it.s.title || 'sample'), ok: r.ok && !r.result.error && !missing.length, detail: r.ok ? (r.result.error ? r.result.error.message : missing.length ? 'the output no longer confirms the prediction answer: ' + missing.join(' | ') : '') : r.message });
           this.done++;
         }
         this.running = false;
@@ -187,12 +187,12 @@
       <div v-if="total" class="small">{{ done }} / {{ total }} {{ running ? '· running…' : '· finished' }} · <b :class="bad ? 'bad-text' : 'ok-text'">{{ bad }} problem(s) found</b></div>
       <div class="problem-table">
         <div v-for="r in shown" :key="r.p.id" class="pt-row" style="grid-template-columns: 26px 1fr auto">
-          <span>{{ r.solOk && r.starterFails ? '✅' : '❌' }}</span>
+          <span>{{ r.solOk && r.starterFails ? '✓' : '✗' }}</span>
           <span><b>{{ r.p.id }}</b> <span class="tiny dim">{{ r.ms }} ms</span><div v-if="!r.solOk" class="tiny bad-text">solution: {{ r.detail }}</div><div v-if="!r.starterFails" class="tiny bad-text">starter passes every test (tests too weak)</div></span>
           <a class="tiny" @click="MLA.router.navigate('/problem/'+r.p.id)">open</a>
         </div>
         <div v-for="s in shownSamples" :key="s.key" class="pt-row" style="grid-template-columns: 26px 1fr">
-          <span>{{ s.ok ? '✅' : '❌' }}</span><span><b>{{ s.title }}</b><div v-if="!s.ok" class="tiny bad-text">{{ s.detail }}</div></span>
+          <span>{{ s.ok ? '✓' : '✗' }}</span><span><b>{{ s.title }}</b><div v-if="!s.ok" class="tiny bad-text">{{ s.detail }}</div></span>
         </div>
       </div>
     </div>`

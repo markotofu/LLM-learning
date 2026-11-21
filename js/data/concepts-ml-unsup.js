@@ -8,7 +8,7 @@
     id: 'svm', branch: 'ml', title: 'Support Vector Machines', short: 'Support Vector Machines', level: 2, minutes: 35, prereqs: ['logistic-regression', 'regularization'],
     tags: ['svm', 'margin', 'hinge loss', 'kernel trick', 'rbf'],
     summary: 'Classify with the widest possible margin: support vectors, the hinge loss, the C trade-off, and the kernel trick for curved boundaries.',
-    why: `Before deep learning took over, support vector machines were the go-to classifier for text, images and bioinformatics — and they are still excellent for small-to-medium datasets with many features. SVMs introduce two ideas you will meet again and again: **maximising a margin** (robustness through confidence) and the **kernel trick** (working implicitly in a richer feature space via similarities). The hinge loss is also a close cousin of the losses used to train ranking and embedding models.`,
+    why: `Before deep learning took over, support vector machines were the go-to classifier for text, images and bioinformatics, and they are still excellent for small-to-medium datasets with many features. SVMs introduce two ideas you will meet again and again: **maximising a margin** (robustness through confidence) and the **kernel trick** (working implicitly in a richer feature space via similarities). The hinge loss is also a close cousin of the losses used to train ranking and embedding models.`,
     objectives: [
       'Explain the maximum-margin idea and what support vectors are',
       'Write the soft-margin SVM objective with hinge loss and L2 regularization',
@@ -16,9 +16,9 @@
       'Describe the kernel trick and when an RBF kernel helps'
     ],
     sections: [
-      { type: 'text', title: 'The widest street', md: `When two classes are linearly separable, infinitely many lines separate them. Which is best? An SVM chooses the line with the **largest margin** — the widest "street" between the classes, with the boundary down the middle.
+      { type: 'text', title: 'The widest street', md: `When two classes are linearly separable, infinitely many lines separate them. Which is best? An SVM chooses the line with the **largest margin**: the widest "street" between the classes, with the boundary down the middle.
 
-Intuition: a boundary that passes far from all training points is robust — small perturbations of the inputs won't flip predictions — and tends to generalize better.
+Intuition: a boundary that passes far from all training points is robust (small perturbations of the inputs won't flip predictions) and tends to generalize better.
 
 Only the points on the edges of the street determine it: the **support vectors**. Move any other point (without crossing the street) and the boundary doesn't change. That makes SVMs memory-efficient at prediction time.` },
       { type: 'text', title: 'Soft margins and the hinge loss', md: `Real data overlaps, so we allow some points inside the street or on the wrong side, at a price. With labels y ∈ {−1, +1} and score s = w·x + b, the **soft-margin SVM** minimises
@@ -64,13 +64,13 @@ print("margin width 2/||w|| =", round(2 / np.linalg.norm(w), 3))
 print("points on or inside the margin (support vectors):", int(np.sum(margins <= 1.0001)))
 ` },
       { type: 'check', question: { type: 'mcq', q: 'For a correctly classified point with y·s = 2.5, what is its hinge loss?', options: ['2.5', '1', '0', '−1.5'], answer: 2, explain: 'max(0, 1 − 2.5) = 0. Points beyond the margin contribute nothing.' } },
-      { type: 'text', title: 'The kernel trick', md: `What if no straight line separates the classes — say, one class forms a ring around the other? Mapping the data into a higher-dimensional space (add x₁², x₂², x₁x₂…) can make it linearly separable there. But explicit feature maps get huge.
+      { type: 'text', title: 'The kernel trick', md: `What if no straight line separates the classes, say, one class forms a ring around the other? Mapping the data into a higher-dimensional space (add x₁², x₂², x₁x₂…) can make it linearly separable there. But explicit feature maps get huge.
 
 The SVM's solution only ever needs **dot products between examples**. A **kernel** k(a, b) computes the dot product in a rich feature space *without* building that space:
 - **Polynomial kernel** (a·b + c)^d.
-- **RBF (Gaussian) kernel** exp(−γ‖a − b‖²) — a similarity that is 1 for identical points and decays with distance; it corresponds to an *infinite*-dimensional feature space.
+- **RBF (Gaussian) kernel** exp(−γ‖a − b‖²): a similarity that is 1 for identical points and decays with distance; it corresponds to an *infinite*-dimensional feature space.
 
-With an RBF kernel the decision function becomes a weighted sum of similarities to the support vectors — a smooth, flexible boundary. Hyperparameters: C and γ (large γ = very local, wiggly boundary).
+With an RBF kernel the decision function becomes a weighted sum of similarities to the support vectors: a smooth, flexible boundary. Hyperparameters: C and γ (large γ = very local, wiggly boundary).
 
 The cost: kernel SVMs scale roughly quadratically with the number of examples, so they suit datasets up to tens of thousands of points.` },
       { type: 'code', title: "Polynomial features versus the polynomial kernel", md: `Two ways to give a linear SVM curved boundaries on the two-moons data. The first adds all polynomial features up to degree 3 explicitly and fits a linear SVM on them. The second uses the **polynomial kernel**, which computes the same kind of decision function *without ever creating those features*.`, code: `import warnings
@@ -82,6 +82,9 @@ from sklearn.svm import LinearSVC, SVC
 warnings.filterwarnings("ignore")
 
 X, y = make_moons(n_samples=300, noise=0.3, random_state=0)
+print(f"X: {X.shape[0]} points with 2 coordinates; y says which moon (0 or 1). The first 3:")
+for row, label in zip(X[:3], y[:3]):
+    print("  ", row.round(2).tolist(), "->", label)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 explicit = make_pipeline(PolynomialFeatures(degree=3), StandardScaler(), LinearSVC(C=10, max_iter=100_000))
@@ -211,9 +214,9 @@ In scikit-learn this is \`SGDClassifier(loss="hinge")\`, which updates the model
     when: `- Small/medium datasets with many features (text classification with TF-IDF features is a classic fit for linear SVMs).
 - When a robust, max-margin linear classifier is wanted, or a smooth non-linear boundary via the RBF kernel on modest data sizes.
 - Avoid kernel SVMs on very large datasets (training cost), and when you need calibrated probabilities (use logistic regression, or calibrate).
-- Always **scale features** — the margin and RBF distances depend on them.`,
+- Always **scale features**: the margin and RBF distances depend on them.`,
     pitfalls: `- Forgetting feature scaling.
-- Poorly chosen C and γ — tune them together on a log grid with cross-validation.
+- Poorly chosen C and γ: tune them together on a log grid with cross-validation.
 - Expecting probabilities: \`SVC(probability=True)\` fits an extra calibration model and is slower.
 - Labels must be ±1 in the math (libraries handle 0/1 for you).`,
     takeaways: [
@@ -225,7 +228,7 @@ In scikit-learn this is \`SGDClassifier(loss="hinge")\`, which updates the model
     ],
     quiz: [
       { type: 'mcq', q: 'What are support vectors?', options: ['All training points', 'The training points on or inside the margin that determine the boundary', 'The weight vectors', 'Points far from the boundary'], answer: 1, explain: 'Only margin and violating points affect the solution.' },
-      { type: 'fill', q: 'A point has label y = −1 and score s = 0.4. What is its hinge loss?', answer: ['1.4'], explain: 'max(0, 1 − (−1)(0.4)) = max(0, 1.4) = 1.4 — it is on the wrong side.' },
+      { type: 'fill', q: 'A point has label y = −1 and score s = 0.4. What is its hinge loss?', answer: ['1.4'], explain: 'max(0, 1 − (−1)(0.4)) = max(0, 1.4) = 1.4: it is on the wrong side.' },
       { type: 'mcq', q: 'What does the kernel trick allow?', options: ['Training without labels', 'Computing dot products in a high-dimensional feature space without constructing it', 'Removing the need for regularization', 'Making SVMs output probabilities'], answer: 1, explain: 'Kernels give similarities that equal dot products of implicit feature maps.' },
       { type: 'mcq', q: 'How does SVM\'s hinge loss differ from logistic regression\'s log loss?', options: ['Hinge loss is zero for points beyond the margin; log loss is never exactly zero', 'They are identical', 'Hinge loss is used for regression', 'Log loss ignores misclassified points'], answer: 0, explain: 'Log loss keeps pushing even confident correct points; hinge loss is satisfied once the margin is met.' },
       { type: 'tf', q: 'A wider margin corresponds to a smaller ‖w‖.', answer: true, explain: 'The margin width is 2/‖w‖.' },
@@ -323,7 +326,7 @@ def train_linear_svm(X, y, lam=0.01, lr=0.1, epochs=200):
     return w, float(b)
 `,
         hints: ['Only the margin violators (y·s < 1) contribute to the data part of the gradient.', 'The regularization part 2·lam·w applies every step.'],
-        explain: `The hinge loss has a kink at y·s = 1, so we use a *subgradient*: −y·x for violators and 0 otherwise. Points comfortably beyond the margin stop influencing training — the algorithmic version of "only support vectors matter".`,
+        explain: `The hinge loss has a kink at y·s = 1, so we use a *subgradient*: −y·x for violators and 0 otherwise. Points comfortably beyond the margin stop influencing training: the algorithmic version of "only support vectors matter".`,
         tests: [
           { name: 'exact trajectory (3 epochs)', call: 'train_linear_svm([[2.0, 0.0], [0.0, -1.0], [-2.0, 1.0]], [1, -1, -1], lam=0.1, lr=0.5, epochs=3)' },
           { name: 'separates easy data', setup: 'rng = np.random.default_rng(1)\nX = np.vstack([rng.normal([-3, -3], 1.0, (40, 2)), rng.normal([3, 3], 1.0, (40, 2))])\ny = np.array([-1] * 40 + [1] * 40)', code: 'w, b = train_linear_svm(X, y)\nacc = np.mean(np.sign(X @ w + b) == y)\nassert acc >= 0.97, "accuracy %.3f too low" % acc', hidden: true },
@@ -332,10 +335,10 @@ def train_linear_svm(X, y, lam=0.01, lr=0.1, epochs=200):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Support Vector Machines', url: 'https://scikit-learn.org/stable/modules/svm.html' },
-      { title: "Stanford CS229 — Machine Learning lecture notes (SVMs and kernels)", url: "https://cs229.stanford.edu/main_notes.pdf" },
-      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" },
-      { title: "Aurélien Géron — Hands-On Machine Learning with Scikit-Learn, Keras and TensorFlow (book; code and notebooks)", url: "https://github.com/ageron/handson-ml3" }
+      { title: 'scikit-learn, Support Vector Machines', url: 'https://scikit-learn.org/stable/modules/svm.html' },
+      { title: "Stanford CS229, Machine Learning lecture notes (SVMs and kernels)", url: "https://cs229.stanford.edu/main_notes.pdf" },
+      { title: "Andreas Müller & Sarah Guido, Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" },
+      { title: "Aurélien Géron, Hands-On Machine Learning with Scikit-Learn, Keras and TensorFlow (book; code and notebooks)", url: "https://github.com/ageron/handson-ml3" }
     ]
   },
 
@@ -343,8 +346,8 @@ def train_linear_svm(X, y, lam=0.01, lr=0.1, epochs=200):
   {
     id: 'naive-bayes', branch: 'ml', title: 'Naive Bayes for Text Classification', short: 'Naive Bayes', level: 2, minutes: 35, prereqs: ['probability', 'supervised-learning'],
     tags: ['naive bayes', 'spam', 'text classification', 'laplace smoothing', 'bayes rule'],
-    summary: 'Bayes\' rule turned into a fast classifier: the "naive" independence assumption, word-count likelihoods, Laplace smoothing and log probabilities — the classic spam filter.',
-    why: `Naive Bayes filtered the world's spam for years, and it remains a strong, extremely fast baseline for text classification: it trains in one pass over the data, needs little data, and handles huge vocabularies. It is also the clearest example of a **generative** classifier — it models how each class generates its data — and it puts Bayes' rule, independence assumptions and log-probabilities to work in a few lines of code.`,
+    summary: 'Bayes\' rule turned into a fast classifier: the "naive" independence assumption, word-count likelihoods, Laplace smoothing and log probabilities (the classic spam filter).',
+    why: `Naive Bayes filtered the world's spam for years, and it remains a strong, extremely fast baseline for text classification: it trains in one pass over the data, needs little data, and handles huge vocabularies. It is also the clearest example of a **generative** classifier (it models how each class generates its data) and it puts Bayes' rule, independence assumptions and log-probabilities to work in a few lines of code.`,
     objectives: [
       'Apply Bayes\' rule to classification: posterior ∝ likelihood × prior',
       'State the naive independence assumption and why it still works',
@@ -374,7 +377,7 @@ P(doc | c) — the **likelihood**: how probable this document is if it came from
 score(c) — proportional to P(c | doc), so the class with the highest score wins
 :::
 
-The hard part is P(doc | c) — there are astronomically many possible documents.` },
+The hard part is P(doc | c): there are astronomically many possible documents.` },
       { type: 'text', title: 'The naive assumption', md: `Naive Bayes assumes that, given the class, **each word occurs independently** of the others. Then the likelihood of a document is a product over its words:
 
 $$ P(doc | c) = Π_words P(word | c) $$
@@ -384,7 +387,7 @@ $$ P(doc | c) = Π_words P(word | c) $$
 P(word | c) — how likely that word is to appear in documents of class c
 :::
 
-This is obviously false ("New" and "York" are not independent!), yet the classifier works surprisingly well: we only need the *ranking* of classes to be right, not calibrated probabilities, and the errors from the assumption often affect all classes similarly.
+This is obviously false ("New" and "York" are not independent), yet the classifier works surprisingly well: we only need the *ranking* of classes to be right, not calibrated probabilities, and the errors from the assumption often affect all classes similarly.
 
 **Multinomial Naive Bayes** estimates each P(word | c) from counts:
 
@@ -397,7 +400,7 @@ total words in c — the total number of words in all training documents of clas
 α — "alpha": the smoothing amount added to every count
 :::
 
-Setting α = 1 is called **Laplace (add-one) smoothing**. Without smoothing, a word never seen in spam during training would get probability 0 — and a single unseen word would make P(doc | spam) = 0 no matter what else the email says.` },
+Setting α = 1 is called **Laplace (add-one) smoothing**. Without smoothing, a word never seen in spam during training would get probability 0, and a single unseen word would make P(doc | spam) = 0 no matter what else the email says.` },
       { type: 'text', title: 'Log-probabilities', md: `Multiplying hundreds of small probabilities underflows to 0.0. So we work in logs, and products become sums:
 
 $$ log score(c) = log P(c) + Σ_words log P(word | c) $$
@@ -477,6 +480,9 @@ model = BernoulliNB(alpha=1.0).fit(X, y)
 print("P(class | [1, 0, 1, 1]) =", model.predict_proba([[1, 0, 1, 1]]).round(3))
 
 X, y = load_breast_cancer(return_X_y=True)
+print(f"X: {X.shape[0]} tumours x {X.shape[1]} measurements. The first 3 rows (first 5 columns) and labels (0 = malignant, 1 = benign):")
+for row, label in zip(X[:3], y[:3]):
+    print("  ", row[:5].round(2).tolist(), "->", label)
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
 gnb = GaussianNB().fit(X_train, y_train)
 print(f"Gaussian naive Bayes on breast cancer: test accuracy {gnb.score(X_test, y_test):.3f}")
@@ -521,15 +527,15 @@ print("duplicating features makes it more confident:", bool(p3 > p1 > 0.5))`, af
     ],
     when: `- **Text classification baselines** (spam, sentiment, topic, language detection), especially with little data or a need for speed.
 - When features are counts or presence indicators.
-- Streaming or online settings — updating counts is trivial.
+- Streaming or online settings: updating counts is trivial.
 - Prefer logistic regression or fine-tuned transformers when accuracy matters more than speed, or when you need calibrated probabilities.`,
     pitfalls: `- Forgetting smoothing (zero probabilities).
 - Multiplying raw probabilities (underflow) instead of summing logs.
-- Trusting the output probabilities — they are typically over-confident because of the independence assumption.
+- Trusting the output probabilities: they are typically over-confident because of the independence assumption.
 - Strongly correlated features get "double counted".`,
     takeaways: [
       'Naive Bayes picks argmax_c P(c)·Π P(word | c).',
-      'The naive assumption: words are independent given the class — false, but effective.',
+      'The naive assumption: words are independent given the class (false, but effective).',
       'Laplace smoothing: (count + α) / (total + α|V|) prevents zero probabilities.',
       'Sum log-probabilities to avoid underflow.',
       'Fast, data-efficient, and a strong text baseline.'
@@ -550,10 +556,10 @@ print("duplicating features makes it more confident:", bool(p3 > p1 > 0.5))`, af
         prompt: `Implement a \`MultinomialNB\` text classifier. Tokenize every document with \`doc.lower().split()\`.
 
 **fit(docs, labels, alpha=1.0)** sets:
-- \`classes_\` — sorted list of distinct labels;
-- \`vocab_\` — sorted list of distinct training tokens;
-- \`log_prior_\` — NumPy array, log(number of docs of the class / number of docs), in \`classes_\` order;
-- \`log_likelihood_\` — NumPy array of shape (n_classes, |V|): log((count of word in class + α) / (total words in class + α·|V|)), columns in \`vocab_\` order.
+- \`classes_\`: sorted list of distinct labels;
+- \`vocab_\`: sorted list of distinct training tokens;
+- \`log_prior_\`: NumPy array, log(number of docs of the class / number of docs), in \`classes_\` order;
+- \`log_likelihood_\`: NumPy array of shape (n_classes, |V|): log((count of word in class + α) / (total words in class + α·|V|)), columns in \`vocab_\` order.
 
 **predict(docs)** → a list of labels: for each document, the class maximising log_prior + Σ log_likelihood over its tokens (repeated tokens count each time, unknown tokens are skipped). Ties → the earlier class in \`classes_\`.`,
         starter: `
@@ -602,7 +608,7 @@ class MultinomialNB:
         return out
 `,
         hints: ['Build a word → column index dict from the sorted vocabulary.', 'Fill a (n_classes, |V|) count matrix in one pass over the documents.', 'In predict, start from log_prior_ and add a column of log_likelihood_ for every known token.'],
-        explain: `Training is just counting — one pass, no iterations — which is why Naive Bayes is so fast. Keeping a (classes × vocabulary) matrix of log-probabilities makes prediction a sum of columns. \`np.argmax\` returns the first maximum, giving the required tie-breaking.`,
+        explain: `Training is just counting (one pass, no iterations) which is why Naive Bayes is so fast. Keeping a (classes × vocabulary) matrix of log-probabilities makes prediction a sum of columns. \`np.argmax\` returns the first maximum, giving the required tie-breaking.`,
         tests: [
           { name: 'log priors', setup: 'docs = ["win money", "win prize", "meeting notes"]\nlabels = ["spam", "spam", "ham"]', call: 'MultinomialNB().fit(docs, labels).log_prior_', expect: 'np.log(np.array([1 / 3, 2 / 3]))' },
           { name: 'predictions', setup: 'docs = ["win money now", "cheap money offer", "win a cheap prize now", "meeting at noon", "lunch money tomorrow", "project meeting notes"]\nlabels = ["spam", "spam", "spam", "ham", "ham", "ham"]', call: 'MultinomialNB().fit(docs, labels).predict(["win cheap money", "meeting tomorrow at noon", "totally unknown words"])', expect: '["spam", "ham", "ham"]' },
@@ -653,7 +659,7 @@ def doc_log_odds(log_prior, log_likelihood, vocab, doc):
     return total
 `,
         hints: ['Log-odds of a word: subtract its two log-likelihoods.', 'Python\'s `sorted` is stable, so sorting indices by −odds keeps vocabulary order on ties.', 'Start the document total from the prior log-odds.'],
-        explain: `Because Naive Bayes multiplies independent word probabilities, its log-odds are a sum of per-word contributions — a built-in explanation of every decision. The same additive view underlies logistic regression, which learns the per-word weights directly instead of from counts.`,
+        explain: `Because Naive Bayes multiplies independent word probabilities, its log-odds are a sum of per-word contributions: a built-in explanation of every decision. The same additive view underlies logistic regression, which learns the per-word weights directly instead of from counts.`,
         tests: [
           { setup: 'L = np.log(np.array([[0.5, 0.25, 0.25], [0.1, 0.1, 0.8]])); V = ["meeting", "report", "prize"]', call: 'top_words(L, V, 2)', expect: '["prize", "report"]' },
           { setup: 'L = np.log(np.array([[0.5, 0.25, 0.25], [0.1, 0.1, 0.8]])); V = ["meeting", "report", "prize"]; P = np.log(np.array([0.5, 0.5]))', call: 'doc_log_odds(P, L, V, "Prize prize unknown")', expect: '2 * np.log(0.8 / 0.25)' },
@@ -663,9 +669,9 @@ def doc_log_odds(log_prior, log_likelihood, vocab, doc):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Naive Bayes', url: 'https://scikit-learn.org/stable/modules/naive_bayes.html' },
-      { title: 'Paul Graham — A Plan for Spam (2002)', url: 'http://www.paulgraham.com/spam.html' },
-      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
+      { title: 'scikit-learn, Naive Bayes', url: 'https://scikit-learn.org/stable/modules/naive_bayes.html' },
+      { title: 'Paul Graham, A Plan for Spam (2002)', url: 'http://www.paulgraham.com/spam.html' },
+      { title: "Andreas Müller & Sarah Guido, Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 
@@ -694,7 +700,7 @@ Clustering is **exploratory**: there is no single correct answer, and the result
 3. **Update**: move each centroid to the mean of the points assigned to it.
 4. Repeat 2–3 until the assignments stop changing.
 
-It minimises the **inertia** — the total squared distance from each point to its centroid:
+It minimises the **inertia**, the total squared distance from each point to its centroid:
 
 $$ inertia = Σᵢ ‖xᵢ − μ_{cluster(i)}‖² $$
 :::where
@@ -705,7 +711,7 @@ cluster(i) — the index of the cluster that point i is currently assigned to
 Σᵢ — add up over all the points
 :::
 
-Both steps can only decrease the inertia, so the algorithm always converges — but to a **local** minimum that depends on the starting centroids.` },
+Both steps can only decrease the inertia, so the algorithm always converges, but to a **local** minimum that depends on the starting centroids.` },
       { type: 'demo', title: 'Interactive: k-means step by step', md: `Step through assign/update; then try different random starts with k = 4 and compare the inertia.`, demo: 'kmeans' },
       { type: 'code', title: 'k-means in NumPy', code: `
 import numpy as np
@@ -726,14 +732,14 @@ def kmeans(X, k, seed, iters=100):
 for k in range(1, 7):
     best = min(kmeans(X, k, s)[2] for s in range(5))      # best of 5 random starts
     print(f"k={k}: inertia {best:8.1f}")
-`, after: `Inertia always falls as k grows (k = n gives inertia 0), so you can't pick k by minimising it. Look for the **elbow** where adding clusters stops helping much — here at k = 3.` },
+`, after: `Inertia always falls as k grows (k = n gives inertia 0), so you can't pick k by minimising it. Look for the **elbow** where adding clusters stops helping much: here at k = 3.` },
       { type: 'check', question: { type: 'mcq', q: 'Why do libraries run k-means several times with different initializations?', options: ['To use more CPU cores', 'Because k-means converges to a local minimum that depends on the starting centroids', 'To choose k automatically', 'Because one run never converges'], answer: 1, explain: 'Different starts can give different (worse or better) solutions; keep the run with the lowest inertia.' } },
-      { type: 'text', title: 'Initialization, choosing k, and limitations', md: `**k-means++ initialization** picks the first centroid at random, then each next one with probability proportional to its squared distance from the nearest existing centroid — spreading the starting points out. It's the default in scikit-learn and gives better, more consistent results.
+      { type: 'text', title: 'Initialization, choosing k, and limitations', md: `**k-means++ initialization** picks the first centroid at random, then each next one with probability proportional to its squared distance from the nearest existing centroid, spreading the starting points out. It's the default in scikit-learn and gives better, more consistent results.
 
 **Choosing k:**
-- **Elbow method** — plot inertia vs k, look for the bend.
-- **Silhouette score** — for each point compares the mean distance to its own cluster with the distance to the nearest other cluster (−1 to 1, higher is better).
-- **Domain needs** — sometimes the business needs exactly 5 segments.
+- **Elbow method**: plot inertia vs k, look for the bend.
+- **Silhouette score**: for each point compares the mean distance to its own cluster with the distance to the nearest other cluster (−1 to 1, higher is better).
+- **Domain needs**: sometimes the business needs exactly 5 segments.
 
 **Assumptions and limits:**
 - Clusters are roughly **spherical** and of similar size (it uses Euclidean distance to a mean).
@@ -799,7 +805,7 @@ s(i) — the silhouette of point i, from −1 (probably in the wrong cluster) to
       'k-means alternates two steps: assign to the nearest centroid, move centroids to the mean.',
       'It minimises inertia (within-cluster squared distance) and converges to a local minimum.',
       'Use k-means++ initialization and several restarts.',
-      'Choose k with the elbow method, silhouette scores or domain needs — not raw inertia.',
+      'Choose k with the elbow method, silhouette scores or domain needs, not raw inertia.',
       'Assumes spherical, similar-sized clusters; scale features.'
     ],
     quiz: [
@@ -860,7 +866,7 @@ def update(X, labels, C_old):
             C[j] = X[mask].mean(axis=0)
     return C
 `,
-        hints: ['Squared distances are enough for choosing the nearest centroid — no square root needed.', '`np.argmin` returns the first (lowest) index on ties.', 'Start from a copy of `C_old` so empty clusters keep their old centroid.'],
+        hints: ['Squared distances are enough for choosing the nearest centroid: no square root needed.', '`np.argmin` returns the first (lowest) index on ties.', 'Start from a copy of `C_old` so empty clusters keep their old centroid.'],
         explain: `Comparing squared distances avoids the square root without changing which centroid is nearest. Handling empty clusters matters in practice: with unlucky initialization a centroid can lose all its points, and dividing by zero would produce NaNs.`,
         tests: [
           { call: 'assign([[0, 0], [0, 1], [5, 5], [6, 5]], [[0, 0], [5, 5]])', expect: 'np.array([0, 0, 1, 1])' },
@@ -947,8 +953,8 @@ def kmeans(X, k, seed=0, max_iter=100):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Clustering', url: 'https://scikit-learn.org/stable/modules/clustering.html' },
-      { title: "Arthur & Vassilvitskii — k-means++: The Advantages of Careful Seeding", url: "https://theory.stanford.edu/~sergei/papers/kMeansPP-soda.pdf" }
+      { title: 'scikit-learn, Clustering', url: 'https://scikit-learn.org/stable/modules/clustering.html' },
+      { title: "Arthur & Vassilvitskii, k-means++: The Advantages of Careful Seeding", url: "https://theory.stanford.edu/~sergei/papers/kMeansPP-soda.pdf" }
     ]
   },
 
@@ -957,7 +963,7 @@ def kmeans(X, k, seed=0, max_iter=100):
     id: 'pca', branch: 'ml', title: 'Dimensionality Reduction with PCA', short: 'PCA', level: 2, minutes: 40, prereqs: ['statistics', 'numpy', 'eigen-svd'],
     tags: ['pca', 'svd', 'eigenvectors', 'explained variance', 'dimensionality reduction'],
     summary: 'Compress many correlated features into a few directions of maximum variance: the intuition, the SVD computation, explained variance, and how to use and misuse PCA.',
-    why: `Real datasets often have hundreds or thousands of features that are heavily correlated — pixels next to each other, survey questions that ask nearly the same thing, gene expression levels. **Principal Component Analysis** finds the few directions that capture most of the variation, letting you visualize high-dimensional data in 2-D, speed up and regularize downstream models, remove noise, and understand structure. It is also the cleanest introduction to the linear-algebra machinery (eigenvectors, SVD) behind embeddings and low-rank tricks like LoRA.`,
+    why: `Real datasets often have hundreds or thousands of features that are heavily correlated: pixels next to each other, survey questions that ask nearly the same thing, gene expression levels. **Principal Component Analysis** finds the few directions that capture most of the variation, letting you visualize high-dimensional data in 2-D, speed up and regularize downstream models, remove noise, and understand structure. It is also the cleanest introduction to the linear-algebra machinery (eigenvectors, SVD) behind embeddings and low-rank tricks like LoRA.`,
     objectives: [
       'Explain PCA as finding orthogonal directions of maximum variance',
       'Compute principal components with the SVD of the centred data',
@@ -969,7 +975,7 @@ def kmeans(X, k, seed=0, max_iter=100):
 
 1. the **first principal component (PC1)** points along the direction of **greatest variance**;
 2. **PC2** is perpendicular to PC1 and captures the most remaining variance;
-3. and so on — each component orthogonal to the previous ones.
+3. and so on: each component orthogonal to the previous ones.
 
 Keeping only the first k components gives the best k-dimensional linear approximation of the data (smallest squared reconstruction error). If two features are 95% redundant, one component captures almost everything both carried.` },
       { type: 'demo', title: 'Interactive: find the direction of greatest variance', demo: 'pca' },
@@ -991,7 +997,7 @@ X_c V_kᵀ — the projected data (the "scores"), an (n, k) matrix
 
 **Reconstruction**: map back with X̂ = scores · V_k + mean. The reconstruction error measures what was thrown away.
 
-Note: each component's sign is arbitrary — v and −v describe the same direction.` },
+Note: each component's sign is arbitrary (v and −v describe the same direction).` },
       { type: 'code', title: 'PCA with NumPy\'s SVD', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -1014,7 +1020,7 @@ X_rec = scores @ Vt[:1] + mean             # reconstruct back to 3 features
 print("reconstruction MSE with 1 component:", round(float(np.mean((X - X_rec) ** 2)), 4))
 print("original feature variance:          ", X.var(axis=0).round(3))
 ` },
-      { type: 'check', question: { type: 'mcq', q: 'Explained variance ratios are [0.72, 0.18, 0.06, 0.04]. How many components keep at least 90% of the variance?', options: ['1', '2', '3', '4'], answer: 1, explain: '0.72 + 0.18 = 0.90 — two components.' } },
+      { type: 'check', question: { type: 'mcq', q: 'Explained variance ratios are [0.72, 0.18, 0.06, 0.04]. How many components keep at least 90% of the variance?', options: ['1', '2', '3', '4'], answer: 1, explain: '0.72 + 0.18 = 0.90: two components.' } },
       { type: 'text', title: "Reading the components: scores, loadings and whitening", md: `After fitting, PCA gives you two things to look at:
 
 - **Scores** are the coordinates of each example along the components (\`pca.transform(X)\`). They are new, uncorrelated features, and a scatter plot of the first two scores is the classic way to look at high-dimensional data.
@@ -1037,6 +1043,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
 X, y = load_digits(return_X_y=True)                 # 1,797 images, 64 pixels each
+print(f"X: {X.shape[0]} images x {X.shape[1]} pixels (8 x 8 grey levels, 0 to 16). The first one, a {y[0]}:")
+for row in X[0].reshape(8, 8).astype(int):
+    print("  ", " ".join(f"{v:2d}" for v in row))
 X = X / 16.0                                        # pixel values from 0 to 1
 pca = PCA().fit(X)
 cumulative = np.cumsum(pca.explained_variance_ratio_)
@@ -1055,16 +1064,16 @@ for k in (2, 10, 21, 64):
       { type: 'chart', title: "Cumulative explained variance of the digit images", after: `The curve rises steeply and then flattens: the first 10 components keep 74% of the variance, 21 keep 90%, and the last 20 or so add almost nothing (some pixels at the image border are always blank). Reading the elbow of this curve is the usual way to choose k.`, chart: {"kind":"line","x":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64],"points":false,"series":[{"name":"share of the variance kept by the first k components","y":[0.1489,0.2851,0.403,0.4871,0.545,0.5941,0.6373,0.6739,0.7074,0.7382,0.762,0.7847,0.8029,0.8206,0.8353,0.8494,0.8626,0.8751,0.8852,0.8943,0.9032,0.9112,0.9188,0.9261,0.933,0.939,0.9447,0.9499,0.9548,0.9591,0.9628,0.9664,0.9697,0.973,0.9761,0.979,0.9816,0.9839,0.9861,0.9882,0.9901,0.9917,0.9932,0.9946,0.9958,0.9968,0.9978,0.9986,0.9991,0.9995,0.9998,0.9998,0.9999,0.9999,1,1,1,1,1,1,1,1,1,1]}],"xLabel":"number of components k (of 64)","yLabel":"cumulative explained variance","yMin":0,"yMax":1,"hlines":[{"y":0.9,"label":"90%"}],"vlines":[{"x":21,"label":"k = 21"}]} },
       { type: 'chart', title: "The digits projected onto the first two components", md: `Each dot is one 64-pixel image, placed by its scores on the first two components (four of the ten digits shown):`, after: `Even two directions, chosen without ever looking at the labels, separate the zeros, ones, fours and sevens into recognisable regions. Where clouds overlap, two components are not enough, which matches the low accuracy of the 2-component classifier above.`, chart: {"kind":"scatter","series":[{"name":"digit 0","x":[-0.079,0.701,0.402,0.015,0.383,0.314,0.246,0.645,0.394,-0.214,-0.079,0.535,0.478,0.126,0.223,0.505,0.376,0.268,0.176,0.674,0.666,0.357,0.925,0.707,0.009,0.497,0.353,0.197,0.04,0.364,-0.198,0.229,-0.039,0.07,0.124,0.215,0.033,0.074,0.155,-0.33,-0.05,0.284,0.469,-0.167,0.175,0.335,-0.338,0.136,-0.057,0.006,0.179,0.038,-0.22,0.008,-0.404,0.013,-0.39,-0.157,-0.311,0.228,0.107,-0.539,-0.108,-0.545,-0.184,0.195,-0.057,0.472,0.309,-0.004,0.481,-0.002,0.91,0.526,0.36,0.242,0.264,0.21,-0.204,-0.256,0.267,0.246,0.223,0.113,0.335,0.229,0.421,0.728,-0.321,-0.179],"y":[-1.33,-1.057,-1.217,-1.662,-0.994,-1.298,-1.305,-0.874,-1.256,-1.428,-1.488,-1.47,-1.318,-1.508,-1.346,-1.392,-1.302,-1.411,-1.517,-1.011,-1.341,-1.527,-1.018,-1.29,-1.568,-1.451,-1.175,-1.302,-1.301,-1.156,-1.186,-1.284,-1.553,-1.333,-1.295,-1.536,-1.125,-1.27,-1.504,-1.563,-1.559,-1.502,-1.062,-1.41,-1.658,-1.342,-1.635,-1.178,-1.491,-1.692,-1.402,-1.396,-1.5,-1.372,-1.144,-1.387,-1.448,-1.543,-1.824,-1.326,-1.182,-1.128,-1.261,-1.201,-1.541,-1.463,-0.72,-1.32,-1.209,-1.563,-1.401,-0.825,-0.588,-1.253,-1.113,-1.448,-1.413,-1.08,-1.232,-1.658,-1.129,-1.58,-1.472,-1.113,-1.08,-1.358,-1.401,-0.821,-1.328,-1.422]},{"name":"digit 1","x":[0.497,0.188,0.002,0.177,0.103,0.203,0.495,0.012,0.469,0.196,0.785,1.245,-0.049,-0.244,0.175,-0.139,-0.145,-0.12,0.129,0.45,0.09,0.067,-0.102,0.474,0.245,0.596,0.678,0.548,0.839,0.886,0.607,0.35,0.712,0.517,0.43,0.683,0.633,0.217,0.95,-0.379,0.157,0.281,-0.082,0.094,-0.016,-0.03,0.402,0.791,-0.021,0.088,0.082,0.142,-0.055,-0.014,0.101,0.463,0.748,0.605,0.756,0.516,0.31,0.559,0.027,0.495,-0.013,0.644,0.856,1.134,0.641,0.648,0.035,0.947,0.041,0.503,0.618,0.865,0.925,0.671,0.157,-0.157,0.262,0.775,0.471,-0.002,0.052,0.688,0.583,0.646,0.563,0.358],"y":[1.298,0.75,0.646,0.58,0.671,0.6,0.678,0.973,1.304,0.881,1.265,1.2,0.577,-0.239,0.454,0.157,0.213,-0.228,0.462,0.617,0.341,0.667,0.015,0.681,0.688,0.61,1.329,1.162,1.126,1.176,1.053,0.723,1.276,1.584,1.289,1.444,1.296,1.578,0.788,-0.152,0.654,0.529,0.214,0.487,0.21,0.505,0.796,0.755,0.663,0.701,0.365,0.227,0.353,0.25,0.403,0.227,0.176,0.183,0.069,0.332,0.296,0.11,0.581,0.721,0.391,1.631,1,0.696,1.388,1.221,1.513,0.886,1.644,0.933,1.056,1.155,1.096,1.39,1.674,1.278,1.642,0.592,1.184,0.189,1.344,0.8,1.231,1.581,1.407,1.627]},{"name":"digit 4","x":[1.457,1.529,1.096,1.565,1.761,1.215,1.138,1.411,1.423,1.052,1.172,1.044,1.532,1.151,1.401,1.228,1.584,1.274,1.319,1.641,1.553,1.3,1.391,1.097,1.419,1.307,1.653,1.462,1.723,1.806,1.623,1.651,1.9,1.293,1.842,1.756,1.803,1.677,1.111,1.374,1.381,1.199,1.411,1.264,1.084,1.331,1.299,0.934,1.349,1.27,1.188,1.21,0.74,1.395,1.198,1.546,0.917,1.053,1.159,1.239,0.979,1.525,0.776,0.941,1.454,1.698,1.067,1.148,0.983,1.397,1.574,1.22,0.485,0.935,1,1.463,0.863,1.764,1.863,1.609,1.81,1.686,1.804,1.581,1.588,1.605,1.704,1.797,1.847,1.652],"y":[-0.267,-0.166,-0.289,-0.048,-0.464,0.276,0.826,-0.043,-0.312,0.087,-0.168,0.757,-0.077,0.935,0.68,0.776,0.787,0.653,0.799,0.738,0.819,0.804,0.999,0.514,0.83,0.1,0.246,0.063,-0.258,-0.171,-0.161,0.26,-0.488,0.399,-0.586,0.044,-0.105,0.077,0.236,0.608,0.507,0.398,0.301,0.384,-0.066,0.279,0.446,0.211,0.256,0.116,0.593,0.402,0.478,0.083,0.176,0.158,0.572,0.405,0.128,0.223,-0.015,0.052,0.391,0.271,0.653,0.58,0.232,0.664,0.369,0.418,0.422,0.35,0.738,0.042,0.617,-0.16,0.708,-0.195,0.261,-0.155,-0.196,0.057,0.045,-0.853,-0.147,-0.273,0.035,0.023,-0.246,-0.594]},{"name":"digit 7","x":[-0.185,0.351,0.298,0.354,-0.223,0.431,0.298,0.084,0.408,-0.01,0.23,0.148,0.018,0.067,0.305,0.241,0.008,-0.139,0.048,0.557,0.071,0.357,-0.103,-0.013,0.345,-0.356,0.067,0.469,-0.264,0.085,-0.328,0.118,0.165,0.06,-0.123,0.273,0.009,0.324,0.16,0.211,0.391,0.45,-0.272,0.158,0.386,0.552,-0.33,-0.097,0.302,0.18,-0.087,-0.365,-0.451,-0.154,0.236,-0.27,-0.359,-0.087,-0.343,-0.131,0.168,-0.29,-0.185,-0.399,-0.099,0.133,0.251,0.913,0.499,0.258,0.035,0.236,0.611,0.483,0.357,0.794,-0.149,-0.146,-0.18,-0.427,-0.51,-0.196,0.175,-0.462,-0.328,0.05,-0.075,0,-0.145,-0.49],"y":[1.317,0.808,0.324,0.648,1.183,0.833,0.734,1.226,0.232,1.092,0.709,1.104,0.997,1.123,1.275,1.227,1.25,1.221,1.387,1.318,1.476,1.235,1.36,1.305,1.279,1.397,1.111,0.899,1.108,0.858,1.222,1.041,0.891,0.888,1.088,1.064,1,0.745,0.535,0.342,0.294,0.12,1.037,0.444,0.04,-0.043,0.883,0.143,0.389,0.145,0.701,1.154,1.389,1,1.038,1.262,1.04,1.207,1.308,1.306,1.21,1.276,1.092,1.389,1.104,1.182,0.804,0.452,0.523,1.013,1.065,0.846,0.619,0.912,0.781,0.514,1.242,1.013,1.331,1.424,1.13,1.066,1.029,1.288,1.169,1.085,1.329,1.162,1.202,1.26]}],"xLabel":"score on principal component 1","yLabel":"score on principal component 2"} },
       { type: 'text', title: 'Using PCA well', md: `**Good uses:**
-- **Visualization** — project to 2-D or 3-D to eyeball clusters and outliers.
-- **Preprocessing** — fewer, decorrelated features for models that struggle with many correlated ones; faster training.
-- **Denoising/compression** — drop low-variance components, which are often noise.
+- **Visualization**: project to 2-D or 3-D to eyeball clusters and outliers.
+- **Preprocessing**: fewer, decorrelated features for models that struggle with many correlated ones; faster training.
+- **Denoising/compression**: drop low-variance components, which are often noise.
 
 **Choosing k:** keep enough components for ~90–99% of the variance, look for an elbow in the explained-variance plot, or choose k by validation performance of the downstream model.
 
 **Limitations:**
-- **Linear** — curved structure (a "Swiss roll") needs non-linear methods: t-SNE or UMAP for visualization, autoencoders for learned compression.
-- **Variance ≠ importance** — the highest-variance direction may be irrelevant to your label (PCA is unsupervised).
-- **Scale-sensitive** — standardize unless features share units.
+- **Linear**: curved structure (a "Swiss roll") needs non-linear methods: t-SNE or UMAP for visualization, autoencoders for learned compression.
+- **Variance ≠ importance**: the highest-variance direction may be irrelevant to your label (PCA is unsupervised).
+- **Scale-sensitive**: standardize unless features share units.
 - **Fit on training data only**, like any preprocessing.
 
 :::real The low-rank idea everywhere
@@ -1103,7 +1112,7 @@ for k in (2, 10, 21, 64):
 
 1. Centre X: \`Xc = X - X.mean(axis=0)\`.
 2. \`U, S, Vt = np.linalg.svd(Xc, full_matrices=False)\`.
-3. \`components = Vt[:k]\` — then fix the arbitrary signs: **flip each component so that its entry with the largest absolute value is positive**.
+3. \`components = Vt[:k]\`: then fix the arbitrary signs: **flip each component so that its entry with the largest absolute value is positive**.
 4. \`projected = Xc @ components.T\` (shape (n, k)).
 5. \`ratio = S[:k] ** 2 / np.sum(S ** 2)\`.
 
@@ -1174,8 +1183,8 @@ def components_for_variance(ratios, threshold):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Decomposing signals in components (PCA)', url: 'https://scikit-learn.org/stable/modules/decomposition.html#pca' },
-      { title: 'Setosa — Principal Component Analysis explained visually', url: 'https://setosa.io/ev/principal-component-analysis/' }
+      { title: 'scikit-learn, Decomposing signals in components (PCA)', url: 'https://scikit-learn.org/stable/modules/decomposition.html#pca' },
+      { title: 'Setosa, Principal Component Analysis explained visually', url: 'https://setosa.io/ev/principal-component-analysis/' }
     ]
   },
 
@@ -1184,7 +1193,7 @@ def components_for_variance(ratios, threshold):
     id: 'sklearn-workflow', branch: 'ml', title: 'The scikit-learn Workflow: Pipelines & Model Selection', short: 'scikit-learn Workflow', level: 2, minutes: 35, prereqs: ['evaluation-metrics', 'cross-validation', 'feature-engineering'],
     tags: ['scikit-learn', 'pipeline', 'columntransformer', 'gridsearchcv', 'joblib'],
     summary: 'How classical ML is done in practice: the estimator API, leak-proof pipelines, cross-validation and grid search in a few lines, and saving models.',
-    why: `scikit-learn is the standard library for classical machine learning in Python, and its design — every model with \`fit\`, \`predict\` and \`transform\` — has been copied by countless other libraries. Its **Pipeline** object solves the data-leakage problem structurally: preprocessing is fitted inside each cross-validation fold automatically. Knowing this workflow turns everything you have learned so far into reliable, production-ready code.`,
+    why: `scikit-learn is the standard library for classical machine learning in Python, and its design (every model with \`fit\`, \`predict\` and \`transform\`) has been copied by countless other libraries. Its **Pipeline** object solves the data-leakage problem structurally: preprocessing is fitted inside each cross-validation fold automatically. Knowing this workflow turns everything you have learned so far into reliable, production-ready code.`,
     objectives: [
       'Use the estimator API: fit, predict, predict_proba, transform, score',
       'Build a Pipeline (and a ColumnTransformer for mixed column types)',
@@ -1219,9 +1228,9 @@ model.fit(X_train, y_train)      # fits the scaler on X_train, then the classifi
 model.predict(X_test)            # transforms X_test with the *training* statistics
 \`\`\`
 
-Pass the pipeline to \`cross_val_score\` or \`GridSearchCV\` and the scaler is re-fitted on each fold's training part — no leakage, by construction.
+Pass the pipeline to \`cross_val_score\` or \`GridSearchCV\` and the scaler is re-fitted on each fold's training part: no leakage, by construction.
 
-For tables with mixed types, a **ColumnTransformer** routes columns to different preprocessing: standardize numeric columns, one-hot encode categorical ones (with \`handle_unknown="ignore"\`), impute missing values — all inside the pipeline.` },
+For tables with mixed types, a **ColumnTransformer** routes columns to different preprocessing: standardize numeric columns, one-hot encode categorical ones (with \`handle_unknown="ignore"\`), impute missing values: all inside the pipeline.` },
       { type: 'code', title: "The leak you cannot see", md: `Here the features are **pure random noise**: 10,000 of them for 100 examples, and a random target. No model can predict anything. First, the classic mistake: select the 5% of features most correlated with the target using *all* the data, then cross-validate. Then the correct way: put the selection inside a pipeline, so it is redone on the training part of every fold.`, code: `import numpy as np
 from sklearn.feature_selection import SelectPercentile, f_regression
 from sklearn.linear_model import Ridge
@@ -1256,6 +1265,9 @@ from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 
 X, y = load_breast_cancer(return_X_y=True)
+print(f"X: {X.shape[0]} tumours x {X.shape[1]} measurements. The first 3 rows (first 5 columns) and labels (0 = malignant, 1 = benign):")
+for row, label in zip(X[:3], y[:3]):
+    print("  ", row[:5].round(2).tolist(), "->", label)
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=0)
 pipe = make_pipeline(StandardScaler(), PCA(n_components=5), LogisticRegression())
 print("steps:", [name for name, _ in pipe.steps])
@@ -1342,11 +1354,11 @@ model = joblib.load("model.joblib")          # same library versions recommended
 Set \`random_state\` everywhere randomness appears so results are reproducible.` },
       { type: 'text', title: 'Going further: mixed columns, tuning and saving models', md: `- **Mixed column types**: \`ColumnTransformer\` applies different preprocessing to numeric and categorical columns inside one pipeline (the tabular capstone uses it end to end).
 - **Tuning**: \`GridSearchCV\` and \`RandomizedSearchCV\` search pipeline parameters named step__parameter, such as logisticregression__C; successive-halving searches drop weak candidates early.
-- **Nested cross-validation**: an inner loop tunes, an outer loop estimates how well the whole tuning procedure generalizes — the honest number to report when there is no separate test set.
+- **Nested cross-validation**: an inner loop tunes, an outer loop estimates how well the whole tuning procedure generalizes (the honest number to report when there is no separate test set).
 - **Your own steps**: \`FunctionTransformer\`, or a small class with fit and transform, puts custom feature code inside the pipeline so it runs identically in training and in production.
 - **Saving**: \`joblib.dump(pipeline, "model.joblib")\` stores the fitted pipeline. Pickle-based files can run code when loaded, so only load files you trust, and record the library versions used.` }
     ],
-    when: `- Any classical ML project on tabular or text-feature data — the default toolbox.
+    when: `- Any classical ML project on tabular or text-feature data: the default toolbox.
 - Use pipelines always; ColumnTransformer for mixed column types.
 - Move to PyTorch/JAX for deep learning, and to XGBoost/LightGBM/CatBoost for maximum tabular accuracy (they offer scikit-learn-compatible APIs too).`,
     pitfalls: `- Preprocessing outside the pipeline (leakage in CV).
@@ -1374,7 +1386,7 @@ Set \`random_state\` everywhere randomness appears so results are reproducible.`
     problems: [
       {
         id: 'sklearn-pipeline', title: 'Build and Evaluate a Pipeline', difficulty: 'medium',
-        prompt: `This problem uses real **scikit-learn** (it downloads into the browser the first time — about 20 MB — then it's cached).
+        prompt: `This problem uses real **scikit-learn** (it downloads into the browser the first time (about 20 MB) then it's cached).
 
 Implement:
 1. \`make_model(C=1.0)\` → a \`Pipeline\` with two steps named **"scale"** (\`StandardScaler()\`) and **"clf"** (\`LogisticRegression(C=C, max_iter=5000)\`).
@@ -1420,8 +1432,8 @@ def best_C(X, y, Cs):
             best, best_score = C, score
     return best
 `,
-        hints: ['`Pipeline([("scale", StandardScaler()), ("clf", LogisticRegression(...))])`.', '`cross_val_score` returns an array of 5 scores — take `.mean()`.', 'Loop over Cs, keep the strictly best score so ties keep the first.'],
-        explain: `Because the scaler lives inside the pipeline, \`cross_val_score\` refits it on each fold's training portion — your CV estimate stays honest. \`best_C\` is a hand-written GridSearchCV; in practice you would call \`GridSearchCV(make_model(), {"clf__C": Cs}, cv=5)\`.`,
+        hints: ['`Pipeline([("scale", StandardScaler()), ("clf", LogisticRegression(...))])`.', '`cross_val_score` returns an array of 5 scores: take `.mean()`.', 'Loop over Cs, keep the strictly best score so ties keep the first.'],
+        explain: `Because the scaler lives inside the pipeline, \`cross_val_score\` refits it on each fold's training portion: your CV estimate stays honest. \`best_C\` is a hand-written GridSearchCV; in practice you would call \`GridSearchCV(make_model(), {"clf__C": Cs}, cv=5)\`.`,
         tests: [
           { name: 'pipeline structure', code: 'm = make_model(0.5)\nfrom sklearn.pipeline import Pipeline\nassert isinstance(m, Pipeline), "make_model must return a Pipeline"\nassert [name for name, _ in m.steps] == ["scale", "clf"]\nassert type(m.named_steps["scale"]).__name__ == "StandardScaler"\nassert m.named_steps["clf"].C == 0.5' },
           { name: 'CV accuracy on breast cancer', setup: 'from sklearn.datasets import load_breast_cancer\nX, y = load_breast_cancer(return_X_y=True)', call: 'cv_accuracy(make_model(1.0), X, y)', tol: 1e-9 },
@@ -1487,9 +1499,9 @@ def final_test_accuracy(X_train, y_train, X_test, y_test, Cs):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Getting started', url: 'https://scikit-learn.org/stable/getting_started.html' },
-      { title: 'scikit-learn — Pipelines and composite estimators', url: 'https://scikit-learn.org/stable/modules/compose.html' },
-      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
+      { title: 'scikit-learn, Getting started', url: 'https://scikit-learn.org/stable/getting_started.html' },
+      { title: 'scikit-learn, Pipelines and composite estimators', url: 'https://scikit-learn.org/stable/modules/compose.html' },
+      { title: "Andreas Müller & Sarah Guido, Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   }
   ]);

@@ -26,7 +26,7 @@
     },
     template: `
     <div class="stack">
-      <section-head title="Practice Problems" sub="Real Python, graded in your browser. Every problem belongs to a concept on the map — solve them in map order for a smooth difficulty curve.">
+      <section-head title="Practice Problems" sub="Real Python, graded in your browser. Every problem belongs to a concept on the map. Solve them in map order for a smooth difficulty curve.">
         <button class="btn" @click="random"><mla-icon name="dice" :size="16"/> Random unsolved</button>
       </section-head>
       <div class="grid cols-4">
@@ -35,8 +35,8 @@
         <div class="stat"><div class="label diff-text medium">Medium</div><div class="value">{{ counts.medium.solved }}<span class="dim small"> / {{ counts.medium.total }}</span></div><mla-progress :value="counts.medium.solved/Math.max(1,counts.medium.total)*100" thin color="var(--amber)" /></div>
         <div class="stat"><div class="label diff-text hard">Hard</div><div class="value">{{ counts.hard.solved }}<span class="dim small"> / {{ counts.hard.total }}</span></div><mla-progress :value="counts.hard.solved/Math.max(1,counts.hard.total)*100" thin color="var(--red)" /></div>
       </div>
-      <div v-if="potd" class="card clickable potd" @click="go('/problem/'+potd.problem.id)">
-        <div class="row between"><div><div class="tiny dim upper">Problem of the day {{ potd.done ? '· done ✓' : '· +30 bonus XP' }}</div><div style="font-weight:650;font-size:1.05rem">{{ potd.problem.title }}</div><div class="small muted">{{ P.concept(potd.problem.concept).title }}</div></div><diff-chip :d="potd.problem.difficulty"/></div>
+      <div v-if="potd" class="card clickable potd" role="link" tabindex="0" @click="go('/problem/'+potd.problem.id)" @keydown.enter="go('/problem/'+potd.problem.id)">
+        <div class="row between"><div><div class="tiny dim upper">Problem of the day {{ potd.done ? '· done' : '· +30 bonus XP' }}</div><div style="font-weight:650;font-size:1.05rem">{{ potd.problem.title }}</div><div class="small muted">{{ P.concept(potd.problem.concept).title }}</div></div><diff-chip :d="potd.problem.difficulty"/></div>
       </div>
       <div class="filters">
         <div class="map-search grow"><mla-icon name="search" :size="15"/><input type="search" v-model="q" placeholder="Search problems or concepts…" aria-label="Search problems"></div>

@@ -7,8 +7,8 @@
   {
     id: 'distillation-pruning', branch: 'dl', title: 'Knowledge Distillation & Pruning', short: 'Distillation & Pruning', level: 3, minutes: 40, prereqs: ['information-theory', 'training-loop'],
     tags: ['knowledge distillation', 'teacher', 'student', 'soft targets', 'temperature', 'kl divergence', 'dark knowledge', 'sequence-level distillation', 'synthetic data', 'pruning', 'magnitude pruning', 'structured pruning', 'n:m sparsity', 'lottery ticket hypothesis', 'model compression'],
-    summary: 'Making models smaller and cheaper while keeping what they know: training a small student on a large teacher\'s soft targets with temperature and KL divergence, distilling language models through generated data and token-level targets, and pruning — unstructured magnitude pruning, structured pruning, N:M sparsity and the lottery ticket hypothesis.',
-    why: `The best models are often too big, slow or expensive to deploy everywhere. **Knowledge distillation** trains a small "student" to imitate a large "teacher", and it is one of the main reasons small modern models are so capable — many are trained on the outputs of much larger ones. **Pruning** removes weights or whole neurons the network doesn't need. Together with quantization (see *Quantization & Efficient Inference*), these are the standard tools of **model compression**.`,
+    summary: 'Making models smaller and cheaper while keeping what they know: training a small student on a large teacher\'s soft targets with temperature and KL divergence, distilling language models through generated data and token-level targets, and pruning, unstructured magnitude pruning, structured pruning, N:M sparsity and the lottery ticket hypothesis.',
+    why: `The best models are often too big, slow or expensive to deploy everywhere. **Knowledge distillation** trains a small "student" to imitate a large "teacher", and it is one of the main reasons small modern models are so capable: many are trained on the outputs of much larger ones. **Pruning** removes weights or whole neurons the network doesn't need. Together with quantization (see *Quantization & Efficient Inference*), these are the standard tools of **model compression**.`,
     objectives: [
       'Explain soft targets, temperature and why they carry more information than hard labels',
       'Write the distillation loss and explain the T² factor',
@@ -16,7 +16,7 @@
       'Compare unstructured, structured and N:M pruning, and state the lottery ticket hypothesis'
     ],
     sections: [
-      { type: 'text', title: 'Big teacher, small student', md: `A trained teacher knows more than its top-1 predictions reveal. For a picture of a cat it might give 90% cat, 7.4% tiger, 2.5% dog and 0.01% car — telling us cats resemble tigers far more than cars. That similarity structure, sometimes called **dark knowledge**, is lost when we train only on the hard label "cat".
+      { type: 'text', title: 'Big teacher, small student', md: `A trained teacher knows more than its top-1 predictions reveal. For a picture of a cat it might give 90% cat, 7.4% tiger, 2.5% dog and 0.01% car: telling us cats resemble tigers far more than cars. That similarity structure, sometimes called **dark knowledge**, is lost when we train only on the hard label "cat".
 
 **Knowledge distillation** (Hinton et al., 2015) trains a student on the teacher's full probability distribution, usually softened with a **temperature** T so that the small probabilities become visible:
 
@@ -42,7 +42,7 @@ def softmax(z, T=1.0):
 for T in (1, 2, 5):
     p = softmax(logits, T)
     print(f"T = {T}: " + "   ".join(f"{c} {q:.3f}" for c, q in zip(classes, p)))
-` , after: `At T = 1 almost everything goes to "cat". Raising the temperature reveals the teacher's view that a tiger is the next most likely class and a car is out of the question — information a hard label throws away.` },
+` , after: `At T = 1 almost everything goes to "cat". Raising the temperature reveals the teacher's view that a tiger is the next most likely class and a car is out of the question: information a hard label throws away.` },
       { type: 'chart', title: "The teacher's probabilities at three temperatures", after: `At T = 1 the teacher's answer is almost a hard label: 90% cat, and the other classes are hard to see. Raising the temperature flattens the distribution without changing the order, so the student can see that tiger and dog are plausible confusions while car is not. That relative structure is the extra signal distillation passes on.`, chart: {"kind":"bar","x":["cat","tiger","dog","car"],"series":[{"name":"T = 1","y":[0.9013,0.074,0.0246,0.0001]},{"name":"T = 2","y":[0.6836,0.1958,0.113,0.0076]},{"name":"T = 5","y":[0.4428,0.2685,0.2155,0.0732]}],"xLabel":"class","yLabel":"probability","yMin":0,"yMax":1} },
       { type: 'code', title: 'Distillation beats hard labels when data is scarce', code: `
 import numpy as np
@@ -72,21 +72,21 @@ W_soft = train_student(softmax(X_train @ W_teacher, 2.0), T=2.0)    # trained on
 print(f"student trained on hard labels:   agreement with the teacher {accuracy(W_hard):.3f}")
 print(f"student trained on soft targets:  agreement with the teacher {accuracy(W_soft):.3f}")
 `, after: `With only 60 examples, each hard label says just "this one class". The soft targets transmit the teacher's full judgement about every example, so the student learns far more from the same inputs and agrees with the teacher almost everywhere.` },
-      { type: 'check', question: { type: 'mcq', q: 'Why use a temperature T > 1 for the teacher\'s targets?', options: ['To speed up training', 'To flatten the distribution so the small probabilities — the similarity structure — become visible', 'To make the teacher more confident', 'To reduce the number of classes'], answer: 1, explain: 'At T = 1 the secondary probabilities are often too tiny to matter.' } },
+      { type: 'check', question: { type: 'mcq', q: 'Why use a temperature T > 1 for the teacher\'s targets?', options: ['To speed up training', 'To flatten the distribution so the small probabilities (the similarity structure) become visible', 'To make the teacher more confident', 'To reduce the number of classes'], answer: 1, explain: 'At T = 1 the secondary probabilities are often too tiny to matter.' } },
       { type: 'text', title: 'Distilling language models', md: `For LLMs, distillation comes in several forms:
 
-- **Sequence-level distillation (synthetic data)**: the teacher generates responses — answers, explanations, reasoning traces — and the student is fine-tuned on them with ordinary next-token training. This is how many small instruction-following and reasoning models are made; for example, the DeepSeek-R1 release included smaller Qwen- and Llama-based models fine-tuned on the large model's reasoning traces.
-- **Token-level (logit) distillation**: at each position the student matches the teacher's whole next-token distribution with a KL loss — far more signal per token than the single correct token, but it requires access to the teacher's probabilities (and the same tokenizer, or an alignment between tokenizers).
+- **Sequence-level distillation (synthetic data)**: the teacher generates responses (answers, explanations, reasoning traces) and the student is fine-tuned on them with ordinary next-token training. This is how many small instruction-following and reasoning models are made; for example, the DeepSeek-R1 release included smaller Qwen- and Llama-based models fine-tuned on the large model's reasoning traces.
+- **Token-level (logit) distillation**: at each position the student matches the teacher's whole next-token distribution with a KL loss, far more signal per token than the single correct token, but it requires access to the teacher's probabilities (and the same tokenizer, or an alignment between tokenizers).
 - **On-policy distillation**: the student generates text and the teacher provides targets on the student's own outputs, which avoids the mismatch between training on the teacher's text and generating one's own.
 
 Data quality matters as much as quantity: filter generated data for correctness and diversity. Check model licences and terms of service before distilling from a model you don't own.` },
       { type: 'text', title: 'Pruning: removing what isn\'t needed', md: `Trained networks are over-parameterized: many weights can be removed with little loss.
 
 - **Unstructured (magnitude) pruning** zeroes the weights with the smallest absolute values. Easy and effective, but the zeros are scattered, so speed-ups need specialized sparse kernels; the main win is smaller compressed models.
-- **Structured pruning** removes whole neurons, channels, attention heads or layers. The remaining model is simply smaller and dense — real speed-ups on any hardware — but it usually needs fine-tuning to recover accuracy.
+- **Structured pruning** removes whole neurons, channels, attention heads or layers. The remaining model is simply smaller and dense (real speed-ups on any hardware) but it usually needs fine-tuning to recover accuracy.
 - **N:M sparsity** keeps N non-zero weights in every group of M (for example 2:4), a compromise that NVIDIA GPUs since the Ampere generation accelerate in hardware.
-- **Iterative pruning**: prune a little, fine-tune, repeat — much better than one big cut.
-- **The lottery ticket hypothesis** (Frankle & Carbin, 2019): dense networks contain sparse subnetworks that, trained in isolation from their original initialization, reach the full network's accuracy — suggesting that much of a big network's value lies in giving training many "tickets" to find a good one.` },
+- **Iterative pruning**: prune a little, fine-tune, repeat (much better than one big cut).
+- **The lottery ticket hypothesis** (Frankle & Carbin, 2019): dense networks contain sparse subnetworks that, trained in isolation from their original initialization, reach the full network's accuracy, suggesting that much of a big network's value lies in giving training many "tickets" to find a good one.` },
       { type: 'code', title: 'Magnitude pruning a trained network', timeoutSec: 90, code: `
 import numpy as np, warnings
 from sklearn.datasets import load_digits
@@ -94,6 +94,9 @@ from sklearn.neural_network import MLPClassifier
 warnings.filterwarnings("ignore")
 
 digits = load_digits()
+print(f"{len(digits.images)} images of 8 x 8 grey levels (0 to 16). The first one, a {digits.target[0]}:")
+for row in digits.images[0].astype(int):
+    print("  ", " ".join(f"{v:2d}" for v in row))
 X, y = digits.data / 16.0, digits.target
 rng = np.random.default_rng(0)
 order = rng.permutation(len(X))
@@ -108,7 +111,7 @@ for sparsity in (0.5, 0.8, 0.9, 0.95):
     mlp.coefs_ = [np.where(np.abs(w) >= threshold, w, 0.0) for w in original]
     print(f"{sparsity:.0%} of weights removed: test accuracy {mlp.score(X[test], y[test]):.3f}   (no retraining)")
 mlp.coefs_ = original
-`, after: `Half the weights can be removed without any loss at all. Beyond that, accuracy drops quickly when nothing is retrained — which is why practical pruning removes weights gradually and fine-tunes in between.` },
+`, after: `Half the weights can be removed without any loss at all. Beyond that, accuracy drops quickly when nothing is retrained, which is why practical pruning removes weights gradually and fine-tunes in between.` },
       { type: 'chart', title: "Accuracy as weights are removed (no retraining)", md: `The digit classifier above, pruned to increasing sparsity in two ways:`, after: `Removing the smallest weights first costs almost nothing up to about 70% sparsity, then accuracy falls steeply. Removing the same number of weights at random hurts much sooner, because it also hits the large weights that carry most of the computation. Magnitude really is a decent proxy for importance, and fine-tuning after each round of pruning would recover much of the remaining loss.`, chart: {"kind":"line","x":[0,30,50,60,70,80,85,90,93,95,97,98,99],"series":[{"name":"remove the smallest weights first","y":[0.984,0.986,0.984,0.976,0.97,0.883,0.686,0.471,0.392,0.336,0.237,0.229,0.131]},{"name":"remove weights at random (average of 10 tries)","y":[0.984,0.91,0.714,0.555,0.395,0.246,0.206,0.152,0.157,0.134,0.113,0.106,0.112]}],"xLabel":"share of weights set to zero (%)","yLabel":"test accuracy","yMin":0,"yMax":1,"hlines":[{"y":0.1,"label":"chance (10 classes)"}]} },
       { type: 'text', title: "Choosing a compression method", md: `| Method | What it changes | Typical gain | What it costs |
 | --- | --- | --- | --- |
@@ -126,9 +129,9 @@ The methods combine: a common recipe distils a smaller student, prunes it struct
 - Structured pruning when you need real speed-ups on ordinary hardware.`,
     pitfalls: `- Pruning in one big step without fine-tuning.
 - Expecting unstructured sparsity to speed up inference on standard dense kernels.
-- Distilling from a teacher's mistakes — filter generated data for correctness.
+- Distilling from a teacher's mistakes: filter generated data for correctness.
 - Forgetting the T² factor (or using wildly different temperatures) so the soft term is too weak.
-- Evaluating compressed models only on average accuracy — compression can hurt rare classes and long-tail inputs first.`,
+- Evaluating compressed models only on average accuracy: compression can hurt rare classes and long-tail inputs first.`,
     takeaways: [
       'Distillation trains a student on the teacher\'s soft probability distribution, which carries similarity information.',
       'Loss: α·CE(hard) + (1 − α)·T²·KL(teacher_T ‖ student_T).',
@@ -197,7 +200,7 @@ def kd_loss(student_logits, teacher_logits, labels, T, alpha):
         id: 'magnitude-pruning', title: 'Magnitude and N:M Pruning Masks', difficulty: 'medium',
         prompt: `Implement pruning masks (True = keep the weight):
 
-- \`prune_mask(W, sparsity)\` → remove the k = int(sparsity · W.size) weights with the smallest absolute values (ties: the earlier flat index is removed first — use a stable argsort of |W|.ravel()); return a boolean array shaped like W.
+- \`prune_mask(W, sparsity)\` → remove the k = int(sparsity · W.size) weights with the smallest absolute values (ties: the earlier flat index is removed first, use a stable argsort of |W|.ravel()); return a boolean array shaped like W.
 - \`nm_mask(W, n=2, m=4)\` → along the last axis, in each consecutive group of m weights keep the n with the largest absolute values (ties: keep the earlier one). The last axis length is a multiple of m.
 - \`sparsity(W)\` → the fraction of entries that are exactly zero.`,
         starter: `
@@ -248,10 +251,10 @@ def sparsity(W):
       }
     ],
     refs: [
-      { title: 'Hinton, Vinyals & Dean — Distilling the Knowledge in a Neural Network', url: 'https://arxiv.org/abs/1503.02531' },
-      { title: 'Frankle & Carbin — The Lottery Ticket Hypothesis', url: 'https://arxiv.org/abs/1803.03635' },
-      { title: 'Kim & Rush — Sequence-Level Knowledge Distillation', url: 'https://arxiv.org/abs/1606.07947' },
-      { title: 'Han et al. — Deep Compression: pruning, quantization and Huffman coding', url: 'https://arxiv.org/abs/1510.00149' }
+      { title: 'Hinton, Vinyals & Dean, Distilling the Knowledge in a Neural Network', url: 'https://arxiv.org/abs/1503.02531' },
+      { title: 'Frankle & Carbin, The Lottery Ticket Hypothesis', url: 'https://arxiv.org/abs/1803.03635' },
+      { title: 'Kim & Rush, Sequence-Level Knowledge Distillation', url: 'https://arxiv.org/abs/1606.07947' },
+      { title: 'Han et al., Deep Compression: pruning, quantization and Huffman coding', url: 'https://arxiv.org/abs/1510.00149' }
     ]
   },
 
@@ -260,7 +263,7 @@ def sparsity(W):
     id: 'self-supervised', branch: 'dl', title: 'Self-Supervised Representation Learning', short: 'Self-Supervised Learning', level: 3, minutes: 45, prereqs: ['vision-transformers', 'text-embeddings'],
     tags: ['self-supervised learning', 'representation learning', 'pretext task', 'contrastive learning', 'simclr', 'nt-xent', 'augmentations', 'byol', 'dino', 'collapse', 'masked autoencoder', 'mae', 'jepa', 'linear probe', 'foundation models'],
     summary: 'Learning useful representations without labels: pretext tasks, contrastive learning with SimCLR and the NT-Xent loss, why augmentations define what is learned, non-contrastive methods such as BYOL and DINO and the collapse problem they must avoid, masked autoencoders, and how self-supervised features are evaluated and used.',
-    why: `Labels are scarce and expensive; raw images, audio and text are nearly unlimited. **Self-supervised learning** creates its own training signal from the data — predict a hidden part from the rest, or recognize two views of the same thing — and the representations it learns transfer to many downstream tasks with few labels. It is the principle behind every foundation model: next-token prediction in GPT, masked tokens in BERT, image–text pairs in CLIP, and, for images and audio without text, methods such as SimCLR, DINO and masked autoencoders.`,
+    why: `Labels are scarce and expensive; raw images, audio and text are nearly unlimited. **Self-supervised learning** creates its own training signal from the data (predict a hidden part from the rest, or recognize two views of the same thing) and the representations it learns transfer to many downstream tasks with few labels. It is the principle behind every foundation model: next-token prediction in GPT, masked tokens in BERT, image–text pairs in CLIP, and, for images and audio without text, methods such as SimCLR, DINO and masked autoencoders.`,
     objectives: [
       'Explain pretext tasks and how self-supervised features are evaluated (linear probes, k-NN, fine-tuning)',
       'Implement the NT-Xent contrastive loss and explain the role of augmentations, negatives and temperature',
@@ -274,7 +277,7 @@ def sparsity(W):
 - **Recognize the same thing**: two augmented views of one image (SimCLR, DINO), or an image and its caption (CLIP).
 
 Nobody cares about the pretext task itself; the goal is the **representation** the network builds to solve it. It is evaluated by how useful it is downstream: a **linear probe** (freeze the network, train only a linear classifier on its features), k-nearest-neighbour classification on the features, or full fine-tuning on a small labelled set.` },
-      { type: 'text', title: 'Contrastive learning: SimCLR', md: `**SimCLR** takes a batch of N images and creates two random augmentations of each (random crops, colour jitter, blur). An encoder plus a small projection head maps all 2N views to vectors z. Each view must identify its partner among the other 2N − 1 views — the **NT-Xent** loss, a softmax cross-entropy over cosine similarities:
+      { type: 'text', title: 'Contrastive learning: SimCLR', md: `**SimCLR** takes a batch of N images and creates two random augmentations of each (random crops, colour jitter, blur). An encoder plus a small projection head maps all 2N views to vectors z. Each view must identify its partner among the other 2N − 1 views, the **NT-Xent** loss, a softmax cross-entropy over cosine similarities:
 
 $$ ℓ_i = −log [ exp( sim(z_i, z_p(i)) / τ ) / Σ_{k ≠ i} exp( sim(z_i, z_k) / τ ) ] $$
 :::where
@@ -322,7 +325,7 @@ m — the momentum, close to 1 (e.g. 0.996), so the teacher changes slowly and p
 - **DINO** additionally **centres** and **sharpens** the teacher's outputs so that no single dimension can dominate; DINOv2 features are among the strongest general-purpose image features.
 - **VICReg** adds explicit terms that keep the variance of every embedding dimension up and decorrelate the dimensions.
 
-Collapse can also be partial — **dimensional collapse**, where embeddings use only a few directions. Monitor the per-dimension standard deviation and the effective rank of a batch of embeddings during training.` },
+Collapse can also be partial: **dimensional collapse**, where embeddings use only a few directions. Monitor the per-dimension standard deviation and the effective rank of a batch of embeddings during training.` },
       { type: 'code', title: 'Detecting collapse', code: `
 import numpy as np
 rng = np.random.default_rng(1)
@@ -381,7 +384,7 @@ print(f"attention cost relative to the full image: {(len(visible) / num_patches)
 print(f"MLP cost relative to the full image:       {len(visible) / num_patches:.2f}")
 print("first 20 patches (1 = hidden):", mask[:20].astype(int))
 ` },
-      { type: 'text', title: 'Using self-supervised features', md: `- **Frozen features + a small head** — a linear probe or k-NN on the embeddings — for classification, retrieval and clustering with few labels.
+      { type: 'text', title: 'Using self-supervised features', md: `- **Frozen features + a small head**: a linear probe or k-NN on the embeddings, for classification, retrieval and clustering with few labels.
 - **Fine-tuning** the whole network on the downstream task, usually the most accurate option.
 - **Dense features** from methods such as DINO also support segmentation and correspondence without labels.
 - **Beyond images**: wav2vec 2.0 and HuBERT learn speech representations by predicting masked audio; the same ideas apply to video, time series, graphs and medical data.
@@ -398,12 +401,12 @@ Self-supervised pretraining followed by light supervision is now the default rec
 A recent line of work, **joint-embedding predictive architectures** (JEPA), predicts the *representation* of a masked region instead of its raw pixels, so the model need not spend capacity on unpredictable detail such as the exact texture of leaves. Whatever the method, the evaluation is the same: freeze the encoder and measure how well a linear probe or a k-nearest-neighbour classifier does on downstream tasks with few labels.` }
     ],
     when: `- Plenty of unlabelled data and few labels: pretrain (or start from a self-supervised checkpoint), then probe or fine-tune.
-- Domains poorly covered by public pretrained models — medical, satellite, industrial images, sensor data.
+- Domains poorly covered by public pretrained models: medical, satellite, industrial images, sensor data.
 - Retrieval, clustering and deduplication using embedding similarity.
 - Prefer existing checkpoints (DINOv2, MAE, CLIP) over pretraining from scratch unless your domain is very different.`,
     pitfalls: `- Augmentations that destroy the information you need downstream (e.g. colour jitter when colour is the label).
 - Small batches for contrastive methods, which then see too few negatives.
-- Undetected collapse — monitor embedding spread and effective rank.
+- Undetected collapse: monitor embedding spread and effective rank.
 - Judging features only by the pretext loss instead of downstream probes.
 - Comparing linear-probe numbers across papers with different evaluation protocols.`,
     takeaways: [
@@ -512,10 +515,10 @@ def effective_rank(Z):
       }
     ],
     refs: [
-      { title: 'Chen et al. — A Simple Framework for Contrastive Learning of Visual Representations (SimCLR)', url: 'https://arxiv.org/abs/2002.05709' },
-      { title: 'Grill et al. — Bootstrap Your Own Latent (BYOL)', url: 'https://arxiv.org/abs/2006.07733' },
-      { title: 'Caron et al. — Emerging Properties in Self-Supervised Vision Transformers (DINO)', url: 'https://arxiv.org/abs/2104.14294' },
-      { title: 'He et al. — Masked Autoencoders Are Scalable Vision Learners', url: 'https://arxiv.org/abs/2111.06377' }
+      { title: 'Chen et al., A Simple Framework for Contrastive Learning of Visual Representations (SimCLR)', url: 'https://arxiv.org/abs/2002.05709' },
+      { title: 'Grill et al., Bootstrap Your Own Latent (BYOL)', url: 'https://arxiv.org/abs/2006.07733' },
+      { title: 'Caron et al., Emerging Properties in Self-Supervised Vision Transformers (DINO)', url: 'https://arxiv.org/abs/2104.14294' },
+      { title: 'He et al., Masked Autoencoders Are Scalable Vision Learners', url: 'https://arxiv.org/abs/2111.06377' }
     ]
   },
 
@@ -524,7 +527,7 @@ def effective_rank(Z):
     id: 'diffusion-models', branch: 'spec', title: 'Diffusion Models & Flow Matching', short: 'Diffusion Models', level: 3, minutes: 50, prereqs: ['generative-models', 'transformer-block'],
     tags: ['diffusion models', 'ddpm', 'noise schedule', 'forward process', 'reverse process', 'denoising', 'noise prediction', 'score matching', 'ddim', 'classifier-free guidance', 'latent diffusion', 'dit', 'flow matching', 'rectified flow', 'fid'],
     summary: 'How modern image, video and audio generators work: gradually noising data in closed form, training a network to predict the noise, sampling by running the process backwards (DDPM and faster samplers), conditioning on text with classifier-free guidance, latent diffusion and diffusion transformers, flow matching, and how generated samples are evaluated.',
-    why: `Diffusion models produced the leap in image generation (Stable Diffusion, DALL·E, Imagen, Midjourney) and now drive video, audio, 3-D and even robot-control generation. The core idea is surprisingly simple — learn to remove a little noise — and it connects to concepts across this atlas: Gaussians, MSE regression, U-Nets, transformers, cross-attention and VAEs. **Flow matching**, a close relative, powers many of the newest models.`,
+    why: `Diffusion models produced the leap in image generation (Stable Diffusion, DALL·E, Imagen, Midjourney) and now drive video, audio, 3-D and even robot-control generation. The core idea is surprisingly simple (learn to remove a little noise) and it connects to concepts across this atlas: Gaussians, MSE regression, U-Nets, transformers, cross-attention and VAEs. **Flow matching**, a close relative, powers many of the newest models.`,
     objectives: [
       'Write the forward noising process and sample x_t directly from x_0',
       'Explain the noise-prediction training objective and its link to score matching',
@@ -534,7 +537,7 @@ def effective_rank(Z):
     sections: [
       { type: 'text', title: 'Generating by denoising', md: `A diffusion model learns to reverse a process that slowly destroys data with noise. Training: take a real image, add a random amount of noise, and teach a network to predict the noise that was added. Generation: start from pure noise and repeatedly ask the network to remove a little of it, until an image appears.
 
-Compared with GANs (see *Generative Models*), diffusion training is a plain, stable regression problem, and the many small steps make it easy to cover all modes of the data. The price is slow sampling — many network evaluations per sample — which much research has reduced.` },
+Compared with GANs (see *Generative Models*), diffusion training is a plain, stable regression problem, and the many small steps make it easy to cover all modes of the data. The price is slow sampling (many network evaluations per sample) which much research has reduced.` },
       { type: 'text', title: 'The forward process', md: `Over T steps (typically 1,000), a little Gaussian noise is added at each step according to a **noise schedule** β₁ … β_T. The useful fact is that any step can be reached in one jump:
 
 $$ x_t = √ᾱ_t · x₀ + √(1 − ᾱ_t) · ε          ε ~ N(0, I)          ᾱ_t = Π_{s=1}^{t} (1 − β_s) $$
@@ -572,7 +575,7 @@ $$ L = E_{x₀, t, ε} [ ‖ ε − ε_θ( x_t, t ) ‖² ] $$
 E — the average over training examples, steps and noise draws
 :::
 
-Predicting the noise is equivalent to predicting the clean image, x̂₀ = (x_t − √(1 − ᾱ_t) ε_θ) / √ᾱ_t, and to estimating the **score** ∇ log p_t(x_t) = −ε / √(1 − ᾱ_t), the direction towards more probable data — which is why diffusion models are also called **score-based models**. The network is usually a U-Net (see *Object Detection & Segmentation*) or a transformer.` },
+Predicting the noise is equivalent to predicting the clean image, x̂₀ = (x_t − √(1 − ᾱ_t) ε_θ) / √ᾱ_t, and to estimating the **score** ∇ log p_t(x_t) = −ε / √(1 − ᾱ_t), the direction towards more probable data, which is why diffusion models are also called **score-based models**. The network is usually a U-Net (see *Object Detection & Segmentation*) or a transformer.` },
       { type: 'text', title: 'Sampling: running the process backwards', md: `Start from x_T ~ N(0, I) and step down to t = 0. The DDPM sampler removes the predicted noise and adds back a little fresh noise:
 
 $$ x_{t−1} = ( x_t − β_t / √(1 − ᾱ_t) · ε_θ(x_t, t) ) / √(1 − β_t) + σ_t · z          z ~ N(0, I) $$
@@ -610,9 +613,9 @@ for t in range(T - 1, -1, -1):                            # the DDPM reverse pro
 nearest = ((x[:, None, :] - data[None]) ** 2).sum(-1).argmin(axis=1)
 print("share of samples at each training point:", [round(float(np.mean(nearest == i)), 3) for i in range(3)])
 print("largest distance from a sample to its nearest training point:", float(np.sqrt(((x - data[nearest]) ** 2).sum(1)).max()))
-`, after: `Starting from pure noise, the reverse process delivers samples spread evenly over the data. But notice what the *perfect* denoiser for a finite training set does: it reproduces the training points exactly. Real networks cannot represent this ideal function and generalize to new samples instead — and when a model has too much capacity for too little data, it does memorize, which is a real privacy and copyright concern.` },
+`, after: `Starting from pure noise, the reverse process delivers samples spread evenly over the data. But notice what the *perfect* denoiser for a finite training set does: it reproduces the training points exactly. Real networks cannot represent this ideal function and generalize to new samples instead, and when a model has too much capacity for too little data, it does memorize, which is a real privacy and copyright concern.` },
       { type: 'check', question: { type: 'mcq', q: 'What does the network learn to predict in standard DDPM training?', options: ['The class label', 'The noise ε that was added to produce x_t', 'The next pixel', 'The number of steps'], answer: 1, explain: 'An MSE regression onto the added noise.' } },
-      { type: 'text', title: 'Conditioning and classifier-free guidance', md: `Text-to-image models give the denoiser a condition c — usually text embeddings from a language or CLIP encoder, injected through **cross-attention** layers. **Classifier-free guidance** strengthens the condition at sampling time. During training the condition is dropped (replaced by an empty one) about 10% of the time, so one network learns both the conditional and the unconditional prediction; at sampling time they are extrapolated:
+      { type: 'text', title: 'Conditioning and classifier-free guidance', md: `Text-to-image models give the denoiser a condition c, usually text embeddings from a language or CLIP encoder, injected through **cross-attention** layers. **Classifier-free guidance** strengthens the condition at sampling time. During training the condition is dropped (replaced by an empty one) about 10% of the time, so one network learns both the conditional and the unconditional prediction; at sampling time they are extrapolated:
 
 $$ ε̃ = ε_θ(x_t, ∅) + w · ( ε_θ(x_t, c) − ε_θ(x_t, ∅) ) $$
 :::where
@@ -620,7 +623,7 @@ $$ ε̃ = ε_θ(x_t, ∅) + w · ( ε_θ(x_t, c) − ε_θ(x_t, ∅) ) $$
 ε_θ(x_t, ∅) — the prediction with the empty condition
 w — the guidance scale; w = 1 is plain conditional sampling, larger values (often 3–8) follow the prompt more closely at the cost of diversity
 :::` },
-      { type: 'text', title: 'Latent diffusion, DiT and flow matching', md: `- **Latent diffusion** (Stable Diffusion): first train an autoencoder (a VAE) that compresses images, e.g. 8× in each spatial dimension; run diffusion in that small latent space and decode at the end — far cheaper than diffusing raw pixels.
+      { type: 'text', title: 'Latent diffusion, DiT and flow matching', md: `- **Latent diffusion** (Stable Diffusion): first train an autoencoder (a VAE) that compresses images, e.g. 8× in each spatial dimension; run diffusion in that small latent space and decode at the end: far cheaper than diffusing raw pixels.
 - **Diffusion transformers (DiT)** replace the U-Net with a transformer over latent patches, scaling cleanly with compute; many recent image and video models use them.
 - **Flow matching / rectified flow** learns a velocity field that moves samples along (nearly) straight paths from noise to data, and generates by integrating an ordinary differential equation:
 
@@ -632,7 +635,7 @@ v_θ(x_t, t) — the network's predicted velocity at the point x_t
 ε − x₀ — the constant velocity of the straight path from data to noise, the regression target
 :::
 
-Straighter paths need fewer sampling steps; Stable Diffusion 3, for example, is a rectified-flow transformer. **Evaluation**: FID (the Fréchet distance between feature statistics of real and generated images), CLIP score for prompt alignment, and — still essential — human preference studies.` },
+Straighter paths need fewer sampling steps; Stable Diffusion 3, for example, is a rectified-flow transformer. **Evaluation**: FID (the Fréchet distance between feature statistics of real and generated images), CLIP score for prompt alignment, and (still essential) human preference studies.` },
       { type: 'text', title: "Fewer sampling steps", md: `A thousand denoising steps per image is slow, because every step is a full pass of the network. Several ideas cut the number of steps:
 - **DDIM** samplers take large deterministic jumps along the same trajectory and need 20 to 50 steps instead of 1,000, without retraining.
 - **Higher-order solvers** (DPM-Solver and others) treat sampling as solving a differential equation and produce good images in 10 to 20 steps.
@@ -647,7 +650,7 @@ Each step costs one network evaluation, so the number of steps directly sets the
 - Start from pretrained latent diffusion or flow models and fine-tune (e.g. with LoRA) rather than training from scratch.`,
     pitfalls: `- Too few sampling steps with a sampler not designed for it (blurry or broken outputs).
 - Very high guidance scales: saturated, low-diversity images.
-- Memorizing training data when models are large relative to their data — check for near-duplicates of training images.
+- Memorizing training data when models are large relative to their data: check for near-duplicates of training images.
 - Judging quality by FID alone; it misses prompt faithfulness and many artefacts.
 - Ignoring licensing, consent and misuse (deepfakes); use provenance and watermarking where possible.`,
     takeaways: [
@@ -704,7 +707,7 @@ def predict_x0(xt, t, eps_hat, alpha_bar):
     return (np.asarray(xt, dtype=float) - np.sqrt(1 - a) * np.asarray(eps_hat, dtype=float)) / np.sqrt(a)
 `,
         hints: ['`np.cumprod` computes running products.', 'predict_x0 simply solves the q_sample formula for x0.'],
-        explain: `Because x_t is a known mix of signal and noise, a perfect noise prediction gives back the exact clean input — the relationship every diffusion sampler relies on.`,
+        explain: `Because x_t is a known mix of signal and noise, a perfect noise prediction gives back the exact clean input: the relationship every diffusion sampler relies on.`,
         tests: [
           { call: 'alpha_bars([0.1, 0.5])', expect: 'np.array([0.9, 0.45])' },
           { call: 'q_sample(np.array([1.0, -1.0]), 0, np.array([0.5, 0.5]), np.array([0.64]))', expect: 'np.array([0.8 + 0.3, -0.8 + 0.3])' },
@@ -758,11 +761,11 @@ def ddpm_step(xt, t, eps_hat, betas, z):
       }
     ],
     refs: [
-      { title: 'Ho, Jain & Abbeel — Denoising Diffusion Probabilistic Models', url: 'https://arxiv.org/abs/2006.11239' },
-      { title: 'Rombach et al. — High-Resolution Image Synthesis with Latent Diffusion Models', url: 'https://arxiv.org/abs/2112.10752' },
-      { title: 'Ho & Salimans — Classifier-Free Diffusion Guidance', url: 'https://arxiv.org/abs/2207.12598' },
-      { title: 'Lipman et al. — Flow Matching for Generative Modeling', url: 'https://arxiv.org/abs/2210.02747' },
-      { title: 'Weng — What are Diffusion Models?', url: 'https://lilianweng.github.io/posts/2021-07-11-diffusion-models/' }
+      { title: 'Ho, Jain & Abbeel, Denoising Diffusion Probabilistic Models', url: 'https://arxiv.org/abs/2006.11239' },
+      { title: 'Rombach et al., High-Resolution Image Synthesis with Latent Diffusion Models', url: 'https://arxiv.org/abs/2112.10752' },
+      { title: 'Ho & Salimans, Classifier-Free Diffusion Guidance', url: 'https://arxiv.org/abs/2207.12598' },
+      { title: 'Lipman et al., Flow Matching for Generative Modeling', url: 'https://arxiv.org/abs/2210.02747' },
+      { title: 'Weng, What are Diffusion Models?', url: 'https://lilianweng.github.io/posts/2021-07-11-diffusion-models/' }
     ]
   },
 
@@ -770,8 +773,8 @@ def ddpm_step(xt, t, eps_hat, betas, z):
   {
     id: 'deep-rl', branch: 'spec', title: 'Deep Reinforcement Learning: DQN, Actor–Critic & PPO', short: 'Deep RL', level: 3, minutes: 50, prereqs: ['reinforcement-learning', 'mlp'],
     tags: ['deep reinforcement learning', 'dqn', 'experience replay', 'target network', 'double dqn', 'policy gradient', 'reinforce', 'baseline', 'advantage', 'actor-critic', 'gae', 'ppo', 'clipped objective', 'entropy bonus', 'model-based rl', 'offline rl'],
-    summary: 'Reinforcement learning with neural networks: why function approximation is unstable, DQN with experience replay and target networks (and Double DQN against overestimation), the policy-gradient theorem with baselines and advantages, actor–critic methods with generalized advantage estimation, and PPO\'s clipped objective — the algorithm behind RLHF — plus a map of the wider landscape.',
-    why: `Tabular Q-learning works for gridworlds, but real problems — games from pixels, robots, chip placement, data-centre cooling, and fine-tuning language models — have far too many states for a table. **Deep RL** replaces the table with neural networks, which brings powerful generalization and notorious instability. The tricks that make it work (replay buffers, target networks, baselines, advantage estimates, clipped updates) are exactly the ones you need to understand RLHF and RL-trained reasoning models.`,
+    summary: 'Reinforcement learning with neural networks: why function approximation is unstable, DQN with experience replay and target networks (and Double DQN against overestimation), the policy-gradient theorem with baselines and advantages, actor–critic methods with generalized advantage estimation, and PPO\'s clipped objective (the algorithm behind RLHF) plus a map of the wider landscape.',
+    why: `Tabular Q-learning works for gridworlds, but real problems (games from pixels, robots, chip placement, data-centre cooling, and fine-tuning language models) have far too many states for a table. **Deep RL** replaces the table with neural networks, which brings generalization across states and notorious instability. The tricks that make it work (replay buffers, target networks, baselines, advantage estimates, clipped updates) are exactly the ones you need to understand RLHF and RL-trained reasoning models.`,
     objectives: [
       'Explain why RL with function approximation is unstable and how DQN\'s replay buffer and target network help',
       'Show why max-based targets overestimate values and how Double DQN fixes it',
@@ -779,7 +782,7 @@ def ddpm_step(xt, t, eps_hat, betas, z):
       'Explain PPO\'s clipped objective and connect it to RLHF and GRPO'
     ],
     sections: [
-      { type: 'text', title: 'From tables to function approximation', md: `In *Reinforcement Learning* you stored one Q-value per (state, action). With images as states there are astronomically many states, and most are never seen twice. A neural network Q_θ(s, a) **generalizes** across similar states — but RL training data is unlike supervised data:
+      { type: 'text', title: 'From tables to function approximation', md: `In *Reinforcement Learning* you stored one Q-value per (state, action). With images as states there are astronomically many states, and most are never seen twice. A neural network Q_θ(s, a) **generalizes** across similar states, but RL training data is unlike supervised data:
 
 - consecutive experiences are strongly **correlated**;
 - the **targets move**, because they are computed from the network being trained;
@@ -789,7 +792,7 @@ The combination of function approximation, bootstrapping (targets built from est
       { type: 'text', title: 'DQN: Q-learning with a neural network', md: `**Deep Q-Networks** (Mnih et al., 2015) learned to play Atari games from pixels with two stabilizers:
 
 - an **experience replay buffer** stores past transitions (s, a, r, s′, done); training samples random mini-batches from it, breaking correlations and reusing data;
-- a **target network** — a periodically updated copy of the Q-network — computes the targets, so they don't shift with every gradient step.
+- a **target network** (a periodically updated copy of the Q-network) computes the targets, so they don't shift with every gradient step.
 
 $$ y = r + γ · (1 − done) · max_{a′} Q_target(s′, a′)          L = ( y − Q_θ(s, a) )² $$
 :::where
@@ -800,7 +803,7 @@ Q_target — the slowly updated target network
 Q_θ — the network being trained
 :::
 
-Taking the max over *noisy* estimates is biased upwards: some action's error will be positive. **Double DQN** decouples the two roles — the online network chooses the action, the target network evaluates it: y = r + γ·Q_target(s′, argmax_a′ Q_θ(s′, a′)).` },
+Taking the max over *noisy* estimates is biased upwards: some action's error will be positive. **Double DQN** decouples the two roles, the online network chooses the action, the target network evaluates it: y = r + γ·Q_target(s′, argmax_a′ Q_θ(s′, a′)).` },
       { type: 'code', title: 'Why max-based targets overestimate', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -879,7 +882,7 @@ r_t(θ) — the probability ratio between the new and the old policy for the act
 min — takes the more pessimistic of the clipped and unclipped objectives
 :::
 
-The full loss adds a value-function loss for the critic and an **entropy bonus** that keeps exploring. PPO is robust and simple, which is why it became the default — including for **RLHF**, where the "environment" is a prompt, the action is a generated response, the reward comes from a reward model, and a KL penalty keeps the policy near the reference model (see *RLHF, DPO & Alignment*). **GRPO** (see *Reasoning Models*) drops the critic and computes advantages relative to a group of responses to the same prompt.` },
+The full loss adds a value-function loss for the critic and an **entropy bonus** that keeps exploring. PPO is robust and simple, which is why it became the default, including for **RLHF**, where the "environment" is a prompt, the action is a generated response, the reward comes from a reward model, and a KL penalty keeps the policy near the reference model (see *RLHF, DPO & Alignment*). **GRPO** (see *Reasoning Models*) drops the critic and computes advantages relative to a group of responses to the same prompt.` },
       { type: 'code', title: 'What the clipped objective does', code: `
 import numpy as np
 eps = 0.2
@@ -900,10 +903,10 @@ for adv in (+1.0, -1.0):
     when: `- Sequential decision problems where actions affect future states: control, robotics, games, resource allocation, recommendation sequences.
 - Fine-tuning generative models towards rewards that are easy to judge but hard to demonstrate (RLHF, RL from verifiable rewards).
 - When a simulator exists (cheap experience); offline RL when only logs exist.
-- Prefer simpler alternatives (supervised learning, bandits, planning) when they fit — deep RL is data-hungry and fragile.`,
+- Prefer simpler alternatives (supervised learning, bandits, planning) when they fit: deep RL is data-hungry and fragile.`,
     pitfalls: `- Tiny bugs (wrong done handling, unnormalized observations or advantages) that silently break learning.
 - Reward hacking: agents optimize what you measure, not what you meant.
-- Judging an algorithm on one random seed — results vary a lot between seeds.
+- Judging an algorithm on one random seed: results vary a lot between seeds.
 - Learning rates and clip ranges set too aggressively, causing policy collapse.
 - Forgetting that the value targets need (1 − done) at episode ends.`,
     takeaways: [
@@ -1026,10 +1029,10 @@ def double_dqn_targets(rewards, next_q_online, next_q_target, dones, gamma):
       }
     ],
     refs: [
-      { title: 'Mnih et al. — Human-level control through deep reinforcement learning (DQN)', url: 'https://www.nature.com/articles/nature14236' },
-      { title: 'Schulman et al. — Proximal Policy Optimization Algorithms', url: 'https://arxiv.org/abs/1707.06347' },
-      { title: 'Schulman et al. — High-Dimensional Continuous Control Using Generalized Advantage Estimation', url: 'https://arxiv.org/abs/1506.02438' },
-      { title: 'OpenAI — Spinning Up in Deep RL', url: 'https://spinningup.openai.com/' }
+      { title: 'Mnih et al., Human-level control through deep reinforcement learning (DQN)', url: 'https://www.nature.com/articles/nature14236' },
+      { title: 'Schulman et al., Proximal Policy Optimization Algorithms', url: 'https://arxiv.org/abs/1707.06347' },
+      { title: 'Schulman et al., High-Dimensional Continuous Control Using Generalized Advantage Estimation', url: 'https://arxiv.org/abs/1506.02438' },
+      { title: 'OpenAI, Spinning Up in Deep RL', url: 'https://spinningup.openai.com/' }
     ]
   },
 
@@ -1038,7 +1041,7 @@ def double_dqn_targets(rewards, next_q_online, next_q_target, dones, gamma):
     id: 'ml-security', branch: 'spec', title: 'Adversarial ML, Security & Privacy', short: 'ML Security & Privacy', level: 3, minutes: 45, prereqs: ['responsible-ai', 'backpropagation'],
     tags: ['adversarial examples', 'fgsm', 'pgd', 'adversarial training', 'robustness', 'data poisoning', 'backdoor', 'model extraction', 'membership inference', 'differential privacy', 'dp-sgd', 'federated learning', 'prompt injection', 'jailbreak', 'threat model'],
     summary: 'Attacks on machine-learning systems and how to defend against them: threat models, adversarial examples (FGSM, PGD) and adversarial training, data poisoning and backdoors, membership inference and training-data extraction, differential privacy with DP-SGD, federated learning, and the security of LLM applications against prompt injection and jailbreaks.',
-    why: `Models are software that learns from data — and both the software and the data can be attacked. Tiny, invisible changes can flip an image classifier's decision; a few poisoned training examples can plant a backdoor; a model can leak whether a person's record was in its training set; and an LLM agent can be hijacked by instructions hidden in a web page it reads. Anyone deploying ML needs to know these threats and the defences that actually work.`,
+    why: `Models are software that learns from data, and both the software and the data can be attacked. Tiny, invisible changes can flip an image classifier's decision; a few poisoned training examples can plant a backdoor; a model can leak whether a person's record was in its training set; and an LLM agent can be hijacked by instructions hidden in a web page it reads. Anyone deploying ML needs to know these threats and the defences that actually work.`,
     objectives: [
       'Describe threat models by attacker goal, knowledge and access',
       'Create adversarial examples with FGSM and explain why linear models in high dimensions are vulnerable',
@@ -1057,7 +1060,7 @@ def double_dqn_targets(rewards, next_q_online, next_q_target, dones, gamma):
 | Application | **prompt injection** | to make an LLM system follow the attacker's instructions |
 
 Also specify the attacker's **knowledge** (white-box: weights and gradients; black-box: only queries) and **access** (one query or millions; control over a few training examples or none). A defence is only meaningful against a stated threat model.` },
-      { type: 'text', title: 'Adversarial examples', md: `An adversarial example is an input changed slightly — often imperceptibly — so that the model gets it wrong. The **fast gradient sign method** takes one step that increases the loss as much as possible within a per-feature budget ε:
+      { type: 'text', title: 'Adversarial examples', md: `An adversarial example is an input changed slightly (often imperceptibly) so that the model gets it wrong. The **fast gradient sign method** takes one step that increases the loss as much as possible within a per-feature budget ε:
 
 $$ x′ = x + ε · sign( ∇ₓ L(f(x), y) ) $$
 :::where
@@ -1067,7 +1070,7 @@ sign — keeps only the direction (+1 or −1) of each component
 ε — "epsilon": the largest change allowed to any single feature (an L∞ budget)
 :::
 
-**PGD** repeats small FGSM steps, projecting back into the ε-ball after each, and is the standard strong attack. Why are models so fragile? Even for a linear score wᵀx, the change ε·sign(w) shifts the score by ε·‖w‖₁ — a sum over every input dimension. With thousands of pixels, many imperceptible changes add up to a large effect.` },
+**PGD** repeats small FGSM steps, projecting back into the ε-ball after each, and is the standard strong attack. Why are models so fragile? Even for a linear score wᵀx, the change ε·sign(w) shifts the score by ε·‖w‖₁: a sum over every input dimension. With thousands of pixels, many imperceptible changes add up to a large effect.` },
       { type: 'code', title: 'FGSM against a linear classifier', code: `
 import numpy as np, warnings
 from sklearn.datasets import load_digits
@@ -1075,6 +1078,9 @@ from sklearn.linear_model import LogisticRegression
 warnings.filterwarnings("ignore")
 
 digits = load_digits()
+print(f"{len(digits.images)} images of 8 x 8 grey levels (0 to 16). The first one, a {digits.target[0]}:")
+for row in digits.images[0].astype(int):
+    print("  ", " ".join(f"{v:2d}" for v in row))
 X, y = digits.data / 16.0, digits.target                      # pixel values scaled to [0, 1]
 keep = (y == 3) | (y == 8)                                     # a binary task: 3 versus 8
 X, y = X[keep], (y[keep] == 8).astype(int)
@@ -1092,15 +1098,15 @@ def fgsm(Xs, ys, eps):
 for eps in (0.0, 0.05, 0.1, 0.2):
     Xa = fgsm(X[test], y[test], eps)
     print(f"eps = {eps:.2f}: accuracy {clf.score(Xa, y[test]):.3f}   average pixel change {np.abs(Xa - X[test]).mean():.3f}")
-`, after: `The classifier is perfect on clean test digits, yet changing each pixel by at most 0.1 (on a 0–1 scale) pulls accuracy down to about 74%, and 0.2 to below 20% — worse than guessing.` },
+`, after: `The classifier is perfect on clean test digits, yet changing each pixel by at most 0.1 (on a 0–1 scale) pulls accuracy down to about 74%, and 0.2 to below 20%: worse than guessing.` },
       { type: 'chart', title: "Accuracy under adversarial and random perturbations of the same size", md: `A logistic-regression classifier telling handwritten 3s from 8s, with every pixel changed by at most ε:`, after: `Random changes of size ε barely matter: they mostly cancel out in the weighted sum. The same budget spent in the direction of the gradient's sign moves every pixel against the classifier at once, and accuracy falls from 100% to 67% at ε = 0.1 and to 9% at ε = 0.2, where random changes of the same size still leave it at 98%. Adversarial examples are not about large noise but about many small changes that all point the same way, which is why high-dimensional inputs are so vulnerable.`, chart: {"kind":"line","x":[0,0.02,0.05,0.1,0.15,0.2,0.3],"series":[{"name":"random ±ε noise on every pixel","y":[1,1,1,1,0.991,0.981,0.907]},{"name":"FGSM: ε in the worst direction","y":[1,1,0.935,0.673,0.355,0.093,0]}],"xLabel":"ε: maximum change per pixel (pixels range from 0 to 1)","yLabel":"accuracy (3 versus 8)","yMin":0,"yMax":1} },
-      { type: 'text', title: 'Defences against evasion', md: `- **Adversarial training** — train on adversarial examples generated on the fly (usually with PGD) — is the most reliable empirical defence, at the cost of extra compute and some clean accuracy.
+      { type: 'text', title: 'Defences against evasion', md: `- **Adversarial training**: train on adversarial examples generated on the fly (usually with PGD), is the most reliable empirical defence, at the cost of extra compute and some clean accuracy.
 - **Certified defences** such as randomized smoothing give provable guarantees within a radius.
 - **Input preprocessing** and "gradient masking" tricks have repeatedly been broken by adaptive attacks.
 - Evaluate robustness with **adaptive** attacks designed against the specific defence (and with standard suites such as AutoAttack), never only with the attack the defence was tuned for.` },
-      { type: 'text', title: 'Poisoning and backdoors', md: `If attackers can influence the training data, they can **poison** it: flip labels to degrade a model, or plant a **backdoor** — training examples with a small trigger (a pixel patch, a rare phrase) labelled with the attacker's target class. The model behaves normally until the trigger appears. Web-scale datasets are especially exposed: researchers showed it is practical to poison them, for example by buying expired domains that datasets still link to (Carlini et al., 2023).
+      { type: 'text', title: 'Poisoning and backdoors', md: `If attackers can influence the training data, they can **poison** it: flip labels to degrade a model, or plant a **backdoor**, training examples with a small trigger (a pixel patch, a rare phrase) labelled with the attacker's target class. The model behaves normally until the trigger appears. Web-scale datasets are especially exposed: researchers showed it is practical to poison them, for example by buying expired domains that datasets still link to (Carlini et al., 2023).
 
-Defences: data provenance and integrity checks (hashes of crawled content), deduplication and filtering, anomaly detection on training examples and on activations, robust training, and careful vetting of third-party models and datasets — a downloaded checkpoint can contain a backdoor, and pickle-based model files can execute code when loaded (prefer formats such as safetensors).` },
+Defences: data provenance and integrity checks (hashes of crawled content), deduplication and filtering, anomaly detection on training examples and on activations, robust training, and careful vetting of third-party models and datasets, a downloaded checkpoint can contain a backdoor, and pickle-based model files can execute code when loaded (prefer formats such as safetensors).` },
       { type: 'text', title: 'Privacy attacks and differential privacy', md: `Models can leak their training data:
 
 - **Membership inference**: was this record in the training set? Overfit models have noticeably lower loss on their training examples, which an attacker can threshold.
@@ -1120,7 +1126,7 @@ S — any set of possible outputs (trained models)
 
 **DP-SGD** achieves it for neural networks: compute each example's gradient, **clip** it to a maximum norm C (so no individual can have a large influence), add Gaussian noise with standard deviation σ·C to the sum, then average and update. A privacy accountant tracks the total ε spent over training. The price is lower accuracy, especially on rare groups.
 
-**Federated learning** trains across many devices that share model updates instead of raw data (FedAvg averages the clients' updates). It is not private on its own — updates can leak data — so it is combined with secure aggregation and DP.` },
+**Federated learning** trains across many devices that share model updates instead of raw data (FedAvg averages the clients' updates). It is not private on its own (updates can leak data) so it is combined with secure aggregation and DP.` },
       { type: 'code', title: 'Membership inference from loss values', code: `
 import numpy as np, warnings
 from sklearn.datasets import load_digits
@@ -1151,7 +1157,7 @@ for name, model in [("fully grown decision tree", DecisionTreeClassifier(random_
       { type: 'check', question: { type: 'tf', q: 'Federated learning on its own guarantees that no information about a user\'s data can leak.', answer: false, explain: 'Model updates can leak data; combine it with secure aggregation and differential privacy.' } },
       { type: 'text', title: 'Securing LLM applications', md: `LLM systems add new attack surfaces (see *LLM Agents & Tool Use*):
 
-- **Prompt injection**: instructions hidden in user input or — worse — in content the model reads (web pages, emails, documents, tool results: *indirect* injection) that try to override the developer's instructions.
+- **Prompt injection**: instructions hidden in user input or (worse) in content the model reads (web pages, emails, documents, tool results: *indirect* injection) that try to override the developer's instructions.
 - **Jailbreaks**: prompts crafted to bypass a model's safety training.
 - **Data exfiltration** through tools, links or images the model is tricked into producing; **insecure output handling** when model output is executed or rendered without validation.
 
@@ -1271,7 +1277,7 @@ def membership_advantage(member_losses, outsider_losses):
     return float(best)
 `,
         hints: ['Row norms: `np.linalg.norm(G, axis=1, keepdims=True)`.', 'Add the noise to the summed gradient before dividing by the batch size.', 'Try every observed loss value as a threshold.'],
-        explain: `Clipping bounds how much any single example can move the model, and the noise — scaled to that bound — hides whether a given example was present. The membership advantage measures exactly the kind of leakage DP is designed to limit.`,
+        explain: `Clipping bounds how much any single example can move the model, and the noise (scaled to that bound) hides whether a given example was present. The membership advantage measures exactly the kind of leakage DP is designed to limit.`,
         tests: [
           { call: 'clip_rows(np.array([[3.0, 4.0], [0.3, 0.4], [0.0, 0.0]]), 1.0)', expect: 'np.array([[0.6, 0.8], [0.3, 0.4], [0.0, 0.0]])' },
           { call: 'dp_sgd_update(np.zeros(2), np.array([[3.0, 4.0], [0.0, 1.0]]), 1.0, 0.5, 1.0, np.array([1.0, -1.0]))', expect: '-np.array([0.6 + 0.0 + 0.5, 0.8 + 1.0 - 0.5]) / 2' },
@@ -1282,11 +1288,11 @@ def membership_advantage(member_losses, outsider_losses):
       }
     ],
     refs: [
-      { title: 'Goodfellow, Shlens & Szegedy — Explaining and Harnessing Adversarial Examples (FGSM)', url: 'https://arxiv.org/abs/1412.6572' },
-      { title: 'Madry et al. — Towards Deep Learning Models Resistant to Adversarial Attacks (PGD)', url: 'https://arxiv.org/abs/1706.06083' },
-      { title: 'Abadi et al. — Deep Learning with Differential Privacy (DP-SGD)', url: 'https://arxiv.org/abs/1607.00133' },
-      { title: 'Shokri et al. — Membership Inference Attacks against Machine Learning Models', url: 'https://arxiv.org/abs/1610.05820' },
-      { title: 'OWASP — Top 10 for Large Language Model Applications', url: 'https://owasp.org/www-project-top-10-for-large-language-model-applications/' }
+      { title: 'Goodfellow, Shlens & Szegedy, Explaining and Harnessing Adversarial Examples (FGSM)', url: 'https://arxiv.org/abs/1412.6572' },
+      { title: 'Madry et al., Towards Deep Learning Models Resistant to Adversarial Attacks (PGD)', url: 'https://arxiv.org/abs/1706.06083' },
+      { title: 'Abadi et al., Deep Learning with Differential Privacy (DP-SGD)', url: 'https://arxiv.org/abs/1607.00133' },
+      { title: 'Shokri et al., Membership Inference Attacks against Machine Learning Models', url: 'https://arxiv.org/abs/1610.05820' },
+      { title: 'OWASP, Top 10 for Large Language Model Applications', url: 'https://owasp.org/www-project-top-10-for-large-language-model-applications/' }
     ]
   },
 
@@ -1295,7 +1301,7 @@ def membership_advantage(member_losses, outsider_losses):
     id: 'llm-serving', branch: 'llm', title: 'LLM Inference & Serving: Latency, Throughput & Cost', short: 'LLM Serving', level: 3, minutes: 45, prereqs: ['quantization', 'efficient-attention'],
     tags: ['inference', 'serving', 'prefill', 'decode', 'time to first token', 'inter-token latency', 'throughput', 'batching', 'continuous batching', 'arithmetic intensity', 'roofline', 'memory bandwidth', 'speculative decoding', 'prefix caching', 'vllm'],
     summary: 'What happens when an LLM answers many users at once: the prefill and decode phases, latency and throughput metrics, arithmetic intensity and the roofline model that explain why decoding is memory-bound, static versus continuous batching, speculative decoding and its expected speed-up, prefix caching and the other levers that set the cost per token.',
-    why: `Training happens once; inference happens billions of times, so it dominates the cost of most LLM products. Why does generating text feel slow when GPUs are so fast? Why can serving 64 users cost little more than serving one? Why do providers discount cached prompts and batch jobs? The answers come from a little hardware arithmetic — FLOPs versus bytes moved — and a few serving techniques that every LLM engineer should know.`,
+    why: `Training happens once; inference happens billions of times, so it dominates the cost of most LLM products. Why does generating text feel slow when GPUs are so fast? Why can serving 64 users cost little more than serving one? Why do providers discount cached prompts and batch jobs? The answers come from a little hardware arithmetic (FLOPs versus bytes moved) and a few serving techniques that every LLM engineer should know.`,
     objectives: [
       'Distinguish the prefill and decode phases and the metrics TTFT, inter-token latency and throughput',
       'Use arithmetic intensity and the roofline model to tell compute-bound from memory-bound work',
@@ -1304,10 +1310,10 @@ def membership_advantage(member_losses, outsider_losses):
     ],
     sections: [
       { type: 'text', title: 'Two phases: prefill and decode', md: `- **Prefill** processes the whole prompt in one parallel forward pass, filling the KV cache (see *Efficient Attention*) and producing the first output token. It is big matrix–matrix work: **compute-bound**.
-- **Decode** then generates one token at a time. Every step reads all the model's weights — and the sequence's KV cache — from GPU memory to do comparatively little arithmetic: **memory-bandwidth-bound**.
+- **Decode** then generates one token at a time. Every step reads all the model's weights (and the sequence's KV cache) from GPU memory to do comparatively little arithmetic: **memory-bandwidth-bound**.
 
 User-facing metrics: **time to first token (TTFT)**, dominated by queueing and prefill; **inter-token latency (ITL)**, the time per generated token; **throughput**, total tokens per second across all users; and the **cost per million tokens**. For one request, latency ≈ TTFT + (output tokens − 1) × ITL.` },
-      { type: 'text', title: 'Arithmetic intensity and the roofline', md: `A GPU has a peak compute rate (FLOP/s) and a memory bandwidth (bytes/s). Whether a computation is limited by one or the other depends on its **arithmetic intensity** — how much work it does per byte it moves:
+      { type: 'text', title: 'Arithmetic intensity and the roofline', md: `A GPU has a peak compute rate (FLOP/s) and a memory bandwidth (bytes/s). Whether a computation is limited by one or the other depends on its **arithmetic intensity**, how much work it does per byte it moves:
 
 $$ intensity = FLOPs / bytes moved          attainable FLOP/s = min( peak FLOP/s,  bandwidth × intensity ) $$
 :::where
@@ -1317,7 +1323,7 @@ peak FLOP/s — the hardware's maximum compute rate
 bandwidth — the hardware's memory bandwidth in bytes per second
 :::
 
-The **ridge point** peak / bandwidth is the intensity needed to keep the compute units busy; for a modern data-centre GPU it is a few hundred FLOPs per byte. Decoding one token for one sequence multiplies each weight once (2 FLOPs per weight) while reading it (2 bytes in bf16): an intensity of about 1 — hundreds of times below the ridge. **Batching** B sequences reuses each weight read B times, raising the intensity by about B, which is why serving many users together is so much cheaper per token.` },
+The **ridge point** peak / bandwidth is the intensity needed to keep the compute units busy; for a modern data-centre GPU it is a few hundred FLOPs per byte. Decoding one token for one sequence multiplies each weight once (2 FLOPs per weight) while reading it (2 bytes in bf16): an intensity of about 1 (hundreds of times below the ridge). **Batching** B sequences reuses each weight read B times, raising the intensity by about B, which is why serving many users together is so much cheaper per token.` },
       { type: 'code', title: 'A roofline calculator for decoding', code: `
 params = 8e9                        # an 8-billion-parameter model
 bytes_per_param = 2                 # bf16 weights
@@ -1335,7 +1341,7 @@ for batch in (1, 8, 32, 128, 256):
     t = max(t_compute, t_memory)
     bound = "memory" if t_memory > t_compute else "compute"
     print(f"batch {batch:3d}: {t * 1000:5.2f} ms per step ({bound}-bound)  {1 / t:5.0f} tokens/s per user  {batch / t:7.0f} tokens/s in total")
-`, after: `One sequence gets about 200 tokens per second and uses well under 1% of the GPU's compute. Batching multiplies total throughput by tens of times while each user slows down only gradually. With long contexts the KV cache grows with the batch, so even large batches stay memory-bound — one reason KV-cache size (grouped-query attention, KV quantization) matters so much.` },
+`, after: `One sequence gets about 200 tokens per second and uses well under 1% of the GPU's compute. Batching multiplies total throughput by tens of times while each user slows down only gradually. With long contexts the KV cache grows with the batch, so even large batches stay memory-bound: one reason KV-cache size (grouped-query attention, KV quantization) matters so much.` },
       { type: 'demo', title: 'Interactive: batching on the roofline', demo: 'roofline' },
       { type: 'text', title: 'Batching: static versus continuous', md: `- **Static batching** waits to collect a batch and runs it until the *longest* response finishes; short requests sit idle and new ones wait.
 - **Continuous (in-flight) batching** (Orca, vLLM) schedules at the level of single decode steps: finished sequences leave and new ones join at every step, keeping the GPU full.
@@ -1407,8 +1413,8 @@ for batch, per_user in [(1, 60), (8, 55), (32, 45), (128, 25)]:   # illustrative
     print(f"batch {batch:4d}: {per_user:3d} tokens/s per user, {total:5d} tokens/s total, "
           f"\${cost_per_million(total):6.2f} per million output tokens")
 print("batching cuts the cost per token:", cost_per_million(128 * 25) < cost_per_million(60) / 20)`, after: `A single user streaming 60 tokens per second leaves the GPU mostly idle and costs about $14 per million tokens. Batching 128 users slows each one to 25 tokens per second but cuts the cost to about 26 cents, more than 50 times cheaper. The per-user speeds here are illustrative, but the shape of the trade-off is real, and it is why API prices sit so far below single-user hardware costs.`, predict: {"type":"mcq","q":"A GPU costs $3 per hour and produces 3,200 output tokens per second in total. Roughly what does a million output tokens cost?","options":["About $0.26","About $2.60","About $26","About $0.03"],"answer":0,"explain":"3,200 × 3,600 ≈ 11.5 million tokens per hour, so $3 buys 11.5 million tokens: about 26 cents per million.","expect":["batching cuts the cost per token: True"]} },
-      { type: 'text', title: 'Other levers on cost and latency', md: `- **Quantization** (see *Quantization & Efficient Inference*): int8/int4 weights mean fewer bytes per decode step — a direct speed-up for memory-bound decoding — and KV-cache quantization fits more sequences.
-- **Prefix (prompt) caching**: reuse the KV cache of a shared prefix — a long system prompt, tool definitions, a document — across requests. API providers expose this as prompt caching with discounted cached input tokens.
+      { type: 'text', title: 'Other levers on cost and latency', md: `- **Quantization** (see *Quantization & Efficient Inference*): int8/int4 weights mean fewer bytes per decode step (a direct speed-up for memory-bound decoding) and KV-cache quantization fits more sequences.
+- **Prefix (prompt) caching**: reuse the KV cache of a shared prefix (a long system prompt, tool definitions, a document) across requests. API providers expose this as prompt caching with discounted cached input tokens.
 - **Batch APIs** for offline work trade latency for price (often around half the cost).
 - **Routing**: send easy requests to smaller models and hard ones to larger models.
 - **Streaming** output hides latency; capping output length and asking for concise formats cuts cost.
@@ -1426,7 +1432,7 @@ tokens per second — the sustained total throughput across all requests
 - Choosing batch sizes, context limits and quantization levels against latency targets.
 - Long shared prompts or repeated documents: use prefix caching.
 - Latency-sensitive generation with a good draft model available: speculative decoding.`,
-    pitfalls: `- Measuring throughput without latency (or the reverse) — always report both, under realistic load.
+    pitfalls: `- Measuring throughput without latency (or the reverse): always report both, under realistic load.
 - Ignoring the KV cache when estimating memory; long contexts and big batches can need more memory than the weights.
 - Benchmarking with short prompts and outputs that don't match production traffic.
 - Expecting speculative decoding to help in compute-bound regimes (very large batches).
@@ -1539,10 +1545,10 @@ def best_k(alpha, c, k_max=16):
       }
     ],
     refs: [
-      { title: 'Kwon et al. — Efficient Memory Management for LLM Serving with PagedAttention (vLLM)', url: 'https://arxiv.org/abs/2309.06180' },
-      { title: 'Leviathan, Kalman & Matias — Fast Inference from Transformers via Speculative Decoding', url: 'https://arxiv.org/abs/2211.17192' },
-      { title: 'Yu et al. — Orca: A Distributed Serving System for Transformer-Based Generative Models', url: 'https://www.usenix.org/conference/osdi22/presentation/yu' },
-      { title: 'Williams, Waterman & Patterson — Roofline: An Insightful Visual Performance Model', url: 'https://doi.org/10.1145/1498765.1498785' }
+      { title: 'Kwon et al., Efficient Memory Management for LLM Serving with PagedAttention (vLLM)', url: 'https://arxiv.org/abs/2309.06180' },
+      { title: 'Leviathan, Kalman & Matias, Fast Inference from Transformers via Speculative Decoding', url: 'https://arxiv.org/abs/2211.17192' },
+      { title: 'Yu et al., Orca: A Distributed Serving System for Transformer-Based Generative Models', url: 'https://www.usenix.org/conference/osdi22/presentation/yu' },
+      { title: 'Williams, Waterman & Patterson, Roofline: An Insightful Visual Performance Model', url: 'https://doi.org/10.1145/1498765.1498785' }
     ]
   }
   ]);

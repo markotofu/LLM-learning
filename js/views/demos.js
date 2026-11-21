@@ -40,8 +40,36 @@
   function canvasPoint(cv, e, W, H) { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; }
   function softmax(xs) { const m = Math.max(...xs); const e = xs.map(x => Math.exp(x - m)); const s = e.reduce((a, b) => a + b, 0); return e.map(x => x / s); }
   const redrawOnChange = { mounted() { this.$nextTick(() => this.draw()); this.$watch(() => JSON.stringify(this.$data), () => this.$nextTick(() => this.draw())); } };
+  // Keyboard access for plots that take clicks. The canvas is focusable: the arrow keys move a cross-hair (Shift moves
+  // it further) and Enter or Space acts at the cross-hair exactly as a click there would. `act(px, py)` returns a
+  // sentence, and `said` feeds a polite live region so that screen readers hear where the cross-hair is and what
+  // happened. A component can define `kbDescribe(x, y)` (data coordinates) to say more about the cross-hair's position.
+  const kbCursor = {
+    data() { return { kb: null, said: '' }; },
+    methods: {
+      kbKey(e, W, H, act) {
+        const s = e.shiftKey ? 40 : 10;
+        const d = { ArrowLeft: [-s, 0], ArrowRight: [s, 0], ArrowUp: [0, -s], ArrowDown: [0, s] }[e.key];
+        const c = this.kb || [W / 2, H / 2];
+        if (d) {
+          e.preventDefault();
+          this.kb = [Math.min(W - 6, Math.max(6, c[0] + d[0])), Math.min(H - 6, Math.max(6, c[1] + d[1]))];
+          if (this._T) { const [x, y] = this._T.inv(this.kb[0], this.kb[1]); this.said = this.kbDescribe ? this.kbDescribe(x, y) : 'Cross-hair at x ' + x.toFixed(1) + ', y ' + y.toFixed(1) + '.'; }
+        } else if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault(); this.kb = c; this.said = act(c[0], c[1]) || '';
+        }
+      },
+      kbBlur() { this.kb = null; },
+      kbDraw(ctx, P) {
+        if (!this.kb) return; const [x, y] = this.kb;
+        ctx.strokeStyle = P.text; ctx.lineWidth = 1.5; ctx.setLineDash([]); ctx.beginPath();
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { ctx.moveTo(x + 4 * dx, y + 4 * dy); ctx.lineTo(x + 11 * dx, y + 11 * dy); }
+        ctx.stroke();
+      }
+    }
+  };
   // Shared with js/views/demos-more.js
-  MLA.demoKit = { palette, setup, frame, curve, dot, gauss, canvasPoint, softmax, redrawOnChange, niceStep, fmt };
+  MLA.demoKit = { palette, setup, frame, curve, dot, gauss, canvasPoint, softmax, redrawOnChange, kbCursor, niceStep, fmt };
 
   C['mla-demo'] = { props: { name: String }, computed: { comp() { return C['demo-' + this.name] ? 'demo-' + this.name : null; } }, template: `<div class="demo"><component v-if="comp" :is="comp" /><div v-else class="callout warn">Unknown demo: {{ name }}</div></div>` };
 
@@ -76,14 +104,14 @@
     template: `
     <div class="card demo-card">
       <div class="row between"><div class="pills"><button :class="{active:fn==='bowl'}" @click="fn='bowl'">Convex bowl</button><button :class="{active:fn==='bumpy'}" @click="fn='bumpy'">Bumpy (local minima)</button></div>
-      <div class="small muted">step {{ path.length-1 }} · w = {{ isFinite(w) ? w.toFixed(3) : '∞' }} · loss = {{ isFinite(w) ? f(w).toFixed(3) : '∞' }} · gradient = {{ isFinite(w) ? df(w).toFixed(3) : '—' }}</div></div>
+      <div class="small muted">step {{ path.length-1 }} · w = {{ isFinite(w) ? w.toFixed(3) : '∞' }} · loss = {{ isFinite(w) ? f(w).toFixed(3) : '∞' }} · gradient = {{ isFinite(w) ? df(w).toFixed(3) : '∞' }}</div></div>
       <canvas ref="cv" class="demo-canvas"></canvas>
       <div class="demo-controls">
         <label>Learning rate <b>{{ lr }}</b><input type="range" min="0.01" max="1.1" step="0.01" v-model.number="lr"></label>
         <label>Start at w = <b>{{ start }}</b><input type="range" min="-4.5" max="4.5" step="0.5" v-model.number="start"></label>
       </div>
       <div class="btn-row"><button class="btn sm" @click="step">Take one step</button><button class="btn sm primary" @click="run">Run 25 steps</button><button class="btn sm ghost" @click="reset">Reset</button></div>
-      <p v-if="diverged" class="feedback bad">Diverged! The learning rate is so large that every step overshoots the minimum by more than it gains.</p>
+      <p v-if="diverged" class="feedback bad">Diverged. The learning rate is so large that every step overshoots the minimum by more than it gains.</p>
       <p class="small muted mt">The dashed pink line is the tangent: its slope is the gradient. Each step moves w by −(learning rate × gradient). Try 0.05 (slow), 0.3 (fast), 0.95 (oscillates) and 1.05 (diverges) on the bowl, then try the bumpy curve from different starting points.</p>
     </div>`
   };
@@ -121,7 +149,7 @@
   // 3 ---------- Fit a line by hand / by gradient descent ----------
   function linData() { const rng = MLA.util.seededRng(7); const pts = []; for (let i = 0; i < 14; i++) { const x = rng() * 8 - 1; pts.push([x, 2 * x + 1 + gauss(rng) * 1.6]); } return pts; }
   C['demo-linear-fit'] = {
-    mixins: [redrawOnChange],
+    mixins: [redrawOnChange, kbCursor],
     data() { return { pts: linData(), w: 0.5, b: 0, timer: null, residuals: true }; },
     computed: {
       mse() { return this.pts.reduce((s, [x, y]) => s + (this.w * x + this.b - y) ** 2, 0) / this.pts.length; },
@@ -138,7 +166,13 @@
           if (++n > 160) clearInterval(this.timer);
         }, 30);
       },
-      add(e) { const cv = this.$refs.cv; const [px, py] = canvasPoint(cv, e, 560, 300); const [x, y] = this._T.inv(px, py); if (x >= -2 && x <= 8 && y >= -6 && y <= 20) this.pts.push([+x.toFixed(2), +y.toFixed(2)]); },
+      add(e) { const [px, py] = canvasPoint(this.$refs.cv, e, 560, 300); this.addAt(px, py); },
+      addAt(px, py) {
+        const [x, y] = this._T.inv(px, py); if (x < -2 || x > 8 || y < -6 || y > 20) return '';
+        this.pts.push([+x.toFixed(2), +y.toFixed(2)]);
+        return 'Added a point at x ' + x.toFixed(1) + ', y ' + y.toFixed(1) + '. ' + this.pts.length + ' points, MSE ' + this.mse.toFixed(2) + '.';
+      },
+      kbDescribe(x, y) { return 'Cross-hair at x ' + x.toFixed(1) + ', y ' + y.toFixed(1) + '. The line is at y ' + (this.w * x + this.b).toFixed(1) + ' there.'; },
       resetData() { clearInterval(this.timer); this.pts = linData(); },
       draw() {
         const cv = this.$refs.cv; if (!cv) return; const W = 560, H = 300; const ctx = setup(cv, W, H); const P = palette();
@@ -146,18 +180,20 @@
         if (this.residuals) { ctx.strokeStyle = P.red; ctx.globalAlpha = 0.6; for (const [x, y] of this.pts) { ctx.beginPath(); ctx.moveTo(T.X(x), T.Y(y)); ctx.lineTo(T.X(x), T.Y(this.w * x + this.b)); ctx.stroke(); } ctx.globalAlpha = 1; }
         curve(ctx, x => this.w * x + this.b, xr, T, P.accent, 2.5);
         for (const [x, y] of this.pts) dot(ctx, T.X(x), T.Y(y), 4.5, P.amber);
+        this.kbDraw(ctx, P);
       }
     },
     template: `
     <div class="card demo-card">
       <div class="row between"><div class="small">ŷ = <b>{{ w.toFixed(2) }}</b>·x + <b>{{ b.toFixed(2) }}</b> &nbsp; · &nbsp; MSE = <b :style="{color: best && mse < best.mse*1.05 ? 'var(--green)' : ''}">{{ mse.toFixed(3) }}</b></div><div class="small muted" v-if="best">best possible MSE ≈ {{ best.mse.toFixed(3) }} (w={{ best.w.toFixed(2) }}, b={{ best.b.toFixed(2) }})</div></div>
-      <canvas ref="cv" class="demo-canvas clickable" @click="add"></canvas>
+      <canvas ref="cv" class="demo-canvas clickable" tabindex="0" role="application" aria-label="Scatter plot with the current line. Arrow keys move a cross-hair; Enter adds a point there." @click="add" @keydown="kbKey($event, 560, 300, addAt)" @blur="kbBlur"></canvas>
+      <p class="sr-only" aria-live="polite">{{ said }}</p>
       <div class="demo-controls">
         <label>Slope w <b>{{ w.toFixed(2) }}</b><input type="range" min="-1" max="4" step="0.01" v-model.number="w"></label>
         <label>Intercept b <b>{{ b.toFixed(2) }}</b><input type="range" min="-4" max="6" step="0.01" v-model.number="b"></label>
       </div>
       <div class="btn-row"><button class="btn sm primary" @click="fit">Fit with gradient descent</button><button class="btn sm ghost" @click="residuals=!residuals">{{ residuals?'Hide':'Show' }} errors</button><button class="btn sm ghost" @click="resetData">Reset data</button></div>
-      <p class="small muted mt">Red lines are the errors (residuals). MSE is the average of their squares. Click the chart to add points — try adding an outlier far from the line and watch how much it drags the fit.</p>
+      <p class="small muted mt">Red lines are the errors (residuals). MSE is the average of their squares. Click the chart to add points (or focus it with Tab, move the cross-hair with the arrow keys and press Enter). Try adding an outlier far from the line and watch how much it drags the fit.</p>
     </div>`
   };
 
@@ -208,7 +244,7 @@
       <canvas ref="cv" class="demo-canvas"></canvas>
       <label class="demo-controls">Model complexity (polynomial degree) <b>{{ deg }}</b><input type="range" min="0" max="11" step="1" v-model.number="deg"></label>
       <p class="small">{{ verdict[1] }}</p>
-      <div class="tiny muted">Error vs. complexity — <span style="color:var(--amber)">training error</span> keeps falling, <span style="color:var(--purple)">test error</span> is U-shaped:</div>
+      <div class="tiny muted">Error vs. complexity: <span style="color:var(--amber)">training error</span> keeps falling, <span style="color:var(--purple)">test error</span> is U-shaped:</div>
       <canvas ref="cv2" class="demo-canvas short"></canvas>
       <p class="small muted">Orange dots: 12 training points. Hollow dots: unseen test points. Dashed grey: the true function the data came from.</p>
     </div>`
@@ -217,11 +253,14 @@
   // 5 ---------- k-nearest neighbours decision regions ----------
   function knnData() { const rng = MLA.util.seededRng(11); const pts = []; for (let i = 0; i < 26; i++) pts.push([2.5 + gauss(rng) * 1.2, 3 + gauss(rng) * 1.1, 0]); for (let i = 0; i < 26; i++) pts.push([5.5 + gauss(rng) * 1.2, 5 + gauss(rng) * 1.1, 1]); for (let i = 0; i < 4; i++) pts.push([4 + gauss(rng) * 2, 4 + gauss(rng) * 2, i % 2]); return pts; }
   C['demo-knn'] = {
-    mixins: [redrawOnChange],
+    mixins: [redrawOnChange, kbCursor],
     data() { return { pts: knnData(), k: 1, cls: 0 }; },
     methods: {
       predict(x, y) { const d = this.pts.map(p => [(p[0] - x) ** 2 + (p[1] - y) ** 2, p[2]]).sort((a, b) => a[0] - b[0]).slice(0, this.k); const v = d.reduce((s, q) => s + q[1], 0); return v / d.length; },
-      add(e) { const [px, py] = canvasPoint(this.$refs.cv, e, 560, 320); const [x, y] = this._T.inv(px, py); this.pts.push([x, y, this.cls]); },
+      region(x, y) { const p = this.predict(x, y); return p > 0.5 ? 'purple' : p < 0.5 ? 'cyan' : 'a tie'; },
+      add(e) { const [px, py] = canvasPoint(this.$refs.cv, e, 560, 320); this.addAt(px, py); },
+      addAt(px, py) { const [x, y] = this._T.inv(px, py); this.pts.push([x, y, this.cls]); return 'Added a ' + (this.cls ? 'purple' : 'cyan') + ' point at x ' + x.toFixed(1) + ', y ' + y.toFixed(1) + '.'; },
+      kbDescribe(x, y) { return 'Cross-hair at x ' + x.toFixed(1) + ', y ' + y.toFixed(1) + ': a new point there would be classified ' + this.region(x, y) + '.'; },
       draw() {
         const cv = this.$refs.cv; if (!cv) return; const W = 560, H = 320; const ctx = setup(cv, W, H); const P = palette();
         const xr = [0, 8], yr = [0, 8]; const T = frame(ctx, W, H, xr, yr, P, { axes: false }); this._T = T;
@@ -229,13 +268,15 @@
         for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) { const x = (i + 0.5) / nx * 8, y = (j + 0.5) / ny * 8; const p = this.predict(x, y); ctx.fillStyle = p > 0.5 ? P.purple : p < 0.5 ? P.cyan : P.muted; ctx.globalAlpha = 0.14 + Math.abs(p - 0.5) * 0.25; ctx.fillRect(T.X(0) + i * cw, T.Y(8) + (ny - 1 - j) * ch, cw + 0.5, ch + 0.5); }
         ctx.globalAlpha = 1;
         for (const [x, y, c] of this.pts) dot(ctx, T.X(x), T.Y(y), 4.5, c ? P.purple : P.cyan, P.bg);
+        this.kbDraw(ctx, P);
       }
     },
     template: `
     <div class="card demo-card">
-      <canvas ref="cv" class="demo-canvas clickable" @click="add"></canvas>
+      <canvas ref="cv" class="demo-canvas clickable" tabindex="0" role="application" aria-label="Decision regions of k-nearest neighbours. Arrow keys move a cross-hair and report the predicted class; Enter adds a point of the selected class." @click="add" @keydown="kbKey($event, 560, 320, addAt)" @blur="kbBlur"></canvas>
+      <p class="sr-only" aria-live="polite">{{ said }}</p>
       <label class="demo-controls">Neighbours k = <b>{{ k }}</b><input type="range" min="1" max="25" step="2" v-model.number="k"></label>
-      <div class="row"><span class="small muted">Click to add a point of class:</span><div class="pills"><button :class="{active:cls===0}" @click="cls=0">cyan</button><button :class="{active:cls===1}" @click="cls=1">purple</button></div><button class="btn xs ghost" @click="resetPts">Reset</button></div>
+      <div class="row"><span class="small muted">Click (or press Enter on the focused plot) to add a point of class:</span><div class="pills"><button :class="{active:cls===0}" @click="cls=0">cyan</button><button :class="{active:cls===1}" @click="cls=1">purple</button></div><button class="btn xs ghost" @click="resetPts">Reset</button></div>
       <p class="small muted mt">Background colour = the class a new point would get. With k = 1 the boundary is jagged and every noisy point carves out its own island (overfitting). Larger k smooths the boundary (more bias, less variance).</p>
     </div>`
   };
@@ -265,11 +306,11 @@
     },
     template: `
     <div class="card demo-card">
-      <div class="row between"><div class="small">iteration {{ iter }} · next step: <b>{{ phase==='assign' ? 'assign points to nearest centroid' : phase==='update' ? 'move centroids to the mean of their points' : 'converged ✓' }}</b></div><div class="small muted" v-if="inertia!=null">inertia (within-cluster squared distance) = {{ inertia.toFixed(1) }}</div></div>
+      <div class="row between"><div class="small">iteration {{ iter }} · next step: <b>{{ phase==='assign' ? 'assign points to nearest centroid' : phase==='update' ? 'move centroids to the mean of their points' : 'converged' }}</b></div><div class="small muted" v-if="inertia!=null">inertia (within-cluster squared distance) = {{ inertia.toFixed(1) }}</div></div>
       <canvas ref="cv" class="demo-canvas"></canvas>
       <label class="demo-controls">Number of clusters k = <b>{{ k }}</b><input type="range" min="2" max="6" step="1" v-model.number="k"></label>
       <div class="btn-row"><button class="btn sm primary" :disabled="phase==='done'" @click="next">Next step</button><button class="btn sm" :disabled="phase==='done'" @click="runAll">Run to convergence</button><button class="btn sm ghost" @click="init">New random start</button></div>
-      <p class="small muted mt">The data has 4 real groups. Try k = 4 with several random starts: sometimes k-means gets stuck in a worse solution (higher inertia) — which is why libraries run it several times (n_init) and use smarter k-means++ starts.</p>
+      <p class="small muted mt">The data has 4 real groups. Try k = 4 with several random starts: sometimes k-means gets stuck in a worse solution (higher inertia), which is why libraries run it several times (n_init) and use smarter k-means++ starts.</p>
     </div>`
   };
 
@@ -308,12 +349,12 @@
         <div><div class="tiny muted">Model scores for <span style="color:var(--pink)">actual positives</span> and <span style="color:var(--cyan)">actual negatives</span></div><canvas ref="cv" class="demo-canvas"></canvas></div>
         <div><div class="pills" style="margin-bottom:4px"><button :class="{active: curve==='roc'}" @click="curve='roc'">ROC</button><button :class="{active: curve==='pr'}" @click="curve='pr'">Precision–recall</button></div><div class="tiny muted">{{ curve === 'roc' ? 'ROC curve: recall (true positive rate) against false positive rate. AUC = ' + roc.auc.toFixed(3) : 'Precision against recall. Average precision = ' + pr.ap.toFixed(3) + '; dashed = share of positives (' + pr.base.toFixed(2) + ')' }} · dot = current threshold</div><canvas ref="cv2" class="demo-canvas square"></canvas></div>
       </div>
-      <label class="demo-controls">Decision threshold <b>{{ t.toFixed(2) }}</b> — predict “positive” when score ≥ threshold<input type="range" min="0.01" max="0.99" step="0.01" v-model.number="t"></label>
+      <label class="demo-controls">Decision threshold <b>{{ t.toFixed(2) }}</b>: predict “positive” when score ≥ threshold<input type="range" min="0.01" max="0.99" step="0.01" v-model.number="t"></label>
       <div class="grid cols-2" style="gap:12px;align-items:start">
         <table class="mini-table confusion"><thead><tr><th></th><th>predicted +</th><th>predicted −</th></tr></thead><tbody><tr><th>actual +</th><td class="good">TP {{ m.tp }}</td><td class="bad">FN {{ m.fn }}</td></tr><tr><th>actual −</th><td class="bad">FP {{ m.fp }}</td><td class="good">TN {{ m.tn }}</td></tr></tbody></table>
         <table class="mini-table"><tbody><tr><td>Accuracy</td><td class="mono">{{ m.acc.toFixed(3) }}</td></tr><tr><td>Precision = TP/(TP+FP)</td><td class="mono">{{ m.prec.toFixed(3) }}</td></tr><tr><td>Recall = TP/(TP+FN)</td><td class="mono">{{ m.rec.toFixed(3) }}</td></tr><tr><td>F1</td><td class="mono">{{ m.f1.toFixed(3) }}</td></tr><tr><td>False positive rate</td><td class="mono">{{ m.fpr.toFixed(3) }}</td></tr></tbody></table>
       </div>
-      <p class="small muted">Raise the threshold: fewer false alarms (precision ↑) but more misses (recall ↓). There is no free lunch — you choose the trade-off your application needs. The ROC curve ignores how rare positives are; the precision–recall curve does not, which is why it is the better picture when positives are rare: a random model's precision sits at the share of positives (the dashed line), not at 0.5.</p>
+      <p class="small muted">Raise the threshold: fewer false alarms (precision ↑) but more misses (recall ↓). There is no free lunch: you choose the trade-off your application needs. The ROC curve ignores how rare positives are; the precision–recall curve does not, which is why it is the better picture when positives are rare: a random model's precision sits at the share of positives (the dashed line), not at 0.5.</p>
     </div>`
   };
 
@@ -337,7 +378,7 @@
     },
     template: `
     <div class="card demo-card">
-      <div class="small muted">Prompt: “The child wanted to adopt a ___” — the model's raw scores (logits) for 7 candidate tokens:</div>
+      <div class="small muted">Prompt: “The child wanted to adopt a ___”. The model's raw scores (logits) for 7 candidate tokens:</div>
       <div class="bars mt">
         <div v-for="(t,i) in tokens" :key="t" class="bar-row" :class="{off: !kept.has(i)}">
           <span class="mono bar-label">{{ t }}</span><span class="tiny muted mono" style="width:44px">{{ logits[i].toFixed(1) }}</span>
@@ -381,11 +422,11 @@
     <div class="card demo-card">
       <div class="small">Click a token to make it the <b>query</b>. Bars show how much it attends to each <b>key</b> (each row of weights sums to 1).</div>
       <div class="att-tokens mt"><button v-for="(t,i) in toks" :key="i" class="att-tok" :class="{q: i===q, masked: causal && i>q}" @click="q=i">{{ t }}<span class="att-w" :style="{height: Math.round(row[i]*48)+'px'}"></span><span class="tiny mono">{{ (row[i]*100).toFixed(0) }}%</span></button></div>
-      <div class="row mt"><label class="checkbox"><input type="checkbox" v-model="causal"> causal mask (a token may only look at itself and earlier tokens — what GPT uses)</label></div>
+      <div class="row mt"><label class="checkbox"><input type="checkbox" v-model="causal"> causal mask (a token may only look at itself and earlier tokens: what GPT uses)</label></div>
       <label class="demo-controls">Score scale (like 1/√d or inverse temperature) <b>{{ scale.toFixed(1) }}</b><input type="range" min="0.2" max="3" step="0.1" v-model.number="scale"></label>
       <div class="scroll-x"><table class="att-matrix"><thead><tr><th class="tiny muted">query ↓ / key →</th><th v-for="(t,j) in toks" :key="j" class="tiny">{{ t }}</th></tr></thead>
       <tbody><tr v-for="(t,i) in toks" :key="i" :class="{sel:i===q}" @click="q=i"><th class="tiny">{{ t }}</th><td v-for="(v,j) in W[i]" :key="j" :style="cell(v)" class="tiny mono">{{ v>0.005 ? (v*100).toFixed(0) : '' }}</td></tr></tbody></table></div>
-      <p class="small muted">These scores are hand-made to illustrate the mechanism (a trained model learns them from data via the query and key matrices). Note how “it” attends mostly to “cat” — attention is how a transformer resolves which earlier words matter.</p>
+      <p class="small muted">These scores are hand-made to illustrate the mechanism (a trained model learns them from data via the query and key matrices). Note how “it” attends mostly to “cat”: attention is how a transformer resolves which earlier words matter.</p>
     </div>`
   };
 
@@ -400,7 +441,7 @@
     },
     methods: {
       reset() { this.words = this.text.trim().split(/\s+/).filter(Boolean).map(w => w.split('').concat(['_'])); this.merges = []; },
-      merge() { const best = this.pairs[0]; if (!best || best.n < 2) { MLA.ui.toast('No pair occurs twice — merging further would just memorise words.', 'info'); return; } const tok = best.a + best.b; this.words = this.words.map(w => { const out = []; for (let i = 0; i < w.length; i++) { if (i < w.length - 1 && w[i] === best.a && w[i + 1] === best.b) { out.push(tok); i++; } else out.push(w[i]); } return out; }); this.merges.push(best.a + ' + ' + best.b + ' → ' + tok + '  (' + best.n + '×)'); }
+      merge() { const best = this.pairs[0]; if (!best || best.n < 2) { MLA.ui.toast('No pair occurs twice, so merging further would just memorise words.', 'info'); return; } const tok = best.a + best.b; this.words = this.words.map(w => { const out = []; for (let i = 0; i < w.length; i++) { if (i < w.length - 1 && w[i] === best.a && w[i + 1] === best.b) { out.push(tok); i++; } else out.push(w[i]); } return out; }); this.merges.push(best.a + ' + ' + best.b + ' → ' + tok + '  (' + best.n + '×)'); }
     },
     template: `
     <div class="card demo-card">
@@ -418,7 +459,7 @@
   const KERNELS = { 'vertical edge': [[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]], 'horizontal edge': [[-1, -1, -1], [0, 0, 0], [1, 1, 1]], blur: [[1, 1, 1], [1, 1, 1], [1, 1, 1]].map(r => r.map(v => v / 9)), sharpen: [[0, -1, 0], [-1, 5, -1], [0, -1, 0]], identity: [[0, 0, 0], [0, 1, 0], [0, 0, 0]] };
   function convImage() { const g = []; for (let i = 0; i < 8; i++) { const r = []; for (let j = 0; j < 8; j++) r.push(j >= 2 && j <= 5 && i >= 1 && i <= 6 ? 1 : 0); g.push(r); } g[3][3] = 0; g[4][4] = 0; return g; }
   C['demo-convolution'] = {
-    data() { return { img: convImage(), kname: 'vertical edge', hover: null }; },
+    data() { return { img: convImage(), kname: 'vertical edge', hover: null, inFocus: 0, outFocus: 0 }; },
     computed: {
       K() { return KERNELS[this.kname]; }, names() { return Object.keys(KERNELS); },
       out() { const o = []; for (let i = 0; i < 6; i++) { const r = []; for (let j = 0; j < 6; j++) { let s = 0; for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) s += this.img[i + a][j + b] * this.K[a][b]; r.push(s); } o.push(r); } return o; },
@@ -426,18 +467,29 @@
     },
     methods: {
       inField(i, j) { if (!this.hover) return false; const [a, b] = this.hover; return i >= a && i < a + 3 && j >= b && j < b + 3; },
+      toggle(k) { const i = Math.floor(k / 8), j = k % 8; this.img[i][j] = this.img[i][j] ? 0 : 1; },
+      // Arrow keys move between the cells of a grid (one tab stop per grid); Enter or Space toggles an input pixel.
+      gridKey(e, k, n, which) {
+        const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -n, ArrowDown: n }[e.key];
+        if (step != null) {
+          e.preventDefault();
+          const c = k % n, t = k + step;
+          if ((e.key === 'ArrowLeft' && c === 0) || (e.key === 'ArrowRight' && c === n - 1) || t < 0 || t >= n * n) return;
+          this[which] = t; const el = e.target.parentElement.children[t]; if (el) el.focus();
+        } else if (which === 'inFocus' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); this.toggle(k); }
+      },
       outStyle(v) { const m = 3; const t = Math.max(-1, Math.min(1, v / m)); return { background: t >= 0 ? 'color-mix(in srgb, var(--green) ' + Math.round(t * 100) + '%, var(--panel2))' : 'color-mix(in srgb, var(--red) ' + Math.round(-t * 100) + '%, var(--panel2))' }; }
     },
     template: `
     <div class="card demo-card">
       <div class="pills"><button v-for="n in names" :key="n" :class="{active:kname===n}" @click="kname=n">{{ n }}</button></div>
       <div class="conv-layout mt">
-        <div><div class="tiny muted">Input 8×8 (click to toggle pixels)</div><div class="conv-grid g8"><span v-for="(v,k) in img.flat()" :key="k" :class="{on: v, field: inField(Math.floor(k/8), k%8)}" @click="img[Math.floor(k/8)][k%8] = v ? 0 : 1"></span></div></div>
+        <div><div class="tiny muted">Input 8×8 (click a pixel, or use the arrow keys and Space, to toggle it)</div><div class="conv-grid g8" role="group" aria-label="Input image, 8 by 8 pixels"><span v-for="(v,k) in img.flat()" :key="k" role="button" :tabindex="k === inFocus ? 0 : -1" :aria-pressed="v ? 'true' : 'false'" :aria-label="'Pixel in row ' + (Math.floor(k/8) + 1) + ', column ' + (k%8 + 1)" :class="{on: v, field: inField(Math.floor(k/8), k%8)}" @click="toggle(k)" @keydown="gridKey($event, k, 8, 'inFocus')"></span></div></div>
         <div><div class="tiny muted">Kernel 3×3</div><div class="conv-grid g3"><span v-for="(v,k) in K.flat()" :key="k" class="mono">{{ +v.toFixed(2) }}</span></div></div>
-        <div><div class="tiny muted">Output 6×6 (hover a cell)</div><div class="conv-grid g6"><span v-for="(v,k) in out.flat()" :key="k" class="mono" :style="outStyle(v)" @mouseenter="hover=[Math.floor(k/6), k%6]" @mouseleave="hover=null">{{ Math.round(v*10)/10 }}</span></div></div>
+        <div><div class="tiny muted">Output 6×6 (hover or focus a cell)</div><div class="conv-grid g6" role="group" aria-label="Output, 6 by 6"><span v-for="(v,k) in out.flat()" :key="k" class="mono" :tabindex="k === outFocus ? 0 : -1" :aria-label="'Output row ' + (Math.floor(k/6) + 1) + ', column ' + (k%6 + 1) + ': ' + Math.round(v*10)/10" :style="outStyle(v)" @mouseenter="hover=[Math.floor(k/6), k%6]" @mouseleave="hover=null" @focus="hover=[Math.floor(k/6), k%6]; outFocus = k" @blur="hover=null" @keydown="gridKey($event, k, 6, 'outFocus')">{{ Math.round(v*10)/10 }}</span></div></div>
       </div>
-      <p class="small mono mt" style="min-height:1.4em">{{ calc || 'Hover an output cell to see the multiply-and-add that produced it.' }}</p>
-      <p class="small muted">The same 9 weights slide over every position. An edge kernel lights up (green/red) only where brightness changes — that is a learned “feature detector” in a CNN.</p>
+      <p class="small mono mt" style="min-height:1.4em" aria-live="polite">{{ calc || 'Hover or focus an output cell to see the multiply-and-add that produced it.' }}</p>
+      <p class="small muted">The same 9 weights slide over every position. An edge kernel lights up (green or red) only where the brightness changes, which is what a learned feature detector in a CNN does.</p>
     </div>`
   };
 
@@ -470,7 +522,7 @@
           <label class="demo-controls">w₂ <b>{{ w2.toFixed(1) }}</b><input type="range" min="-3" max="3" step="0.1" v-model.number="w2"></label>
           <label class="demo-controls">bias b <b>{{ b.toFixed(1) }}</b><input type="range" min="-3" max="3" step="0.1" v-model.number="b"></label>
           <table class="mini-table"><thead><tr><th>x₁</th><th>x₂</th><th>z</th><th>output</th><th>target</th></tr></thead><tbody><tr v-for="(r,i) in rows" :key="i" :class="r.ok?'':'bad-row'"><td>{{ r.x[0] }}</td><td>{{ r.x[1] }}</td><td class="mono">{{ r.z.toFixed(1) }}</td><td>{{ r.y }}</td><td>{{ r.t }}</td></tr></tbody></table>
-          <p class="small" :style="{color: allOk ? 'var(--green)' : ''}">{{ allOk ? '✓ All four cases correct!' : (gate==='XOR' ? 'Try as long as you like: no single straight line separates XOR. That is why we need hidden layers.' : 'Adjust the weights until every row matches its target.') }}</p>
+          <p class="small" :style="{color: allOk ? 'var(--green)' : ''}">{{ allOk ? 'All four cases are correct.' : (gate==='XOR' ? 'Try as long as you like: no single straight line separates XOR. That is why we need hidden layers.' : 'Adjust the weights until every row matches its target.') }}</p>
         </div>
       </div>
     </div>`
@@ -498,7 +550,7 @@
       <canvas ref="cv" class="demo-canvas"></canvas>
       <label class="demo-controls">Inspect dimension <b>{{ dim }}</b> (and {{ dim+1 }}, dashed)<input type="range" :min="0" :max="d-2" step="2" v-model.number="dim"></label>
       <canvas ref="cv2" class="demo-canvas short"></canvas>
-      <p class="small muted">Low dimensions oscillate fast, high dimensions slowly — like the hands of a clock. Every position gets a unique pattern, and the pattern for position p+k is a fixed rotation of the pattern for p, which makes relative positions easy to learn.</p>
+      <p class="small muted">Low dimensions oscillate fast, high dimensions slowly, like the hands of a clock. Every position gets a unique pattern, and the pattern for position p+k is a fixed rotation of the pattern for p, which makes relative positions easy to learn.</p>
     </div>`
   };
 
@@ -556,7 +608,7 @@
     <div class="card demo-card">
       <div class="pills"><button :class="{active:mode==='near'}" @click="mode='near'">Nearest neighbours</button><button :class="{active:mode==='analogy'}" @click="mode='analogy'">Vector arithmetic</button></div>
       <canvas ref="cv" class="demo-canvas clickable" @click="pick"></canvas>
-      <div v-if="mode==='near'" class="small">Click a word. Nearest to <b>{{ sel }}</b>: <span v-for="n in near" :key="n.w" class="chip" style="margin:2px">{{ n.w }} · cos {{ n.cos.toFixed(2) }}</span></div>
+      <div v-if="mode==='near'" class="small">Click a word or choose one: <select v-model="sel" aria-label="Word"><option v-for="w in words" :key="w">{{ w }}</option></select> Nearest to <b>{{ sel }}</b>: <span v-for="n in near" :key="n.w" class="chip" style="margin:2px">{{ n.w }} · cos {{ n.cos.toFixed(2) }}</span></div>
       <div v-else class="inline-form small"><select v-model="a"><option v-for="w in words" :key="w">{{ w }}</option></select> − <select v-model="b"><option v-for="w in words" :key="w">{{ w }}</option></select> + <select v-model="c"><option v-for="w in words" :key="w">{{ w }}</option></select> ≈ <b>{{ analogy.best.w }}</b></div>
       <p class="small muted mt">A toy 2-D space (real embeddings have hundreds of dimensions and are learned, not hand-placed). Similar meanings sit close together, and directions can encode relationships: the arrow man → woman is roughly the same as king → queen.</p>
     </div>`
@@ -604,7 +656,7 @@
       <div class="small muted">accuracy <b>{{ (stats.accuracy * 100).toFixed(1) }}%</b> · expected calibration error <b>{{ stats.ece.toFixed(3) }}</b> · temperature T = <b>{{ T.toFixed(2) }}</b></div>
       <canvas ref="cv" class="demo-canvas"></canvas>
       <div class="demo-controls"><label>Temperature T (logits are divided by T) <b>{{ T.toFixed(2) }}</b><input type="range" min="0.5" max="5" step="0.05" v-model.number="T"></label></div>
-      <p class="small muted mt">Blue bars: accuracy of the predictions in each confidence bin (0–10%, …, 90–100%). Red ticks: their average confidence. Dashed line: perfect calibration. This model is overconfident (red above blue). Raise T until the ticks meet the bars — the error is smallest near T ≈ 2.5 — and notice that accuracy never changes, because dividing all logits by T keeps their order.</p>
+      <p class="small muted mt">Blue bars: accuracy of the predictions in each confidence bin (0–10%, …, 90–100%). Red ticks: their average confidence. Dashed line: perfect calibration. This model is overconfident (red above blue). Raise T until the ticks meet the bars (the error is smallest near T ≈ 2.5) and notice that accuracy never changes, because dividing all logits by T keeps their order.</p>
     </div>`
   };
 
@@ -668,7 +720,7 @@
         <label>Context already in each sequence <b>{{ ctxK }}k tokens</b><input type="range" min="1" max="32" step="1" v-model.number="ctxK"></label>
         <label>Model size <b>{{ paramsB }}B parameters</b><input type="range" min="1" max="70" step="1" v-model.number="paramsB"></label>
       </div>
-      <p class="small muted mt">Total throughput (tokens per second, vertical axis) against log₂ of the batch size (horizontal: 0 = 1 request, 9 = 512) for decoding on a GPU like an H100 (≈ 990 TFLOP/s, 3.35 TB/s), with bf16 weights and a grouped-query-attention KV cache of 128 KiB per token. Blue points are memory-bound, red ones compute-bound. Batching shares each read of the weights across many users — until the growing KV cache or the compute limit catches up. A simplified model: real servers add scheduling, prefill and kernel overheads.</p>
+      <p class="small muted mt">Total throughput (tokens per second, vertical axis) against log₂ of the batch size (horizontal: 0 = 1 request, 9 = 512) for decoding on a GPU like an H100 (≈ 990 TFLOP/s, 3.35 TB/s), with bf16 weights and a grouped-query-attention KV cache of 128 KiB per token. Blue points are memory-bound, red ones compute-bound. Batching shares each read of the weights across many users, until the growing KV cache or the compute limit catches up. A simplified model: real servers add scheduling, prefill and kernel overheads.</p>
     </div>`
   };
 
@@ -692,7 +744,7 @@
       <div class="small muted">clip range: ratio between <b>{{ (1 - eps).toFixed(2) }}</b> and <b>{{ (1 + eps).toFixed(2) }}</b></div></div>
       <canvas ref="cv" class="demo-canvas"></canvas>
       <div class="demo-controls"><label>Clip parameter ε <b>{{ eps.toFixed(2) }}</b><input type="range" min="0.05" max="0.5" step="0.01" v-model.number="eps"></label></div>
-      <p class="small muted mt">Horizontal axis: the ratio r = π_new(a|s) / π_old(a|s) for the action taken. Dashed grey: the unclipped objective r·A. Blue: PPO's min(r·A, clip(r, 1 − ε, 1 + ε)·A). Where the blue line is flat, the gradient is zero — the update has no reason to move the policy further. For a bad action the objective still falls as r grows: PPO never ignores a change that makes a bad action more likely.</p>
+      <p class="small muted mt">Horizontal axis: the ratio r = π_new(a|s) / π_old(a|s) for the action taken. Dashed grey: the unclipped objective r·A. Blue: PPO's min(r·A, clip(r, 1 − ε, 1 + ε)·A). Where the blue line is flat, the gradient is zero: the update has no reason to move the policy further. For a bad action the objective still falls as r grows: PPO never ignores a change that makes a bad action more likely.</p>
     </div>`
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

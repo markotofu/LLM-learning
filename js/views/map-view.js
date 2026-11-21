@@ -191,7 +191,7 @@
         if (/INPUT|TEXTAREA|SELECT/.test((e.target && e.target.tagName) || '')) return;
         if (e.key === '+' || e.key === '=') this.zoomBy(1.2); else if (e.key === '-') this.zoomBy(1 / 1.2); else if (e.key === '0' || e.key === 'f') this.fitAll(); else if (e.key === 'Escape') { this.selected = null; this.pathFor = null; }
       },
-      statusLabel(s) { return { mastered: 'Mastered', completed: 'Completed', started: 'In progress', ready: 'Ready — prerequisites done', locked: 'Prerequisites not finished yet' }[s]; },
+      statusLabel(s) { return { mastered: 'Mastered', completed: 'Completed', started: 'In progress', ready: 'Ready: prerequisites done', locked: 'Prerequisites not finished yet' }[s]; },
       cstatus(id) { return this.P.status(id); }
     },
     template: `
@@ -218,7 +218,7 @@
         </div>
       </div>
 
-      <div v-if="goal && layout!=='outline'" class="goal-banner"><mla-icon name="flag" :size="14"/> Goal: <b>{{ goal.title }}</b> — {{ P.trackProgress(goal).done }}/{{ P.trackProgress(goal).total }} concepts done. Concepts outside this path are dimmed. <button class="btn xs ghost" @click="clearGoal">Clear goal</button></div>
+      <div v-if="goal && layout!=='outline'" class="goal-banner"><mla-icon name="flag" :size="14"/> Goal: <b>{{ goal.title }}</b>: {{ P.trackProgress(goal).done }}/{{ P.trackProgress(goal).total }} concepts done. Concepts outside this path are dimmed. <button class="btn xs ghost" @click="clearGoal">Clear goal</button></div>
 
       <div v-if="layout==='outline'" class="outline-wrap">
         <div class="pills mb"><button :class="{active:outlineFilter==='all'}" @click="outlineFilter='all'">All</button><button :class="{active:outlineFilter==='todo'}" @click="outlineFilter='todo'">Still to learn</button><button :class="{active:outlineFilter==='done'}" @click="outlineFilter='done'">Completed</button></div>
@@ -244,7 +244,7 @@
             </g>
             <path v-for="e in edges" :key="e.key" :d="e.d" class="edge" :class="e.cls" :stroke="e.color" />
             <g v-if="layout==='mindmap'">
-              <g v-for="h in hubs" :key="h.id" class="hub" :class="{sel: selected===h.id, faded: branchOff[h.branch]}" :transform="'translate('+h.x+','+h.y+')'" @click.stop="select(h.id)">
+              <g v-for="h in hubs" :key="h.id" class="hub" :class="{sel: selected===h.id, faded: branchOff[h.branch]}" :transform="'translate('+h.x+','+h.y+')'" tabindex="0" role="button" :aria-label="h.label + ', ' + h.pct + '% complete'" @click.stop="select(h.id)" @keydown.enter="select(h.id)">
                 <rect :x="-88" :y="-23" width="176" height="46" rx="23" :fill="h.color" class="hub-bg"/>
                 <text x="0" y="-2" text-anchor="middle" class="hub-label">{{ h.label }}</text>
                 <text x="0" y="14" text-anchor="middle" class="hub-meta">{{ h.pct }}% complete</text>
@@ -282,7 +282,7 @@
           <p class="small muted">{{ selInfo.c.summary }}</p>
           <div class="row small"><status-dot :status="selInfo.status"/> {{ statusLabel(selInfo.status) }}</div>
           <mla-progress :value="selInfo.pr.pct" thin :color="selInfo.branch.color" style="margin:8px 0 4px" />
-          <div class="tiny dim">{{ selInfo.pr.sectionsRead }}/{{ selInfo.pr.sections }} sections · quiz {{ selInfo.pr.quizPassed ? 'passed ✓' : (selInfo.pr.quizAttempts ? 'best ' + selInfo.pr.quizBest + '%' : 'not taken') }} · {{ selInfo.pr.solved }}/{{ selInfo.pr.problems }} problems</div>
+          <div class="tiny dim">{{ selInfo.pr.sectionsRead }}/{{ selInfo.pr.sections }} sections · quiz {{ selInfo.pr.quizPassed ? 'passed' : (selInfo.pr.quizAttempts ? 'best ' + selInfo.pr.quizBest + '%' : 'not taken') }} · {{ selInfo.pr.solved }}/{{ selInfo.pr.problems }} problems</div>
           <div class="btn-row mt">
             <button class="btn primary sm" @click="go('/concept/'+selInfo.c.id)"><mla-icon name="book" :size="14"/> {{ selInfo.pr.started ? 'Continue' : 'Start learning' }}</button>
             <button v-if="selInfo.c.problems.length" class="btn sm" @click="go('/concept/'+selInfo.c.id+'?tab=practice')"><mla-icon name="code" :size="14"/> Practice</button>

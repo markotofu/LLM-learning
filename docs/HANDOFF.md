@@ -1,4 +1,24 @@
-# ML Atlas — build handoff
+# ML Atlas: build handoff
+
+## STATUS UPDATE (session 9, 2026-11-21): ten topic lessons, keyboard access, row previews, style pass, loading screen
+
+The user asked for: the lessons missing from the "full mastery" review, keyboard access, practice problems ("sample problems"), short row previews of the data, no emojis and fewer other signs of machine-written text, and a real loading screen. Then, on a separate branch, a rebrand inspired by baroque ceiling frescoes (CSS and SVG only, no generated images).
+
+**New lessons** (`js/data/concepts-topics-1.js`, `concepts-topics-2.js`, loaded after `concepts-roadmap.js`): graphical-models, glm-survival, vision-3d, ai-for-science, audio-generation, ai-governance, contextual-bandits, geometric-dl, interpretability-practice, ai-hardware. Each has 7 to 10 sections, runnable samples with predictions, 2 problems (20 in all) and 6 quiz questions. Governance is dated "as of mid-2026" and says it is not legal advice. The Interpretability lesson has one `run: false` TransformerLens sample.
+
+**Charts:** `tools/charts/charts_z1.py` (9 charts); it replays the lessons' own samples through Node like `charts_y1.py`.
+
+**Glossary and tracks:** 49 new terms; the lessons were added to the theory, data-science, build-llm, llm-apps and frontier-dl tracks. The geometric-dl problem `pairwise-distances` clashed with an existing id and was replaced by `symmetry-check`.
+
+**Keyboard access:** `MLA.demoKit.kbCursor` (in `js/views/demos.js`) is a mixin for canvases that take clicks: arrow keys move a cross-hair, Enter or Space acts there, and a polite live region (`said`) reports positions; a component can define `kbDescribe(x, y)`. Used by linear-fit, knn and gp. `turnKey` in `demos-more.js` turns the eigen and PCA directions. The convolution grid uses a roving tabindex. Quiz options, map hubs, the problem of the day and playground files are focusable. `.sr-only` is in `css/app.css`.
+
+**Row previews:** 31 samples print a few rows of their data (the first sample per lesson and dataset).
+
+**Style pass:** emojis replaced by `MLA.ui` line icons (tracks and achievements now store icon names); em dashes in prose rewritten by rule (pairs to parentheses, one dash to a colon, or to a comma before words such as "and", "which", "including"). Formula legends keep " — " because `MLA.util.md` splits legend lines on it. The rewrite touched no code, tests, expectations or quiz answers, and all 1,499 section ids are unchanged. CONTENT_GUIDE has the style rules.
+
+**Loading screen:** markup in `index.html`, styles under "Loading screen" in `css/app.css`.
+
+**Totals:** 123 concepts, 266 problems, 877 quiz questions, 683 glossary terms, 155 charts in 109 lessons, 158 predictions, 356 browser-run samples, median lesson 1,180 words.
 
 ## STATUS UPDATE (session 8, later on 2026-11-21): seven new lessons, roadmap.sh coverage, slow samples
 
@@ -312,7 +332,7 @@ That makes 25 demos in total.
 - Totals: 105 concepts, 230 problems, 532 quiz questions, 594 glossary terms, 19 interactive demos.
 - Tests: views.test.js now checks the legal pages (placeholders filled, localStorage keys named in the policy).
 
-## STATUS UPDATE (session 4, later on 2026-11-20): 16 MORE CONCEPTS (99 total) — "full mastery" pass
+## STATUS UPDATE (session 4, later on 2026-11-20): 16 MORE CONCEPTS (99 total) ("full mastery" pass)
 - The user asked to add anything else needed for full mastery of modern ML plus the four lower-priority topics.
   16 new concepts in three new files (index.html, after concepts-spec-plus.js, before glossary.js):
   - `concepts-theory-plus.js`: matrix-calculus, optimization-theory, learning-theory, bayesian-methods,
@@ -333,7 +353,7 @@ That makes 25 demos in total.
   to llm-serving.
 - Totals: 99 concepts, 214 problems, 502 quiz questions, 565 glossary terms. `npm test` passes with 0 failures
   (content 9240, views 222, problems 780 with 184 samples).
-- Authoring gotcha: when writing content files with the Write tool, check escapes afterwards — an apostrophe
+- Authoring gotcha: when writing content files with the Write tool, check escapes afterwards (an apostrophe)
   inside a single-quoted JS string sometimes lost its backslash, and a doubled backslash sometimes appeared.
   `node --check` catches both; repair scripts lived in the session scratchpad (fix_quotes.js / fix_double.js).
 - Not committed yet.
@@ -392,9 +412,9 @@ That makes 25 demos in total.
 ## STATUS UPDATE (session 2)
 - DONE and verified in a real browser (`node serve.js` → built-in browser): every view, app root, CSS (dark/midnight/light),
   index.html, sw.js, manifest, icons (tools/make-icons.js), serve.js, package.json, .nojekyll, .gitignore, .gitattributes,
-  .github/workflows/deploy.yml, tracks.js, achievements.js, glossary.js (36 terms so far — extend at the end for every concept),
+  .github/workflows/deploy.yml, tracks.js, achievements.js, glossary.js (36 terms so far: extend at the end for every concept),
   tests (graph / content / views / problems + run_problems.py, shared loader tests/_load.js), and the first content file
-  `js/data/concepts-start-math.js` (what-is-ml + 5 math concepts, 12 problems — all solutions pass in CPython).
+  `js/data/concepts-start-math.js` (what-is-ml + 5 math concepts, 12 problems: all solutions pass in CPython).
 - Map, drawer, lesson page, runnable samples and the problem page (Run → Wrong Answer, Submit → Accepted + XP) all work.
 - Python loader: worker prefetches runtime files with progress + stall detection, races 4 jsDelivr hosts
   (cdn / testingcf / fastly / gcore) on first load, remembers the winner in localStorage `mla.pyMirror`.
@@ -425,8 +445,8 @@ commits; remote `origin` = https://github.com/markotofu/LLM-learning). Do not co
 1. Use `C:\Users\Mark\Downloads\learning-app-development.zip` as the basis (it is "NetSec Academy":
    an offline Vue 3 learning app with lessons, quizzes, flashcards, XP, labs).
 2. A learning app built as a **tree / mind map of concept nodes**: start from core concepts, branch
-   out to the sub-concepts needed for the big topics — machine learning → neural networks → LLMs
-   and how to build them — plus other branching concepts (not limited to ML/NN/LLM).
+   out to the sub-concepts needed for the big topics: machine learning → neural networks → LLMs
+   and how to build them, plus other branching concepts (not limited to ML/NN/LLM).
 3. **Full understanding of every concept is the top priority**: as detailed as possible, yet
    understandable for complete beginners.
 4. Code samples everywhere: how to do things in code, and *why, when and how*.
@@ -516,11 +536,11 @@ questions; problems with visible examples + hidden randomised tests.
 
 ## Still to do (in order)
 
-1. `js/views/concept-view.js` — tabs Learn / Practice / Quiz / Notes (`?tab=` query); prereq card
+1. `js/views/concept-view.js`: tabs Learn / Practice / Quiz / Notes (`?tab=` query); prereq card
    with "recommended first" warning; why / objectives / sections / when / pitfalls / takeaways / refs;
    auto-mark sections read via an IntersectionObserver sentinel at each section end; side TOC;
    `P.visit(id)` on mount; quiz prepared with a seeded shuffle.
-2. `js/views/problem-view.js` — LeetCode layout: left tabs Description / Hints / Solution
+2. `js/views/problem-view.js`: LeetCode layout: left tabs Description / Hints / Solution
    (confirm before reveal → assisted) / Explanation (after solve); right `code-editor` (fill) +
    console tabs Test cases / Result / Output; Run (visible tests) + Submit (all tests); draft
    autosave per problem; reset to starter; download `.py`; prev/next problem; XP toast on accept.
@@ -538,7 +558,7 @@ questions; problems with visible examples + hidden randomised tests.
    Atlas `all:true`, plus hidden `custom` track whose `title`/`goals` are **getters** reading
    `profile.customGoal`), `achievements.js`, `glossary.js` (~150 terms with `concept` links; doubles
    as flashcards).
-5. `css/app.css` — port the base stylesheet (in the zip) and add styles for every class used in the
+5. `css/app.css`: port the base stylesheet (in the zip) and add styles for every class used in the
    views (map-*, mnode*, hub*, edge*, lane*, editor*, ro-*, code-sample/code-block/code-btn,
    demo-*, mini-table, att-*, bpe-*, conv-*, formula, diff, status-dot, branch-chip, light theme,
    `--pink`, `--accent-soft`).
@@ -551,11 +571,11 @@ questions; problems with visible examples + hidden randomised tests.
 7. Content: write the 64 concepts in ~9 files (`js/data/concepts-*.js`), one branch at a time.
 8. Tests: `tests/graph.test.js`, `tests/content.test.js` (ids unique, prereqs exist, no cycles,
    demos exist, quiz questions valid, tests well-formed), `tests/views.test.js` (load app in Node
-   with DOM stubs, compile every template — adapt the base's version), `tests/problems.test.js` +
+   with DOM stubs, compile every template: adapt the base's version), `tests/problems.test.js` +
    `tests/run_problems.py` (CPython: solution passes all, starter fails ≥1, every Python code sample
    compiles; runnable samples execute).
 9. Run in the browser via `node serve.js` + the built-in browser: map, lesson, a problem Run/Submit
    with Pyodide, playground, export/import; then `/selftest`.
 
 Local environment: Node 24, Python 3.14.5 with numpy 2.5.3 and scikit-learn 1.9.0 (sklearn imports
-slowly — run with a long timeout or in the background).
+slowly: run with a long timeout or in the background).

@@ -53,7 +53,7 @@
         <div class="row between"><strong class="small upper dim">Your files</strong><button class="btn xs" @click="showNew=!showNew"><mla-icon name="plus" :size="12"/> New</button></div>
         <div v-if="showNew" class="pg-templates"><div class="tiny dim">Start from a template:</div><a v-for="t in templates" :key="t.name" @click="create(t)">{{ t.name }}</a></div>
         <div class="pg-list">
-          <div v-for="f in files" :key="f.id" class="pg-file" :class="{active: active && f.id===active.id}" @click="select(f)">
+          <div v-for="f in files" :key="f.id" class="pg-file" :class="{active: active && f.id===active.id}" role="button" tabindex="0" :aria-current="active && f.id===active.id ? 'true' : null" :title="'Open ' + f.name + ' (F2 renames it)'" @click="select(f)" @keydown.enter.self="select(f)" @keydown.space.self.prevent="select(f)" @keydown.f2.self.prevent="startRename(f)">
             <mla-icon name="file" :size="14"/>
             <input v-if="renaming===f.id" :ref="'rn-'+f.id" v-model="renameVal" class="pg-rename" @keydown.enter="finishRename(f)" @blur="finishRename(f)" @click.stop>
             <span v-else class="pg-name" @dblclick.stop="startRename(f)">{{ f.name }}</span>

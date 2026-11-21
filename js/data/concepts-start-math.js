@@ -8,14 +8,14 @@
   {
     id: 'what-is-ml', branch: 'start', title: 'What Is Machine Learning?', level: 1, minutes: 20, prereqs: [],
     tags: ['introduction', 'overview', 'ai'],
-    summary: 'Programs that learn patterns from examples instead of following hand-written rules — and the five-step recipe that every model on this map follows.',
-    why: `Machine learning is behind search engines, spam filters, recommendations, translation, self-driving perception and large language models like ChatGPT. It can look like magic, but every one of those systems — from a two-parameter line fit to a trillion-parameter LLM — is built from the **same five ingredients**: data, a model with adjustable numbers, a way to measure mistakes, a procedure that reduces those mistakes, and an honest test on new data.
+    summary: 'Programs that learn patterns from examples instead of following hand-written rules, and the five-step recipe that every model on this map follows.',
+    why: `Machine learning is behind search engines, spam filters, recommendations, translation, self-driving perception and large language models like ChatGPT. It can look like magic, but every one of those systems (from a two-parameter line fit to a trillion-parameter LLM) is built from the **same five ingredients**: data, a model with adjustable numbers, a way to measure mistakes, a procedure that reduces those mistakes, and an honest test on new data.
 
 Learn that recipe once and the rest of this map becomes a tour of better ingredients, rather than a pile of unrelated tricks.`,
     objectives: [
       'Explain the difference between traditional programming (writing rules) and machine learning (learning rules from examples)',
       'Use the core vocabulary: features, labels, model, parameters, training, inference, generalization',
-      'Name the main kinds of learning — supervised, unsupervised, reinforcement and self-supervised — with an example of each',
+      'Name the main kinds of learning (supervised, unsupervised, reinforcement and self-supervised) with an example of each',
       'Describe the universal recipe: data → model → loss → optimization → evaluation',
       'Place AI, machine learning, deep learning and LLMs relative to each other'
     ],
@@ -24,7 +24,7 @@ Learn that recipe once and the rest of this map becomes a tour of better ingredi
 
 That works until the rules get too complicated to write down. Spammers change their wording every week; there are thousands of subtle clues; and nobody can write a rule for "does this photo contain a dog?".
 
-**Machine learning flips the arrangement.** Instead of rules, you give the computer *examples* — 100,000 emails each labelled "spam" or "not spam" — and an algorithm *finds* the rules (patterns) that best explain them.
+**Machine learning flips the arrangement.** Instead of rules, you give the computer *examples* (100,000 emails each labelled "spam" or "not spam") and an algorithm *finds* the rules (patterns) that best explain them.
 
 | | Traditional programming | Machine learning |
 | --- | --- | --- |
@@ -33,7 +33,7 @@ That works until the rules get too complicated to write down. Spammers change th
 | Good when | logic is clear and fixed | patterns are complex, fuzzy or changing |
 
 :::analogy How you learned what a dog is
-Nobody gave you a rulebook ("four legs, fur, a tail..." — cats have those too). You saw many dogs and many not-dogs, someone told you which was which, and your brain tuned itself until it could recognise dogs it had never seen. That is supervised machine learning.
+Nobody gave you a rulebook ("four legs, fur, a tail...": cats have those too). You saw many dogs and many not-dogs, someone told you which was which, and your brain tuned itself until it could recognise dogs it had never seen. That is supervised machine learning.
 :::` },
       { type: 'text', title: 'The vocabulary you will use everywhere', md: `Suppose we want to predict house prices.
 
@@ -50,7 +50,7 @@ Nobody gave you a rulebook ("four legs, fur, a tail..." — cats have those too)
 | **Generalization** | doing well on data the model has never seen | accurate prices for next year's houses |
 
 The model's prediction is usually written **ŷ** ("y-hat") to distinguish it from the true value **y**.` },
-      { type: 'code', title: 'Your first learning program', md: `Here is machine learning stripped to the bone. We have hours studied and whether each student passed. The "model" is a single rule — *pass if hours ≥ t* — with one parameter, the threshold **t**. "Training" means trying candidate values of t and keeping the one that makes the fewest mistakes. Press **Run**.`, code: `
+      { type: 'code', title: 'Your first learning program', md: `Here is machine learning stripped to the bone. We have hours studied and whether each student passed. The "model" is a single rule (*pass if hours ≥ t*) with one parameter, the threshold **t**. "Training" means trying candidate values of t and keeping the one that makes the fewest mistakes. Press **Run**.`, code: `
 # Hours studied and whether each student passed (1) or failed (0)
 hours  = [1.0, 2.0, 2.5, 3.0, 4.0, 4.5, 5.0, 6.0]
 passed = [0,   0,   0,   1,   0,   1,   1,   1]
@@ -68,7 +68,7 @@ print("training accuracy:", accuracy(best))
 # Inference = applying the learned rule to new, unseen students
 for h in [1.5, 3.5, 5.5]:
     print(h, "hours ->", "pass" if h >= best else "fail")
-`, after: `Notice that even the best threshold gets one student wrong (the one who studied 4 hours and failed). Real data is noisy; models make mistakes. Our job is to make *few* mistakes on *new* data — not zero mistakes on old data.` },
+`, after: `Notice that even the best threshold gets one student wrong (the one who studied 4 hours and failed). Real data is noisy; models make mistakes. Our job is to make *few* mistakes on *new* data, not zero mistakes on old data.` },
       { type: 'text', title: 'The kinds of learning', md: `| Kind | What you have | Typical tasks | Examples |
 | --- | --- | --- | --- |
 | **Supervised** | inputs **with** correct labels | *regression* (predict a number), *classification* (predict a category) | house prices, spam filters, medical image diagnosis |
@@ -76,7 +76,7 @@ for h in [1.5, 3.5, 5.5]:
 | **Reinforcement** | an environment that gives **rewards** | learning a sequence of actions | game-playing agents, robotics, tuning chatbots with human feedback (RLHF) |
 | **Self-supervised** | raw data where the label hides inside the data | predict a missing or next piece | **LLM pretraining**: predict the next word of internet text |
 
-Self-supervised learning is the secret behind LLMs: nobody labels trillions of words by hand. The "label" for every position in a sentence is simply the word that comes next — free supervision at enormous scale.` },
+Self-supervised learning is the secret behind LLMs: nobody labels trillions of words by hand. The "label" for every position in a sentence is simply the word that comes next: free supervision at enormous scale.` },
       { type: 'text', title: "Problems machine learning can solve", md: `The most successful applications automate a decision that people already make, by **learning from examples of past decisions**. In supervised learning you supply pairs of inputs and the desired outputs; the algorithm finds a way to produce the output for new inputs, without anyone writing the rules.
 
 How hard a supervised problem is in practice often depends on **where the labels come from**:
@@ -101,14 +101,14 @@ Almost every method on this map sees its data as a table. Each **row is a sample
 :::warn When machine learning is the wrong tool
 If the rules are known, stable and easy to write down (calculating sales tax, validating a date), write them down: code is cheaper, exact and explainable. And if your data simply does not contain the information needed (predicting a coin toss from yesterday's weather), no algorithm can find it.
 :::` },
-      { type: 'check', question: { type: 'mcq', q: 'An online shop wants to group its customers by purchasing behaviour, but has no predefined groups. Which kind of learning fits?', options: ['Supervised classification', 'Unsupervised learning (clustering)', 'Reinforcement learning', 'Supervised regression'], answer: 1, explain: 'There are no labels — nobody has told us which group each customer belongs to — so we look for structure in the data itself: clustering, a form of unsupervised learning.' } },
-      { type: 'text', title: 'The universal recipe', md: `Every model on this map — linear regression, decision trees, neural networks, GPT — is an instance of the same five steps:
+      { type: 'check', question: { type: 'mcq', q: 'An online shop wants to group its customers by purchasing behaviour, but has no predefined groups. Which kind of learning fits?', options: ['Supervised classification', 'Unsupervised learning (clustering)', 'Reinforcement learning', 'Supervised regression'], answer: 1, explain: 'There are no labels (nobody has told us which group each customer belongs to) so we look for structure in the data itself: clustering, a form of unsupervised learning.' } },
+      { type: 'text', title: 'The universal recipe', md: `Every model on this map (linear regression, decision trees, neural networks, GPT) is an instance of the same five steps:
 
-1. **Data** — collect examples and turn them into numbers (features).
-2. **Model** — choose a family of functions with adjustable parameters θ (theta): ŷ = f(x; θ).
-3. **Loss** — a single number measuring how wrong the predictions are (for example, the average squared error).
-4. **Optimization** — adjust θ to make the loss smaller, usually by *gradient descent*.
-5. **Evaluation** — measure performance on data that was **not** used for training.
+1. **Data**: collect examples and turn them into numbers (features).
+2. **Model**: choose a family of functions with adjustable parameters θ (theta): ŷ = f(x; θ).
+3. **Loss**: a single number measuring how wrong the predictions are (for example, the average squared error).
+4. **Optimization**: adjust θ to make the loss smaller, usually by *gradient descent*.
+5. **Evaluation**: measure performance on data that was **not** used for training.
 
 $$ find θ that minimises  L(θ) = (1/n) Σᵢ loss( f(xᵢ; θ), yᵢ ) $$
 :::where
@@ -156,6 +156,9 @@ iris = load_iris()
 print("features:", iris.feature_names)
 print("classes: ", list(iris.target_names))
 print("data shape:", iris.data.shape)        # 150 flowers (rows) x 4 measurements (columns)
+preview = pd.DataFrame(iris.data, columns=iris.feature_names)
+preview["species"] = iris.target_names[iris.target]
+print(preview.sample(5, random_state=0).to_string())    # five random rows of the table
 
 # 1. Hold out 25% of the flowers for testing. random_state makes the shuffle repeatable.
 X_train, X_test, y_train, y_test = train_test_split(iris.data, iris.target, random_state=0)
@@ -191,15 +194,15 @@ print("same thing:   ", round(knn.score(X_test, y_test), 2))`, after: `Things to
 | **pandas** | tables with named columns of different types; reading CSV, Excel and SQL; grouping, joining and reshaping | [pandas & EDA](#/concept/pandas-eda) |
 | **matplotlib** | plots and charts | [Data Visualization](#/concept/data-visualization) |
 | **scikit-learn** | almost every classical algorithm behind one consistent interface: \`fit\`, \`predict\`, \`transform\`, \`score\` | [the scikit-learn workflow](#/concept/sklearn-workflow) |
-| **Jupyter** | notebooks that mix code, output and notes; the runnable cells here work the same way | — |
+| **Jupyter** | notebooks that mix code, output and notes; the runnable cells here work the same way |: |
 
 Learning these well is the fastest way to be productive: the algorithms in scikit-learn are written by experts, tested by thousands of users and share one API, so once you can use one model you can use them all.` },
       { type: 'text', title: 'AI, machine learning, deep learning and LLMs', md: `These terms nest inside each other:
 
-- **Artificial intelligence (AI)** — any technique that makes computers do things we consider intelligent. Includes old-school rule systems and search.
-  - **Machine learning (ML)** — AI that *learns from data*.
-    - **Deep learning** — ML with *neural networks* of many layers. Dominant for images, audio and text since about 2012.
-      - **Large language models (LLMs)** — very large deep-learning models (transformers) trained on huge amounts of text to predict the next token. ChatGPT, Claude, Gemini and Llama are LLMs.
+- **Artificial intelligence (AI)**: any technique that makes computers do things we consider intelligent. Includes old-school rule systems and search.
+  - **Machine learning (ML)**: AI that *learns from data*.
+    - **Deep learning**: ML with *neural networks* of many layers. Dominant for images, audio and text since about 2012.
+      - **Large language models (LLMs)**: very large deep-learning models (transformers) trained on huge amounts of text to predict the next token. ChatGPT, Claude, Gemini and Llama are LLMs.
 
 A whirlwind history: the **perceptron** (1958) → **backpropagation** popularised (1986) → **support vector machines** and **random forests** dominate (1990s–2000s) → **AlexNet** wins ImageNet with a deep CNN on GPUs (2012) → the **Transformer** paper "Attention Is All You Need" (2017) → **GPT-2/3** show that scale works (2019–2020) → **ChatGPT** brings LLMs to everyone (2022).` },
       { type: 'text', title: 'How to use this map', md: `The **concept map** is organised like a tree that grows outward from this page:
@@ -223,8 +226,8 @@ Each concept lists its **prerequisites**. You can open anything at any time, but
 - a clear rule exists (tax calculations, unit conversion, sorting);
 - you have little or no data;
 - every answer must be exactly right and fully explainable;
-- a simple heuristic already works — start with the simplest thing that could work, then use ML to beat it.`,
-    pitfalls: `- **Garbage in, garbage out.** A model can only learn what is in its data — including its biases and errors.
+- a simple heuristic already works: start with the simplest thing that could work, then use ML to beat it.`,
+    pitfalls: `- **Garbage in, garbage out.** A model can only learn what is in its data, including its biases and errors.
 - **Testing on the training data.** It measures memory, not understanding. Always keep a separate test set.
 - **Mistaking correlation for causation.** A model that predicts well has found useful patterns, not necessarily causes.
 - **Reaching for deep learning first.** On small tabular datasets a simple model is often as good and far easier to trust.
@@ -237,26 +240,26 @@ Each concept lists its **prerequisites**. You can open anything at any time, but
       'Deep learning ⊂ machine learning ⊂ AI, and LLMs are very large deep-learning models trained to predict the next token.'
     ],
     quiz: [
-      { type: 'mcq', q: 'In machine learning, what does the computer produce from the training examples?', options: ['The labels', 'The rules (a trained model)', 'The features', 'The raw data'], answer: 1, explain: 'We supply inputs and correct outputs; the learning algorithm produces the rules — the trained model — that map one to the other.' },
+      { type: 'mcq', q: 'In machine learning, what does the computer produce from the training examples?', options: ['The labels', 'The rules (a trained model)', 'The features', 'The raw data'], answer: 1, explain: 'We supply inputs and correct outputs; the learning algorithm produces the rules (the trained model) that map one to the other.' },
       { type: 'match', q: 'Match each task with the kind of learning it uses.', pairs: [['Predict tomorrow\'s temperature from historical weather data', 'Supervised regression'], ['Decide whether an email is spam', 'Supervised classification'], ['Group news articles by topic without labels', 'Unsupervised clustering'], ['Teach an agent to win a game from scores', 'Reinforcement learning']], explain: 'Numbers → regression; categories → classification; no labels → unsupervised; rewards from actions → reinforcement learning.' },
       { type: 'order', q: 'Put the universal ML recipe in order.', items: ['Collect data and turn it into features', 'Choose a model with adjustable parameters', 'Define a loss that measures mistakes', 'Optimise the parameters to reduce the loss', 'Evaluate on data the model has never seen'], explain: 'Data → model → loss → optimization → evaluation. Evaluation must use unseen data.' },
       { type: 'mcq', q: 'How are large language models mainly pretrained?', options: ['On millions of hand-labelled question/answer pairs', 'By self-supervised next-token prediction on huge amounts of text', 'With hand-written grammar rules', 'Purely by reinforcement learning from scratch'], answer: 1, explain: 'Pretraining predicts the next token of real text; the labels come from the text itself, so it scales to trillions of tokens. Later stages (fine-tuning, RLHF) add smaller amounts of curated data.' },
-      { type: 'multi', q: 'Which situations are good candidates for machine learning? (select all)', options: ['Recognising handwritten digits', 'Converting Celsius to Fahrenheit', 'Flagging unusual credit-card transactions', 'Recommending songs a user might like'], answer: [0, 2, 3], explain: 'Temperature conversion is an exact formula — just code it. The others involve fuzzy, data-driven patterns.' },
-      { type: 'tf', q: 'Parameters are the numbers inside a model that are adjusted during training.', answer: true, explain: 'Yes — weights and biases are parameters. Settings you choose before training, like the learning rate, are called hyperparameters.' },
+      { type: 'multi', q: 'Which situations are good candidates for machine learning? (select all)', options: ['Recognising handwritten digits', 'Converting Celsius to Fahrenheit', 'Flagging unusual credit-card transactions', 'Recommending songs a user might like'], answer: [0, 2, 3], explain: 'Temperature conversion is an exact formula, just code it. The others involve fuzzy, data-driven patterns.' },
+      { type: 'tf', q: 'Parameters are the numbers inside a model that are adjusted during training.', answer: true, explain: 'Yes: weights and biases are parameters. Settings you choose before training, like the learning rate, are called hyperparameters.' },
       {"type":"mcq","q":"Which of these tasks is **unsupervised**?","options":["Predicting a house's sale price from its features, using past sales","Grouping thousands of blog posts by topic when no list of topics exists","Flagging spam using emails that users marked as spam or not spam","Reading handwritten digits using scans labelled with the correct digit"],"answer":1,"explain":"Only the topic grouping has no labels to learn from; the other three learn from known correct answers."},
       {"type":"tf","q":"In scikit-learn, `predict` expects a two-dimensional input, even when you predict for a single example.","answer":true,"explain":"The input is always a table: one row per example and one column per feature. A single example is a table with one row, e.g. `np.array([[5.0, 2.9, 1.0, 0.2]])`."}
     ],
     problems: [
       {
         id: 'learn-threshold', title: 'Learn a Threshold from Data', difficulty: 'easy',
-        prompt: `Welcome to your first practice problem! Write code in the editor on the right, press **Run** to check it against the examples, then **Submit** to run the hidden tests too.
+        prompt: `This is your first practice problem. Write code in the editor on the right, press **Run** to check it against the examples, then **Submit** to run the hidden tests too.
 
 We will "train" the simplest possible classifier: **predict 1 if x ≥ t, otherwise 0**, where the threshold **t** is the only parameter.
 
 Implement two functions:
 
-1. \`accuracy(xs, ys, t)\` — the fraction of examples (between 0 and 1) where the rule's prediction equals the label \`ys[i]\`.
-2. \`fit_threshold(xs, ys)\` — try every distinct value in \`xs\` as a candidate threshold and return the one with the **highest accuracy**. If several tie, return the **smallest**.
+1. \`accuracy(xs, ys, t)\`: the fraction of examples (between 0 and 1) where the rule's prediction equals the label \`ys[i]\`.
+2. \`fit_threshold(xs, ys)\`: try every distinct value in \`xs\` as a candidate threshold and return the one with the **highest accuracy**. If several tie, return the **smallest**.
 
 **Example**
 
@@ -297,8 +300,8 @@ def fit_threshold(xs, ys):
             best_t, best_acc = t, acc
     return best_t
 `,
-        hints: ['In `accuracy`, loop with `for x, y in zip(xs, ys):` and compare `(1 if x >= t else 0)` with `y`.', '`sorted(set(xs))` gives the distinct candidate thresholds from smallest to largest.', 'Only replace your best threshold when the new accuracy is *strictly* greater — that automatically keeps the smallest one on ties.'],
-        explain: `This is a complete, if tiny, learning algorithm: a **model family** (threshold rules), a **performance measure** (accuracy) and an **optimizer** (exhaustive search over candidate parameters). Exhaustive search works because there is one parameter with few candidates. Real models have millions of parameters, so instead of trying every value we follow the slope of the loss — gradient descent — which you will meet soon.`,
+        hints: ['In `accuracy`, loop with `for x, y in zip(xs, ys):` and compare `(1 if x >= t else 0)` with `y`.', '`sorted(set(xs))` gives the distinct candidate thresholds from smallest to largest.', 'Only replace your best threshold when the new accuracy is *strictly* greater: that automatically keeps the smallest one on ties.'],
+        explain: `This is a complete, if tiny, learning algorithm: a **model family** (threshold rules), a **performance measure** (accuracy) and an **optimizer** (exhaustive search over candidate parameters). Exhaustive search works because there is one parameter with few candidates. Real models have millions of parameters, so instead of trying every value we follow the slope of the loss (gradient descent) which you will meet soon.`,
         tests: [
           { name: 'accuracy: perfect rule', call: 'accuracy([1, 2, 3, 4], [0, 0, 1, 1], 3)', expect: '1.0' },
           { name: 'accuracy: one mistake', call: 'accuracy([1, 2, 3, 4], [0, 1, 0, 1], 2)', expect: '0.75' },
@@ -313,9 +316,9 @@ def fit_threshold(xs, ys):
         id: 'train-then-test', title: 'Train on One Part, Test on Another', difficulty: 'easy',
         prompt: `The universal recipe of machine learning: **learn from training data, then check on data the model has never seen.** Using the threshold rule from the first problem (predict 1 if x ≥ t, else 0), implement:
 
-1. \`best_threshold(xs, ys)\` — try every value in \`xs\` as the threshold t and return the one with the highest accuracy on (xs, ys). If several tie, return the smallest.
-2. \`holdout_split(xs, ys, test_fraction)\` — put the **last** \`round(len(xs) * test_fraction)\` examples in the test set and the rest in the training set; return \`(xs_train, ys_train, xs_test, ys_test)\`.
-3. \`train_and_test(xs, ys, test_fraction=0.25)\` — split, choose t on the training part only, and return \`(t, train_accuracy, test_accuracy)\`.
+1. \`best_threshold(xs, ys)\`: try every value in \`xs\` as the threshold t and return the one with the highest accuracy on (xs, ys). If several tie, return the smallest.
+2. \`holdout_split(xs, ys, test_fraction)\`: put the **last** \`round(len(xs) * test_fraction)\` examples in the test set and the rest in the training set; return \`(xs_train, ys_train, xs_test, ys_test)\`.
+3. \`train_and_test(xs, ys, test_fraction=0.25)\`: split, choose t on the training part only, and return \`(t, train_accuracy, test_accuracy)\`.
 
 \`\`\`text
 best_threshold([1, 2, 3, 4], [0, 0, 1, 1])  ->  3
@@ -360,7 +363,7 @@ def train_and_test(xs, ys, test_fraction=0.25):
     return t, accuracy(xtr, ytr, t), accuracy(xte, yte, t)
 `,
         hints: ['Loop over the thresholds in ascending order and only replace the best when the accuracy is strictly higher.', 'Slicing with a cut point: xs[:cut] and xs[cut:].', 'The threshold must be chosen without looking at the test part.'],
-        explain: `Training accuracy measures how well the rule fits the examples it was chosen on; test accuracy estimates how it will do on new data. The gap between them — here usually small, because a threshold has only one parameter — is the generalization gap you will meet again in *Overfitting* and *Generalization Theory*.`,
+        explain: `Training accuracy measures how well the rule fits the examples it was chosen on; test accuracy estimates how it will do on new data. The gap between them (here usually small, because a threshold has only one parameter) is the generalization gap you will meet again in *Overfitting* and *Generalization Theory*.`,
         tests: [
           { call: 'best_threshold([1, 2, 3, 4], [0, 0, 1, 1])', expect: '3' },
           { call: 'holdout_split([1, 2, 3, 4], [0, 0, 1, 1], 0.25)', expect: '([1, 2, 3], [0, 0, 1], [4], [1])' },
@@ -371,9 +374,9 @@ def train_and_test(xs, ys, test_fraction=0.25):
       }
     ],
     refs: [
-      { title: 'Google — Machine Learning Crash Course', url: 'https://developers.google.com/machine-learning/crash-course', note: 'free, practical introduction' },
+      { title: 'Google, Machine Learning Crash Course', url: 'https://developers.google.com/machine-learning/crash-course', note: 'free, practical introduction' },
       { title: 'Dive into Deep Learning (d2l.ai)', url: 'https://d2l.ai/', note: 'free interactive textbook' },
-      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
+      { title: "Andreas Müller & Sarah Guido, Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 
@@ -382,7 +385,7 @@ def train_and_test(xs, ys, test_fraction=0.25):
     id: 'vectors-matrices', branch: 'math', title: 'Vectors, Matrices & the Dot Product', short: 'Vectors & Matrices', level: 1, minutes: 35, prereqs: ['what-is-ml'],
     tags: ['linear algebra', 'dot product', 'matrix multiplication', 'cosine similarity'],
     summary: 'How data becomes numbers: vectors for single examples, matrices for whole datasets, and the dot product that powers almost every model.',
-    why: `Every input to a model is a **vector** of numbers: a house is [size, bedrooms, age], a 28×28 image is 784 pixel brightnesses, and each word inside an LLM is a vector of thousands of numbers. Whole datasets are **matrices**, and most of what a neural network does is **multiply matrices**. That is literally why GPUs — chips built to multiply matrices fast — power modern AI.
+    why: `Every input to a model is a **vector** of numbers: a house is [size, bedrooms, age], a 28×28 image is 784 pixel brightnesses, and each word inside an LLM is a vector of thousands of numbers. Whole datasets are **matrices**, and most of what a neural network does is **multiply matrices**. That is literally why GPUs (chips built to multiply matrices fast) power modern AI.
 
 If you understand the dot product and how matrix shapes fit together, you can read the code of any model, debug the most common errors ("shapes not aligned"), and understand why attention in a transformer is "just" a big batch of dot products.`,
     objectives: [
@@ -394,7 +397,7 @@ If you understand the dot product and how matrix shapes fit together, you can re
     sections: [
       { type: 'text', title: 'Vectors: lists of numbers with meaning', md: `A **vector** is an ordered list of numbers. The position matters: in \`[120, 3, 10]\` the first number might be size in m², the second the bedrooms and the third the age of a house. The number of entries is its **dimension** (here 3).
 
-Geometrically, a 2-D vector like [3, 4] is an arrow from the origin to the point (3, 4). That picture generalises — we can't *draw* 4,096 dimensions, but distances, angles and directions still work exactly the same way.
+Geometrically, a 2-D vector like [3, 4] is an arrow from the origin to the point (3, 4). That picture generalises: we can't *draw* 4,096 dimensions, but distances, angles and directions still work exactly the same way.
 
 Two basic operations, both done **element by element**:
 
@@ -514,7 +517,7 @@ for name, dist in measures.items():
     print(f"{name:<6}", "  ".join(f"{k}: {v:.3f}" for k, v in d.items()), f"  -> nearest by {name}: {nearest}")`, after: `A points in exactly the same direction as q, so its cosine distance is 0, yet it is the farthest point under both L1 and L2. C wins under L2 because its difference from q, [1, −0.6], is spread over two coordinates; B wins under L1 because its whole difference (1.3) sits in one coordinate, and L1 does not reward spreading. Choosing a distance is choosing what "similar" means.`, predict: {"type":"mcq","q":"q = [1, 1]. Candidates: A = [3, 3], B = [1, 2.3], C = [2, 0.4]. Which one is nearest to q by cosine distance?","options":["A","B","C","They tie"],"answer":0,"explain":"A points in exactly the same direction as q, so the angle between them is 0 and the cosine distance is 0, even though A is the farthest away in straight-line distance.","expect":["nearest by cosine: A"]} },
       { type: 'text', title: 'Matrices: a whole dataset at once', md: `A **matrix** is a 2-D grid of numbers with a **shape** written (rows, columns). The convention in ML: **one row per example, one column per feature**. Four houses with three features each form a 4×3 matrix **X**.
 
-Multiplying the matrix by a weight vector computes the dot product of *every row* with the weights — a prediction for every house in one operation:
+Multiplying the matrix by a weight vector computes the dot product of *every row* with the weights, a prediction for every house in one operation:
 
 $$ X w  =  [ x⁽¹⁾·w,  x⁽²⁾·w,  x⁽³⁾·w,  x⁽⁴⁾·w ] $$
 :::where
@@ -538,7 +541,7 @@ k — the shared inner dimension: A's number of columns must equal B's number of
 C[i][j] — the entry in row i, column j of the result, which is the dot product of row i of A with column j of B
 :::
 
-- The **inner** dimensions (k and k) must match — every row of A must be as long as every column of B.
+- The **inner** dimensions (k and k) must match, every row of A must be as long as every column of B.
 - The **outer** dimensions give the result's shape.
 
 Worked example:
@@ -589,12 +592,12 @@ except ValueError as err:
 \`[1, 2, 3] * [4, 5, 6]\` gives \`[4, 10, 18]\`; adding those up gives the dot product, 32.` }
     ],
     when: `- Use **vectors** whenever you represent one example, one word, one image or one set of weights.
-- Use **matrix products** instead of Python loops whenever you apply the same operation to many examples — it is clearer and often 100× faster.
+- Use **matrix products** instead of Python loops whenever you apply the same operation to many examples: it is clearer and often 100× faster.
 - Use **cosine similarity** when only direction matters (comparing texts or embeddings of different lengths); use the plain **dot product** when magnitude carries meaning (a model's score), and **Euclidean distance** when absolute position matters (k-nearest neighbours on scaled features).`,
     pitfalls: `- **Shape mismatches.** Before multiplying, write the shapes down: (n×k)@(k×m). If they don't line up, you may need a transpose.
 - **\`*\` is not \`@\`.** \`*\` multiplies element by element.
 - **1-D vs 2-D arrays.** NumPy treats a shape \`(3,)\` vector differently from a \`(3, 1)\` column. When something broadcasts strangely, check for a stray extra dimension.
-- **Comparing raw dot products of vectors with very different lengths.** Longer vectors get bigger dot products regardless of direction — normalise first if you mean "similar direction".`,
+- **Comparing raw dot products of vectors with very different lengths.** Longer vectors get bigger dot products regardless of direction: normalise first if you mean "similar direction".`,
     takeaways: [
       'An example is a vector of features; a dataset is a matrix with one row per example.',
       'The dot product a·b = Σ aᵢbᵢ is both a weighted sum (a linear model, a neuron) and a similarity score.',
@@ -606,7 +609,7 @@ except ValueError as err:
       { type: 'fill', q: 'Compute the dot product [2, −1, 3] · [4, 5, −2].', answer: ['-3'], explain: '2·4 + (−1)·5 + 3·(−2) = 8 − 5 − 6 = −3.' },
       { type: 'mcq', q: 'Which shapes can be multiplied as A @ B?', options: ['A (5, 3) and B (5, 3)', 'A (5, 3) and B (3, 7)', 'A (3, 5) and B (3, 7)', 'A (7, 1) and B (5, 1)'], answer: 1, explain: 'The inner dimensions must match: (5, 3) @ (3, 7) → (5, 7).' },
       { type: 'tf', q: 'For matrices, A @ B always equals B @ A.', answer: false, explain: 'Matrix multiplication is not commutative. The products are usually different, and often only one of them has compatible shapes.' },
-      { type: 'mcq', q: 'Two embedding vectors have cosine similarity 0.98. What does that tell you?', options: ['They are almost identical in length', 'They point in almost the same direction — likely similar meanings', 'They are perpendicular', 'One is the negative of the other'], answer: 1, explain: 'Cosine similarity measures the angle. 0.98 means a tiny angle, which for embeddings indicates very similar meaning.' },
+      { type: 'mcq', q: 'Two embedding vectors have cosine similarity 0.98. What does that tell you?', options: ['They are almost identical in length', 'They point in almost the same direction: likely similar meanings', 'They are perpendicular', 'One is the negative of the other'], answer: 1, explain: 'Cosine similarity measures the angle. 0.98 means a tiny angle, which for embeddings indicates very similar meaning.' },
       { type: 'fill', q: 'What is the length (L2 norm) of the vector [6, 8]?', answer: ['10', '10.0'], explain: '√(6² + 8²) = √100 = 10.' },
       { type: 'mcq', q: 'In NumPy, what does `a * b` compute for two vectors of the same length?', options: ['Their dot product', 'Their element-wise product (a new vector)', 'Their cosine similarity', 'An error'], answer: 1, explain: '`*` multiplies element by element. Use `a @ b` or `np.dot(a, b)` for the dot product.' },
       {"type":"fill","q":"What is the L1 norm of the vector [3, −4]?","answer":["7"],"explain":"|3| + |−4| = 7. (Its L2 norm is 5 and its L∞ norm is 4.)"},
@@ -641,7 +644,7 @@ def dot(a, b):
     return total
 `,
         hints: ['Check `len(a) != len(b)` first and `raise ValueError("...")`.', 'Start a running `total = 0`, then loop over `zip(a, b)` adding `x * y`.'],
-        explain: `\`zip\` walks both lists in step. Starting the total at 0 makes the empty case work for free. In real code you would call \`np.dot\` or use \`@\` — they run in optimised C and are roughly 100× faster — but writing it once by hand makes it obvious what every neuron is computing.`,
+        explain: `\`zip\` walks both lists in step. Starting the total at 0 makes the empty case work for free. In real code you would call \`np.dot\` or use \`@\` (they run in optimised C and are roughly 100× faster) but writing it once by hand makes it obvious what every neuron is computing.`,
         tests: [
           { call: 'dot([1, 2, 3], [4, 5, 6])', expect: '32' },
           { call: 'dot([1, 0], [0, 1])', expect: '0' },
@@ -684,8 +687,8 @@ def matmul(A, B):
             C[i][j] = s
     return C
 `,
-        hints: ['The number of rows of B must equal the number of columns of A (`len(A[0])`).', 'Create the result with `[[0] * m for _ in range(n)]` — not `[[0] * m] * n`, which repeats the *same* row object.', 'Column j of B is `B[0][j], B[1][j], ...` — loop over the shared index t.'],
-        explain: `Three nested loops: for each output cell (i, j), take the dot product of row i of A with column j of B. That is n·m·k multiply-adds — for two 4096×4096 matrices about 69 billion. Libraries like NumPy and GPUs use cache-friendly blocking and parallel hardware to do this enormously faster, which is why you should never write this loop in real code — but now you know exactly what \`A @ B\` means.`,
+        hints: ['The number of rows of B must equal the number of columns of A (`len(A[0])`).', 'Create the result with `[[0] * m for _ in range(n)]`, not `[[0] * m] * n`, which repeats the *same* row object.', 'Column j of B is `B[0][j], B[1][j], ...`: loop over the shared index t.'],
+        explain: `Three nested loops: for each output cell (i, j), take the dot product of row i of A with column j of B. That is n·m·k multiply-adds, for two 4096×4096 matrices about 69 billion. Libraries like NumPy and GPUs use cache-friendly blocking and parallel hardware to do this enormously faster, which is why you should never write this loop in real code, but now you know exactly what \`A @ B\` means.`,
         tests: [
           { call: 'matmul([[1, 2], [3, 4]], [[5, 6], [7, 8]])', expect: '[[19, 22], [43, 50]]' },
           { name: 'row times column', call: 'matmul([[1, 2, 3]], [[1], [0], [-1]])', expect: '[[-2]]' },
@@ -748,7 +751,7 @@ def cosine_similarity(a, b):
       }
     ],
     refs: [
-      { title: '3Blue1Brown — Essence of Linear Algebra', url: 'https://www.3blue1brown.com/topics/linear-algebra', note: 'beautiful visual intuition' },
+      { title: '3Blue1Brown, Essence of Linear Algebra', url: 'https://www.3blue1brown.com/topics/linear-algebra', note: 'visual intuition for linear algebra' },
       { title: 'NumPy: the absolute basics for beginners', url: 'https://numpy.org/doc/stable/user/absolute_beginners.html' }
     ]
   },
@@ -758,7 +761,7 @@ def cosine_similarity(a, b):
     id: 'derivatives', branch: 'math', title: 'Derivatives, Gradients & the Chain Rule', short: 'Derivatives & Gradients', level: 1, minutes: 40, prereqs: ['what-is-ml'],
     tags: ['calculus', 'gradient', 'chain rule', 'partial derivative'],
     summary: 'The mathematics of "which way is downhill": slopes, partial derivatives, gradients and the chain rule that makes backpropagation possible.',
-    why: `Training a model means adjusting its parameters to make the loss smaller. The **derivative** answers the key question: *if I nudge this parameter a little, does the loss go up or down, and how fast?* The **gradient** collects that answer for every parameter at once — millions of them — and points uphill, so stepping the opposite way reduces the loss. The **chain rule** lets us compute gradients through long chains of computations, which is exactly what **backpropagation** does in every neural network.
+    why: `Training a model means adjusting its parameters to make the loss smaller. The **derivative** answers the key question: *if I nudge this parameter a little, does the loss go up or down, and how fast?* The **gradient** collects that answer for every parameter at once (millions of them) and points uphill, so stepping the opposite way reduces the loss. The **chain rule** lets us compute gradients through long chains of computations, which is exactly what **backpropagation** does in every neural network.
 
 You do not need to become a calculus expert. You need the intuition (slope = sensitivity), a handful of rules, and the chain rule. This lesson gives you all three, with code to check every claim numerically.`,
     objectives: [
@@ -787,12 +790,12 @@ f(x + h) − f(x) — how much the output changes over that step
 lim (h → 0) — "the limit as h goes to 0": the value the ratio settles on as the step shrinks towards zero
 :::
 
-For x² the derivative is **2x** — at x = 3 that is 6. ✓
+For x² the derivative is **2x**: at x = 3 that is 6.
 
 How to read it:
-- **f′(x) > 0** — increasing x increases f (the curve goes uphill to the right).
-- **f′(x) < 0** — increasing x decreases f.
-- **f′(x) = 0** — the curve is flat: a minimum, a maximum or a plateau.
+- **f′(x) > 0**: increasing x increases f (the curve goes uphill to the right).
+- **f′(x) < 0**: increasing x decreases f.
+- **f′(x) = 0**: the curve is flat: a minimum, a maximum or a plateau.
 - The **size** tells you how *sensitive* the output is: a derivative of 6 means "a tiny nudge of ε in x changes f by about 6ε".
 
 :::key Why ML cares
@@ -811,7 +814,7 @@ Replace x with a model parameter and f with the loss. The derivative says which 
 | sigmoid σ(x) = 1/(1+e⁻ˣ) | σ(x)·(1 − σ(x)) | at most 0.25 |
 | ReLU max(0, x) | 1 if x > 0 else 0 | the most common activation |
 
-Example: the squared error (ŷ − y)² has derivative **2(ŷ − y)** with respect to ŷ — large errors produce large corrections.` },
+Example: the squared error (ŷ − y)² has derivative **2(ŷ − y)** with respect to ŷ (large errors produce large corrections).` },
       { type: 'chart', title: "A function and its derivative", after: `Wherever the dashed derivative is positive, f rises; wherever it is negative, f falls. Where the derivative crosses zero, f has a flat spot: a local maximum at x = −1 and a local minimum at x = 1. Optimisers hunt for exactly these points, and the derivative's sign tells them which way to go.`, chart: {"kind":"line","x":[-2.2,-2.15,-2.1,-2.05,-2,-1.95,-1.9,-1.85,-1.8,-1.75,-1.7,-1.65,-1.6,-1.55,-1.5,-1.45,-1.4,-1.35,-1.3,-1.25,-1.2,-1.15,-1.1,-1.05,-1,-0.95,-0.9,-0.85,-0.8,-0.75,-0.7,-0.65,-0.6,-0.55,-0.5,-0.45,-0.4,-0.35,-0.3,-0.25,-0.2,-0.15,-0.1,-0.05,0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1,1.05,1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75,1.8,1.85,1.9,1.95,2,2.05,2.1,2.15,2.2],"points":false,"series":[{"name":"f(x) = x³ − 3x","y":[-4.048,-3.4884,-2.961,-2.4651,-2,-1.5649,-1.159,-0.7816,-0.432,-0.1094,0.187,0.4579,0.704,0.9261,1.125,1.3014,1.456,1.5896,1.703,1.7969,1.872,1.9291,1.969,1.9924,2,1.9926,1.971,1.9359,1.888,1.8281,1.757,1.6754,1.584,1.4836,1.375,1.2589,1.136,1.0071,0.873,0.7344,0.592,0.4466,0.299,0.1499,0,-0.1499,-0.299,-0.4466,-0.592,-0.7344,-0.873,-1.0071,-1.136,-1.2589,-1.375,-1.4836,-1.584,-1.6754,-1.757,-1.8281,-1.888,-1.9359,-1.971,-1.9926,-2,-1.9924,-1.969,-1.9291,-1.872,-1.7969,-1.703,-1.5896,-1.456,-1.3014,-1.125,-0.9261,-0.704,-0.4579,-0.187,0.1094,0.432,0.7816,1.159,1.5649,2,2.4651,2.961,3.4884,4.048]},{"name":"f′(x) = 3x² − 3","y":[11.52,10.8675,10.23,9.6075,9,8.4075,7.83,7.2675,6.72,6.1875,5.67,5.1675,4.68,4.2075,3.75,3.3075,2.88,2.4675,2.07,1.6875,1.32,0.9675,0.63,0.3075,0,-0.2925,-0.57,-0.8325,-1.08,-1.3125,-1.53,-1.7325,-1.92,-2.0925,-2.25,-2.3925,-2.52,-2.6325,-2.73,-2.8125,-2.88,-2.9325,-2.97,-2.9925,-3,-2.9925,-2.97,-2.9325,-2.88,-2.8125,-2.73,-2.6325,-2.52,-2.3925,-2.25,-2.0925,-1.92,-1.7325,-1.53,-1.3125,-1.08,-0.8325,-0.57,-0.2925,0,0.3075,0.63,0.9675,1.32,1.6875,2.07,2.4675,2.88,3.3075,3.75,4.2075,4.68,5.1675,5.67,6.1875,6.72,7.2675,7.83,8.4075,9,9.6075,10.23,10.8675,11.52],"dash":true}],"xLabel":"x","yLabel":"value","vlines":[{"x":-1,"label":"f′ = 0: local maximum"},{"x":1,"label":"f′ = 0: local minimum"}]} },
       { type: 'code', title: 'Estimating derivatives numerically', md: `You can always *estimate* a derivative by nudging the input. The **central difference** (look a little left *and* a little right) is far more accurate than the one-sided version, and it is how ML engineers sanity-check gradient code (*gradient checking*).`, code: `
 def f(x):
@@ -827,8 +830,8 @@ x = 3.0
 print("exact derivative 2x =", 2 * x)
 for h in [0.1, 0.01, 0.001]:
     print(f"h={h:<6} forward={forward_diff(f, x, h):.6f}   central={central_diff(f, x, h):.6f}")
-`, after: `The forward difference has an error proportional to h; the central difference's error shrinks like h² — for a parabola it is exact. Don't make h *too* small, though (like 1e-15): floating-point rounding then dominates.`, predict: {"type":"mcq","q":"Both formulas estimate the derivative of x² at x = 3 (exactly 6) with the same step h = 0.1. Which one prints the more accurate value?","options":["The forward difference (f(x+h) − f(x)) / h","The central difference (f(x+h) − f(x−h)) / 2h","Both give exactly the same number","Neither: h = 0.1 is far too large for either to be close"],"answer":1,"explain":"For x² the central difference is exact (6.000000) at every h, while the forward difference is off by h (6.1 at h = 0.1). In general the central error shrinks like h², the forward error only like h.","expect":["h=0.1    forward=6.100000   central=6.000000"]} },
-      { type: 'chart', title: "Error of a numerical derivative against the step size h", md: `Estimating the derivative of sin(x) at x = 1 (exactly cos 1) with ever smaller steps:`, after: `Read from left to right as h shrinks. At first the error falls, by 10× per decade of h for the forward difference and by 100× for the central one. Then floating-point rounding takes over: f(x + h) and f(x) agree in almost every digit, and their difference is mostly rounding noise divided by a tiny h. The best forward step is about 10⁻⁸ (error about 3 × 10⁻⁹); the best central step about 10⁻⁵ to 10⁻⁶ (error about 6 × 10⁻¹³).`, chart: {"kind":"line","x":[0.1,0.0316,0.01,0.00316,0.001,0.000316,0.0001,0.0000316,0.00001,0.00000316,0.000001,3.16e-7,1e-7,3.16e-8,1e-8,3.16e-9,1e-9,3.16e-10,1e-10,3.16e-11,1e-11,3.16e-12,1e-12,3.16e-13,1e-13],"xLog":true,"yLog":true,"series":[{"name":"forward difference","y":[0.04294,0.01339,0.004216,0.001331,0.0004208,0.0001331,0.00004207,0.0000133,0.000004207,0.00000133,4.207e-7,1.33e-7,4.183e-8,1.227e-8,2.97e-9,2.631e-8,5.254e-8,1.316e-7,5.848e-8,9.216e-7,0.000001169,0.00001496,0.00004324,0.00001496,0.0007339]},{"name":"central difference","y":[0.0009001,0.00009005,0.000009005,9.005e-7,9.005e-8,9.005e-9,9.004e-10,8.893e-11,1.114e-11,6.005e-13,2.772e-11,1.815e-11,1.943e-10,1.815e-11,2.581e-9,8.759e-9,2.97e-9,1.316e-7,5.848e-8,9.216e-7,0.000001169,0.000002589,0.00001227,0.00001496,0.0001788]}],"xLabel":"step size h (log scale; smaller to the right is not better!)","yLabel":"error (log scale)","points":false} },
+`, after: `The forward difference has an error proportional to h; the central difference's error shrinks like h², for a parabola it is exact. Don't make h *too* small, though (like 1e-15): floating-point rounding then dominates.`, predict: {"type":"mcq","q":"Both formulas estimate the derivative of x² at x = 3 (exactly 6) with the same step h = 0.1. Which one prints the more accurate value?","options":["The forward difference (f(x+h) − f(x)) / h","The central difference (f(x+h) − f(x−h)) / 2h","Both give exactly the same number","Neither: h = 0.1 is far too large for either to be close"],"answer":1,"explain":"For x² the central difference is exact (6.000000) at every h, while the forward difference is off by h (6.1 at h = 0.1). In general the central error shrinks like h², the forward error only like h.","expect":["h=0.1    forward=6.100000   central=6.000000"]} },
+      { type: 'chart', title: "Error of a numerical derivative against the step size h", md: `Estimating the derivative of sin(x) at x = 1 (exactly cos 1) with ever smaller steps:`, after: `Read from left to right as h shrinks. At first the error falls, by 10× per decade of h for the forward difference and by 100× for the central one. Then floating-point rounding takes over: f(x + h) and f(x) agree in almost every digit, and their difference is mostly rounding noise divided by a tiny h. The best forward step is about 10⁻⁸ (error about 3 × 10⁻⁹); the best central step about 10⁻⁵ to 10⁻⁶ (error about 6 × 10⁻¹³).`, chart: {"kind":"line","x":[0.1,0.0316,0.01,0.00316,0.001,0.000316,0.0001,0.0000316,0.00001,0.00000316,0.000001,3.16e-7,1e-7,3.16e-8,1e-8,3.16e-9,1e-9,3.16e-10,1e-10,3.16e-11,1e-11,3.16e-12,1e-12,3.16e-13,1e-13],"xLog":true,"yLog":true,"series":[{"name":"forward difference","y":[0.04294,0.01339,0.004216,0.001331,0.0004208,0.0001331,0.00004207,0.0000133,0.000004207,0.00000133,4.207e-7,1.33e-7,4.183e-8,1.227e-8,2.97e-9,2.631e-8,5.254e-8,1.316e-7,5.848e-8,9.216e-7,0.000001169,0.00001496,0.00004324,0.00001496,0.0007339]},{"name":"central difference","y":[0.0009001,0.00009005,0.000009005,9.005e-7,9.005e-8,9.005e-9,9.004e-10,8.893e-11,1.114e-11,6.005e-13,2.772e-11,1.815e-11,1.943e-10,1.815e-11,2.581e-9,8.759e-9,2.97e-9,1.316e-7,5.848e-8,9.216e-7,0.000001169,0.000002589,0.00001227,0.00001496,0.0001788]}],"xLabel":"step size h (log scale; smaller to the right is not always better)","yLabel":"error (log scale)","points":false} },
       { type: 'check', question: { type: 'fill', q: 'f(x) = x³. What is f′(2)?', answer: ['12', '12.0'], explain: 'f′(x) = 3x², so f′(2) = 3·4 = 12.' } },
       { type: 'text', title: 'Partial derivatives and the gradient', md: `Models have many parameters, so the loss is a function of many variables. Take a one-feature linear model with weight w and bias b, and a single training example x = 2, y = 7:
 
@@ -894,7 +897,7 @@ u — the inner expression, 3x + 1
 If gear A turns 3 times for each turn of gear B, and B turns 2 times for each turn of C, then A turns 3 × 2 = 6 times per turn of C. Rates along a chain multiply.
 :::
 
-**This is backpropagation.** A neural network computes a long chain: input → layer 1 → activation → layer 2 → … → loss. To find how the loss depends on a weight deep inside, backprop starts at the loss and walks backwards, multiplying each step's local derivative — the chain rule, applied efficiently to millions of parameters at once.` },
+**This is backpropagation.** A neural network computes a long chain: input → layer 1 → activation → layer 2 → … → loss. To find how the loss depends on a weight deep inside, backprop starts at the loss and walks backwards, multiplying each step's local derivative: the chain rule, applied efficiently to millions of parameters at once.` },
       { type: 'code', title: 'Checking the chain rule on a neuron', md: `A single neuron with a sigmoid computes ŷ = σ(w·x + b). By the chain rule, dŷ/dw = σ′(z)·dz/dw = σ(z)(1 − σ(z))·x. Let's confirm numerically.`, code: `
 import math
 
@@ -951,21 +954,21 @@ for h in [0.4, 0.2, 0.1, 0.05]:
 r1 = errors[0.1][0] / errors[0.05][0]
 r2 = errors[0.1][1] / errors[0.05][1]
 print(f"halving h divides the errors by {r1:.1f} and {r2:.1f}")
-print("first-order error ratio about 4:", 3.5 < r1 < 4.5)`, after: `The tangent line's error shrinks like h², so halving the step divides it by about 4; the parabola's error shrinks like h³, about 8 times per halving. Higher-order approximations are dramatically better, but only near x₀.`, predict: {"type":"mcq","q":"When the step h is halved, the error of the first-order (tangent-line) approximation shrinks by about…","options":["2 times","4 times","8 times","It does not change"],"answer":1,"explain":"The first neglected term is ½·f″(x₀)·h², so the error is proportional to h²: halving h divides it by about 4.","expect":["first-order error ratio about 4: True"]} }
+print("first-order error ratio about 4:", 3.5 < r1 < 4.5)`, after: `The tangent line's error shrinks like h², so halving the step divides it by about 4; the parabola's error shrinks like h³, about 8 times per halving. Higher-order approximations are much better, but only near x₀.`, predict: {"type":"mcq","q":"When the step h is halved, the error of the first-order (tangent-line) approximation shrinks by about…","options":["2 times","4 times","8 times","It does not change"],"answer":1,"explain":"The first neglected term is ½·f″(x₀)·h², so the error is proportional to h²: halving h divides it by about 4.","expect":["first-order error ratio about 4: True"]} }
     ],
-    when: `- Think in **derivatives** whenever you ask "how sensitive is the output to this input or parameter?" — tuning, debugging, feature importance.
+    when: `- Think in **derivatives** whenever you ask "how sensitive is the output to this input or parameter?": tuning, debugging, feature importance.
 - Use **numerical derivatives** to *check* gradient code (gradient checking) or for a handful of parameters; they are too slow for training big models (two function evaluations per parameter).
-- Use **analytic gradients via the chain rule** — in practice, automatic differentiation in PyTorch/JAX — for training.`,
+- Use **analytic gradients via the chain rule** (in practice, automatic differentiation in PyTorch/JAX) for training.`,
     pitfalls: `- **Confusing the gradient's direction.** It points *uphill*; gradient descent subtracts it.
 - **Step size in numerical derivatives.** Too large → inaccurate; too small (≲1e-10) → floating-point noise. 1e-5 to 1e-6 with central differences is a good default.
-- **Forgetting the inner derivative** in the chain rule (the "·g′(x)" part) — the classic error.
+- **Forgetting the inner derivative** in the chain rule (the "·g′(x)" part): the classic error.
 - **Non-differentiable points.** ReLU has a kink at 0; libraries simply pick 0 (or 1) there and it works fine in practice.`,
     takeaways: [
       'A derivative is a slope: how much the output changes per tiny change in the input.',
       'Positive derivative → increasing; negative → decreasing; zero → flat (possibly a minimum).',
       'The gradient is the vector of partial derivatives and points in the direction of steepest increase.',
       'Gradient descent steps against the gradient: θ ← θ − η·∇L.',
-      'The chain rule multiplies local derivatives along a chain of functions — this is backpropagation.'
+      'The chain rule multiplies local derivatives along a chain of functions: this is backpropagation.'
     ],
     quiz: [
       { type: 'mcq', q: 'If ∂L/∂w = −3 at the current weights, what happens to the loss if we increase w slightly?', options: ['It increases', 'It decreases', 'It stays the same', 'It cannot be determined'], answer: 1, explain: 'A negative derivative means the loss goes down as w goes up (approximately by 3 × the change).' },
@@ -997,7 +1000,7 @@ f(x + h) − f(x − h) — the change in output between a point just right of x
 numerical_derivative(lambda x: x ** 2, 3.0)   ->  6.0   (approximately)
 \`\`\`
 
-The tests use a tight tolerance (1e-6), which the forward difference (f(x+h) − f(x)) / h is not accurate enough to meet — another reason the central difference is the standard choice.`,
+The tests use a tight tolerance (1e-6), which the forward difference (f(x+h) − f(x)) / h is not accurate enough to meet: another reason the central difference is the standard choice.`,
         starter: `
 def numerical_derivative(f, x, h=1e-5):
     """Central-difference estimate of f'(x)."""
@@ -1055,8 +1058,8 @@ def numerical_gradient(f, x, h=1e-5):
         grad[i] = (f_plus - f_minus) / (2 * h)
     return grad
 `,
-        hints: ['Loop `for i in range(x.size):` and save `original = x[i]` first.', 'Set `x[i] = original + h`, call f, then `x[i] = original - h`, call f again.', 'Restore `x[i] = original` before the next coordinate — otherwise later partials are measured at the wrong point.'],
-        explain: `Each partial derivative needs two evaluations of f, so a model with a million parameters would need two million loss evaluations per gradient — hopelessly slow for training, which is why backpropagation (one backward pass for *all* partials) matters so much. Numerical gradients remain the gold standard for *testing* backprop code on small examples.`,
+        hints: ['Loop `for i in range(x.size):` and save `original = x[i]` first.', 'Set `x[i] = original + h`, call f, then `x[i] = original - h`, call f again.', 'Restore `x[i] = original` before the next coordinate; otherwise later partials are measured at the wrong point.'],
+        explain: `Each partial derivative needs two evaluations of f, so a model with a million parameters would need two million loss evaluations per gradient: hopelessly slow for training, which is why backpropagation (one backward pass for *all* partials) matters so much. Numerical gradients remain the gold standard for *testing* backprop code on small examples.`,
         tests: [
           { name: 'sum of squares', call: 'numerical_gradient(lambda v: np.sum(v ** 2), np.array([1.0, -2.0, 3.0]))', expect: 'np.array([2.0, -4.0, 6.0])' },
           { name: 'the lesson\'s loss L(w, b)', call: 'numerical_gradient(lambda p: (p[0] * 2 + p[1] - 7) ** 2, np.array([1.0, 1.0]))', expect: 'np.array([-16.0, -8.0])' },
@@ -1067,8 +1070,8 @@ def numerical_gradient(f, x, h=1e-5):
       }
     ],
     refs: [
-      { title: '3Blue1Brown — Essence of Calculus', url: 'https://www.3blue1brown.com/topics/calculus' },
-      { title: 'CS231n notes — Optimization and gradients', url: 'https://cs231n.github.io/optimization-1/' }
+      { title: '3Blue1Brown, Essence of Calculus', url: 'https://www.3blue1brown.com/topics/calculus' },
+      { title: 'CS231n notes, Optimization and gradients', url: 'https://cs231n.github.io/optimization-1/' }
     ]
   },
 
@@ -1077,9 +1080,9 @@ def numerical_gradient(f, x, h=1e-5):
     id: 'probability', branch: 'math', title: 'Probability & Distributions', level: 1, minutes: 40, prereqs: ['what-is-ml'],
     tags: ['probability', 'bayes', 'gaussian', 'expectation', 'distribution'],
     summary: 'Reasoning under uncertainty: probabilities, random variables, the Gaussian, expected values, conditional probability and Bayes\' rule.',
-    why: `Models rarely know for sure. A spam filter says *"97% spam"*; a medical model says *"12% chance of disease"*; an LLM assigns a probability to every one of ~100,000 possible next tokens and samples from that distribution. Training objectives are written in the language of probability (*maximise the likelihood of the data*), and many classic algorithms — Naive Bayes, Gaussian models, probabilistic generative models — are probability turned into code.
+    why: `Models rarely know for sure. A spam filter says *"97% spam"*; a medical model says *"12% chance of disease"*; an LLM assigns a probability to every one of ~100,000 possible next tokens and samples from that distribution. Training objectives are written in the language of probability (*maximise the likelihood of the data*), and many classic algorithms (Naive Bayes, Gaussian models, probabilistic generative models) are probability turned into code.
 
-Probability also protects you from very human reasoning errors. Bayes' rule explains why a "99% accurate" test can still be wrong most of the time — a lesson that applies directly to evaluating classifiers.`,
+Probability also protects you from very human reasoning errors. Bayes' rule explains why a "99% accurate" test can still be wrong most of the time: a lesson that applies directly to evaluating classifiers.`,
     objectives: [
       'Use the basic rules of probability (complement, sum, product for independent events)',
       'Describe discrete and continuous distributions, including the Gaussian and the categorical distribution an LLM outputs',
@@ -1088,8 +1091,8 @@ Probability also protects you from very human reasoning errors. Bayes' rule expl
     ],
     sections: [
       { type: 'text', title: 'The basics', md: `A **probability** is a number between 0 (impossible) and 1 (certain). Two useful ways to think about it:
-- **Long-run frequency** — a fair coin lands heads with probability 0.5: flip it a million times and about half are heads.
-- **Degree of belief** — "there is a 70% chance it rains tomorrow" even though tomorrow happens only once.
+- **Long-run frequency**: a fair coin lands heads with probability 0.5: flip it a million times and about half are heads.
+- **Degree of belief**: "there is a 70% chance it rains tomorrow" even though tomorrow happens only once.
 
 The handful of rules you need:
 
@@ -1104,8 +1107,8 @@ The handful of rules you need:
       { type: 'text', title: 'Random variables and distributions', md: `A **random variable** is a quantity whose value is uncertain; its **distribution** says how likely each value is.
 
 **Discrete** distributions list a probability for each value:
-- **Bernoulli** — one yes/no trial with P(yes) = p. Binary classification models output a Bernoulli probability.
-- **Categorical** — one of K categories with probabilities that sum to 1. **An LLM's output at each step is a categorical distribution over its entire vocabulary.**
+- **Bernoulli**: one yes/no trial with P(yes) = p. Binary classification models output a Bernoulli probability.
+- **Categorical**: one of K categories with probabilities that sum to 1. **An LLM's output at each step is a categorical distribution over its entire vocabulary.**
 
 **Continuous** distributions are described by a **probability density function (PDF)**. The most important is the **Gaussian** (normal) bell curve with mean μ (centre) and standard deviation σ (width):
 
@@ -1120,7 +1123,7 @@ exp(z) — e raised to the power z, where e ≈ 2.718
 π — pi ≈ 3.14159
 :::
 
-Rule of thumb: about **68%** of values fall within 1σ of the mean, **95%** within 2σ and **99.7%** within 3σ. Measurement noise, heights and many sums of small effects are roughly Gaussian (the *central limit theorem*), which is why it appears everywhere — from weight initialisation to the noise in diffusion models.
+Rule of thumb: about **68%** of values fall within 1σ of the mean, **95%** within 2σ and **99.7%** within 3σ. Measurement noise, heights and many sums of small effects are roughly Gaussian (the *central limit theorem*), which is why it appears everywhere: from weight initialisation to the noise in diffusion models.
 
 :::warn A density is not a probability
 For continuous variables, P(x = exactly 1.70000…) is 0. The PDF gives probability *per unit*, and you integrate it over a range to get a probability. Densities can therefore exceed 1 (a very narrow Gaussian has a tall peak).
@@ -1151,7 +1154,7 @@ pᵏ · (1 − p)ⁿ⁻ᵏ — the probability of one particular arrangement wit
 
 For large n and small p the binomial is close to a **Poisson** with λ = np; for large n with p not too extreme it is close to a **normal** with mean np and variance np(1 − p).` },
       { type: 'chart', title: "A binomial distribution: heads in 20 tosses of a coin with P(heads) = 0.3", after: `The most likely count is 6 (= 20 × 0.3), but 4, 5, 7 and 8 are all common: a single experiment rarely lands exactly on its expected value. The bars add up to 1.`, chart: {"kind":"bar","x":["0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20"],"series":[{"name":"probability","y":[0.0008,0.0068,0.0278,0.0716,0.1304,0.1789,0.1916,0.1643,0.1144,0.0654,0.0308,0.012,0.0039,0.001,0.0002,0,0,0,0,0,0]}],"xLabel":"number of heads","yLabel":"probability"} },
-      { type: 'code', title: 'Simulating randomness with NumPy', md: `Simulation is a superpower: when you are unsure about a probability, generate a million random trials and count. Always use a seeded generator so results are reproducible.`, code: `
+      { type: 'code', title: 'Simulating randomness with NumPy', md: `Simulation is a practical tool: when you are unsure about a probability, generate a million random trials and count. Always use a seeded generator so results are reproducible.`, code: `
 import numpy as np
 rng = np.random.default_rng(42)          # seeded: the same "random" numbers on every run
 
@@ -1171,7 +1174,7 @@ within2 = np.mean(np.abs(heights - 170) < 16)
 print(f"within 1 std: {within1:.3f}   within 2 std: {within2:.3f}   (theory: 0.683, 0.954)")
 ` },
       { type: 'chart', title: "The law of large numbers: the share of heads settles down", after: `After a few tosses the share of heads swings wildly; after thousands it hugs 0.5. Frequencies converge to probabilities, slowly: the typical deviation shrinks like 1 / √n.`, chart: {"kind":"line","x":[1,2,3,4,5,6,7,9,10,13,15,19,23,28,34,41,50,60,73,89,108,131,160,194,236,287,349,424,515,626,761,925,1124,1366,1661,2019,2454,2982,3625,4406,5356,6510,7912,9617,11690,14208,17270,20991,25514,31012,37694,45816,55688,67688,82272,100000],"xLog":true,"points":false,"series":[{"name":"share of heads so far","y":[0,0,0,0.25,0.4,0.5,0.5714,0.6667,0.6,0.6154,0.5333,0.5263,0.5217,0.5,0.5,0.5366,0.52,0.5,0.5068,0.4831,0.4907,0.4962,0.5062,0.5103,0.5297,0.5366,0.5301,0.5283,0.5301,0.5399,0.5427,0.5286,0.5214,0.522,0.5148,0.5191,0.5114,0.5064,0.5117,0.5102,0.5118,0.5065,0.5015,0.5009,0.5004,0.5017,0.5028,0.5025,0.5023,0.5024,0.5033,0.5026,0.5019,0.5001,0.4992,0.4994]}],"xLabel":"number of tosses (log scale)","yLabel":"share of heads","hlines":[{"y":0.5,"label":"true probability 0.5"}],"yMin":0,"yMax":1} },
-      { type: 'text', title: 'Expected value and variance', md: `The **expected value** E[X] is the probability-weighted average of the outcomes — the long-run average if you repeated the experiment forever:
+      { type: 'text', title: 'Expected value and variance', md: `The **expected value** E[X] is the probability-weighted average of the outcomes, the long-run average if you repeated the experiment forever:
 
 $$ E[X] = Σ x · P(x)          die: (1 + 2 + 3 + 4 + 5 + 6) · 1/6 = 3.5 $$
 :::where
@@ -1195,7 +1198,7 @@ E[X] — the expected value (mean) of X
 :::
 
 :::key The loss is an expectation
-When we train a model we want to minimise the *expected* loss over all the data the model will ever see. We can't compute that, so we estimate it with the average over the training set — and that average gets more reliable as the dataset grows.
+When we train a model we want to minimise the *expected* loss over all the data the model will ever see. We can't compute that, so we estimate it with the average over the training set, and that average gets more reliable as the dataset grows.
 :::` },
       { type: 'text', title: "Rules for sums and averages", md: `A few rules let you reason about combinations of random variables without simulating anything.
 
@@ -1232,7 +1235,7 @@ models = [0.8 * shared + 0.6 * rng.normal(size=200_000) for _ in range(10)]   # 
 print("variance of one model's error:     ", round(float(models[0].var()), 3))
 print("variance of the 10-model average:  ", round(float(np.mean(models, axis=0).var()), 3))`, after: `Averaging 4 independent dice divides the variance by 4. The ten "models" at the end share a common error component (any two have correlation 0.64), so averaging them only reduces the variance from 1 to about 0.68 instead of 0.1: diversity is what makes ensembles work.`, predict: {"type":"mcq","q":"How does the variance of the average of 4 independent dice compare with the variance of a single die?","options":["The same","Half as large","A quarter as large","A sixteenth as large"],"answer":2,"explain":"Var(average of n) = σ²/n, so with n = 4 the variance is divided by 4 (and the standard deviation by 2).","expect":["variance ratio about 4: True"]} },
       { type: 'check', question: {"type":"tf","q":"Averaging the predictions of 10 models always divides the variance of the error by 10.","answer":false,"explain":"Only if the errors are independent. Correlated errors add covariance terms, so averaging similar models helps much less."} },
-      { type: 'text', title: 'Conditional probability and Bayes\' rule', md: `**P(A | B)** — "the probability of A *given* B" — restricts attention to the cases where B happened:
+      { type: 'text', title: 'Conditional probability and Bayes\' rule', md: `**P(A | B)** ("the probability of A *given* B") restricts attention to the cases where B happened:
 
 $$ P(A | B) = P(A and B) / P(B) $$
 :::where
@@ -1263,7 +1266,7 @@ Imagine 10,000 people:
 
 Of the 99 + 495 = 594 positive results, only 99 are real: **P(condition | positive) = 99 / 594 ≈ 16.7%**, not 99%!
 
-The rare condition's low **base rate** (prior) means false positives from the huge healthy group swamp the true positives. Ignoring it is the **base-rate fallacy** — and the same arithmetic explains why a fraud model with "99% accuracy" can still produce mostly false alarms.` },
+The rare condition's low **base rate** (prior) means false positives from the huge healthy group swamp the true positives. Ignoring it is the **base-rate fallacy**, and the same arithmetic explains why a fraud model with "99% accuracy" can still produce mostly false alarms.` },
       { type: 'code', title: 'Bayes by counting', md: `Let's verify the 16.7% by simulating a million people, then compute it directly with Bayes' rule.`, code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -1303,7 +1306,7 @@ The second rule (the product rule) is the definition of conditional probability 
 
 The same distinction separates two families of classifiers. **Generative** models such as [Naive Bayes](#/concept/naive-bayes) learn the joint distribution, as P(x | y) · P(y), and classify with Bayes' rule. **Discriminative** models such as [logistic regression](#/concept/logistic-regression) learn P(y | x) directly and never model how the inputs themselves are distributed.` },
       { type: 'check', question: { type: 'mcq', q: 'A test for a very rare condition (1 in 10,000) is 99.9% accurate in both directions. Someone tests positive. The probability they have the condition is…', options: ['About 99.9%', 'About 50%', 'About 9%', 'Exactly 0.01%'], answer: 2, explain: 'In 10,000,000 people: 1,000 have it (999 test positive) and 9,999,000 don\'t (about 9,999 false positives). 999 / (999 + 9,999) ≈ 9%. The tiny base rate dominates.' } },
-      { type: 'text', title: 'Independence, products and log-probabilities', md: `When events are independent, the probability of all of them is the product of their probabilities. Models often *assume* independence to keep things tractable — Naive Bayes assumes the words of an email are independent given its class; an LLM writes the probability of a whole sentence as a product of next-token probabilities:
+      { type: 'text', title: 'Independence, products and log-probabilities', md: `When events are independent, the probability of all of them is the product of their probabilities. Models often *assume* independence to keep things tractable, Naive Bayes assumes the words of an email are independent given its class; an LLM writes the probability of a whole sentence as a product of next-token probabilities:
 
 $$ P(w₁, w₂, …, wₙ) = P(w₁) · P(w₂ | w₁) · P(w₃ | w₁, w₂) · … $$
 :::where
@@ -1325,15 +1328,15 @@ P(wᵢ | earlier words) — the probability of word i given all the words before
 Sums don't underflow, and maximising a log-probability is the same as maximising the probability. This is why loss functions are full of logarithms.` },
       { type: 'check', question: { type: 'tf', q: 'A probability density function can take values greater than 1.', answer: true, explain: 'Densities are probability per unit. A narrow Gaussian (say σ = 0.1) peaks at about 3.99. Only the area under the curve must equal 1.' } }
     ],
-    when: `- Use **probabilities** (not hard yes/no labels) as model outputs whenever decisions depend on confidence or costs — e.g. only auto-block transactions above 95% fraud probability.
+    when: `- Use **probabilities** (not hard yes/no labels) as model outputs whenever decisions depend on confidence or costs, e.g. only auto-block transactions above 95% fraud probability.
 - Use **Bayes' rule** whenever you update a belief with new evidence, and whenever you interpret a test or classifier on a rare class.
 - Use **simulation** to check probability reasoning you are unsure about.
 - Use **log-probabilities** whenever you multiply many probabilities.`,
-    pitfalls: `- **The base-rate fallacy** — ignoring how rare something is to begin with.
+    pitfalls: `- **The base-rate fallacy**: ignoring how rare something is to begin with.
 - **Assuming independence** that doesn't hold (e.g. treating consecutive days of weather as independent).
-- **Confusing P(A | B) with P(B | A)** — "most positives are sick" is not "most sick people test positive".
+- **Confusing P(A | B) with P(B | A)**: "most positives are sick" is not "most sick people test positive".
 - **Treating a density as a probability.**
-- **Unseeded randomness** — results you can't reproduce. Use \`np.random.default_rng(seed)\`.`,
+- **Unseeded randomness**: results you can't reproduce. Use \`np.random.default_rng(seed)\`.`,
     takeaways: [
       'Probabilities lie between 0 and 1 and sum to 1 over all outcomes.',
       'An LLM outputs a categorical distribution over its vocabulary at every step.',
@@ -1388,7 +1391,7 @@ def posterior(prior, sensitivity, false_positive_rate):
     return sensitivity * prior / p_positive
 `,
         hints: ['P(not condition) = 1 − prior.', 'Numerator: sensitivity × prior. Denominator: the probability of a positive test from either group.'],
-        explain: `The denominator adds the two ways to get a positive result: real cases (sensitivity × prior) and false alarms (false positive rate × (1 − prior)). When the prior is tiny, the false alarms dominate — the arithmetic behind the base-rate fallacy, and behind low precision on rare classes.`,
+        explain: `The denominator adds the two ways to get a positive result: real cases (sensitivity × prior) and false alarms (false positive rate × (1 − prior)). When the prior is tiny, the false alarms dominate: the arithmetic behind the base-rate fallacy, and behind low precision on rare classes.`,
         tests: [
           { call: 'posterior(0.01, 0.99, 0.05)', expect: '0.0099 / (0.0099 + 0.0495)' },
           { call: 'posterior(0.5, 0.9, 0.1)', expect: '0.9' },
@@ -1432,7 +1435,7 @@ def gaussian_pdf(x, mu=0.0, sigma=1.0):
     return np.exp(-((x - mu) ** 2) / (2 * sigma ** 2)) / (sigma * np.sqrt(2 * np.pi))
 `,
         hints: ['`np.pi` is π and `np.sqrt` is the square root.', 'NumPy functions apply element-wise, so the same formula works for arrays.'],
-        explain: `Because NumPy operations are element-wise, one formula handles a single value or a million at once ("vectorization"). The 1/(σ√(2π)) factor makes the total area exactly 1 — the hidden test checks that numerically.`,
+        explain: `Because NumPy operations are element-wise, one formula handles a single value or a million at once ("vectorization"). The 1/(σ√(2π)) factor makes the total area exactly 1: the hidden test checks that numerically.`,
         tests: [
           { call: 'gaussian_pdf(0.0)', expect: '1 / np.sqrt(2 * np.pi)' },
           { call: 'gaussian_pdf(1.0, 1.0, 2.0)', expect: '1 / (2 * np.sqrt(2 * np.pi))' },
@@ -1443,8 +1446,8 @@ def gaussian_pdf(x, mu=0.0, sigma=1.0):
       }
     ],
     refs: [
-      { title: 'Seeing Theory — a visual introduction to probability', url: 'https://seeing-theory.brown.edu/' },
-      { title: '3Blue1Brown — Bayes theorem, the geometry of changing beliefs', url: 'https://www.youtube.com/watch?v=HZGCoVF3YvM' }
+      { title: 'Seeing Theory, a visual introduction to probability', url: 'https://seeing-theory.brown.edu/' },
+      { title: '3Blue1Brown, Bayes theorem, the geometry of changing beliefs', url: 'https://www.youtube.com/watch?v=HZGCoVF3YvM' }
     ]
   },
 
@@ -1452,10 +1455,10 @@ def gaussian_pdf(x, mu=0.0, sigma=1.0):
   {
     id: 'statistics', branch: 'math', title: 'Statistics: Mean, Variance & Correlation', short: 'Descriptive Statistics', level: 1, minutes: 35, prereqs: ['probability'],
     tags: ['mean', 'median', 'variance', 'standard deviation', 'correlation', 'sampling'],
-    summary: 'Summarising data with a few numbers — mean, median, variance, standard deviation, covariance and correlation — and the traps hidden in each.',
+    summary: 'Summarising data with a few numbers (mean, median, variance, standard deviation, covariance and correlation) and the traps hidden in each.',
     why: `Before you model data you must *understand* it: what is typical, how spread out it is, where the outliers are, and which features move together. These few statistics are also building blocks of ML itself: **standardization** (used by almost every model) subtracts the mean and divides by the standard deviation; **PCA** is built on the covariance matrix; **batch and layer normalization** in neural networks compute means and variances on the fly; and judging whether "model B is better than model A" needs a sense of sampling noise.`,
     objectives: [
-      'Compute and interpret the mean, median, variance and standard deviation — and know when the median is better',
+      'Compute and interpret the mean, median, variance and standard deviation, and know when the median is better',
       'Explain the difference between population (÷n) and sample (÷(n−1)) variance and why NumPy and pandas disagree',
       'Compute covariance and Pearson correlation and explain why correlation is not causation',
       'Reason about sampling noise and the standard error when comparing models'
@@ -1464,8 +1467,8 @@ def gaussian_pdf(x, mu=0.0, sigma=1.0):
       { type: 'text', title: 'Centre: mean and median', md: `The **mean** is the average: x̄ = (x₁ + … + xₙ) / n. The **median** is the middle value of the sorted data (the average of the two middle values when n is even).
 
 Ten salaries in k€: 38, 41, 42, 45, 47, 50, 52, 55, 58, **950** (the CEO).
-- Mean = **137.8** — no one earns anything close to that.
-- Median = **48.5** — a much better summary of a typical salary.
+- Mean = **137.8**: no one earns anything close to that.
+- Median = **48.5**: a much better summary of a typical salary.
 
 The mean is pulled by **outliers**; the median is **robust**. Use the median for skewed data (incomes, house prices, response times) and report both when in doubt.` },
       { type: 'text', title: "Percentiles, quartiles and box plots", md: `The **p-th percentile** is the value below which p% of the data falls. Three of them have special names, the **quartiles**:
@@ -1583,7 +1586,7 @@ cov(x, y) — the covariance of x and y
 | −1 | perfect decreasing straight line |
 
 Two crucial caveats:
-1. **Correlation is not causation.** Ice-cream sales correlate with drownings — both are driven by hot weather.
+1. **Correlation is not causation.** Ice-cream sales correlate with drownings, both are driven by hot weather.
 2. **r only measures straight-line relationships.** y = x² for x spread symmetrically around 0 is perfectly determined by x, yet r ≈ 0.` },
       { type: 'code', title: 'Correlation in practice', code: `
 import numpy as np
@@ -1647,7 +1650,7 @@ n — the sample size (the number of observations)
 
 To halve the noise you need **four times** the data.
 
-This matters every time you evaluate a model. Accuracy on a test set of 100 examples is a sample statistic: at 90% accuracy its standard error is about √(0.9·0.1/100) = **3 percentage points**. "Model B scored 91%, model A 89%" on 100 examples is well within noise — don't celebrate yet. On 10,000 examples the standard error drops to 0.3 points and the same gap becomes meaningful.` },
+This matters every time you evaluate a model. Accuracy on a test set of 100 examples is a sample statistic: at 90% accuracy its standard error is about √(0.9·0.1/100) = **3 percentage points**. "Model B scored 91%, model A 89%" on 100 examples is well within noise: don't celebrate yet. On 10,000 examples the standard error drops to 0.3 points and the same gap becomes meaningful.` },
       { type: 'chart', title: "The central limit theorem in action", md: `Start from a strongly skewed distribution (exponential, mean 1), draw samples of size n, and plot the distribution of their **means**:`, after: `A single value (n = 1) follows the skewed original. Averages of 5 values are already more symmetric, and averages of 30 are close to a bell curve centred on the true mean, with a spread of σ / √n. This is the **central limit theorem**: averages of many independent values are approximately normal, whatever the original distribution. It is why confidence intervals for averages and accuracies work.`, chart: {"kind":"line","x":[0.025,0.075,0.125,0.175,0.225,0.275,0.325,0.375,0.425,0.475,0.525,0.575,0.625,0.675,0.725,0.775,0.825,0.875,0.925,0.975,1.025,1.075,1.125,1.175,1.225,1.275,1.325,1.375,1.425,1.475,1.525,1.575,1.625,1.675,1.725,1.775,1.825,1.875,1.925,1.975,2.025,2.075,2.125,2.175,2.225,2.275,2.325,2.375,2.425,2.475,2.525,2.575,2.625,2.675,2.725,2.775,2.825,2.875,2.925,2.975],"points":false,"series":[{"name":"mean of 1 value","y":[1.023,0.983,0.935,0.885,0.85,0.802,0.758,0.714,0.688,0.653,0.627,0.578,0.572,0.541,0.523,0.486,0.467,0.442,0.412,0.395,0.379,0.355,0.346,0.323,0.307,0.288,0.285,0.263,0.254,0.238,0.235,0.219,0.212,0.189,0.183,0.166,0.169,0.162,0.15,0.146,0.137,0.133,0.127,0.116,0.122,0.109,0.103,0.095,0.092,0.088,0.083,0.081,0.075,0.073,0.071,0.063,0.06,0.059,0.054,0.055]},{"name":"mean of 5 values","y":[0,0.004,0.015,0.053,0.103,0.194,0.286,0.394,0.492,0.616,0.723,0.81,0.88,0.934,0.94,0.983,0.976,0.974,0.925,0.891,0.871,0.813,0.736,0.69,0.634,0.592,0.546,0.479,0.444,0.389,0.346,0.309,0.261,0.237,0.206,0.184,0.157,0.137,0.118,0.101,0.084,0.075,0.062,0.053,0.048,0.038,0.034,0.029,0.023,0.021,0.018,0.015,0.015,0.009,0.008,0.007,0.005,0.006,0.004,0.003]},{"name":"mean of 30 values","y":[0,0,0,0,0,0,0,0,0.002,0.006,0.025,0.083,0.212,0.417,0.743,1.162,1.567,1.942,2.151,2.199,2.085,1.875,1.556,1.232,0.92,0.654,0.445,0.288,0.182,0.11,0.067,0.035,0.02,0.01,0.006,0.002,0.001,0.001,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}],"xLabel":"value of the sample mean","yLabel":"density"} },
       { type: 'check', question: {"type":"mcq","q":"Response times have Q1 = 120 ms and Q3 = 200 ms. Above what value does the 1.5 × IQR rule flag a response as an outlier?","options":["200 ms","280 ms","320 ms","400 ms"],"answer":2,"explain":"IQR = 200 − 120 = 80, so the upper fence is 200 + 1.5 × 80 = 320 ms."} }
     ],
@@ -1658,19 +1661,19 @@ This matters every time you evaluate a model. Accuracy on a test set of 100 exam
     pitfalls: `- Reporting only the mean of skewed data.
 - Forgetting that \`np.std\` and pandas' \`.std()\` use different denominators.
 - Reading causation into correlation.
-- Concluding "no relationship" from r ≈ 0 — always plot the data.
+- Concluding "no relationship" from r ≈ 0: always plot the data.
 - Comparing models on tiny test sets and trusting differences smaller than the noise.`,
     takeaways: [
       'The mean is sensitive to outliers; the median is robust.',
       'Variance = average squared deviation; standard deviation is its square root, in the data\'s units.',
       'Standardization (z-scores) puts features on a common scale: (x − mean) / std.',
-      'Pearson r ∈ [−1, 1] measures linear association only — and is not causation.',
+      'Pearson r ∈ [−1, 1] measures linear association only, and is not causation.',
       'The standard error shrinks like 1/√n: small test sets give noisy scores.'
     ],
     quiz: [
       { type: 'fill', q: 'What is the median of [7, 1, 9, 3, 5, 11]?', answer: ['6', '6.0'], explain: 'Sorted: 1, 3, 5, 7, 9, 11. Two middle values 5 and 7 → median 6.' },
       { type: 'mcq', q: 'What does a z-score of −2 mean?', options: ['The value is 2 units below the mean', 'The value is 2 standard deviations below the mean', 'The value is in the bottom 2%', 'The value is negative'], answer: 1, explain: 'z = (x − mean)/std, so z = −2 means two standard deviations below the mean.' },
-      { type: 'mcq', q: 'Two features have Pearson correlation 0.98. What is the most reasonable conclusion?', options: ['One causes the other', 'They are nearly linearly related — possibly redundant features', 'They are independent', 'The model will be perfectly accurate'], answer: 1, explain: 'A very high correlation means they carry almost the same linear information; it says nothing about causation.' },
+      { type: 'mcq', q: 'Two features have Pearson correlation 0.98. What is the most reasonable conclusion?', options: ['One causes the other', 'They are nearly linearly related, possibly redundant features', 'They are independent', 'The model will be perfectly accurate'], answer: 1, explain: 'A very high correlation means they carry almost the same linear information; it says nothing about causation.' },
       { type: 'tf', q: '`np.std(x)` and pandas `pd.Series(x).std()` give slightly different answers by default.', answer: true, explain: 'NumPy uses ddof=0 (divide by n); pandas uses ddof=1 (divide by n − 1).' },
       { type: 'mcq', q: 'To halve the standard error of an estimated mean, you need…', options: ['twice as much data', 'four times as much data', 'half as much data', 'the same data with a different seed'], answer: 1, explain: 'SE = σ/√n, so halving it requires √n to double, i.e. n × 4.' },
       {"type":"mcq","q":"Which summary is most robust to a few extreme values?","options":["The mean","The standard deviation","The interquartile range","The range (maximum − minimum)"],"answer":2,"explain":"The IQR depends only on the middle half of the data; the mean, the standard deviation and the range are all pulled by extremes."},
@@ -1723,7 +1726,7 @@ def describe(xs):
       },
       {
         id: 'pearson-correlation', title: 'Pearson Correlation', difficulty: 'medium',
-        prompt: `Implement \`pearson(x, y)\` from the formula (please don't call \`np.corrcoef\` — that's what we compare against):
+        prompt: `Implement \`pearson(x, y)\` from the formula (please don't call \`np.corrcoef\`, that's what we compare against):
 
 $$ r = Σ (xᵢ − x̄)(yᵢ − ȳ) / √( Σ (xᵢ − x̄)² · Σ (yᵢ − ȳ)² ) $$
 :::where
@@ -1764,7 +1767,7 @@ def pearson(x, y):
     return float(np.sum(dx * dy) / denom)
 `,
         hints: ['Centre each array: `dx = x - x.mean()`.', 'Numerator: `np.sum(dx * dy)`. Denominator: the square root of the product of the sums of squares.', 'The 1/n factors in the covariance and the standard deviations cancel, so you can leave them out.'],
-        explain: `Centring removes each variable's mean, so only co-movement remains; dividing by the square roots of the sums of squares removes the units and bounds r between −1 and 1. Geometrically, r is the **cosine similarity of the centred vectors** — the same idea as in the vectors lesson.`,
+        explain: `Centring removes each variable's mean, so only co-movement remains; dividing by the square roots of the sums of squares removes the units and bounds r between −1 and 1. Geometrically, r is the **cosine similarity of the centred vectors**: the same idea as in the vectors lesson.`,
         tests: [
           { call: 'pearson([1, 2, 3, 4], [2, 4, 6, 8])', expect: '1.0' },
           { call: 'pearson([1, 2, 3, 4], [8, 6, 4, 2])', expect: '-1.0' },
@@ -1785,8 +1788,8 @@ def pearson(x, y):
   {
     id: 'information-theory', branch: 'math', title: 'Entropy, Cross-Entropy & KL Divergence', short: 'Information Theory', level: 2, minutes: 35, prereqs: ['probability'],
     tags: ['entropy', 'cross-entropy', 'kl divergence', 'perplexity', 'bits'],
-    summary: 'Measuring surprise and uncertainty — the foundation of classification losses, decision-tree splits and LLM perplexity.',
-    why: `**Cross-entropy is the loss function of modern AI.** Every image classifier and every LLM — trained to predict the next token — minimises cross-entropy. **Entropy** decides where decision trees split. **KL divergence** keeps an RLHF-tuned chatbot close to its original model, powers VAEs and knowledge distillation. And **perplexity**, the headline metric of language models, is just cross-entropy exponentiated.
+    summary: 'Measuring surprise and uncertainty: the foundation of classification losses, decision-tree splits and LLM perplexity.',
+    why: `**Cross-entropy is the loss function of modern AI.** Every image classifier and every LLM (trained to predict the next token) minimises cross-entropy. **Entropy** decides where decision trees split. **KL divergence** keeps an RLHF-tuned chatbot close to its original model, powers VAEs and knowledge distillation. And **perplexity**, the headline metric of language models, is just cross-entropy exponentiated.
 
 Understanding these few formulas turns the loss curve of a training run from a mysterious number into something you can read: "the model is about as uncertain as if it were choosing among 20 equally likely words".`,
     objectives: [
@@ -1796,7 +1799,7 @@ Understanding these few formulas turns the loss curve of a training run from a m
       'Compute KL divergence and relate it to cross-entropy; convert a loss into perplexity'
     ],
     sections: [
-      { type: 'text', title: 'Surprise', md: `Information theory starts with one idea: **rare events are more surprising — they carry more information.** The surprise (information content) of an event with probability p is
+      { type: 'text', title: 'Surprise', md: `Information theory starts with one idea: **rare events are more surprising, they carry more information.** The surprise (information content) of an event with probability p is
 
 $$ surprise(p) = −log₂ p   bits $$
 :::where
@@ -1825,18 +1828,18 @@ H(p) — the entropy: the probability-weighted average surprise, highest when al
 
 (with the convention 0 · log 0 = 0).
 
-- A **fair coin**: H = 1 bit — maximum uncertainty for two outcomes.
-- A **coin that lands heads 90% of the time**: H ≈ 0.47 bits — usually unsurprising.
+- A **fair coin**: H = 1 bit (maximum uncertainty for two outcomes).
+- A **coin that lands heads 90% of the time**: H ≈ 0.47 bits, usually unsurprising.
 - A **certain outcome**: H = 0.
-- **Uniform over K outcomes**: H = log₂ K — the maximum possible for K outcomes.
+- **Uniform over K outcomes**: H = log₂ K (the maximum possible for K outcomes).
 
 Intuition: entropy is roughly the average number of yes/no questions needed to identify the outcome. It measures *how unpredictable* a distribution is.
 
 :::real Where entropy shows up
-Decision trees choose the split that reduces the entropy (impurity) of the labels the most — that reduction is called *information gain*. An LLM's next-token distribution has low entropy after "The capital of France is" and high entropy after "My favourite colour is".
+Decision trees choose the split that reduces the entropy (impurity) of the labels the most: that reduction is called *information gain*. An LLM's next-token distribution has low entropy after "The capital of France is" and high entropy after "My favourite colour is".
 :::` },
       { type: 'chart', title: "Entropy of a coin with P(heads) = p", after: `A fair coin (p = 0.5) is the most uncertain two-outcome variable: exactly 1 bit. As the coin becomes predictable, entropy falls towards 0; a coin that always lands heads carries no information at all.`, chart: {"kind":"line","x":[0.001,0.011,0.021,0.031,0.041,0.051,0.061,0.072,0.082,0.092,0.102,0.112,0.122,0.132,0.142,0.152,0.162,0.172,0.182,0.193,0.203,0.213,0.223,0.233,0.243,0.253,0.263,0.273,0.283,0.293,0.303,0.314,0.324,0.334,0.344,0.354,0.364,0.374,0.384,0.394,0.404,0.414,0.424,0.434,0.445,0.455,0.465,0.475,0.485,0.495,0.505,0.515,0.525,0.535,0.545,0.555,0.566,0.576,0.586,0.596,0.606,0.616,0.626,0.636,0.646,0.656,0.666,0.676,0.686,0.697,0.707,0.717,0.727,0.737,0.747,0.757,0.767,0.777,0.787,0.797,0.807,0.818,0.828,0.838,0.848,0.858,0.868,0.878,0.888,0.898,0.908,0.918,0.928,0.939,0.949,0.959,0.969,0.979,0.989,0.999],"points":false,"series":[{"name":"entropy H(p) in bits","y":[0.0114,0.0879,0.1479,0.2006,0.2483,0.2923,0.3333,0.3717,0.408,0.4422,0.4747,0.5056,0.535,0.563,0.5898,0.6153,0.6398,0.6631,0.6854,0.7067,0.7271,0.7466,0.7652,0.783,0.7999,0.816,0.8314,0.846,0.8599,0.873,0.8854,0.8972,0.9082,0.9186,0.9284,0.9374,0.9459,0.9537,0.9609,0.9674,0.9734,0.9787,0.9834,0.9876,0.9911,0.9941,0.9964,0.9982,0.9993,0.9999,0.9999,0.9993,0.9982,0.9964,0.9941,0.9911,0.9876,0.9834,0.9787,0.9734,0.9674,0.9609,0.9537,0.9459,0.9374,0.9284,0.9186,0.9082,0.8972,0.8854,0.873,0.8599,0.846,0.8314,0.816,0.7999,0.783,0.7652,0.7466,0.7271,0.7067,0.6854,0.6631,0.6398,0.6153,0.5898,0.563,0.535,0.5056,0.4747,0.4422,0.408,0.3717,0.3333,0.2923,0.2483,0.2006,0.1479,0.0879,0.0114]}],"xLabel":"p, the probability of heads","yLabel":"entropy (bits)","yMin":0} },
-      { type: 'code', title: 'Computing entropy', md: `Writing entropy as Σ p · log(1/p) — "probability × surprise" — avoids an awkward −0.0 for certain events.`, code: `
+      { type: 'code', title: 'Computing entropy', md: `Writing entropy as Σ p · log(1/p) ("probability × surprise") avoids an awkward −0.0 for certain events.`, code: `
 import numpy as np
 
 def entropy_bits(p):
@@ -1973,20 +1976,20 @@ perplexity — the effective number of equally likely choices the model is torn 
 
 Intuition: a perplexity of 20 means the model is, on average, as uncertain as if it had to choose uniformly among **20** equally likely tokens at each step. A model that knew nothing, choosing uniformly from a 50,000-token vocabulary, would have perplexity 50,000; a perfect model would have perplexity 1.
 
-A loss of 2.0 nats ↔ perplexity e² ≈ 7.4. Lowering the loss from 2.0 to 1.8 looks small but cuts perplexity from 7.4 to 6.0 — a meaningful gain.` },
+A loss of 2.0 nats ↔ perplexity e² ≈ 7.4. Lowering the loss from 2.0 to 1.8 looks small but cuts perplexity from 7.4 to 6.0: a meaningful gain.` },
       { type: 'check', question: { type: 'fill', q: 'A model is exactly as uncertain as a uniform choice among 50,000 tokens. What is its perplexity?', answer: ['50000', '50,000', '50 000', '5e4'], display: '50,000', explain: 'Uniform over K options has cross-entropy log K, and exp(log K) = K.' } }
     ],
     when: `- Use **cross-entropy** as the loss for any classification problem, binary or multi-class, and for language modelling.
-- Use **entropy** to measure uncertainty — of a model's prediction (e.g. to flag uncertain cases for human review) or of labels when choosing decision-tree splits.
+- Use **entropy** to measure uncertainty: of a model's prediction (e.g. to flag uncertain cases for human review) or of labels when choosing decision-tree splits.
 - Use **KL divergence** when you want one distribution to match or stay close to another (distillation, VAEs, RLHF penalties).
 - Report **perplexity** for language models; compare it only between models with the same tokenizer.`,
-    pitfalls: `- **log(0)** — always clip probabilities (e.g. to at least 1e-12) or, better, compute the loss from raw logits with a numerically stable function such as PyTorch's \`cross_entropy\`.
-- **Mixing bits and nats** — be explicit about the log base.
-- **Treating KL as symmetric** — D_KL(p‖q) and D_KL(q‖p) behave differently.
-- **Comparing perplexities across tokenizers** — a model with bigger tokens faces a harder per-token task; the numbers are not comparable.`,
+    pitfalls: `- **log(0)**: always clip probabilities (e.g. to at least 1e-12) or, better, compute the loss from raw logits with a numerically stable function such as PyTorch's \`cross_entropy\`.
+- **Mixing bits and nats**: be explicit about the log base.
+- **Treating KL as symmetric**: D_KL(p‖q) and D_KL(q‖p) behave differently.
+- **Comparing perplexities across tokenizers**: a model with bigger tokens faces a harder per-token task; the numbers are not comparable.`,
     takeaways: [
       'Surprise of an event = −log p; rare events carry more information.',
-      'Entropy H(p) = −Σ p log p is the average surprise — maximal for uniform distributions, 0 for certainty.',
+      'Entropy H(p) = −Σ p log p is the average surprise: maximal for uniform distributions, 0 for certainty.',
       'Cross-entropy H(p, q) = −Σ p log q; with one-hot labels it is −log(probability of the correct class).',
       'KL(p‖q) = H(p, q) − H(p) ≥ 0, so minimising cross-entropy matches the model to the data.',
       'Perplexity = exp(cross-entropy per token): the effective number of choices an LLM is unsure between.'
@@ -2034,7 +2037,7 @@ import math
 def entropy(p):
     return sum(pi * math.log2(1 / pi) for pi in p if pi > 0)
 `,
-        hints: ['`math.log2(x)` is log base 2.', 'Skip entries that are 0 — log(0) is undefined.', '−p·log₂(p) equals p·log₂(1/p), which avoids returning −0.0.'],
+        hints: ['`math.log2(x)` is log base 2.', 'Skip entries that are 0: log(0) is undefined.', '−p·log₂(p) equals p·log₂(1/p), which avoids returning −0.0.'],
         explain: `Entropy is just "probability × surprise", summed. Skipping zeros implements the limit p·log p → 0 as p → 0. Writing it as p·log₂(1/p) also avoids the cosmetic −0.0 for certain events.`,
         tests: [
           { call: 'entropy([0.5, 0.5])', expect: '1.0' },
@@ -2049,8 +2052,8 @@ def entropy(p):
         id: 'cross-entropy-kl', title: 'Cross-Entropy and KL Divergence', difficulty: 'medium',
         prompt: `Implement two functions using **natural logarithms** (nats), with \`EPS = 1e-12\`:
 
-1. \`cross_entropy(p, q)\` — H(p, q) = −Σ pᵢ log qᵢ. First clip q into [EPS, 1] (\`np.clip\`) so log(0) can't happen.
-2. \`kl_divergence(p, q)\` — D_KL(p‖q) = Σ pᵢ log(pᵢ / qᵢ), where terms with pᵢ = 0 contribute 0. Clip q the same way.
+1. \`cross_entropy(p, q)\`: H(p, q) = −Σ pᵢ log qᵢ. First clip q into [EPS, 1] (\`np.clip\`) so log(0) can't happen.
+2. \`kl_divergence(p, q)\`: D_KL(p‖q) = Σ pᵢ log(pᵢ / qᵢ), where terms with pᵢ = 0 contribute 0. Clip q the same way.
 
 Inputs are lists or arrays of equal length; return Python floats.
 
@@ -2092,7 +2095,7 @@ def kl_divergence(p, q):
     return float(np.sum(p[mask] * np.log(p[mask] / q[mask])))
 `,
         hints: ['`np.clip(q, EPS, 1.0)` keeps every probability at least EPS.', 'For KL, build a boolean mask `p > 0` and index both arrays with it.', 'Check your work: KL(p‖q) should equal cross_entropy(p, q) − entropy(p).'],
-        explain: `Clipping is the crude version of what deep-learning libraries do carefully: they compute cross-entropy directly from logits using the log-sum-exp trick so that log(0) never occurs. The hidden test with q = [1, 0] and the true class at index 1 shows why clipping matters — without it you get infinity (and NaN gradients) during training.`,
+        explain: `Clipping is the crude version of what deep-learning libraries do carefully: they compute cross-entropy directly from logits using the log-sum-exp trick so that log(0) never occurs. The hidden test with q = [1, 0] and the true class at index 1 shows why clipping matters, without it you get infinity (and NaN gradients) during training.`,
         tests: [
           { call: 'cross_entropy([0, 1, 0], [0.1, 0.8, 0.1])', expect: '-np.log(0.8)' },
           { call: 'cross_entropy([1, 0], [0.5, 0.5])', expect: 'np.log(2)' },
@@ -2105,8 +2108,8 @@ def kl_divergence(p, q):
       }
     ],
     refs: [
-      { title: 'Chris Olah — Visual Information Theory', url: 'https://colah.github.io/posts/2015-09-Visual-Information/', note: 'the best visual explanation of entropy and cross-entropy' },
-      { title: "Wikipedia — Entropy (information theory)", url: "https://en.wikipedia.org/wiki/Entropy_(information_theory)" }
+      { title: 'Chris Olah, Visual Information Theory', url: 'https://colah.github.io/posts/2015-09-Visual-Information/', note: 'the best visual explanation of entropy and cross-entropy' },
+      { title: "Wikipedia, Entropy (information theory)", url: "https://en.wikipedia.org/wiki/Entropy_(information_theory)" }
     ]
   }
   ]);

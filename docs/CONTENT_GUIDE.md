@@ -153,7 +153,7 @@ The renderer (`MLA.util.md` in `js/core/util.js`) also displays learners' notes 
 
   Kinds: `tip`, `warn`, `danger`, `real` (real-world example), `note`, `key` (key idea), `analogy`, `math`.
 
-### Formulas — every symbol must be defined
+### Formulas, every symbol must be defined
 
 Formulas are written in Unicode (no LaTeX) between `$$` markers, one formula per line. Two or more spaces inside a formula become a visible gap, so side-by-side formulas stay readable.
 
@@ -186,7 +186,7 @@ $$ θ ← θ − η · ∇L(θ) $$
 { type: 'match', q: 'Match the pairs.', pairs: [['left', 'right'], ['left 2', 'right 2']], explain: '…' }
 ```
 
-Every question needs an `explain`. Options and items are shuffled when shown. `fill` answers are compared after normalization (case, extra spaces, a trailing full stop), numbers are compared as numbers, and an accepted answer written as `'/pattern/i'` is treated as a regular expression — still, list the common spellings.
+Every question needs an `explain`. Options and items are shuffled when shown. `fill` answers are compared after normalization (case, extra spaces, a trailing full stop), numbers are compared as numbers, and an accepted answer written as `'/pattern/i'` is treated as a regular expression; still, list the common spellings.
 
 ## 5. Practice problems
 
@@ -215,12 +215,12 @@ Each test either evaluates an expression or runs assertions:
 { name: 'property', setup: '…', code: 'out = f(x)\nassert out.shape == (3, 3)', hidden: true }
 ```
 
-- `call` — a Python expression evaluated in the learner's namespace. The result is compared with `expect`.
-- `expect` — a Python expression for the expected value. **If omitted, it is computed by running the reference solution** on the same `setup` (convenient for random inputs).
-- `setup` — Python statements run first; `np` and `math` are always available.
-- `code` — statements with `assert`s, instead of `call`/`expect`.
-- `hidden: true` — only run on **Submit**, not on **Run**.
-- `tol` — tolerance for numeric comparisons (default 1e-6). Comparison is smart: NumPy arrays with `allclose`, ints and floats interchangeably, lists/tuples/dicts element by element, `None` distinguished from everything else.
+- `call`: a Python expression evaluated in the learner's namespace. The result is compared with `expect`.
+- `expect`: a Python expression for the expected value. **If omitted, it is computed by running the reference solution** on the same `setup` (convenient for random inputs).
+- `setup`: Python statements run first; `np` and `math` are always available.
+- `code`: statements with `assert`s, instead of `call`/`expect`.
+- `hidden: true`: only run on **Submit**, not on **Run**.
+- `tol`: tolerance for numeric comparisons (default 1e-6). Comparison is smart: NumPy arrays with `allclose`, ints and floats interchangeably, lists/tuples/dicts element by element, `None` distinguished from everything else.
 
 Good problems give a small worked example in the prompt, a visible test that matches it, and hidden tests with edge cases and seeded random inputs. When a function uses a random generator, state the exact order of the generator calls in the prompt so results are reproducible.
 
@@ -234,6 +234,16 @@ Content sits inside JavaScript template literals (backtick strings):
 - Tests and quiz strings are single-quoted JavaScript strings: escape apostrophes as `\'`.
 - Avoid tabs in Python code.
 - The in-browser Python is **32-bit** (WebAssembly), unlike desktop CPython. Some NumPy functions, such as `np.bincount`, reject 64-bit integer arrays (which `rng.integers` returns by default) there. Prefer `np.unique(x, return_counts=True)` or `x.astype(np.intp)`, and always run the in-browser self-test as well as the CPython tests.
+
+### Writing style
+
+The text should read as if a careful teacher wrote it:
+
+- **No em dashes in prose.** Use a colon, a comma, a semicolon or parentheses instead. The one exception is the `symbol — meaning` lines of a `:::where` legend, which the renderer uses as a separator.
+- **No emojis** in lessons or in the interface; use the line icons in `js/core/ui.js` (`<mla-icon name="…">`).
+- **No exclamation marks, and no hype words** ("powerful", "beautiful", "superpower", "seamless"). State what something does and let the numbers show how much it matters.
+- **Show the data.** A sample that loads or builds a dataset prints a few rows of it (`df.head()`, a short loop over `X[:3]`, an 8 × 8 digit grid) before using it, so the learner can see what the model works with.
+- **Keyboard first.** A new demo that reacts to clicks needs a keyboard path too: the `kbCursor` mixin in `js/views/demos.js` gives a canvas an arrow-key cross-hair with Enter to act and a live region for screen readers.
 
 ## 7. Glossary, tracks and achievements
 

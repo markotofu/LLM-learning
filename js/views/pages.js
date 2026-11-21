@@ -16,10 +16,10 @@
     },
     template: `
     <div class="stack">
-      <section-head title="Learning Tracks" sub="Pick a destination. ML Atlas works out every prerequisite and lines the concepts up in a sensible order. You can switch at any time — progress is shared." />
+      <section-head title="Learning Tracks" sub="Pick a destination. ML Atlas works out every prerequisite and lines the concepts up in a sensible order. You can switch at any time; progress is shared." />
       <div class="grid cols-2">
         <div v-for="it in list" :key="it.t.id" class="card track-card" :class="{current: state.profile.goal===it.t.id}">
-          <div class="card-title"><h3>{{ it.t.icon }} {{ it.t.title }}</h3><span v-if="state.profile.goal===it.t.id" class="chip accent tiny">your goal</span></div>
+          <div class="card-title"><h3><mla-icon :name="it.t.icon" :size="18"/> {{ it.t.title }}</h3><span v-if="state.profile.goal===it.t.id" class="chip accent tiny">your goal</span></div>
           <p class="small muted">{{ it.t.desc }}</p>
           <div class="tiny dim mb">{{ it.pr.total }} concepts · about {{ Math.round(it.pr.ids.reduce((s,id)=>s+P.concept(id).minutes,0)/60) }} hours of lessons{{ it.t.level ? ' · ' + it.t.level : '' }}</div>
           <mla-progress :value="it.pr.pct" :label="it.pr.done + '/' + it.pr.total + ' completed'" />
@@ -48,7 +48,7 @@
     <div v-if="!t"><empty-state text="Track not found."><button class="btn mt" @click="go('/tracks')">All tracks</button></empty-state></div>
     <div v-else class="stack">
       <button class="btn ghost sm" style="align-self:flex-start" @click="go('/tracks')"><mla-icon name="arrowLeft" :size="16"/> All tracks</button>
-      <section-head :title="(t.icon || '') + ' ' + t.title" :sub="t.desc">
+      <section-head :title="t.title" :sub="t.desc">
         <button class="btn" :class="isGoal ? '' : 'primary'" @click="toggleGoal">{{ isGoal ? 'Clear goal' : 'Set as my goal' }}</button>
         <button v-if="nextStep" class="btn primary" @click="go('/concept/'+nextStep.c.id)"><mla-icon name="play" :size="16"/> {{ pr.done ? 'Continue' : 'Start' }}</button>
       </section-head>
@@ -115,7 +115,7 @@
         const due = MLA.util.shuffle(MLA.srs.dueCards(this.deckCards, this.state.flashcards));
         const fresh = MLA.srs.newCards(this.deckCards, this.state.flashcards).slice(0, 10);
         this.queue = due.slice(0, 30).concat(fresh); this.idx = 0; this.flipped = false; this.done = 0; this.started = true;
-        if (!this.queue.length) MLA.ui.toast('Nothing due in this deck — come back tomorrow, or pick another deck.', 'info');
+        if (!this.queue.length) MLA.ui.toast('Nothing due in this deck: come back tomorrow, or pick another deck.', 'info');
       },
       grade(g) {
         const c = this.card; if (!c) return;
@@ -145,13 +145,13 @@
         <div class="stat"><div class="label">Mastered (21+ days)</div><div class="value">{{ stats.mastered }}</div></div>
       </div>
       <div v-if="!started || !card" class="card center">
-        <p v-if="started && !card" style="font-size:1.1rem">Session complete — {{ done }} review{{ done===1?'':'s' }} done. 🎉</p>
+        <p v-if="started && !card" style="font-size:1.1rem">Session complete: {{ done }} review{{ done===1?'':'s' }} done.</p>
         <p class="muted small">A session shows every due card plus up to 10 new ones.</p>
         <button class="btn primary" @click="start"><mla-icon name="play" :size="16"/> {{ started ? 'Start another session' : 'Start reviewing' }}</button>
       </div>
       <template v-else>
         <div class="row between small muted"><span>Card {{ idx+1 }} of {{ queue.length }}</span><span>space = flip · 1–4 = grade</span></div>
-        <div class="flashcard" @click="flipped=!flipped" tabindex="0">
+        <div class="flashcard" role="button" @click="flipped=!flipped" tabindex="0">
           <span class="fc-label">{{ flipped ? 'Definition' : 'Term' }} · {{ P.branch(card.deck) ? P.branch(card.deck).short : '' }}</span>
           <div v-if="!flipped" class="fc-front">{{ card.front }}</div>
           <div v-else class="fc-back"><mla-md :src="card.back" /><a v-if="card.concept && P.concept(card.concept)" class="tiny" @click.stop="go('/concept/'+card.concept)">Open the lesson: {{ P.concept(card.concept).title }} →</a></div>
@@ -208,7 +208,7 @@
         <div class="stat"><div class="label">Collected so far</div><div class="value">{{ stats.total }}</div></div>
       </div>
       <div v-if="!started || !cur" class="card center">
-        <p v-if="started && !cur" style="font-size:1.1rem">Session complete: {{ done }} revisited{{ fixed ? ', ' + fixed + ' fixed for good' : '' }}. 🎉</p>
+        <p v-if="started && !cur" style="font-size:1.1rem">Session complete: {{ done }} revisited{{ fixed ? ', ' + fixed + ' fixed for good' : '' }}.</p>
         <template v-if="stats.due">
           <p class="muted small">{{ stats.due }} item{{ stats.due === 1 ? '' : 's' }} to revisit. Answer each one again: right answers come back after longer and longer gaps (1 day, 6 days, about 2 weeks) until they retire; a miss starts the gaps again.</p>
           <button class="btn primary" @click="start"><mla-icon name="play" :size="16"/> {{ started ? 'Start another session' : 'Start revisiting' }}</button>
@@ -226,7 +226,7 @@
         <template v-else>
           <div class="q-text mt-sm"><mla-md :src="cur.shown.q" /></div>
           <check-q :key="cur.id + ':' + idx" :q="cur.shown" :done="result" @answer="answer" />
-          <div v-if="result" class="feedback" :class="result.correct ? 'ok' : 'bad'"><strong>{{ result.correct ? 'Right this time!' : 'Not yet.' }}</strong> <mla-md :src="result.explanation" inline /><span v-if="!result.correct && result.expected"> Answer: <b>{{ result.expected }}</b></span></div>
+          <div v-if="result" class="feedback" :class="result.correct ? 'ok' : 'bad'"><strong>{{ result.correct ? 'Right this time.' : 'Not yet.' }}</strong> <mla-md :src="result.explanation" inline /><span v-if="!result.correct && result.expected"> Answer: <b>{{ result.expected }}</b></span></div>
           <div class="btn-row mt"><button v-if="result" class="btn primary" @click="next">Next</button><button v-if="!result" class="btn ghost" @click="later">Skip until tomorrow</button><button class="btn ghost" @click="lesson(cur)">Re-read the lesson</button></div>
         </template>
       </div>
@@ -250,7 +250,7 @@
       <section-head title="Achievements" :sub="earned + ' of ' + list.length + ' unlocked'" />
       <div class="grid auto">
         <div v-for="x in list" :key="x.a.id" class="ach" :class="x.at ? 'earned' : 'locked'">
-          <div class="ach-icon">{{ x.a.icon }}</div>
+          <div class="ach-icon"><mla-icon :name="x.a.icon" :size="24"/></div>
           <div style="flex:1;min-width:0">
             <div class="row between"><strong>{{ x.a.title }}</strong><span v-if="x.a.xp" class="tiny dim">+{{ x.a.xp }} XP</span></div>
             <div class="small muted">{{ x.a.desc }}</div>

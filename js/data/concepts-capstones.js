@@ -8,7 +8,7 @@
     id: 'capstone-tabular', branch: 'ml', title: 'Capstone: An End-to-End Tabular ML Project', short: 'Tabular ML Capstone', level: 3, minutes: 75, prereqs: ['sklearn-workflow', 'ensembles', 'calibration-uncertainty', 'data-centric', 'stat-inference'],
     tags: ['capstone', 'project', 'churn prediction', 'leakage', 'pipeline', 'cross-validation', 'model selection', 'calibration', 'decision threshold', 'expected cost', 'bootstrap', 'slice analysis', 'error analysis', 'model card', 'monitoring'],
     summary: 'A complete machine-learning project on tabular data, from raw table to a decision you can defend: exploring the data, framing the problem and catching a leaky column, a leak-free pipeline with honest baselines and cross-validated model selection, checking calibration and choosing a threshold by expected business cost, evaluating with bootstrap confidence intervals and per-segment slices, and planning documentation and monitoring.',
-    why: `Individual lessons teach individual tools; real projects need all of them at once, in the right order, with judgement at every step. This capstone walks through the workflow used for countless business problems — here, predicting which customers will cancel so a retention team can contact them. Every step uses something from earlier lessons: pandas exploration, leakage, pipelines, cross-validation, ensembles, calibration, statistical inference and responsible deployment. The goal is not the best possible score but a model whose value, limits and risks you can explain.`,
+    why: `Individual lessons teach individual tools; real projects need all of them at once, in the right order, with judgement at every step. This capstone walks through the workflow used for countless business problems: here, predicting which customers will cancel so a retention team can contact them. Every step uses something from earlier lessons: pandas exploration, leakage, pipelines, cross-validation, ensembles, calibration, statistical inference and responsible deployment. The goal is not the best possible score but a model whose value, limits and risks you can explain.`,
     objectives: [
       'Frame a prediction problem: target, prediction time, available features and the cost of each kind of mistake',
       'Find and remove leakage, then compare honest baselines and models with cross-validation',
@@ -23,7 +23,7 @@
 **Steps.** 1 · explore the data → 2 · frame the problem and find leakage → 3 · a leak-free pipeline, baselines and model selection → 4 · calibration and a cost-based threshold → 5 · honest evaluation with confidence intervals and slices → 6 · ship it responsibly.
 
 The data is synthetic (generated in each code cell, so every cell runs on its own) but has the usual problems: missing values, class imbalance, a skewed numeric feature and one column that should not be there.` },
-      { type: 'code', title: 'Step 1 — load and explore the data', code: `
+      { type: 'code', title: 'Step 1: load and explore the data', code: `
 import numpy as np, pandas as pd
 
 def make_data(seed=42, n=4000):
@@ -44,20 +44,21 @@ def make_data(seed=42, n=4000):
     return df
 
 df = make_data()
+print(df.head().to_string())                         # to_string() keeps every column on one line
 print("rows, columns:", df.shape, "  churn rate:", round(df["churned"].mean(), 3))
 print("missing values per column:", {k: round(v, 3) for k, v in df.isna().mean().items() if v > 0})
 print(df.groupby("contract")["churned"].agg(["mean", "size"]).round(3))
 print("correlation of refund_issued with churned:", round(df[["refund_issued", "churned"]].corr().iloc[0, 1], 3))
-`, after: `About a third of customers churn, monthly contracts churn four times as often as two-year ones, 5.5% of bills are missing — and one column, refund_issued, is almost perfectly correlated with the target. That is the first red flag of the project.` },
-      { type: 'text', title: 'Step 2 — frame the problem and find leakage', md: `Before any modelling, write down:
+`, after: `About a third of customers churn, monthly contracts churn four times as often as two-year ones, 5.5% of bills are missing, and one column, refund_issued, is almost perfectly correlated with the target. That is the first red flag of the project.` },
+      { type: 'text', title: 'Step 2: frame the problem and find leakage', md: `Before any modelling, write down:
 
 - **Target**: churned within the next month (1) or not (0).
 - **Prediction time**: the start of the month, when the retention team acts. Every feature must be known at that moment.
 - **Features available then**: contract, tenure, monthly charges, support calls, region.
-- **refund_issued** is recorded *after* a customer cancels. It is a consequence of the target, not a cause — a textbook leak (see *Data Preparation*). It would make offline results look superb and be useless in production, where it is always 0 for customers who haven't left yet. Drop it.
+- **refund_issued** is recorded *after* a customer cancels. It is a consequence of the target, not a cause: a textbook leak (see *Data Preparation*). It would make offline results look superb and be useless in production, where it is always 0 for customers who haven't left yet. Drop it.
 - **Metric**: with a third of customers churning, accuracy is misleading; use the precision–recall curve (PR-AUC) for model comparison and expected **cost** for the final decision.
 - **Baseline**: always predicting "no churn". Any model must beat it clearly to be worth deploying.` },
-      { type: 'code', title: 'Step 3 — a leak-free pipeline, baselines and model selection', timeoutSec: 90, code: `
+      { type: 'code', title: 'Step 3: a leak-free pipeline, baselines and model selection', timeoutSec: 90, code: `
 import numpy as np, pandas as pd, warnings
 from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
 from sklearn.compose import ColumnTransformer
@@ -103,9 +104,9 @@ for name, model in [("always 'no churn'", DummyClassifier()), ("logistic regress
 
 leaky = make_pipeline(preprocess(num + ["refund_issued"]), LogisticRegression(max_iter=1000))
 print(f"with the leaky column: ROC-AUC {cross_val_score(leaky, X_tr, y_tr, cv=cv, scoring='roc_auc').mean():.3f}  <- too good to be true")
-`, after: `Both real models beat the baseline by a wide margin, and the simple logistic regression edges out gradient boosting — here the underlying relationship is close to linear, and with few features the simpler model wins. Always let cross-validation decide rather than assuming the fanciest model is best. The leaky column would have reported a near-perfect score for a model that cannot work in production.` },
+`, after: `Both real models beat the baseline by a wide margin, and the simple logistic regression edges out gradient boosting: here the underlying relationship is close to linear, and with few features the simpler model wins. Always let cross-validation decide rather than assuming the fanciest model is best. The leaky column would have reported a near-perfect score for a model that cannot work in production.` },
       { type: 'check', question: { type: 'mcq', q: 'Why is refund_issued removed even though it is the most predictive column?', options: ['It has missing values', 'It is recorded after the customer cancels, so it is not available at prediction time', 'It is categorical', 'It is correlated with tenure'], answer: 1, explain: 'Using information from after the prediction time is leakage.' } },
-      { type: 'code', title: "Step 4 — check calibration and choose a threshold by cost", code: `import numpy as np, pandas as pd, warnings
+      { type: 'code', title: "Step 4: check calibration and choose a threshold by cost", code: `import numpy as np, pandas as pd, warnings
 from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_predict
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import make_pipeline
@@ -158,7 +159,7 @@ print("the best threshold is far below 0.5:", bool(t_best < 0.3))
 pipe.fit(X_tr, y_tr)                                                 # final model on all training data
 p_te = pipe.predict_proba(X_te)[:, 1]
 print(f"on the untouched test set, threshold {t_best}: {expected_cost(p_te, y_te.values, t_best):.1f} per customer "
-      f"(no offers: {expected_cost(p_te, y_te.values, 1.01):.1f})")`, after: `The probabilities are well calibrated, so they can be trusted as probabilities. Because a missed churner costs ten times more than an offer, the cost-minimizing threshold is far below 0.5 — the default threshold would actually cost more than simply making offers to everyone. The threshold was chosen on out-of-fold predictions and confirmed on the untouched test set.`, predict: {"type":"mcq","q":"A missed churner costs 200, an offer costs 20, and an offer keeps half of the customers who would otherwise leave. Where will the cost-minimizing threshold be?","options":["Around 0.5, the usual default","Around 0.8: flag only the customers we are sure about","Around 0.2, far below 0.5","At the churn rate, about 0.32"],"answer":2,"explain":"An offer pays for itself when its expected saving beats its cost: p × 0.5 × 200 > 20, so p > 0.2. With calibrated probabilities the best threshold lands close to that break-even point (0.17 here).","expect":["the best threshold is far below 0.5: True"]} },
+      f"(no offers: {expected_cost(p_te, y_te.values, 1.01):.1f})")`, after: `The probabilities are well calibrated, so they can be trusted as probabilities. Because a missed churner costs ten times more than an offer, the cost-minimizing threshold is far below 0.5: the default threshold would actually cost more than simply making offers to everyone. The threshold was chosen on out-of-fold predictions and confirmed on the untouched test set.`, predict: {"type":"mcq","q":"A missed churner costs 200, an offer costs 20, and an offer keeps half of the customers who would otherwise leave. Where will the cost-minimizing threshold be?","options":["Around 0.5, the usual default","Around 0.8: flag only the customers we are sure about","Around 0.2, far below 0.5","At the churn rate, about 0.32"],"answer":2,"explain":"An offer pays for itself when its expected saving beats its cost: p × 0.5 × 200 > 20, so p > 0.2. With calibrated probabilities the best threshold lands close to that break-even point (0.17 here).","expect":["the best threshold is far below 0.5: True"]} },
       { type: 'chart', title: "Are the out-of-fold probabilities calibrated?", md: `A reliability diagram: customers grouped by their out-of-fold predicted probability, against how many of them actually churned (bins with at least 20 customers):`, after: `The points lie close to the diagonal: among customers given about 35%, about 35% churned. The two highest bins hold few customers (80 and 22), so their larger gaps are mostly noise. That is what an expected calibration error of 0.016 looks like, and it is what makes the probabilities usable in a cost calculation. A model whose points bend away from the diagonal would need recalibrating first (see [Calibration & Uncertainty](#/concept/calibration-uncertainty)).`, chart: {"kind":"line","x":[0.06,0.147,0.249,0.352,0.449,0.546,0.644,0.738,0.834],"series":[{"name":"out-of-fold predictions, in bins of 0.1","y":[0.058,0.163,0.265,0.345,0.42,0.527,0.636,0.8,0.955]},{"name":"perfect calibration","x":[0,1],"y":[0,1],"dash":true}],"xLabel":"average predicted churn probability in the bin","yLabel":"share of those customers who churned","xMin":0,"xMax":1,"yMin":0,"yMax":1} },
       { type: 'text', title: "Choosing the threshold by expected cost", md: `For each customer flagged (probability ≥ t) we pay for an offer; for each churner we miss we lose their value; flagged churners are saved with some probability. Averaged over n customers:
 
@@ -171,7 +172,7 @@ s — the fraction of contacted churners the offer saves (0.5)
 #flagged, #missed churners, #flagged churners — counts at threshold t
 :::
 
-Minimize it over t on held-out (out-of-fold) predictions. The ratio of the costs, not the class balance, decides where the threshold should be; when the costs change, re-optimize the threshold — no retraining needed.
+Minimize it over t on held-out (out-of-fold) predictions. The ratio of the costs, not the class balance, decides where the threshold should be; when the costs change, re-optimize the threshold: no retraining needed.
 
 With calibrated probabilities you can also work the answer out in advance. An offer to a customer whose churn probability is p costs c_offer and saves, on average, p · s · c_lost, so it pays for itself when
 
@@ -184,7 +185,7 @@ c_offer, s, c_lost — the offer cost, the save rate and the value of a customer
 
 The threshold found on the out-of-fold predictions, 0.17, is close to this value. A large disagreement between the two would be a sign that the probabilities are not calibrated.` },
       { type: 'chart', title: "Expected cost per customer against the threshold", after: `The curve is lowest near t = 0.17, close to the break-even probability of 0.2, and fairly flat around it: every threshold from about 0.11 to 0.28 costs within 1 per customer of the minimum. To the right, the model flags fewer and fewer customers and the cost climbs towards that of making no offers at all (64 per customer). The default threshold of 0.5 costs more than simply making an offer to everyone.`, chart: {"kind":"line","x":[0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1,0.11,0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.19,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.31,0.32,0.33,0.34,0.35,0.36,0.37,0.38,0.39,0.4,0.41,0.42,0.43,0.44,0.45,0.46,0.47,0.48,0.49,0.5,0.51,0.52,0.53,0.54,0.55,0.56,0.57,0.58,0.59,0.6,0.61,0.62,0.63,0.64,0.65,0.66,0.67,0.68,0.69,0.7,0.71,0.72,0.73,0.74,0.75,0.76,0.77,0.78,0.79,0.8,0.81,0.82,0.83,0.84,0.85,0.86,0.87,0.88,0.89,0.9],"points":false,"series":[{"name":"expected cost per customer (out-of-fold predictions)","y":[52.05,51.85,51.55,51.23,50.97,50.66,50.49,50.21,49.91,49.58,49.39,49.31,49.14,49.19,49.04,48.85,48.87,49.15,49.2,48.98,49.12,49.23,49.29,49.26,49.43,49.56,49.65,49.92,50.17,50.25,50.33,50.69,50.61,50.87,51.03,51.26,51.67,51.94,52.29,52.42,52.69,52.84,53.04,53.47,53.57,53.77,54.13,54.58,55.05,55.57,56.02,56.36,56.82,57.19,57.55,58.07,58.36,58.85,59.11,59.55,60.07,60.29,60.46,60.86,61.06,61.3,61.47,61.79,62.1,62.49,62.63,62.77,62.89,63.15,63.34,63.53,63.55,63.65,63.7,63.88,63.93,63.99,64.01,64.04,64.12,64.17,64.2,64.25,64.25]}],"xLabel":"decision threshold t (flag customers whose churn probability is at least t)","yLabel":"expected cost per customer","vlines":[{"x":0.17,"label":"lowest cost, t = 0.17"}],"hlines":[{"y":64.3,"label":"no offers at all"},{"y":52.2,"label":"offers to everyone"}]} },
-      { type: 'code', title: 'Step 5 — evaluate honestly: uncertainty and slices', code: `
+      { type: 'code', title: 'Step 5: evaluate honestly (uncertainty and slices)', code: `
 import numpy as np, pandas as pd, warnings
 from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
@@ -237,8 +238,8 @@ for c in ["monthly", "one-year", "two-year"]:
 missed = X_te[(~flag) & (y == 1)].assign(probability=p[(~flag) & (y == 1)]).sort_values("probability")
 print("churners the model was most sure would stay:")
 print(missed[["contract", "tenure", "monthly_charges", "support_calls", "probability"]].head(3).round(3).to_string())
-`, after: `The single test score comes with a wide error bar — about ±0.06 — which is what one test set of 1,000 customers can tell you. The slices reveal what the overall number hides: almost every monthly-contract churner is caught, but most two-year churners are missed. The missed customers look loyal on every feature we have; to catch them we would need new signals (usage drops, competitor offers), not a fancier model.` },
-      { type: 'code', title: "Step 5 — which features drive the model?", md: `**Permutation importance** (see [Interpretability](#/concept/interpretability)) measures how much worse the model gets when one column is shuffled, which breaks that column's link to the target while keeping its distribution. It is computed on the test set after training, so it shows what the fitted model relies on:`, code: `import numpy as np, pandas as pd, warnings
+`, after: `The single test score comes with a wide error bar (about ±0.06) which is what one test set of 1,000 customers can tell you. The slices reveal what the overall number hides: almost every monthly-contract churner is caught, but most two-year churners are missed. The missed customers look loyal on every feature we have; to catch them we would need new signals (usage drops, competitor offers), not a fancier model.` },
+      { type: 'code', title: "Step 5: which features drive the model?", md: `**Permutation importance** (see [Interpretability](#/concept/interpretability)) measures how much worse the model gets when one column is shuffled, which breaks that column's link to the target while keeping its distribution. It is computed on the test set after training, so it shows what the fitted model relies on:`, code: `import numpy as np, pandas as pd, warnings
 from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import make_pipeline
@@ -278,7 +279,7 @@ for i in order:
     print(f"{X_te.columns[i]:16s} {result.importances_mean[i]:6.3f} +/- {result.importances_std[i]:.3f}")
 print("most important feature:", X_te.columns[order[0]])
 print("region adds nothing:", bool(abs(result.importances_mean[list(X_te.columns).index("region")]) < 0.01))`, after: `Contract type matters most, followed by tenure and support calls, almost tied, with monthly charges a distant fourth. Region scores about zero, which is correct: the data has no regional effect. The same check catches bugs, because an identifier or a timestamp with a high score is usually a leak. Two cautions. Importance describes the **model**, not the world: customers who call support often are more likely to leave, but hiding the support number would not keep them (see [Causal Inference](#/concept/causal-inference)). And correlated features share their importance, so a feature can look unimportant only because another one carries the same information.`, predict: {"type":"mcq","q":"Which column will the fitted model rely on most?","options":["Contract type","Tenure","Monthly charges","Region"],"answer":0,"explain":"Shuffling the contract column costs the most PR-AUC, more than 0.13: monthly contracts churn four times as often as two-year ones. Region scores about zero, as it should, because it has no effect in this data.","expect":["most important feature: contract","region adds nothing: True"]} },
-      { type: 'code', title: "Step 5 — would more data help?", md: `Before asking for more data, check whether it would help. A **learning curve** trains the same pipeline on growing subsets of the training data and scores each with cross-validation:`, code: `import numpy as np, pandas as pd, warnings
+      { type: 'code', title: "Step 5: would more data help?", md: `Before asking for more data, check whether it would help. A **learning curve** trains the same pipeline on growing subsets of the training data and scores each with cross-validation:`, code: `import numpy as np, pandas as pd, warnings
 from sklearn.model_selection import train_test_split, learning_curve, StratifiedKFold
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import make_pipeline
@@ -319,12 +320,12 @@ gain = val_scores.mean(axis=1)[-1] - val_scores.mean(axis=1)[-3]
 print(f"gain from the last threefold increase in data: {gain:+.3f}")
 print("more rows would barely help:", bool(gain < 0.02))`, after: `Validation PR-AUC rises from about 0.56 with 100 rows to about 0.60 with 800, then stops: three times as many rows add half a point. Training and validation scores have met, so the model is limited by what the five columns can tell it (bias), not by the amount of data (variance). The way forward is new information about the customers, such as usage trends, complaints or competitor offers, which is also what the slices suggested. If instead the training score sat far above the validation score with the gap still closing, more data or stronger regularization would be the levers (see [the bias–variance trade-off](#/concept/overfitting)).`, predict: {"type":"mcq","q":"With 800 training rows the validation PR-AUC is about 0.60. What will three times as many rows (2,400) give?","options":["About 0.60: the curve has flattened","About 0.70","About 0.80","About 0.90"],"answer":0,"explain":"About 0.604 against 0.599. Training and validation scores have met, so the model is limited by what the features can tell it, not by the amount of data. New signals would help more than more rows of the same columns.","expect":["more rows would barely help: True"]} },
       { type: 'chart', title: "Learning curves: training and validation PR-AUC", md: `The same pipeline trained on growing subsets of the training data, with gradient boosting from step 3 for comparison:`, after: `The logistic regression's training and validation scores meet at about 0.60 by 800 rows: it has learned what these five columns can tell it. Gradient boosting fits its training data far better than it generalizes and is still catching up at 2,400 rows, but its validation score is lower than the logistic regression's along the whole curve. Neither curve points to more rows of the same data as the cheapest improvement; new information about the customers would be.`, chart: {"kind":"line","x":[100,200,400,800,1600,2400],"xLog":true,"series":[{"name":"logistic regression, validation","y":[0.556,0.569,0.585,0.599,0.602,0.604]},{"name":"logistic regression, training","y":[0.669,0.541,0.542,0.594,0.598,0.604],"dash":true},{"name":"gradient boosting, validation","y":[0.504,0.486,0.499,0.555,0.579,0.583]},{"name":"gradient boosting, training","y":[0.874,0.847,0.792,0.743,0.704,0.676],"dash":true}],"xLabel":"training rows (log scale)","yLabel":"PR-AUC (5-fold cross-validation)","hlines":[{"y":0.322,"label":"always 'no churn' (the churn rate)"}]} },
-      { type: 'text', title: 'Step 6 — ship it responsibly', md: `- **Model card** (see *Responsible AI*): purpose, training data and period, features, metrics with intervals, per-segment results, known weaknesses (two-year customers), and the threshold with its cost assumptions.
+      { type: 'text', title: 'Step 6: ship it responsibly', md: `- **Model card** (see *Responsible AI*): purpose, training data and period, features, metrics with intervals, per-segment results, known weaknesses (two-year customers), and the threshold with its cost assumptions.
 - **Fairness**: if features or outcomes relate to protected groups (age, for example), compare error rates across them before deployment.
-- **Monitoring** (see *MLOps*): track feature drift (PSI on tenure and charges), the share of customers flagged, offer acceptance, and — once labels arrive a month later — precision, recall and calibration. Alert when they move.
+- **Monitoring** (see *MLOps*): track feature drift (PSI on tenure and charges), the share of customers flagged, offer acceptance, and (once labels arrive a month later) precision, recall and calibration. Alert when they move.
 - **Retraining and review**: a schedule (e.g. quarterly) plus triggers (drift, business changes), always re-validated on a fresh hold-out set and compared with the current model.
-- **Decision log**: record why refund_issued was dropped, why logistic regression was chosen, and how the threshold was set — future you (and auditors) will need it.` },
-      { type: 'code', title: "Step 6 — monitoring after launch: data drift and concept drift", md: `Two different things can go wrong after launch. In **data drift** the mix of customers changes (a promotion brings in many more monthly contracts) but each kind of customer behaves as before. In **concept drift** the relationship itself changes: here a product problem makes every support call twice as damaging as it was. This cell scores two future months, each generated with one change, and compares them with the test set:`, code: `import numpy as np, pandas as pd, warnings
+- **Decision log**: record why refund_issued was dropped, why logistic regression was chosen, and how the threshold was set, future you (and auditors) will need it.` },
+      { type: 'code', title: "Step 6: monitoring after launch (data drift and concept drift)", md: `Two different things can go wrong after launch. In **data drift** the mix of customers changes (a promotion brings in many more monthly contracts) but each kind of customer behaves as before. In **concept drift** the relationship itself changes: here a product problem makes every support call twice as damaging as it was. This cell scores two future months, each generated with one change, and compares them with the test set:`, code: `import numpy as np, pandas as pd, warnings
 from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import make_pipeline
@@ -384,7 +385,7 @@ print("calibrated after concept drift:", calibrated["concept drift: calls hurt m
 - As a checklist for reviewing someone else's project: leakage, baselines, honest validation, decision threshold, uncertainty, slices, monitoring.
 - When stakeholders need a decision and its business impact, not just a metric.`,
     pitfalls: `- Features that are only known after the prediction time (leakage).
-- Tuning anything — preprocessing, model, threshold — on the test set.
+- Tuning anything: preprocessing, model, threshold (on the test set).
 - Reporting one overall score without uncertainty or segment breakdowns.
 - Using the default 0.5 threshold when mistakes have very different costs.
 - Shipping without a monitoring plan; the world drifts and labels arrive late.`,
@@ -396,10 +397,10 @@ print("calibrated after concept drift:", calibrated["concept drift: calls hurt m
       'Report intervals and slices, document decisions, and monitor drift and performance after launch.'
     ],
     quiz: [
-      { type: 'mcq', q: 'What is the first thing to establish in a churn-prediction project?', options: ['Which deep network to use', 'The target, the prediction time and which features are available at that time', 'The GPU budget', 'The colour scheme of the dashboard'], answer: 1, explain: 'Everything else — leakage, metrics, validation — follows from the framing.' },
+      { type: 'mcq', q: 'What is the first thing to establish in a churn-prediction project?', options: ['Which deep network to use', 'The target, the prediction time and which features are available at that time', 'The GPU budget', 'The colour scheme of the dashboard'], answer: 1, explain: 'Everything else (leakage, metrics, validation) follows from the framing.' },
       { type: 'mcq', q: 'A missed churner costs 200 and an offer costs 20. Compared with a symmetric-cost problem, the best threshold will usually be…', options: ['Higher than 0.5', 'Lower than 0.5', 'Exactly 0.5', 'Unrelated to the costs'], answer: 1, explain: 'Expensive misses push the threshold down to flag more customers.' },
       { type: 'tf', q: 'Fitting the imputer and scaler on the full dataset before cross-validation can leak information into the validation folds.', answer: true, explain: 'Statistics such as medians and means must be computed on the training folds only.' },
-      { type: 'mcq', q: 'The model has high overall recall but misses most churners in one segment. What is the best next step?', options: ['Ignore it — the average is good', 'Investigate that segment: look at the missed cases and seek new features or a segment-specific strategy', 'Lower the threshold until everyone is flagged', 'Delete the segment from the data'], answer: 1, explain: 'Slice analysis exists to find exactly these blind spots.' },
+      { type: 'mcq', q: 'The model has high overall recall but misses most churners in one segment. What is the best next step?', options: ['Ignore it: the average is good', 'Investigate that segment: look at the missed cases and seek new features or a segment-specific strategy', 'Lower the threshold until everyone is flagged', 'Delete the segment from the data'], answer: 1, explain: 'Slice analysis exists to find exactly these blind spots.' },
       { type: 'fill', q: 'A bootstrap of the test set gives a 95% interval of 0.52 to 0.63 for PR-AUC. A new model scores 0.58 on the same test set. Can you conclude it is better than the old model\'s 0.57? (yes or no)', answer: ['no'], explain: 'The difference is far smaller than the uncertainty; compare both models on the same bootstrap resamples, or collect more data.' },
       {"type":"fill","q":"An offer costs 30, a lost customer costs 300, and an offer saves 40% of the customers who would leave. What is the break-even probability t* = c_offer / (s · c_lost)? (decimal, 2 places)","answer":["0.25",".25"],"explain":"30 / (0.4 × 300) = 30 / 120 = 0.25. Offers pay for themselves, on average, for customers whose calibrated churn probability is above 0.25."},
       {"type":"mcq","q":"In a reliability diagram, the bin of customers given about a 30% churn probability sits on the diagonal. What does that mean?","options":["30% of all customers churn","About 30% of the customers in that bin actually churned","The model is 30% accurate","The threshold should be 0.3"],"answer":1,"explain":"Calibration compares predicted probabilities with observed frequencies, bin by bin: a point on the diagonal means the probability can be taken at face value."},
@@ -490,7 +491,7 @@ def slice_metric(y, pred, groups, metric):
     return {g.item() if hasattr(g, "item") else g: metric(y[groups == g], pred[groups == g]) for g in np.unique(groups)}
 `,
         hints: ['Draw all indices for one resample with a single `rng.integers` call.', 'Boolean masks such as `groups == g` select one slice.'],
-        explain: `The bootstrap turns one test set into an estimate of how much the score would vary on another test set of the same size. Slices find the groups where the model fails — often more actionable than any overall number.`,
+        explain: `The bootstrap turns one test set into an estimate of how much the score would vary on another test set of the same size. Slices find the groups where the model fails, often more actionable than any overall number.`,
         tests: [
           { name: 'a constant metric has a zero-width interval', call: 'bootstrap_ci(np.array([0, 1, 1, 0]), np.array([0.2, 0.8, 0.6, 0.1]), lambda a, b: 1.0, n_boot=50)', expect: '(1.0, 1.0)' },
           { call: 'slice_metric(np.array([1, 0, 1, 1]), np.array([1, 0, 0, 1]), np.array(["a", "a", "b", "b"]), lambda t, q: float(np.mean(t == q)))', expect: '{"a": 1.0, "b": 0.5}' },
@@ -500,10 +501,10 @@ def slice_metric(y, pred, groups, metric):
       }
     ],
     refs: [
-      { title: 'Google — Rules of Machine Learning: Best Practices for ML Engineering', url: 'https://developers.google.com/machine-learning/guides/rules-of-ml' },
-      { title: 'scikit-learn — Common pitfalls and recommended practices', url: 'https://scikit-learn.org/stable/common_pitfalls.html' },
-      { title: 'Kapoor & Narayanan — Leakage and the Reproducibility Crisis in ML-based Science', url: 'https://arxiv.org/abs/2207.07048' },
-      { title: 'Mitchell et al. — Model Cards for Model Reporting', url: 'https://arxiv.org/abs/1810.03993' }
+      { title: 'Google, Rules of Machine Learning: Best Practices for ML Engineering', url: 'https://developers.google.com/machine-learning/guides/rules-of-ml' },
+      { title: 'scikit-learn, Common pitfalls and recommended practices', url: 'https://scikit-learn.org/stable/common_pitfalls.html' },
+      { title: 'Kapoor & Narayanan, Leakage and the Reproducibility Crisis in ML-based Science', url: 'https://arxiv.org/abs/2207.07048' },
+      { title: 'Mitchell et al., Model Cards for Model Reporting', url: 'https://arxiv.org/abs/1810.03993' }
     ]
   },
 
@@ -511,8 +512,8 @@ def slice_metric(y, pred, groups, metric):
   {
     id: 'capstone-rag', branch: 'apps', title: 'Capstone: Build and Evaluate a RAG System', short: 'RAG Capstone', level: 3, minutes: 75, prereqs: ['rag', 'vector-search', 'learning-to-rank', 'llm-evaluation'],
     tags: ['capstone', 'project', 'rag', 'retrieval', 'bm25', 'embeddings', 'hybrid retrieval', 'chunking', 'context recall', 'evaluation set', 'error analysis', 'iteration', 'citations', 'faithfulness'],
-    summary: 'Build a retrieval-augmented question-answering system for a product help centre and improve it the way professionals do — by measuring: an evaluation set with question types, BM25 and embedding retrieval, combining retrievers, fixing chunking, tracking context recall and cost version by version, then generating cited answers with an LLM and checking them.',
-    why: `Most RAG demos stop at "it answered my question". Real systems are judged on hundreds of questions, many phrased in ways the documents never use, and they fail quietly: the right passage is not retrieved, or the answer is split across chunks, or the model answers without support. This capstone builds a small help-centre assistant and improves it **one measured change at a time** — the habit that separates working RAG systems from impressive demos. It ties together *Retrieval-Augmented Generation*, *Vector Search*, *Learning to Rank* and *Evaluating LLM Applications*.`,
+    summary: 'Build a retrieval-augmented question-answering system for a product help centre and improve it the way professionals do, by measuring: an evaluation set with question types, BM25 and embedding retrieval, combining retrievers, fixing chunking, tracking context recall and cost version by version, then generating cited answers with an LLM and checking them.',
+    why: `Most RAG demos stop at "it answered my question". Real systems are judged on hundreds of questions, many phrased in ways the documents never use, and they fail quietly: the right passage is not retrieved, or the answer is split across chunks, or the model answers without support. This capstone builds a small help-centre assistant and improves it **one measured change at a time**: the habit that separates working RAG systems from impressive demos. It ties together *Retrieval-Augmented Generation*, *Vector Search*, *Learning to Rank* and *Evaluating LLM Applications*.`,
     objectives: [
       'Write an evaluation set with gold documents, gold answers and question types before building',
       'Implement and compare lexical (BM25) and embedding retrieval, and combine them',
@@ -530,7 +531,7 @@ def slice_metric(y, pred, groups, metric):
 - **paraphrase** questions say the same thing in other words ("Can I work on my notes when I have no internet?").
 
 Write the evaluation set **first**, from real user questions when you have them, and never tune on the questions you report.` },
-      { type: 'code', title: "Steps 1–3 — build, measure, improve", code: `import re
+      { type: 'code', title: "Steps 1–3: build, measure, improve", code: `import re
 import numpy as np
 
 DOCS = {
@@ -629,13 +630,13 @@ for name, window, use_dense in [("v1  BM25, one-sentence chunks", 1, False), ("v
         ids = bm25(q)[:3] + (dense(q)[:3] if dense else [])
         return list(dict.fromkeys(ids))
     words = np.mean([sum(len(chunks[i][1].split()) for i in retrieve(q)) for q, *_ in QUESTIONS])
-    print(f"{name:38s} {context_recall(chunks, retrieve, 'keyword'):6.0%} {context_recall(chunks, retrieve, 'paraphrase'):10.0%} {words:12.0f}")`, after: `**v1** finds every keyword question but only 2 of 7 paraphrases: BM25 needs shared words. **v2** adds an embedding retriever (top 3 from each, merged), which rescues most paraphrases. The remaining failures are chunking failures — the right document was found, but the one-sentence chunk retrieved did not contain the answer. **v3** uses overlapping two-sentence chunks and reaches 100% on both types, at the price of about twice as much context per question. **v4** adds more context without improving anything, so v3 is the version to keep.`, predict: {"type":"mcq","q":"Version v1 retrieves with BM25 alone, from one-sentence chunks. For what share of the 7 paraphrase questions will its top 3 chunks contain the answer?","options":["All of them (100%)","About 70%","About 30% (2 of 7)","None of them"],"answer":2,"explain":"Only 2 of 7. BM25 scores chunks by shared words, and paraphrases (\"money back\", \"yearly plan\") use different words from the documents (\"refunded\", \"annual\"). The keyword questions, which reuse the documents' words, all succeed.","expect":["29%"]} },
+    print(f"{name:38s} {context_recall(chunks, retrieve, 'keyword'):6.0%} {context_recall(chunks, retrieve, 'paraphrase'):10.0%} {words:12.0f}")`, after: `**v1** finds every keyword question but only 2 of 7 paraphrases: BM25 needs shared words. **v2** adds an embedding retriever (top 3 from each, merged), which rescues most paraphrases. The remaining failures are chunking failures: the right document was found, but the one-sentence chunk retrieved did not contain the answer. **v3** uses overlapping two-sentence chunks and reaches 100% on both types, at the price of about twice as much context per question. **v4** adds more context without improving anything, so v3 is the version to keep.`, predict: {"type":"mcq","q":"Version v1 retrieves with BM25 alone, from one-sentence chunks. For what share of the 7 paraphrase questions will its top 3 chunks contain the answer?","options":["All of them (100%)","About 70%","About 30% (2 of 7)","None of them"],"answer":2,"explain":"Only 2 of 7. BM25 scores chunks by shared words, and paraphrases (\"money back\", \"yearly plan\") use different words from the documents (\"refunded\", \"annual\"). The keyword questions, which reuse the documents' words, all succeed.","expect":["29%"]} },
       { type: 'check', question: { type: 'mcq', q: 'Retrieval finds the right document but the retrieved chunk does not contain the answer. Which change is most likely to help?', options: ['A bigger LLM', 'Larger or overlapping chunks so the answer stays together with the words that match the question', 'Removing the embedding retriever', 'A lower temperature'], answer: 1, explain: 'That is a chunk-boundary failure, fixed in the chunking step.' } },
-      { type: 'text', title: 'Reading the results like an engineer', md: `- **Measure by question type.** The overall average hid the real story: BM25 was perfect on keyword questions and poor on paraphrases. Embeddings were the opposite on identifier questions like "What does E42 mean?" — rare codes and product names are exactly what embedding models represent poorly.
-- **Combine retrievers carefully.** Merging the top results of both retrievers worked here. A naive rank fusion (such as reciprocal rank fusion with equal weights) can do *worse* than the best single retriever when one of them is useless for a question type — always compare on your evaluation set.
+      { type: 'text', title: 'Reading the results like an engineer', md: `- **Measure by question type.** The overall average hid the real story: BM25 was perfect on keyword questions and poor on paraphrases. Embeddings were the opposite on identifier questions like "What does E42 mean?": rare codes and product names are exactly what embedding models represent poorly.
+- **Combine retrievers carefully.** Merging the top results of both retrievers worked here. A naive rank fusion (such as reciprocal rank fusion with equal weights) can do *worse* than the best single retriever when one of them is useless for a question type: always compare on your evaluation set.
 - **Change one thing at a time** and keep a results table with the version, the change, quality per type and cost (context size, latency). Without it, improvements and regressions are anecdotes.
 - **Watch for overfitting to the eval set.** Twelve questions is a toy; real evaluation sets have hundreds, cover every question type and difficulty, and include questions the documents cannot answer (the system should say so).
-- **Next levers**: a reranker over a larger candidate set (a cross-encoder or an LLM), query rewriting, metadata filters, and better documents — often the cheapest fix of all.` },
+- **Next levers**: a reranker over a larger candidate set (a cross-encoder or an LLM), query rewriting, metadata filters, and better documents, often the cheapest fix of all.` },
       { type: 'chart', title: "Recall as more chunks are retrieved, with and without fusion", md: `Instead of concatenating two result lists, **reciprocal rank fusion** (RRF) merges them into one ranking, so a fixed number of chunks can be kept:
 
 $$ RRF(d) = Σ_r 1 / (60 + rank_r(d)) $$
@@ -673,13 +674,13 @@ need = math.ceil((z / 0.05) ** 2 * 0.8 * 0.2)
 print(f"questions needed for +/-5 points: {need}")
 print("with 12 questions the interval is wider than +/-20 points:", z * math.sqrt(0.8 * 0.2 / 12) > 0.20)`, after: `Twelve questions put the true recall anywhere between about 57% and 100%. Measuring it to within ±5 points takes about 250 questions, and ±2.5 points about 1,000: halving the uncertainty takes four times as many questions. Near 0% or 100% the normal approximation used here becomes unreliable; the Wilson interval from [Statistical Inference](#/concept/stat-inference) handles those cases.`, predict: {"type":"mcq","q":"A context recall of 80% is measured on 12 questions. Roughly how wide is its 95% confidence interval?","options":["±2 points","±5 points","±10 points","±23 points"],"answer":3,"explain":"1.96 × √(0.8 × 0.2 / 12) ≈ 0.23, so the true recall could be anywhere from about 57% to 100%. Twelve questions are enough to debug a pipeline, not to compare versions.","expect":["with 12 questions the interval is wider than +/-20 points: True"]} },
       { type: 'chart', title: "Uncertainty of a measured recall against the size of the evaluation set", after: `Each tenfold increase in questions shrinks the uncertainty by a factor of about three (the square root of ten). The curves are highest for a recall near 50% and lower near the extremes, but even at 95% recall, 50 questions leave about ±6 points of doubt. Seeing a five-point improvement needs a few hundred questions, or a paired comparison on the same questions.`, chart: {"kind":"line","x":[10,20,50,100,200,500,1000,2000],"xLog":true,"series":[{"name":"measured recall 50%","y":[31,21.9,13.9,9.8,6.9,4.4,3.1,2.2]},{"name":"measured recall 80%","y":[24.8,17.5,11.1,7.8,5.5,3.5,2.5,1.8]},{"name":"measured recall 95%","y":[13.5,9.6,6,4.3,3,1.9,1.4,1]}],"xLabel":"questions in the evaluation set (log scale)","yLabel":"95% interval half-width (percentage points)","yMin":0,"hlines":[{"y":5,"label":"±5 points"}]} },
-      { type: 'text', title: 'Step 4 — generation with citations, and checking it', md: `With good context, generation is about **faithfulness**: the answer must be supported by the retrieved passages and say which ones. Give each passage an id, instruct the model to answer only from them, cite them, and say when the answer isn't there. Then check automatically:
+      { type: 'text', title: 'Step 4: generation with citations, and checking it', md: `With good context, generation is about **faithfulness**: the answer must be supported by the retrieved passages and say which ones. Give each passage an id, instruct the model to answer only from them, cite them, and say when the answer isn't there. Then check automatically:
 
-1. **Citation validity** — every cited id exists, and the cited passage contains the key fact (string match for short facts, an LLM judge for longer ones).
-2. **Answer correctness** — compare with the gold answer (exact match or token F1 for short answers; see *Evaluating LLM Applications*).
-3. **Abstention** — for unanswerable questions, the system should decline rather than invent.
-4. **Faithfulness** — an LLM judge asks "is every claim in the answer supported by the passages?", calibrated against a few human labels.` },
-      { type: 'code', title: "Step 4 — grading answers automatically", md: `Most of these checks need no model at all: compare each answer with a gold answer and with the passages it cites. Six answers to three questions show what each check catches:`, code: `import re
+1. **Citation validity**: every cited id exists, and the cited passage contains the key fact (string match for short facts, an LLM judge for longer ones).
+2. **Answer correctness**: compare with the gold answer (exact match or token F1 for short answers; see *Evaluating LLM Applications*).
+3. **Abstention**: for unanswerable questions, the system should decline rather than invent.
+4. **Faithfulness**: an LLM judge asks "is every claim in the answer supported by the passages?", calibrated against a few human labels.` },
+      { type: 'code', title: "Step 4: grading answers automatically", md: `Most of these checks need no model at all: compare each answer with a gold answer and with the passages it cites. Six answers to three questions show what each check catches:`, code: `import re
 from collections import Counter
 
 PASSAGES = {1: "Annual subscriptions can be refunded within 14 days of purchase.",
@@ -729,7 +730,7 @@ for i, (q, gold, fact, answer) in enumerate(CASES, 1):
     if r["pass"]:
         passing.append(i)
 print("passing answers:", passing)`, after: `Each check catches a different failure. Answer 2 has the wrong number but still shares many words with the gold answer (F1 0.53); only the check that every number appears in a cited passage catches it. Answer 4 says the right thing but cites the wrong passage, and answer 5 invents a feature for a question the documents cannot answer. Answer 3, however, is **correct** and still fails: its extra, correct advice dilutes its word overlap with the short gold answer (F1 0.38). Word-overlap metrics punish rewording, so for anything longer than a short fact, teams use an LLM judge whose verdicts are checked against a sample of human labels (see [Evaluating LLM Applications](#/concept/llm-evaluation)).`, predict: {"type":"mcq","q":"Answer 3, \"It means your sync token has expired; sign out and in again [3].\", is correct. Will it pass the automatic checks?","options":["Yes, it passes every check","No: its word overlap with the short gold answer is too low","No: it cites the wrong passage","No: it contains a number that is not in the passage"],"answer":1,"explain":"It shares only 3 of its 12 words with the gold answer \"the sync token expired\", so its token F1 is 0.38, below the 0.5 threshold. Word-overlap metrics punish correct rewording, which is why longer answers need an LLM judge calibrated against human labels.","expect":["passing answers: [1, 6]"]} },
-      { type: 'code', title: 'Step 4 — generating cited answers with the Claude API', run: false, code: `
+      { type: 'code', title: 'Step 4: generating cited answers with the Claude API', run: false, code: `
 import re
 import anthropic
 
@@ -759,7 +760,7 @@ else:
     print(answer)
     print("citations:", cited, "| all valid:", valid, "| key fact in a cited passage:", supported)
 ` },
-      { type: 'text', title: "Step 5 — error analysis: from failures to fixes", md: `Read every failed question and label where the pipeline broke. The label points to the fix:
+      { type: 'text', title: "Step 5: error analysis (from failures to fixes)", md: `Read every failed question and label where the pipeline broke. The label points to the fix:
 
 | Where it broke | What you see | Typical fixes |
 | --- | --- | --- |
@@ -774,12 +775,12 @@ Count the labels before fixing anything. If most failures are in retrieval, a be
       { type: 'check', question: { type: 'tf', q: 'If the retrieved context does not contain the answer, a better prompt can reliably make the LLM answer correctly.', answer: false, explain: 'Without the information it can only guess; fix retrieval first.' } }
     ],
     when: `- Building or reviewing any RAG system: help centres, internal documentation, legal or medical references, code search.
-- Before switching models or vector databases — check whether the evaluation results justify it.
+- Before switching models or vector databases: check whether the evaluation results justify it.
 - As a template for evaluation-driven development of other LLM features.`,
-    pitfalls: `- Building before writing the evaluation set — then every change is judged by gut feeling.
+    pitfalls: `- Building before writing the evaluation set, then every change is judged by gut feeling.
 - Reporting one average that hides failing question types.
 - Changing several things at once, so nobody knows what helped.
-- Assuming hybrid or reranking always helps — measure on your data.
+- Assuming hybrid or reranking always helps: measure on your data.
 - Tuning on the questions you report, or never testing unanswerable questions.`,
     takeaways: [
       'Write the evaluation set first: gold documents, needed facts and question types.',
@@ -836,7 +837,7 @@ def bm25_scores(query_tokens, docs_tokens, k1=1.5, b=0.75):
                 scores[i] += idf * f * (k1 + 1) / (f + k1 * (1 - b + b * len(d) / avgdl))
     return scores
 `,
-        hints: ['Count document frequencies with a set per document.', 'Skip query tokens that never occur — their n_t is 0 and every f is 0 anyway.'],
+        hints: ['Count document frequencies with a set per document.', 'Skip query tokens that never occur: their n_t is 0 and every f is 0 anyway.'],
         explain: `BM25 rewards rare terms (IDF), saturates repeated terms (k1) and normalizes for length (b). It remains a strong first-stage retriever and a valuable signal next to embeddings, especially for names, codes and exact phrases.`,
         tests: [
           { name: 'a single matching document', call: 'bm25_scores(["cat"], [["cat"], ["dog"]])', expect: 'np.array([math.log(1.5 / 1.5 + 1) * 1 * 2.5 / (1 + 1.5), 0.0])' },
@@ -899,9 +900,9 @@ def context_recall(contexts, needed):
       }
     ],
     refs: [
-      { title: 'Es et al. — RAGAS: Automated Evaluation of Retrieval Augmented Generation', url: 'https://arxiv.org/abs/2309.15217' },
-      { title: 'Anthropic — Introducing Contextual Retrieval', url: 'https://www.anthropic.com/news/contextual-retrieval' },
-      { title: 'Thakur et al. — BEIR: A Heterogeneous Benchmark for Information Retrieval', url: 'https://arxiv.org/abs/2104.08663' }
+      { title: 'Es et al., RAGAS: Automated Evaluation of Retrieval Augmented Generation', url: 'https://arxiv.org/abs/2309.15217' },
+      { title: 'Anthropic, Introducing Contextual Retrieval', url: 'https://www.anthropic.com/news/contextual-retrieval' },
+      { title: 'Thakur et al., BEIR: A Heterogeneous Benchmark for Information Retrieval', url: 'https://arxiv.org/abs/2104.08663' }
     ]
   },
 
@@ -909,8 +910,8 @@ def context_recall(contexts, needed):
   {
     id: 'capstone-lora', branch: 'llm', title: 'Capstone: Fine-Tune a Small Language Model with LoRA', short: 'LoRA Capstone', level: 3, minutes: 75, prereqs: ['lora', 'mini-gpt', 'quantization', 'llm-evaluation'],
     tags: ['capstone', 'project', 'fine-tuning', 'lora', 'rank', 'catastrophic forgetting', 'replay', 'adapter merging', 'quantization', 'evaluation', 'perplexity', 'peft'],
-    summary: 'Adapt a pretrained language model to a new style and measure the result: pretrain a small character-level model in the browser, fine-tune it fully and with LoRA at two ranks, measure adaptation and forgetting, prevent forgetting with replay, merge the adapter, quantize to int8 and generate — then see the same workflow with Hugging Face PEFT on a real model.',
-    why: `Fine-tuning is how a general model becomes your model — for a format, a domain, a tone or a task. Doing it well means answering questions the tutorials skip: How much does the model learn of the new task? How much does it forget of the old? How many parameters must be trained? Does merging and quantizing for deployment change anything? This capstone answers all of them with measurements on a model small enough to train in your browser, then maps every step onto the real-world toolchain.`,
+    summary: 'Adapt a pretrained language model to a new style and measure the result: pretrain a small character-level model in the browser, fine-tune it fully and with LoRA at two ranks, measure adaptation and forgetting, prevent forgetting with replay, merge the adapter, quantize to int8 and generate, then see the same workflow with Hugging Face PEFT on a real model.',
+    why: `Fine-tuning is how a general model becomes your model, for a format, a domain, a tone or a task. Doing it well means answering questions the tutorials skip: How much does the model learn of the new task? How much does it forget of the old? How many parameters must be trained? Does merging and quantizing for deployment change anything? This capstone answers all of them with measurements on a model small enough to train in your browser, then maps every step onto the real-world toolchain.`,
     objectives: [
       'Run a fine-tuning experiment that measures both adaptation (new data) and forgetting (old data)',
       'Compare full fine-tuning with LoRA at different ranks in quality and trainable parameters',
@@ -918,11 +919,11 @@ def context_recall(contexts, needed):
       'Translate the experiment into a real LoRA fine-tune with Hugging Face PEFT'
     ],
     sections: [
-      { type: 'text', title: 'The project', md: `**Scenario.** We have a small language model trained on one kind of text (short stories about animals — the "old skill") and want it to write a new kind (recipe steps — the "new style"), without losing the old skill.
+      { type: 'text', title: 'The project', md: `**Scenario.** We have a small language model trained on one kind of text (short stories about animals: the "old skill") and want it to write a new kind (recipe steps: the "new style"), without losing the old skill.
 
-**Deliverables.** A results table — trainable parameters, loss on the new style, loss on the old style — for each fine-tuning method; a merged and int8-quantized model; sample generations; and a recommendation.
+**Deliverables.** A results table (trainable parameters, loss on the new style, loss on the old style) for each fine-tuning method; a merged and int8-quantized model; sample generations; and a recommendation.
 
-**Why two test sets?** Fine-tuning reports usually show only improvement on the target task. The cost — **catastrophic forgetting** of what the model could do before — is invisible unless you measure it on held-out data from the original distribution.
+**Why two test sets?** Fine-tuning reports usually show only improvement on the target task. The cost (**catastrophic forgetting** of what the model could do before) is invisible unless you measure it on held-out data from the original distribution.
 
 **Method.** A character-level model (8 characters of context → embedding → hidden layer → next character), the same family as in *Capstone: A Tiny GPT in NumPy*, small enough to pretrain in about a second on a laptop. In the browser each of the experiments below takes several seconds, and up to a minute on a slow computer, so they are allowed a longer time limit than other samples. LoRA adapts the two weight matrices with low-rank updates W + A·B, exactly as in *LoRA & Parameter-Efficient Fine-Tuning*.` },
       { type: 'code', title: "The whole experiment: pretrain, fine-tune four ways, merge, quantize, generate", timeoutSec: 120, code: `import numpy as np
@@ -1041,14 +1042,14 @@ print("old skill kept: ", repr(generate(quantized, "the cat ")))`, predict: {"ty
       { type: 'chart', title: "Each method on the two skills", md: `The results table as a picture: the goal is the bottom-left corner, a low loss on both kinds of text.`, after: `The base model sits far to the right: it cannot write recipes at all. Fine-tuning without replay moves every method to the left but also far up, because the old skill is lost; LoRA, with far fewer trainable parameters, ends up even higher than full fine-tuning in this tiny model. Only the two runs with replay reach the bottom-left corner, close to the base model's old-style loss and close to full fine-tuning's new-style loss.`, chart: {"kind":"scatter","series":[{"name":"base model, no fine-tuning","x":[7.089],"y":[0.25]},{"name":"full fine-tuning","x":[0.21],"y":[1.845]},{"name":"LoRA rank 2","x":[0.542],"y":[4.664]},{"name":"LoRA rank 8","x":[0.228],"y":[4.339]},{"name":"full fine-tuning + replay","x":[0.217],"y":[0.301]},{"name":"LoRA rank 8 + replay","x":[0.28],"y":[0.334]}],"xLog":true,"yLog":true,"xLabel":"loss on the NEW style, recipes (log scale)","yLabel":"loss on the OLD style, stories (log scale)"} },
       { type: 'text', title: 'Reading the results', md: `The losses are average cross-entropy in nats per character (lower is better; e^loss is the per-character perplexity).
 
-- **The base model** is good at the old style and terrible at the new one — it confidently predicts animal stories.
+- **The base model** is good at the old style and terrible at the new one: it confidently predicts animal stories.
 - **Full fine-tuning** learns the new style but its loss on the old style jumps several-fold: **catastrophic forgetting**.
-- **LoRA rank 8** learns the new style about as well as full fine-tuning while training only about a fifth as many parameters. **Rank 2** is too small to capture the new style fully — rank is a capacity knob.
-- In this tiny model LoRA does **not** protect the old skill — it forgets as much or more. Studies of large models find LoRA tends to learn somewhat less and forget somewhat less than full fine-tuning, but it is not a guarantee.
-- **Replay** — mixing 50% old-style examples into every fine-tuning batch — nearly eliminates forgetting for both methods, at a small cost in new-style loss. If the old skill matters, keep some of its data in the mix (and measure it).
+- **LoRA rank 8** learns the new style about as well as full fine-tuning while training only about a fifth as many parameters. **Rank 2** is too small to capture the new style fully: rank is a capacity knob.
+- In this tiny model LoRA does **not** protect the old skill: it forgets as much or more. Studies of large models find LoRA tends to learn somewhat less and forget somewhat less than full fine-tuning, but it is not a guarantee.
+- **Replay**: mixing 50% old-style examples into every fine-tuning batch, nearly eliminates forgetting for both methods, at a small cost in new-style loss. If the old skill matters, keep some of its data in the mix (and measure it).
 - **Merging** the adapter into the weights gives exactly the same model (no extra latency at inference); **int8 quantization** of the merged weights barely changes the loss.
 
-**Recommendation from this experiment**: LoRA rank 8 with replay, merged and quantized — nearly the best of both styles with a fifth of the trainable parameters.` },
+**Recommendation from this experiment**: LoRA rank 8 with replay, merged and quantized, nearly the best of both styles with a fifth of the trainable parameters.` },
       { type: 'check', question: { type: 'mcq', q: 'Why must a fine-tuning report include the loss on held-out data from the original task?', options: ['To compute the learning rate', 'To detect catastrophic forgetting, which the new-task metrics cannot show', 'Because the old data is larger', 'It is not necessary'], answer: 1, explain: 'Improvement on the target task can hide loss of earlier skills.' } },
       { type: 'code', title: "Watching forgetting happen", timeoutSec: 120, md: `A final results table hides *when* the damage is done. This run fine-tunes in blocks of 20 steps and measures both losses after every block, for full fine-tuning, LoRA rank 8, and LoRA rank 8 with replay (like every sample in this lesson, it first pretrains the small model again):`, code: `import numpy as np
 rng = np.random.default_rng(0)
@@ -1245,7 +1246,7 @@ print("rank 32 is barely better than rank 8:", bool(results[8] - results[32] < 0
 1. **Data**: a few hundred to a few thousand high-quality examples in the chat format the model expects (see *Fine-Tuning & Instruction Tuning*), plus a held-out set for the new task and one for general abilities.
 2. **Setup**: load the base model (in bf16, or 4-bit for QLoRA), attach LoRA adapters to the attention and MLP projections, usually with r = 8–64 and α = 2r.
 3. **Train** with the loss masked to the assistant's tokens, a small learning rate (around 1e-4 to 2e-4 for LoRA), and evaluation every few hundred steps.
-4. **Evaluate** on the new task (task metrics, LLM-as-judge win rates) *and* on general benchmarks or your own regression suite — forgetting shows up there.
+4. **Evaluate** on the new task (task metrics, LLM-as-judge win rates) *and* on general benchmarks or your own regression suite: forgetting shows up there.
 5. **Ship**: merge the adapter (or serve several adapters on one base model), quantize, and run the deployment checks in *LLM Inference & Serving*.` },
       { type: 'code', title: 'A LoRA fine-tune with Hugging Face PEFT (run locally on a GPU)', lang: 'pytorch', code: `
 # pip install torch transformers peft
@@ -1292,7 +1293,7 @@ tok.save_pretrained("my-merged-model")
 - When many task-specific variants are needed: one base model with several small LoRA adapters.
 - Before fine-tuning, try prompting and retrieval; fine-tune for behaviour and style, retrieve for facts.`,
     pitfalls: `- Measuring only the new task and missing catastrophic forgetting.
-- Too small a rank for a large change (underfitting) — or a learning rate that wipes out general abilities.
+- Too small a rank for a large change (underfitting), or a learning rate that wipes out general abilities.
 - Training on low-quality or inconsistent examples; a few hundred excellent ones beat thousands of sloppy ones.
 - Forgetting to mask the prompt tokens in the loss.
 - Skipping evaluation after merging and quantization.`,
@@ -1300,15 +1301,15 @@ tok.save_pretrained("my-merged-model")
       'Always measure adaptation (new task) and forgetting (old task) on held-out data.',
       'LoRA trains a small fraction of the parameters; its rank is a capacity knob.',
       'LoRA alone does not guarantee less forgetting; replay of old data is the reliable protection.',
-      'Merged adapters add no inference cost; int8 quantization usually changes quality very little — check it.',
+      'Merged adapters add no inference cost; int8 quantization usually changes quality very little: check it.',
       'Real fine-tunes follow the same steps: data, LoRA config, masked training, two-sided evaluation, merge and ship.'
     ],
     quiz: [
       { type: 'mcq', q: 'What is catastrophic forgetting?', options: ['Forgetting to save the model', 'Losing previously learned abilities when training on new data', 'A failing GPU', 'Overfitting the tokenizer'], answer: 1, explain: 'It shows up as worse performance on the original distribution.' },
-      { type: 'mcq', q: 'LoRA rank 2 learns the new style worse than rank 8. Why?', options: ['Lower ranks train more slowly but reach the same result', 'A rank-2 update can only change the weights in two directions — too little capacity for this change', 'Rank 2 is not valid', 'The learning rate is different'], answer: 1, explain: 'The rank limits how expressive the update A·B can be.' },
+      { type: 'mcq', q: 'LoRA rank 2 learns the new style worse than rank 8. Why?', options: ['Lower ranks train more slowly but reach the same result', 'A rank-2 update can only change the weights in two directions: too little capacity for this change', 'Rank 2 is not valid', 'The learning rate is different'], answer: 1, explain: 'The rank limits how expressive the update A·B can be.' },
       { type: 'tf', q: 'Merging a LoRA adapter into the base weights changes the model\'s outputs.', answer: false, explain: 'W + A·B computed once gives exactly the same function.' },
       { type: 'mcq', q: 'Which technique most directly prevents forgetting during fine-tuning?', options: ['A larger learning rate', 'Mixing examples from the original data into the fine-tuning batches (replay)', 'Removing the LoRA adapters', 'Training for more epochs'], answer: 1, explain: 'The model keeps practising the old skill.' },
-      { type: 'fill', q: 'A LoRA adapter on a 4096 × 4096 weight matrix with rank 8 has how many trainable parameters for that matrix?', answer: ['65536', '65,536'], explain: '4096 × 8 + 8 × 4096 = 65,536 — versus 16.8 million for the full matrix.' },
+      { type: 'fill', q: 'A LoRA adapter on a 4096 × 4096 weight matrix with rank 8 has how many trainable parameters for that matrix?', answer: ['65536', '65,536'], explain: '4096 × 8 + 8 × 4096 = 65,536: versus 16.8 million for the full matrix.' },
       {"type":"fill","q":"A rank-16 LoRA adapter on a 2048 × 2048 weight matrix trains r · (d_in + d_out) parameters. What percentage of the matrix's own 4,194,304 weights is that? (one decimal)","answer":["1.6","1.56","1.5625"],"explain":"16 × (2048 + 2048) = 65,536 parameters, and 65,536 / 4,194,304 ≈ 1.6% of the full matrix."},
       {"type":"mcq","q":"Why should the old skill be evaluated during fine-tuning, not only at the end?","options":["It makes training faster","Much of the damage can happen early, and the best trade-off may be an intermediate checkpoint","The final model is always the worst one","Evaluation during training changes the weights"],"answer":1,"explain":"In the training curves, more than half of full fine-tuning's forgetting happened in the first fifth of training. Regular measurements show when it happens and which checkpoint balances both skills."},
       {"type":"tf","q":"Doubling the LoRA rank roughly halves the loss on the new task.","answer":false,"explain":"The loss falls quickly up to the capacity the task needs (here about rank 4 to 8) and then hardly moves. Beyond that, extra rank only costs memory and compute."},
@@ -1394,7 +1395,7 @@ def lora_grads(X, A, B, G, s):
     return s * gW @ B.T, s * A.T @ gW
 `,
         hints: ['Compute the effective-weight gradient Xᵀ G once and reuse it.', 'Check shapes: (d_in × d_out)(d_out × r) for dA and (r × d_in)(d_in × d_out) for dB.'],
-        explain: `At initialization B = 0, so dA is zero and only B receives gradient at first — the adapter starts exactly at the base model and grows from there. This is also why LoRA's memory savings come from the optimizer: only A and B need gradient statistics.`,
+        explain: `At initialization B = 0, so dA is zero and only B receives gradient at first: the adapter starts exactly at the base model and grows from there. This is also why LoRA's memory savings come from the optimizer: only A and B need gradient statistics.`,
         tests: [
           { call: 'lora_grads(np.array([[1.0, 2.0]]), np.array([[1.0], [0.0]]), np.array([[3.0]]), np.array([[2.0]]), 1.0)', expect: '(np.array([[6.0], [12.0]]), np.array([[2.0]]))' },
           { name: 'zero B means zero gradient for A', setup: 'rng = np.random.default_rng(0)\nX = rng.normal(size=(4, 3)); A = rng.normal(size=(3, 2)); G = rng.normal(size=(4, 5))', code: 'dA, dB = lora_grads(X, A, np.zeros((2, 5)), G, 2.0)\nassert np.allclose(dA, 0) and dB.shape == (2, 5) and not np.allclose(dB, 0)', hidden: true },
@@ -1404,10 +1405,10 @@ def lora_grads(X, A, B, G, s):
       }
     ],
     refs: [
-      { title: 'Hu et al. — LoRA: Low-Rank Adaptation of Large Language Models', url: 'https://arxiv.org/abs/2106.09685' },
-      { title: 'Biderman et al. — LoRA Learns Less and Forgets Less', url: 'https://arxiv.org/abs/2405.09673' },
-      { title: 'Dettmers et al. — QLoRA: Efficient Finetuning of Quantized LLMs', url: 'https://arxiv.org/abs/2305.14314' },
-      { title: 'Hugging Face — PEFT documentation', url: 'https://huggingface.co/docs/peft' }
+      { title: 'Hu et al., LoRA: Low-Rank Adaptation of Large Language Models', url: 'https://arxiv.org/abs/2106.09685' },
+      { title: 'Biderman et al., LoRA Learns Less and Forgets Less', url: 'https://arxiv.org/abs/2405.09673' },
+      { title: 'Dettmers et al., QLoRA: Efficient Finetuning of Quantized LLMs', url: 'https://arxiv.org/abs/2305.14314' },
+      { title: 'Hugging Face, PEFT documentation', url: 'https://huggingface.co/docs/peft' }
     ]
   }
   ]);

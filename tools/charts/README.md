@@ -1,6 +1,6 @@
 # Chart data scripts
 
-These scripts computed the numbers behind the 146 lesson charts: every curve, point and bar comes from a real
+These scripts computed the numbers behind the 155 lesson charts: every curve, point and bar comes from a real
 computation (a simulation, a fitted model or a formula), never from invented values. Each script covers one batch of
 lessons and writes a lesson patch with one `### INSERT … @@ chart` block per chart:
 
@@ -18,8 +18,9 @@ python tools/charts/charts_n2.py out.txt      # needs numpy, pandas and scikit-l
 | `charts_s1.py`, `charts_s2.py` | specializations, reinforcement learning, MLOps, responsible AI and ML security |
 | `charts_x1.py`–`charts_x4.py` | Advanced Agents and the three capstones (tabular, RAG, LoRA) |
 | `charts_y1.py` | the lessons added for the roadmap.sh roadmaps: video models, world models, robotics & VLAs, AI engineering, LLMs in production, discrete maths |
+| `charts_z1.py` | the ten topic lessons: graphical models, GLMs and survival analysis, 3D vision, AI for science, audio generation, AI governance, contextual bandits, interpretability in practice, AI hardware |
 
-`charts_x3.py`, `charts_x4.py` and `charts_y1.py` read the code of the samples they chart straight from the lesson (through Node, so run
+`charts_x3.py`, `charts_x4.py`, `charts_y1.py` and `charts_z1.py` read the code of the samples they chart straight from the lesson (through Node, so run
 them from a checkout with Node installed) and execute it, so their charts always match what the samples print.
 
 The lesson files in `js/data/` are the source of truth. The charts are already in them, and some captions were reworded

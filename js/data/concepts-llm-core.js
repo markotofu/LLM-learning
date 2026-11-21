@@ -7,8 +7,8 @@
   {
     id: 'text-representation', branch: 'llm', title: 'Text as Data: Tokens, Bag-of-Words & TF-IDF', short: 'Text as Data', level: 1, minutes: 35, prereqs: ['feature-engineering', 'python-essentials'],
     tags: ['nlp', 'bag of words', 'tf-idf', 'n-grams', 'vocabulary', 'document similarity'],
-    summary: 'The first step of NLP: turning text into numbers. Tokenizing, vocabularies, bag-of-words counts, n-grams, TF-IDF weighting — and what these simple representations miss.',
-    why: `Every language technology — spam filters, search engines, chatbots, LLMs — starts by turning text into numbers. The classic representations (bag-of-words and TF-IDF) are still widely used for search, classification baselines and keyword extraction, and they power the "sparse" half of modern hybrid search in RAG systems. Seeing exactly what they capture (which words appear, how distinctive they are) and what they throw away (order, meaning, context) explains why embeddings and transformers were needed.`,
+    summary: 'The first step of NLP: turning text into numbers. Tokenizing, vocabularies, bag-of-words counts, n-grams, TF-IDF weighting, and what these simple representations miss.',
+    why: `Every language technology (spam filters, search engines, chatbots, LLMs) starts by turning text into numbers. The classic representations (bag-of-words and TF-IDF) are still widely used for search, classification baselines and keyword extraction, and they power the "sparse" half of modern hybrid search in RAG systems. Seeing exactly what they capture (which words appear, how distinctive they are) and what they throw away (order, meaning, context) explains why embeddings and transformers were needed.`,
     objectives: [
       'Tokenize text and build a vocabulary',
       'Represent documents as bag-of-words count vectors and n-grams',
@@ -22,7 +22,7 @@
 "The cat sat on the mat."  ->  ["the", "cat", "sat", "on", "the", "mat"]
 \`\`\`
 
-The set of distinct tokens is the **vocabulary**. Real systems must decide how to handle punctuation, numbers, casing, accents and unseen words — and modern LLMs use **subword** tokenizers (see *Subword Tokenization & BPE*), but the idea is the same: text → sequence of ids.` },
+The set of distinct tokens is the **vocabulary**. Real systems must decide how to handle punctuation, numbers, casing, accents and unseen words, and modern LLMs use **subword** tokenizers (see *Subword Tokenization & BPE*), but the idea is the same: text → sequence of ids.` },
       { type: 'text', title: "Four kinds of string data", md: `Not every column of strings is "text". Before choosing a representation, decide which kind you have:
 
 | Kind | Example | What to do |
@@ -227,7 +227,7 @@ print(lda.transform(counts[[0, 40, 80]]).round(2))`, after: `LDA found the three
 - Each document gets a **mixture** (here mostly one topic, with a little of the others), which can feed a downstream model or help you browse a large collection.
 
 Today, clustering [text embeddings](#/concept/text-embeddings) is a strong alternative that captures meaning beyond shared words.` },
-      { type: 'check', question: { type: 'mcq', q: 'A word appears in every document of the corpus. What is its IDF (with idf = log(N/df))?', options: ['1', '0', 'N', 'It is undefined'], answer: 1, explain: 'log(N/N) = log(1) = 0 — a word everywhere carries no distinguishing information.' } },
+      { type: 'check', question: { type: 'mcq', q: 'A word appears in every document of the corpus. What is its IDF (with idf = log(N/df))?', options: ['1', '0', 'N', 'It is undefined'], answer: 1, explain: 'log(N/N) = log(1) = 0: a word everywhere carries no distinguishing information.' } },
       { type: 'text', title: 'What these representations miss', md: `Bag-of-words and TF-IDF are fast, interpretable and strong baselines, but:
 - **No word order** (beyond short n-grams): "not good" vs "good".
 - **No meaning**: "car" and "automobile" are as unrelated as "car" and "banana"; synonyms don't match.
@@ -235,21 +235,21 @@ Today, clustering [text embeddings](#/concept/text-embeddings) is a strong alter
 - **Huge sparse vectors** whose size grows with the vocabulary.
 
 Dense **embeddings** fix similarity; **language models** and **transformers** add order and context. Still, in production search, combining TF-IDF/BM25 keyword matching with embedding search ("hybrid search") often beats either alone, because exact keywords (product codes, names) matter.` },
-      { type: 'check', question: { type: 'tf', q: 'Bag-of-words vectors for "dog bites man" and "man bites dog" are identical.', answer: true, explain: 'Same words, same counts — order is lost.' } }
+      { type: 'check', question: { type: 'tf', q: 'Bag-of-words vectors for "dog bites man" and "man bites dog" are identical.', answer: true, explain: 'Same words, same counts: order is lost.' } }
     ],
     when: `- **TF-IDF + logistic regression / linear SVM**: a strong, fast baseline for text classification with modest data.
 - **BM25 / TF-IDF search**: keyword retrieval, often combined with embeddings (hybrid search) in RAG.
 - **Use embeddings or transformers** when meaning, paraphrase, word order or context matter.`,
-    pitfalls: `- Fitting the vocabulary and IDF on all data (leakage) — fit on training documents only.
+    pitfalls: `- Fitting the vocabulary and IDF on all data (leakage): fit on training documents only.
 - Forgetting consistent preprocessing (lowercasing, punctuation) at query time.
-- Exploding vocabulary with n-grams and rare typos — set minimum document frequencies.
+- Exploding vocabulary with n-grams and rare typos: set minimum document frequencies.
 - Expecting synonyms to match.`,
     takeaways: [
       'Text → tokens → ids; the vocabulary is the set of distinct tokens.',
       'Bag-of-words counts words per document and ignores order; n-grams add local order.',
       'TF-IDF = term frequency × log(N / document frequency): common words get low weight.',
       'Cosine similarity of TF-IDF vectors is a simple, effective keyword search.',
-      'They miss meaning and context — the motivation for embeddings and transformers.'
+      'They miss meaning and context: the motivation for embeddings and transformers.'
     ],
     quiz: [
       { type: 'fill', q: 'In 100 documents, the word "quantum" appears in 10. What is its IDF using natural log, log(N/df)? (2 decimals)', answer: ['2.30', '2.3', '2.303', 'ln10', 'ln 10'], display: 'ln 10 ≈ 2.30', explain: 'log(100/10) = ln 10 ≈ 2.30.' },
@@ -322,7 +322,7 @@ def bow_matrix(docs, vocab):
         id: 'tf-idf', title: 'TF-IDF from Scratch', difficulty: 'medium',
         prompt: `Implement \`tfidf(docs)\` → \`(vocab, matrix)\` using the provided \`build_vocab\` and \`bow_matrix\`:
 
-- tf = counts / (number of tokens in that document) — row-normalised counts;
+- tf = counts / (number of tokens in that document): row-normalised counts;
 - df = number of documents containing each word;
 - idf = ln(N / df) (natural log, no smoothing);
 - matrix = tf × idf (broadcast over rows).
@@ -380,7 +380,7 @@ def tfidf(docs):
     return vocab, tf * idf
 `,
         hints: ['Row-normalise with `counts.sum(axis=1, keepdims=True)`.', '`(counts > 0).sum(axis=0)` counts documents per word.', 'Multiply the (n_docs, V) tf matrix by the (V,) idf vector.'],
-        explain: `The broadcasting multiply applies each word's idf to its whole column. Note how "a" (present in every document) gets weight exactly 0 — it can't help distinguish documents.`,
+        explain: `The broadcasting multiply applies each word's idf to its whole column. Note how "a" (present in every document) gets weight exactly 0: it can't help distinguish documents.`,
         tests: [
           { call: 'tfidf(["a b", "a c"])', expect: '(["a", "b", "c"], np.array([[0.0, 0.5 * np.log(2), 0.0], [0.0, 0.0, 0.5 * np.log(2)]]))' },
           { name: 'repeated words', call: 'tfidf(["x x y", "y z"])[1]', expect: 'np.array([[2 / 3 * np.log(2), 0.0, 0.0], [0.0, 0.0, 0.5 * np.log(2)]])' },
@@ -389,9 +389,9 @@ def tfidf(docs):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Text feature extraction', url: 'https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction' },
-      { title: 'Jurafsky & Martin — Speech and Language Processing (free draft)', url: 'https://web.stanford.edu/~jurafsky/slp3/' },
-      { title: "Andreas Müller & Sarah Guido — Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
+      { title: 'scikit-learn, Text feature extraction', url: 'https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction' },
+      { title: 'Jurafsky & Martin, Speech and Language Processing (free draft)', url: 'https://web.stanford.edu/~jurafsky/slp3/' },
+      { title: "Andreas Müller & Sarah Guido, Introduction to Machine Learning with Python (book; code and notebooks)", url: "https://github.com/amueller/introduction_to_ml_with_python" }
     ]
   },
 
@@ -400,7 +400,7 @@ def tfidf(docs):
     id: 'language-models', branch: 'llm', title: 'Language Models & N-grams', short: 'Language Models', level: 2, minutes: 40, prereqs: ['text-representation', 'probability', 'information-theory', 'mle-map'],
     tags: ['language model', 'n-gram', 'bigram', 'next token prediction', 'perplexity', 'smoothing', 'sampling'],
     summary: 'A language model assigns probabilities to text by predicting the next token. Counting-based n-gram models, smoothing, generating text, and measuring quality with perplexity.',
-    why: `"Predict the next token" is the entire training objective of GPT, Claude and Llama. Before neural networks, the same idea was implemented by **counting**: how often does each word follow the previous one? Building an n-gram model by hand makes the concepts concrete — conditional probabilities, the chain rule for sequences, sampling to generate text, perplexity to evaluate — and shows exactly what neural language models improve: they generalize to contexts never seen verbatim and use far longer context.`,
+    why: `"Predict the next token" is the entire training objective of GPT, Claude and Llama. Before neural networks, the same idea was implemented by **counting**: how often does each word follow the previous one? Building an n-gram model by hand makes the concepts concrete (conditional probabilities, the chain rule for sequences, sampling to generate text, perplexity to evaluate) and shows exactly what neural language models improve: they generalize to contexts never seen verbatim and use far longer context.`,
     objectives: [
       'Define a language model and factor the probability of a sentence with the chain rule',
       'Estimate bigram probabilities by counting and apply add-k smoothing',
@@ -422,8 +422,8 @@ So a language model only needs to answer one question, repeatedly: **given the t
 With that you can:
 - **score** text (is this sentence likely? useful for speech recognition, spelling correction);
 - **generate** text by sampling a token, appending it, and repeating;
-- **complete** prompts — which is all a chatbot does, with a lot of training to make the completions helpful.` },
-      { type: 'text', title: 'n-gram models: counting', md: `Conditioning on the entire history is impossible to estimate by counting — almost every long history is unique. The **n-gram** (Markov) assumption keeps only the last n − 1 tokens:
+- **complete** prompts, which is all a chatbot does, with a lot of training to make the completions helpful.` },
+      { type: 'text', title: 'n-gram models: counting', md: `Conditioning on the entire history is impossible to estimate by counting, almost every long history is unique. The **n-gram** (Markov) assumption keeps only the last n − 1 tokens:
 
 $$ bigram (n = 2):   P(wₜ | w₁…wₜ₋₁) ≈ P(wₜ | wₜ₋₁) $$
 :::where
@@ -454,7 +454,7 @@ k — the small pseudo-count added to every possible pair (k = 1 is Laplace smoo
 V — the vocabulary size; adding k·V to the denominator keeps each row of probabilities summing to 1
 :::
 
-(More refined methods — Kneser-Ney, back-off — were the state of the art until neural LMs.)` },
+(More refined methods (Kneser-Ney, back-off) were the state of the art until neural LMs.)` },
       { type: 'text', title: "Smoothing: giving unseen n-grams a chance", md: `Counting gives probability 0 to every n-gram that never occurred in the training text, and a single zero makes the probability of a whole test sentence 0 and its perplexity infinite. Since most possible n-grams are never seen, **smoothing** moves a little probability from seen to unseen events. The simplest version adds a pseudo-count k to every count:
 
 $$ P_add-k( w | h ) = ( count(h, w) + k ) / ( count(h) + k · V ) $$
@@ -526,11 +526,11 @@ exp — e to that power, which turns the average surprise back into a "number of
 
 It is the exponentiated average cross-entropy (see *Information Theory*): roughly **how many equally likely choices the model is torn between** at each step. Lower is better. A uniform guess over a 50,000-word vocabulary has perplexity 50,000; classic n-gram models on news text reached about 100–200; modern LLMs reach single digits on similar text (with subword tokens).` },
       { type: 'text', title: 'Why neural language models won', md: `n-gram models hit hard limits:
-- **Sparsity** — most long n-grams are never seen, so counts can't generalize; "the purple cat" teaches nothing about "the violet cat".
-- **Short context** — a 5-gram model sees 4 tokens; real meaning depends on paragraphs.
-- **Size** — the table of counts explodes with n.
+- **Sparsity**: most long n-grams are never seen, so counts can't generalize; "the purple cat" teaches nothing about "the violet cat".
+- **Short context**: a 5-gram model sees 4 tokens; real meaning depends on paragraphs.
+- **Size**: the table of counts explodes with n.
 
-**Neural language models** replace the count table with a network: embeddings let similar words share statistical strength, and architectures with long context (RNNs, then transformers) condition on thousands of tokens. A GPT is still a next-token predictor trained with exactly the cross-entropy/perplexity you just computed — but with a learned function instead of a lookup table, and trained on trillions of tokens.` },
+**Neural language models** replace the count table with a network: embeddings let similar words share statistical strength, and architectures with long context (RNNs, then transformers) condition on thousands of tokens. A GPT is still a next-token predictor trained with exactly the cross-entropy/perplexity you just computed, but with a learned function instead of a lookup table, and trained on trillions of tokens.` },
       { type: 'check', question: { type: 'tf', q: 'A lower perplexity on held-out text means a better language model.', answer: true, explain: 'It means the model assigned higher probability to what actually came next.' } }
     ],
     when: `- n-gram models: tiny, fast, interpretable baselines; autocomplete on constrained domains; teaching. (They were used in production speech recognition and machine translation for decades.)
@@ -545,7 +545,7 @@ It is the exponentiated average cross-entropy (see *Information Theory*): roughl
       'n-gram models estimate it by counting, using only the last n − 1 tokens.',
       'Smoothing prevents unseen n-grams from getting probability zero.',
       'Generation = repeatedly sample the next token and append it.',
-      'Perplexity = exp(mean negative log-probability) — lower is better.'
+      'Perplexity = exp(mean negative log-probability): lower is better.'
     ],
     quiz: [
       { type: 'mcq', q: 'What does the bigram assumption say?', options: ['Every word is independent', 'The next word depends only on the previous word', 'Sentences have two words', 'Only pairs of documents matter'], answer: 1, explain: 'P(wₜ | all history) ≈ P(wₜ | wₜ₋₁).' },
@@ -591,7 +591,7 @@ def sentence_prob(tokens, probs):
     return p
 `,
         hints: ['`zip(tokens, tokens[1:])` yields consecutive pairs.', 'Use `dict.setdefault` and `.get(..., 0) + 1` to count.', 'Normalise each prev-row by the sum of its counts.'],
-        explain: `The nested dict is a sparse version of the (V × V) transition matrix — only observed pairs are stored. The zero for unseen pairs in \`sentence_prob\` is the sparsity problem that smoothing (and ultimately neural models) solve.`,
+        explain: `The nested dict is a sparse version of the (V × V) transition matrix, only observed pairs are stored. The zero for unseen pairs in \`sentence_prob\` is the sparsity problem that smoothing (and ultimately neural models) solve.`,
         tests: [
           { call: 'bigram_probs("the cat sat the cat ran".split())', expect: '{"the": {"cat": 1.0}, "cat": {"sat": 0.5, "ran": 0.5}, "sat": {"the": 1.0}}' },
           { call: 'sentence_prob("the cat ran".split(), bigram_probs("the cat sat the cat ran".split()))', expect: '0.5' },
@@ -630,7 +630,7 @@ def perplexity_from_loss(loss):
     return math.exp(loss)
 `,
         hints: ['Average the natural logs, negate, exponentiate.'],
-        explain: `Averaging log-probabilities (instead of multiplying probabilities) keeps the computation stable and makes perplexity independent of text length — a per-token measure. During LLM training you will see loss curves in nats; exp(loss) converts them to perplexity.`,
+        explain: `Averaging log-probabilities (instead of multiplying probabilities) keeps the computation stable and makes perplexity independent of text length: a per-token measure. During LLM training you will see loss curves in nats; exp(loss) converts them to perplexity.`,
         tests: [
           { call: 'perplexity([0.5, 0.5])', expect: '2.0' },
           { call: 'perplexity([0.25] * 4)', expect: '4.0' },
@@ -641,8 +641,8 @@ def perplexity_from_loss(loss):
       }
     ],
     refs: [
-      { title: 'Jurafsky & Martin — N-gram Language Models (chapter 3)', url: 'https://web.stanford.edu/~jurafsky/slp3/3.pdf' },
-      { title: 'Karpathy — makemore (building language models from scratch)', url: 'https://github.com/karpathy/makemore' }
+      { title: 'Jurafsky & Martin, N-gram Language Models (chapter 3)', url: 'https://web.stanford.edu/~jurafsky/slp3/3.pdf' },
+      { title: 'Karpathy, makemore (building language models from scratch)', url: 'https://github.com/karpathy/makemore' }
     ]
   },
 
@@ -651,7 +651,7 @@ def perplexity_from_loss(loss):
     id: 'tokenization', branch: 'llm', title: 'Subword Tokenization & Byte-Pair Encoding', short: 'Tokenization & BPE', level: 2, minutes: 40, prereqs: ['text-representation'],
     tags: ['tokenizer', 'bpe', 'subword', 'byte-level', 'sentencepiece', 'tokens', 'vocabulary'],
     summary: 'How LLMs split text into tokens: why subwords beat words and characters, the BPE training algorithm, byte-level BPE, and the practical consequences of tokenization.',
-    why: `An LLM never sees letters or words — only token ids produced by its **tokenizer**. Tokenization decides the vocabulary size, how long sequences are, what you pay per API call, how much text fits in the context window, and explains many odd LLM behaviours: trouble counting letters in "strawberry", inconsistent arithmetic, and higher cost for non-English languages. Byte-Pair Encoding (BPE) — or a close relative — is used by GPT, Llama and most modern models.`,
+    why: `An LLM never sees letters or words, only token ids produced by its **tokenizer**. Tokenization decides the vocabulary size, how long sequences are, what you pay per API call, how much text fits in the context window, and explains many odd LLM behaviours: trouble counting letters in "strawberry", inconsistent arithmetic, and higher cost for non-English languages. Byte-Pair Encoding (BPE) (or a close relative) is used by GPT, Llama and most modern models.`,
     objectives: [
       'Explain the trade-offs of word-level, character-level and subword tokenization',
       'Run the BPE training algorithm: count pairs, merge the most frequent, repeat',
@@ -718,11 +718,11 @@ print("final segmentation:", [" ".join(s) for s in words])
 ` },
       { type: 'chart', title: "Tokens per word as the BPE vocabulary grows", md: `BPE trained on the words of this app's classical-ML lessons (about 29,000 words), then used to tokenize the neural-network lessons:`, after: `With only characters, a word costs about 5.7 tokens (its letters plus the end-of-word marker). Every merge creates a token for a frequent fragment, and a few thousand merges bring common words down to one or two tokens. New text needs slightly more tokens than the training text because its words and fragments are less familiar, the same reason languages and domains under-represented in a tokenizer's training data cost more tokens.`, chart: {"kind":"line","x":[27,77,127,227,427,827,1627,3227],"xLog":true,"series":[{"name":"text the merges were learned on","y":[5.687,3.628,3.068,2.533,2.058,1.636,1.304,1.091]},{"name":"new text (other lessons)","y":[5.645,3.635,3.142,2.656,2.245,1.879,1.568,1.313]}],"xLabel":"vocabulary size: 27 symbols + number of merges (log scale)","yLabel":"tokens per word","yMin":0} },
       { type: 'check', question: { type: 'mcq', q: 'In BPE training, which pair is merged at each step?', options: ['A random pair', 'The most frequent adjacent pair of symbols in the corpus', 'The longest word', 'The rarest pair'], answer: 1, explain: 'Greedy frequency-based merging builds tokens for common character sequences.' } },
-      { type: 'text', title: 'Byte-level BPE and other tokenizers', md: `**Byte-level BPE** (GPT-2 and later) starts from the 256 possible **bytes** of UTF-8 instead of characters. Any string — emoji, Chinese, code, binary noise — can be encoded without an "unknown" token. GPT-4-era tokenizers have ~100k tokens; Llama 3 uses ~128k.
+      { type: 'text', title: 'Byte-level BPE and other tokenizers', md: `**Byte-level BPE** (GPT-2 and later) starts from the 256 possible **bytes** of UTF-8 instead of characters. Any string (emoji, Chinese, code, binary noise) can be encoded without an "unknown" token. GPT-4-era tokenizers have ~100k tokens; Llama 3 uses ~128k.
 
 Relatives: **WordPiece** (BERT) picks merges by likelihood rather than raw frequency; the **Unigram** model (in **SentencePiece**, used by T5 and many multilingual models) starts with a large vocabulary and prunes it. Tokenizers also define **special tokens**: beginning/end of sequence, padding, and chat-format markers that separate system, user and assistant messages.` },
-      { type: 'text', title: 'Practical consequences', md: `- **Cost and limits are in tokens.** English averages roughly 4 characters (≈ ¾ of a word) per token; code and many other languages need more tokens for the same content — so they cost more and fit less in the context window.
-- **Strange blind spots.** "strawberry" may be one or a few tokens, so the model never directly "sees" its letters — counting r's is surprisingly hard. Numbers split into irregular chunks ("1234" → "123" + "4"), which hurts arithmetic.
+      { type: 'text', title: 'Practical consequences', md: `- **Cost and limits are in tokens.** English averages roughly 4 characters (≈ ¾ of a word) per token; code and many other languages need more tokens for the same content, so they cost more and fit less in the context window.
+- **Strange blind spots.** "strawberry" may be one or a few tokens, so the model never directly "sees" its letters: counting r's is surprisingly hard. Numbers split into irregular chunks ("1234" → "123" + "4"), which hurts arithmetic.
 - **Leading spaces matter.** " hello" and "hello" are usually different tokens.
 - **The tokenizer is part of the model.** You must use the exact tokenizer a model was trained with; perplexities of models with different tokenizers aren't comparable.
 - **Glitch tokens.** Rare tokens that barely appeared in training can trigger bizarre outputs.` },
@@ -800,7 +800,7 @@ print("frequent word needs fewer tokens:", len(tokenize("learning")) < len(token
       { type: 'mcq', q: 'Roughly how many characters of English text does one token represent on average?', options: ['1', 'about 4', 'about 20', 'exactly one word'], answer: 1, explain: 'A common rule of thumb is ~4 characters (~0.75 words) per token.' },
       { type: 'tf', q: 'The same text always takes the same number of tokens regardless of the model.', answer: false, explain: 'Different tokenizers split text differently.' },
       { type: 'mcq', q: 'Why might an LLM miscount the letters in a word?', options: ['It cannot do arithmetic at all', 'It sees subword tokens, not individual characters', 'Its context window is too small', 'It was trained only on numbers'], answer: 1, explain: 'Characters inside a token are not directly visible to the model.' },
-      { type: 'order', q: 'Order one BPE training iteration.', items: ['Count all adjacent symbol pairs (weighted by word frequency)', 'Pick the most frequent pair', 'Merge that pair everywhere into a new symbol', 'Record the merge rule'], explain: 'Count, choose, merge, record — then repeat.' },
+      { type: 'order', q: 'Order one BPE training iteration.', items: ['Count all adjacent symbol pairs (weighted by word frequency)', 'Pick the most frequent pair', 'Merge that pair everywhere into a new symbol', 'Record the merge rule'], explain: 'Count, choose, merge, record, then repeat.' },
       {"type":"mcq","q":"Why can the same sentence cost more tokens in one language than in another?","options":["Some languages have more letters","The tokenizer's merges were learned mostly from other languages, so this language's common fragments are not single tokens","Providers charge more for some languages","Tokenizers drop the vowels"],"answer":1,"explain":"BPE merges reflect the frequencies in the tokenizer's training data; text unlike that data is split into more, smaller pieces."},
       {"type":"tf","q":"' cat' with a leading space and 'cat' without one are usually different tokens.","answer":true,"explain":"Byte-level BPE tokenizers attach the leading space to the word, so the two strings map to different token ids."}
     ],
@@ -831,7 +831,7 @@ def get_pair_counts(words):
     return counts
 `,
         hints: ['`zip(symbols, symbols[1:])` gives adjacent pairs.', 'Add the word\'s frequency, not 1.'],
-        explain: `Weighting by frequency means a pair inside a very common word counts many times — so BPE prioritises merges that shorten the most text overall.`,
+        explain: `Weighting by frequency means a pair inside a very common word counts many times, so BPE prioritises merges that shorten the most text overall.`,
         tests: [
           { call: 'get_pair_counts({("l", "o", "w", "</w>"): 5, ("l", "o", "w", "e", "r", "</w>"): 2})', expect: '{("l", "o"): 7, ("o", "w"): 7, ("w", "</w>"): 5, ("w", "e"): 2, ("e", "r"): 2, ("r", "</w>"): 2}' },
           { name: 'repeated pair inside one word', call: 'get_pair_counts({("a", "a", "a"): 3})', expect: '{("a", "a"): 6}', hidden: true },
@@ -972,7 +972,7 @@ def encode(word, merges):
     return symbols
 `,
         hints: ['`Counter(tuple(w) + ("</w>",) for w in text.split())` builds the initial corpus.', 'The key `(-count, pair)` sorts by highest count, then alphabetical.', 'Encoding replays the merges in the order they were learned.'],
-        explain: `Training is a loop of count → pick → merge; the list of merges *is* the tokenizer. Encoding replays them in order, so frequent words collapse into one token while unseen words still decompose into known pieces — never an "unknown".`,
+        explain: `Training is a loop of count → pick → merge; the list of merges *is* the tokenizer. Encoding replays them in order, so frequent words collapse into one token while unseen words still decompose into known pieces: never an "unknown".`,
         tests: [
           { name: 'first merges on the classic corpus', call: 'train_bpe("low low low low low lower lower newest newest newest newest newest newest widest widest widest", 4)', expect: '[("e", "s"), ("es", "t"), ("est", "</w>"), ("l", "o")]' },
           { name: 'encode a seen word', setup: 'merges = train_bpe("low low low low low lower lower newest newest newest newest newest newest widest widest widest", 10)', call: 'encode("newest", merges)' },
@@ -983,8 +983,8 @@ def encode(word, merges):
       }
     ],
     refs: [
-      { title: 'Sennrich et al. — Neural Machine Translation of Rare Words with Subword Units (BPE)', url: 'https://arxiv.org/abs/1508.07909' },
-      { title: 'Karpathy — minbpe (minimal BPE implementation) ', url: 'https://github.com/karpathy/minbpe' },
+      { title: 'Sennrich et al., Neural Machine Translation of Rare Words with Subword Units (BPE)', url: 'https://arxiv.org/abs/1508.07909' },
+      { title: 'Karpathy, minbpe (minimal BPE implementation) ', url: 'https://github.com/karpathy/minbpe' },
       { title: 'OpenAI tiktoken', url: 'https://github.com/openai/tiktoken' }
     ]
   },
@@ -993,8 +993,8 @@ def encode(word, merges):
   {
     id: 'attention', branch: 'llm', title: 'Attention & Self-Attention', short: 'Attention', level: 2, minutes: 50, prereqs: ['embeddings', 'activation-functions', 'seq2seq'],
     tags: ['attention', 'self-attention', 'query', 'key', 'value', 'causal mask', 'softmax'],
-    summary: 'The core idea behind transformers: every token builds a new representation as a weighted mix of all the tokens it attends to — queries, keys, values, scaled dot products, softmax, and the causal mask.',
-    why: `Attention is the single most important idea in modern AI. It lets every token in a sequence look at every other token and decide, from the content itself, which ones matter: "it" can attend to "cat" twenty words back; a verb can find its subject; a code token can find the variable's definition. It replaced recurrence (no more one-step-at-a-time bottleneck), parallelizes beautifully on GPUs, and is the heart of every transformer — GPT, BERT, Llama, vision transformers and diffusion models.`,
+    summary: 'The core idea behind transformers: every token builds a new representation as a weighted mix of all the tokens it attends to (queries, keys, values, scaled dot products, softmax, and the causal mask).',
+    why: `Attention is the single most important idea in modern AI. It lets every token in a sequence look at every other token and decide, from the content itself, which ones matter: "it" can attend to "cat" twenty words back; a verb can find its subject; a code token can find the variable's definition. It replaced recurrence (no more one-step-at-a-time bottleneck), parallelizes well on GPUs, and is the heart of every transformer: GPT, BERT, Llama, vision transformers and diffusion models.`,
     objectives: [
       'Explain attention as a soft, differentiable dictionary lookup with queries, keys and values',
       'Compute scaled dot-product attention step by step and explain the √d scaling',
@@ -1004,12 +1004,12 @@ def encode(word, merges):
     sections: [
       { type: 'text', title: 'The problem attention solves', md: `Meaning depends on context: in "The animal didn't cross the street because **it** was too tired", *it* refers to the animal; change "tired" to "wide" and *it* refers to the street. A good representation of "it" must pull in information from the right earlier word.
 
-RNNs squeeze all earlier context into one hidden vector, passed step by step — distant information fades and nothing can be parallelized. **Attention** gives every token direct access to every other token, with weights computed from the content of the tokens themselves.` },
+RNNs squeeze all earlier context into one hidden vector, passed step by step: distant information fades and nothing can be parallelized. **Attention** gives every token direct access to every other token, with weights computed from the content of the tokens themselves.` },
       { type: 'text', title: 'Queries, keys and values', md: `Think of a soft dictionary lookup. Each token produces three vectors:
 
-- a **query** q — "what am I looking for?"
-- a **key** k — "what do I contain / what can I be matched on?"
-- a **value** v — "what information do I hand over if you attend to me?"
+- a **query** q: "what am I looking for?"
+- a **key** k: "what do I contain / what can I be matched on?"
+- a **value** v: "what information do I hand over if you attend to me?"
 
 To build a new representation for token i:
 1. **Score** every token j by how well its key matches i's query: the dot product qᵢ · kⱼ.
@@ -1063,7 +1063,7 @@ W_Q, W_K, W_V — three learned weight matrices, each of shape (d, d_k)
 Q, K, V — the queries, keys and values, each (T, d_k): three different learned views of the same tokens
 :::
 
-The model *learns* what to look for (W_Q), how to be found (W_K) and what to pass along (W_V). Different trained heads learn different relationships — subject-verb links, coreference, "the previous token", matching brackets in code.
+The model *learns* what to look for (W_Q), how to be found (W_K) and what to pass along (W_V). Different trained heads learn different relationships: subject-verb links, coreference, "the previous token", matching brackets in code.
 
 Shapes for a sequence of T tokens with model width d and head width d_k:
 
@@ -1098,7 +1098,7 @@ print("output shape:", out.shape)
 ` },
       { type: 'chart', title: "Why the scores are divided by √d", md: `Random queries and keys with unit-variance entries, 64 keys, averaged over 200 draws:`, after: `A dot product of two d-dimensional vectors with unit-variance entries has a standard deviation of √d. Without scaling, the scores spread out as d grows, the softmax saturates and almost all the weight lands on a single key, where the softmax's gradient is nearly zero and learning stalls. Dividing by √d keeps the scores' spread, and therefore the softness of the attention, the same at every width.`, chart: {"kind":"line","x":[4,16,64,256,1024],"xLog":true,"series":[{"name":"softmax(q·k)","y":[0.267,0.57,0.794,0.905,0.935]},{"name":"softmax(q·k / √d)","y":[0.105,0.105,0.103,0.105,0.111]}],"xLabel":"dimension d of queries and keys (log scale)","yLabel":"largest attention weight (of 64 keys)","yMin":0,"yMax":1,"hlines":[{"y":0.0156,"label":"uniform: 1/64"}]} },
       { type: 'check', question: { type: 'mcq', q: 'In softmax(QKᵀ/√d)V, what does row i of the softmax matrix represent?', options: ['The embedding of token i', 'How token i distributes its attention over all tokens (weights summing to 1)', 'The value vector of token i', 'The gradient for token i'], answer: 1, explain: 'Each row is a probability distribution over the keys for one query.' } },
-      { type: 'text', title: 'The causal mask', md: `A language model predicts token t + 1 from tokens 1…t. During training we feed the whole sequence at once (that's what makes it parallel), so we must stop position t from peeking at later positions — otherwise it could simply copy the answer.
+      { type: 'text', title: 'The causal mask', md: `A language model predicts token t + 1 from tokens 1…t. During training we feed the whole sequence at once (that's what makes it parallel), so we must stop position t from peeking at later positions; otherwise it could simply copy the answer.
 
 The **causal mask** sets the scores for all "future" positions (j > i) to −∞ before the softmax; e^(−∞) = 0, so they receive zero weight. The mask is lower-triangular:
 
@@ -1223,9 +1223,9 @@ def attention(Q, K, V, mask=None):
       }
     ],
     refs: [
-      { title: 'Vaswani et al. — Attention Is All You Need (2017)', url: 'https://arxiv.org/abs/1706.03762' },
-      { title: 'Jay Alammar — The Illustrated Transformer', url: 'https://jalammar.github.io/illustrated-transformer/' },
-      { title: '3Blue1Brown — Attention in transformers, visually explained', url: 'https://www.3blue1brown.com/lessons/attention' }
+      { title: 'Vaswani et al., Attention Is All You Need (2017)', url: 'https://arxiv.org/abs/1706.03762' },
+      { title: 'Jay Alammar, The Illustrated Transformer', url: 'https://jalammar.github.io/illustrated-transformer/' },
+      { title: '3Blue1Brown, Attention in transformers, visually explained', url: 'https://www.3blue1brown.com/lessons/attention' }
     ]
   },
 
@@ -1234,7 +1234,7 @@ def attention(Q, K, V, mask=None):
     id: 'multi-head-attention', branch: 'llm', title: 'Multi-Head Attention', level: 3, minutes: 40, prereqs: ['attention'],
     tags: ['multi-head attention', 'heads', 'projection', 'reshape', 'gqa', 'mqa'],
     summary: 'Running several attention operations in parallel so each head can track a different kind of relationship: splitting into heads, shapes, the output projection, and GQA for efficient inference.',
-    why: `A single attention head computes one weighting over the sequence — but a token usually needs several kinds of information at once: its syntactic head, the entity it refers to, the previous token, the matching bracket. **Multi-head attention** runs many smaller attention operations in parallel, each free to specialise. It is the exact form used in every transformer layer, and understanding its reshapes and parameter counts is essential for reading model code and reasoning about inference memory (the KV cache), where variants like grouped-query attention matter.`,
+    why: `A single attention head computes one weighting over the sequence, but a token usually needs several kinds of information at once: its syntactic head, the entity it refers to, the previous token, the matching bracket. **Multi-head attention** runs many smaller attention operations in parallel, each free to specialise. It is the exact form used in every transformer layer, and understanding its reshapes and parameter counts is essential for reading model code and reasoning about inference memory (the KV cache), where variants like grouped-query attention matter.`,
     objectives: [
       'Explain why multiple heads help',
       'Split a (T, d_model) tensor into h heads of size d_model/h and merge them back',
@@ -1246,15 +1246,15 @@ def attention(Q, K, V, mask=None):
 - attend to the **previous token**;
 - link a pronoun to its **antecedent**;
 - connect a verb with its **subject or object**;
-- implement "**induction**": find an earlier occurrence of the current token and copy what followed it — a key mechanism behind in-context learning.
+- implement "**induction**": find an earlier occurrence of the current token and copy what followed it (a key mechanism behind in-context learning).
 
 The heads' outputs are concatenated and mixed by a final linear layer W_O.` },
       { type: 'text', title: 'The mechanics and shapes', md: `With model width d_model and h heads, each head has width d_head = d_model / h (e.g. 768 / 12 = 64 in GPT-2 small).
 
 1. Project: Q = X W_Q, K = X W_K, V = X W_V, each (T, d_model).
 2. **Split** each into heads: reshape (T, d_model) → (T, h, d_head), then transpose to **(h, T, d_head)**.
-3. Run scaled dot-product attention **independently per head** (scores (h, T, T)) — one batched matrix multiply.
-4. **Merge**: transpose back to (T, h, d_head) and reshape to (T, d_model) — concatenating the heads.
+3. Run scaled dot-product attention **independently per head** (scores (h, T, T)): one batched matrix multiply.
+4. **Merge**: transpose back to (T, h, d_head) and reshape to (T, d_model) (concatenating the heads).
 5. Output projection: out = merged @ W_O, (T, d_model).
 
 Splitting into heads costs nothing extra: the total compute is about the same as one big head of width d_model, but the model gets h independent attention patterns.
@@ -1285,10 +1285,10 @@ print(w[:, -1].round(2))
 print("output shape:", out.shape, "  attention parameters:", 4 * d_model * d_model)
 ` },
       { type: 'check', question: { type: 'fill', q: 'A model has d_model = 1024 and 16 heads. What is the dimension of each head?', answer: ['64'], explain: '1024 / 16 = 64.' } },
-      { type: 'text', title: 'Multi-query and grouped-query attention', md: `During generation, a model caches the keys and values of every previous token for every head and layer (the **KV cache**). For long contexts and big batches this cache — not the weights — dominates GPU memory.
+      { type: 'text', title: 'Multi-query and grouped-query attention', md: `During generation, a model caches the keys and values of every previous token for every head and layer (the **KV cache**). For long contexts and big batches this cache (not the weights) dominates GPU memory.
 
 - **Multi-query attention (MQA)**: all heads share **one** key head and one value head (queries stay per-head). The KV cache shrinks by a factor of h, at a small quality cost.
-- **Grouped-query attention (GQA)**: heads are divided into g groups that each share a key/value head — a middle ground (e.g. 32 query heads with 8 KV heads). Used by Llama 2 70B, Llama 3, Mistral and many others.
+- **Grouped-query attention (GQA)**: heads are divided into g groups that each share a key/value head, a middle ground (e.g. 32 query heads with 8 KV heads). Used by Llama 2 70B, Llama 3, Mistral and many others.
 
 The math per head is unchanged; only the number of distinct K/V projections differs.` },
       { type: 'chart', title: "KV-cache memory for one sequence", md: `A 7-billion-parameter-class model: 32 layers, 32 query heads of width 128, 16-bit numbers:`, after: `The cache grows linearly with the context. With full multi-head attention a single 128k-token sequence needs about 69 GB, more than the model's own weights. Grouped-query attention with 8 key/value heads cuts that by 4 (about 17 GB) and multi-query attention by 32, which is why long-context models use GQA almost universally.`, chart: {"kind":"line","x":[1024,4096,16384,65536,131072],"xLog":true,"yLog":true,"series":[{"name":"multi-head (32 key/value heads)","y":[0.54,2.15,8.59,34.36,68.72]},{"name":"grouped-query (8 key/value heads)","y":[0.13,0.54,2.15,8.59,17.18]},{"name":"multi-query (1 key/value heads)","y":[0.02,0.07,0.27,1.07,2.15]}],"xLabel":"context length in tokens (log scale)","yLabel":"KV cache in GB (log scale)"} },
@@ -1316,13 +1316,13 @@ print(f"32 users with 8k contexts, grouped-query: {kv_cache_gb(kv_heads=8, token
 ratio = kv_cache_gb(kv_heads=32, tokens=8192, **config) / kv_cache_gb(kv_heads=8, tokens=8192, **config)
 print("GQA cache is 4x smaller:", ratio == 4)`, after: `At 128k tokens, full multi-head attention needs about 69 GB for a single sequence, far more than the model's 14 GB of 16-bit weights. Grouped-query attention needs a quarter of that, and serving 32 users with 8k contexts still takes over 34 GB of cache: cache memory, not arithmetic, usually limits how many requests run at once.`, predict: {"type":"mcq","q":"A model has 32 query heads. Switching from multi-head attention to grouped-query attention with 8 key/value heads shrinks the KV cache by what factor?","options":["2","4","8","32"],"answer":1,"explain":"The cache is proportional to the number of key/value heads: 32 / 8 = 4.","expect":["GQA cache is 4x smaller: True"]} },
       { type: 'check', question: { type: 'tf', q: 'Splitting attention into 12 heads multiplies the attention computation cost by roughly 12.', answer: false, explain: 'Each head has width d_model/12, so total work stays about the same as one full-width head.' } },
-      { type: 'text', title: 'Going further: what heads learn and what they cost', md: `- **Specialization**: trained heads attend to different things — the previous token, syntactic relations, matching brackets, the first token of the sequence (an "attention sink"). Many heads are redundant and can be pruned with little loss.
+      { type: 'text', title: 'Going further: what heads learn and what they cost', md: `- **Specialization**: trained heads attend to different things, the previous token, syntactic relations, matching brackets, the first token of the sequence (an "attention sink"). Many heads are redundant and can be pruned with little loss.
 - **Cost**: the projections W_Q, W_K, W_V and W_O hold about 4 · d_model² parameters per layer whatever the number of heads. Splitting d_model into h heads of size d_model / h keeps the compute the same while letting each head learn its own pattern.
 - **Smaller KV caches**: multi-query attention (one shared key/value head) and grouped-query attention (one key/value head per group) shrink the KV cache (see *Efficient Attention*); multi-head latent attention compresses keys and values into a small latent vector.
-- **Reading attention maps**: attention weights show where information flows, but they are an incomplete explanation — heads work together in circuits such as induction heads (see *Mechanistic Interpretability*).` }
+- **Reading attention maps**: attention weights show where information flows, but they are an incomplete explanation, heads work together in circuits such as induction heads (see *Mechanistic Interpretability*).` }
     ],
     when: `- Multi-head attention is the default in every transformer layer.
-- Use GQA/MQA variants when inference memory (KV cache) and speed matter — most modern open LLMs do.
+- Use GQA/MQA variants when inference memory (KV cache) and speed matter: most modern open LLMs do.
 - Keep d_model divisible by the number of heads; typical head sizes are 64–128.`,
     pitfalls: `- Reshape vs transpose confusion: reshape (T, d) → (T, h, d_head) **then** transpose to (h, T, d_head). Reshaping directly to (h, T, d_head) scrambles the data.
 - Forgetting the output projection W_O.
@@ -1380,7 +1380,7 @@ def merge_heads(H):
     return H.transpose(1, 0, 2).reshape(T, h * dh)
 `,
         hints: ['Reshape first: (T, n_heads, d_head) keeps each token\'s columns together.', 'Then `.transpose(1, 0, 2)` moves the head axis to the front.', 'Merging: transpose back, then reshape.'],
-        explain: `Reshaping (T, d) to (T, h, d_head) chops each token's vector into consecutive chunks — one per head — without moving data; the transpose brings heads to the front so attention runs as one batched matmul. Reshaping straight to (h, T, d_head) would mix different tokens into one head: a classic bug.`,
+        explain: `Reshaping (T, d) to (T, h, d_head) chops each token's vector into consecutive chunks (one per head) without moving data; the transpose brings heads to the front so attention runs as one batched matmul. Reshaping straight to (h, T, d_head) would mix different tokens into one head: a classic bug.`,
         tests: [
           { call: 'split_heads(np.arange(12).reshape(2, 6), 3)[1]', expect: 'np.array([[2, 3], [8, 9]])' },
           { name: 'shape', code: 'H = split_heads(np.zeros((7, 12)), 4)\nassert H.shape == (4, 7, 3), H.shape' },
@@ -1393,7 +1393,7 @@ def merge_heads(H):
         prompt: `Implement \`mha(X, Wq, Wk, Wv, Wo, n_heads, causal=True)\`:
 
 1. Q, K, V = X @ Wq, X @ Wk, X @ Wv (all (T, d_model)).
-2. Split each into heads (n_heads, T, d_head) — \`split_heads\` and \`merge_heads\` are provided.
+2. Split each into heads (n_heads, T, d_head): \`split_heads\` and \`merge_heads\` are provided.
 3. Per head: scores = Q Kᵀ / √d_head; if \`causal\`, mask future positions with −∞; stable softmax over the last axis; heads = weights @ V.
 4. Merge the heads back to (T, d_model) and return \`merged @ Wo\`.`,
         starter: `
@@ -1447,8 +1447,8 @@ def mha(X, Wq, Wk, Wv, Wo, n_heads, causal=True):
       }
     ],
     refs: [
-      { title: 'Anthropic — A Mathematical Framework for Transformer Circuits', url: 'https://transformer-circuits.pub/2021/framework/index.html', note: 'how heads compose (induction heads)' },
-      { title: 'Ainslie et al. — GQA: Grouped-Query Attention', url: 'https://arxiv.org/abs/2305.13245' }
+      { title: 'Anthropic, A Mathematical Framework for Transformer Circuits', url: 'https://transformer-circuits.pub/2021/framework/index.html', note: 'how heads compose (induction heads)' },
+      { title: 'Ainslie et al., GQA: Grouped-Query Attention', url: 'https://arxiv.org/abs/2305.13245' }
     ]
   },
 
@@ -1457,7 +1457,7 @@ def mha(X, Wq, Wk, Wv, Wo, n_heads, causal=True):
     id: 'positional-encoding', branch: 'llm', title: 'Positional Encoding', level: 2, minutes: 35, prereqs: ['attention'],
     tags: ['positional encoding', 'sinusoidal', 'learned positions', 'rope', 'rotary', 'alibi', 'context length'],
     summary: 'Attention has no built-in notion of order. How transformers inject position: learned position embeddings, sinusoidal encodings, and rotary embeddings (RoPE) used by modern LLMs.',
-    why: `Self-attention treats its input as a **set**: shuffle the tokens and each output is simply shuffled along — "dog bites man" and "man bites dog" would get identical treatment. Order matters enormously in language, so transformers must add positional information. How they do it affects how well a model generalizes to longer contexts; **RoPE** (rotary position embedding), used by Llama, Mistral and most recent open LLMs, is a big part of how context windows have been stretched to hundreds of thousands of tokens.`,
+    why: `Self-attention treats its input as a **set**: shuffle the tokens and each output is simply shuffled along ("dog bites man" and "man bites dog" would get identical treatment). Order matters enormously in language, so transformers must add positional information. How they do it affects how well a model generalizes to longer contexts; **RoPE** (rotary position embedding), used by Llama, Mistral and most recent open LLMs, is a big part of how context windows have been stretched to hundreds of thousands of tokens.`,
     objectives: [
       'Show that self-attention without positions is permutation-equivariant',
       'Compute sinusoidal positional encodings and explain their properties',
@@ -1468,7 +1468,7 @@ def mha(X, Wq, Wk, Wv, Wo, n_heads, causal=True):
       { type: 'text', title: 'Attention is order-blind', md: `Attention computes weights from dot products between token vectors. Nothing in softmax(QKᵀ/√d)V depends on *where* a token sits: permute the input rows and the output rows are permuted the same way (**permutation equivariance**). The model would see a bag of tokens.
 
 The fix is to make each token's vector depend on its position, either by **adding** a position vector to the token embedding before the first layer (absolute positions), or by modifying how queries and keys interact (relative positions, RoPE, ALiBi).` },
-      { type: 'code', title: 'Proving attention ignores order — and fixing it', code: `
+      { type: 'code', title: 'Proving attention ignores order, and fixing it', code: `
 import numpy as np
 rng = np.random.default_rng(0)
 T, d = 4, 6
@@ -1505,14 +1505,14 @@ PE(pos, j) — dimension j of the encoding vector for position pos
 10000^(2i/d) — the wavelength factor: 1 for the first pair, nearly 10,000 for the last, so the waves go from fast to slow
 :::
 
-Each pair of dimensions is a sine/cosine wave with its own frequency — fast oscillations in the first dimensions, very slow ones in the last, like the hands of a clock (seconds, minutes, hours…). Properties:
+Each pair of dimensions is a sine/cosine wave with its own frequency: fast oscillations in the first dimensions, very slow ones in the last, like the hands of a clock (seconds, minutes, hours…). Properties:
 - every position gets a unique pattern;
 - the encoding for position p + k is a fixed **rotation** of the encoding for p, so relative offsets are easy for the model to compute;
 - no parameters to learn, and it is defined for any position (though models don't automatically generalize past the lengths they were trained on).` },
       { type: 'demo', title: 'Interactive: the sinusoidal encoding matrix', demo: 'positional' },
       { type: 'text', title: 'Learned, relative and rotary positions', md: `- **Learned absolute embeddings** (BERT, GPT-2): a trainable vector per position, added to the token embedding. Simple, works well, but can't go beyond the maximum position it was trained with.
 - **Relative position biases** (Transformer-XL, T5): add a learned bias to the attention score depending on the distance j − i.
-- **ALiBi**: subtract a penalty proportional to distance from each attention score — no embeddings at all; extrapolates well.
+- **ALiBi**: subtract a penalty proportional to distance from each attention score, no embeddings at all; extrapolates well.
 - **RoPE (rotary position embedding)** (Llama, Mistral, Qwen, most current open models): instead of adding anything to the input, **rotate** each query and key vector by an angle proportional to its position. Treat dimensions in pairs (x₂ᵢ, x₂ᵢ₊₁) as 2-D points and rotate pair i by pos·θᵢ with θᵢ = 10000^(−2i/d):
 
 $$ (x₂ᵢ, x₂ᵢ₊₁) → (x₂ᵢ cos φ − x₂ᵢ₊₁ sin φ,   x₂ᵢ sin φ + x₂ᵢ₊₁ cos φ),   φ = pos · θᵢ $$
@@ -1525,7 +1525,7 @@ pos — the position of the token
 cos φ, sin φ — the standard 2-D rotation by the angle φ
 :::
 
-Because rotating q by angle mθ and k by angle nθ changes their dot product only through the **difference** (m − n)θ, the attention score depends on the relative distance between tokens — relative positioning, implemented with absolute rotations. Context-extension tricks (position interpolation, NTK scaling, YaRN) adjust these rotation frequencies so models can handle longer contexts than they were trained on.` },
+Because rotating q by angle mθ and k by angle nθ changes their dot product only through the **difference** (m − n)θ, the attention score depends on the relative distance between tokens: relative positioning, implemented with absolute rotations. Context-extension tricks (position interpolation, NTK scaling, YaRN) adjust these rotation frequencies so models can handle longer contexts than they were trained on.` },
       { type: 'chart', title: "RoPE: how the same query–key match decays with distance", md: `A query and a similar key, rotated by RoPE to positions that are a given distance apart (d = 64, base 10,000, averaged over 500 random pairs):`, after: `At distance 0 the rotations cancel and the score is the plain dot product. As the distance grows, the fast-rotating dimensions fall out of phase first, and the average score drops quickly over the first few dozen tokens, then decays more slowly with ripples. The score depends only on the distance, never on the absolute positions, and nearby matches are naturally favoured over distant ones with the same content.`, chart: {"kind":"line","x":[0,4,8,12,16,20,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80,84,88,92,96,100,104,108,112,116,120,124,128,132,136,140,144,148,152,156,160,164,168,172,176,180,184,188,192,196,200,204,208,212,216,220,224,228,232,236,240,244,248,252,256,260,264,268,272,276,280,284,288,292,296,300,304,308,312,316,320,324,328,332,336,340,344,348,352,356,360,364,368,372,376,380,384,388,392,396,400,404,408,412,416,420,424,428,432,436,440,444,448,452,456,460,464,468,472,476,480,484,488,492,496,500,504,508,512],"points":false,"series":[{"name":"average attention score, relative to distance 0","y":[1,0.747,0.699,0.669,0.601,0.584,0.611,0.493,0.608,0.503,0.478,0.604,0.457,0.444,0.557,0.497,0.431,0.457,0.369,0.574,0.452,0.39,0.419,0.393,0.328,0.553,0.438,0.445,0.381,0.339,0.398,0.367,0.284,0.485,0.495,0.392,0.449,0.323,0.343,0.345,0.336,0.331,0.344,0.219,0.482,0.466,0.421,0.389,0.395,0.315,0.359,0.244,0.341,0.341,0.263,0.323,0.295,0.213,0.31,0.445,0.437,0.449,0.293,0.382,0.35,0.305,0.262,0.333,0.201,0.301,0.287,0.324,0.263,0.266,0.278,0.295,0.168,0.225,0.378,0.413,0.435,0.379,0.364,0.285,0.32,0.309,0.361,0.207,0.256,0.251,0.283,0.161,0.248,0.274,0.316,0.229,0.253,0.235,0.245,0.236,0.241,0.207,0.109,0.21,0.347,0.421,0.352,0.419,0.35,0.373,0.243,0.289,0.288,0.314,0.252,0.349,0.202,0.183,0.225,0.272,0.238,0.161,0.131,0.247,0.263,0.197,0.301,0.192,0.187]}],"xLabel":"distance between the query's and the key's positions (tokens)","yLabel":"relative score","hlines":[{"y":0,"label":""}]} },
       { type: 'check', question: { type: 'mcq', q: 'Why does RoPE make attention scores depend on relative position?', options: ['It adds the distance to every score', 'Rotating q by mθ and k by nθ leaves their dot product depending only on (m − n)θ', 'It sorts the tokens', 'It uses learned position embeddings'], answer: 1, explain: 'Rotations preserve dot products up to the angle difference.' } },
       { type: 'text', title: "Stretching the context window", md: `A model trained with RoPE on sequences of up to 4,096 tokens has never seen the rotation angles of position 10,000, and feeding it longer inputs usually breaks it. Several tricks extend the context with little or no extra training:
@@ -1665,7 +1665,7 @@ def apply_rope(x):
     return out
 `,
         hints: ['θ for pair i is `10000 ** (-(2i) / d)`; `np.arange(0, d, 2)` gives 2i.', 'Build the (T, d/2) angle table with broadcasting.', 'Even columns `x[:, 0::2]` and odd columns `x[:, 1::2]` form the pairs.'],
-        explain: `Each pair is a 2-D point rotated by an angle that grows with position. Rotations keep lengths unchanged, and (R_m q)·(R_n k) = q·(R_{n−m} k): the score only sees the relative offset. That is the whole trick — implemented in a few vectorized lines inside every Llama layer.`,
+        explain: `Each pair is a 2-D point rotated by an angle that grows with position. Rotations keep lengths unchanged, and (R_m q)·(R_n k) = q·(R_{n−m} k): the score only sees the relative offset. That is the whole trick: implemented in a few vectorized lines inside every Llama layer.`,
         tests: [
           { name: 'position 0 is unchanged', call: 'apply_rope(np.array([[1.0, 2.0, 3.0, 4.0]]))', expect: 'np.array([[1.0, 2.0, 3.0, 4.0]])' },
           { name: 'single pair rotates by t radians', call: 'apply_rope(np.array([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0]]))', expect: 'np.array([[1.0, 0.0], [np.cos(1.0), np.sin(1.0)], [np.cos(2.0), np.sin(2.0)]])' },
@@ -1676,8 +1676,8 @@ def apply_rope(x):
       }
     ],
     refs: [
-      { title: 'Su et al. — RoFormer: Enhanced Transformer with Rotary Position Embedding', url: 'https://arxiv.org/abs/2104.09864' },
-      { title: 'Press et al. — Train Short, Test Long (ALiBi)', url: 'https://arxiv.org/abs/2108.12409' }
+      { title: 'Su et al., RoFormer: Enhanced Transformer with Rotary Position Embedding', url: 'https://arxiv.org/abs/2104.09864' },
+      { title: 'Press et al., Train Short, Test Long (ALiBi)', url: 'https://arxiv.org/abs/2108.12409' }
     ]
   },
 
@@ -1686,7 +1686,7 @@ def apply_rope(x):
     id: 'transformer-block', branch: 'llm', title: 'The Transformer Block', level: 3, minutes: 45, prereqs: ['multi-head-attention', 'positional-encoding', 'normalization'],
     tags: ['transformer', 'residual stream', 'pre-norm', 'feed-forward', 'encoder', 'decoder'],
     summary: 'Assembling the pieces: pre-norm residual blocks of attention plus a feed-forward MLP, the "residual stream", stacking N blocks, and encoder vs decoder vs encoder-decoder designs.',
-    why: `The transformer block is the repeating unit of every modern language model: GPT-3 stacks 96 of them, Llama 3 8B stacks 32. Once you understand one block — normalize, attend, add; normalize, MLP, add — you understand the architecture behind ChatGPT, Claude, Gemini, BERT, vision transformers and much of image generation. Everything else (bigger widths, more layers, better data) is scale.`,
+    why: `The transformer block is the repeating unit of every modern language model: GPT-3 stacks 96 of them, Llama 3 8B stacks 32. Once you understand one block: normalize, attend, add; normalize, MLP, add, you understand the architecture behind ChatGPT, Claude, Gemini, BERT, vision transformers and much of image generation. Everything else (bigger widths, more layers, better data) is scale.`,
     objectives: [
       'Write a pre-norm transformer block: x + Attn(LN(x)), then x + FFN(LN(x))',
       'Explain the roles of attention (mixing across tokens) and the FFN (processing each token)',
@@ -1706,7 +1706,7 @@ x = x + FeedForward( LayerNorm(x) )            # each token is processed indepen
 - **LayerNorm/RMSNorm** before each sub-layer keeps activations well-scaled (*pre-norm* trains more stably than the original post-norm).
 - **Residual connections** (the "x +") let each sub-layer add a small update and give gradients a highway through dozens of layers.` },
       { type: 'demo', title: 'Diagram: the block at a glance', demo: 'dg-transformer' },
-      { type: 'text', title: 'The residual stream', md: `A helpful mental model: each token has a vector of width d_model — the **residual stream** — that flows straight through the network from the embedding to the output. Every attention and FFN sub-layer **reads** from the stream (after normalization) and **writes** an update back by addition. Nothing overwrites the stream; layers only add to it.
+      { type: 'text', title: 'The residual stream', md: `A helpful mental model: each token has a vector of width d_model (the **residual stream**) that flows straight through the network from the embedding to the output. Every attention and FFN sub-layer **reads** from the stream (after normalization) and **writes** an update back by addition. Nothing overwrites the stream; layers only add to it.
 
 That's why shapes never change inside the stack: input (T, d_model) → after block 1 (T, d_model) → … → after block N (T, d_model). At the end, a final norm and the output layer turn each position's vector into logits over the vocabulary.
 
@@ -1753,7 +1753,7 @@ print("parameters in one block (attention 4d^2 + FFN 2*d*4d):", 4 * d * d + 2 * 
 | **Decoder-only** | causal (masked) | predict the next token | GPT, Llama, Claude | generation, chat, general-purpose LLMs |
 | **Encoder-decoder** | encoder bidirectional; decoder causal + **cross-attention** to the encoder | map input to output text | original Transformer, T5, Whisper | translation, summarization, speech-to-text |
 
-**Cross-attention** takes queries from the decoder and keys/values from the encoder's output — how the decoder "reads" the source sentence. Decoder-only models dominate today because next-token prediction on raw text scales so well and handles every task as text completion.` },
+**Cross-attention** takes queries from the decoder and keys/values from the encoder's output: how the decoder "reads" the source sentence. Decoder-only models dominate today because next-token prediction on raw text scales so well and handles every task as text completion.` },
       { type: 'text', title: "Modern block variants", md: `The 2017 Transformer block has been refined many times. A typical recent LLM block differs from the original in several ways:
 
 | Component | Original Transformer (2017) | Typical recent LLM | Why |
@@ -1777,7 +1777,7 @@ d — the model width, d_model
 total ≈ 12d² — the parameters of one block (biases and norms add only about 13d more)
 :::
 
-GPT-2 small: d = 768, 12 blocks → 12 × 12 × 768² ≈ 85M parameters in the blocks, plus the 50,257 × 768 ≈ 38.6M token-embedding matrix ≈ 124M total. GPT-3: d = 12,288, 96 blocks → 96 × 12 × 12,288² ≈ 174B — essentially its famous 175B. (Models with SwiGLU FFNs use three FFN matrices with a ~8d/3 hidden width to keep the count similar.)` },
+GPT-2 small: d = 768, 12 blocks → 12 × 12 × 768² ≈ 85M parameters in the blocks, plus the 50,257 × 768 ≈ 38.6M token-embedding matrix ≈ 124M total. GPT-3: d = 12,288, 96 blocks → 96 × 12 × 12,288² ≈ 174B (essentially its famous 175B). (Models with SwiGLU FFNs use three FFN matrices with a ~8d/3 hidden width to keep the count similar.)` },
       { type: 'chart', title: "Where a token's compute goes in one block", md: `Forward-pass FLOPs for one new token in one block of a model with d = 4,096 (each multiply-add counts as 2 FLOPs):`, after: `The matrix multiplications with the weights cost the same for every token, about 403 million FLOPs here, whatever the context. The attention computation grows with the number of tokens attended to and only overtakes the weights at T ≈ 6d, about 24,600 tokens for this width. For ordinary prompts a transformer's compute is dominated by its weights; for very long contexts, attention takes over, which is where efficient-attention methods pay off.`, chart: {"kind":"line","x":[512,1024,2048,4096,8192,16384,32768,65536,131072],"xLog":true,"yLog":true,"series":[{"name":"weight matrices: projections and FFN (24d²)","y":[402.7,402.7,402.7,402.7,402.7,402.7,402.7,402.7,402.7]},{"name":"attention scores and weighted sum (4·T·d)","y":[8.4,16.8,33.6,67.1,134.2,268.4,536.9,1073.7,2147.5]}],"xLabel":"context length T (log scale)","yLabel":"million FLOPs per token per layer (log scale)","vlines":[{"x":24576,"label":"T = 6d"}]} },
       { type: 'code', title: "Compute per token: weights versus attention", code: `def flops_per_token(d, context):
     weights = 2 * 12 * d * d          # 12d² weights per block, 2 FLOPs per multiply-add
@@ -1797,7 +1797,7 @@ print("attention matches the weights at T =", crossover, "= 6 * d:", crossover =
 - Encoder-decoder models for sequence-to-sequence tasks with a distinct input and output (translation, speech recognition).`,
     pitfalls: `- Forgetting the residual additions (the network becomes much harder to train).
 - Post-norm vs pre-norm mix-ups when porting code (pre-norm is the modern default).
-- Assuming the FFN mixes tokens — it doesn't; only attention does.
+- Assuming the FFN mixes tokens: it doesn't; only attention does.
 - Mis-sizing the FFN hidden width (4·d, or ≈ 8d/3 with SwiGLU's three matrices).`,
     takeaways: [
       'Pre-norm block: x ← x + Attn(LN(x)); x ← x + FFN(LN(x)).',
@@ -1820,7 +1820,7 @@ print("attention matches the weights at T =", crossover, "= 6 * d:", crossover =
         id: 'ffn-gelu', title: 'The Feed-Forward Network', difficulty: 'easy',
         prompt: `Implement:
 
-1. \`gelu(x)\` — the tanh approximation used by GPT-2:
+1. \`gelu(x)\`: the tanh approximation used by GPT-2:
    0.5 · x · (1 + tanh(√(2/π) · (x + 0.044715 · x³)))
 2. \`ffn(x, W1, b1, W2, b2)\` = gelu(x @ W1 + b1) @ W2 + b2, applied to every row (token) of x.
 
@@ -1849,7 +1849,7 @@ def ffn(x, W1, b1, W2, b2):
     return gelu(np.asarray(x, dtype=float) @ W1 + b1) @ W2 + b2
 `,
         hints: ['Write gelu exactly as the formula with NumPy functions.', 'The FFN is two dense layers with GELU in between.'],
-        explain: `GELU is like a smooth ReLU: it lets small negative values through slightly, which tends to help transformers. Because the FFN uses the same weights for every row, it processes each token's vector independently — no information crosses positions here.`,
+        explain: `GELU is like a smooth ReLU: it lets small negative values through slightly, which tends to help transformers. Because the FFN uses the same weights for every row, it processes each token's vector independently: no information crosses positions here.`,
         tests: [
           { call: 'gelu(np.array([0.0]))', expect: 'np.array([0.0])' },
           { call: 'gelu(np.array([-3.0, 1.0, 3.0]))', expect: '0.5 * np.array([-3.0, 1.0, 3.0]) * (1 + np.tanh(np.sqrt(2 / np.pi) * (np.array([-3.0, 1.0, 3.0]) + 0.044715 * np.array([-3.0, 1.0, 3.0]) ** 3)))' },
@@ -1947,8 +1947,8 @@ def stack(x, blocks, n_heads):
       }
     ],
     refs: [
-      { title: 'Jay Alammar — The Illustrated GPT-2', url: 'https://jalammar.github.io/illustrated-gpt2/' },
-      { title: 'Anthropic — A Mathematical Framework for Transformer Circuits (residual stream)', url: 'https://transformer-circuits.pub/2021/framework/index.html' }
+      { title: 'Jay Alammar, The Illustrated GPT-2', url: 'https://jalammar.github.io/illustrated-gpt2/' },
+      { title: 'Anthropic, A Mathematical Framework for Transformer Circuits (residual stream)', url: 'https://transformer-circuits.pub/2021/framework/index.html' }
     ]
   }
   ]);

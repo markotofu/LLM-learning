@@ -7,7 +7,7 @@
   {
     id: 'eigen-svd', branch: 'math', title: 'Eigenvectors, Eigenvalues & the SVD', short: 'Eigenvectors & SVD', level: 2, minutes: 45, prereqs: ['vectors-matrices'],
     tags: ['eigenvector', 'eigenvalue', 'svd', 'singular value decomposition', 'rank', 'low-rank approximation', 'power iteration', 'linear algebra'],
-    summary: 'What a matrix does to space, the special directions it only stretches (eigenvectors), and the singular value decomposition that writes any matrix as rotate–stretch–rotate — the mathematics behind PCA, low-rank approximation, LoRA and recommender systems.',
+    summary: 'What a matrix does to space, the special directions it only stretches (eigenvectors), and the singular value decomposition that writes any matrix as rotate–stretch–rotate: the mathematics behind PCA, low-rank approximation, LoRA and recommender systems.',
     why: `Many ML ideas are really statements about the structure of a matrix. PCA looks for the directions in which data varies most; LoRA assumes a weight update is "low rank"; matrix factorization compresses a ratings table; RNN gradients explode or vanish depending on how much a weight matrix stretches vectors. **Eigenvectors** and the **singular value decomposition (SVD)** are the tools that make "important directions" and "rank" precise, so these lessons stop being recipes and start making sense.`,
     objectives: [
       'See a matrix as a transformation that rotates, stretches and projects vectors',
@@ -16,7 +16,7 @@
       'Build the best rank-k approximation and explain why "low rank" means "compressible"'
     ],
     sections: [
-      { type: 'text', title: 'A matrix is a transformation', md: `Multiplying a vector by a matrix produces a new vector: the matrix **moves space around** — it can rotate, stretch, squash, shear or project it. The columns of the matrix show where the basis vectors [1, 0] and [0, 1] end up.
+      { type: 'text', title: 'A matrix is a transformation', md: `Multiplying a vector by a matrix produces a new vector: the matrix **moves space around** (it can rotate, stretch, squash, shear or project it). The columns of the matrix show where the basis vectors [1, 0] and [0, 1] end up.
 
 | Matrix | What it does |
 | --- | --- |
@@ -25,7 +25,7 @@
 | [[1, 1], [0, 1]] | shears: slides the top of the plane sideways |
 | [[1, 0], [0, 0]] | projects onto the x-axis (throws y away) |
 
-Most vectors change **direction** when you multiply them by a matrix. A few special directions don't — and they reveal what the matrix really does.` },
+Most vectors change **direction** when you multiply them by a matrix. A few special directions don't, and they reveal what the matrix really does.` },
       { type: 'text', title: 'Eigenvectors: directions that only get stretched', md: `An **eigenvector** of a square matrix is a direction that the matrix only stretches (or flips), never turns:
 
 $$ A v = λ v $$
@@ -38,7 +38,7 @@ v — an eigenvector: a non-zero vector whose direction A leaves unchanged
 Example: for A = [[2, 1], [1, 2]], the vector [1, 1] becomes [3, 3] = 3·[1, 1], so it is an eigenvector with λ = 3; [1, −1] becomes [1, −1], an eigenvector with λ = 1.
 
 Why it matters:
-- **Symmetric matrices** (such as covariance matrices) have real eigenvalues and mutually perpendicular eigenvectors. For a covariance matrix those eigenvectors are exactly the **principal axes** of the data — PCA.
+- **Symmetric matrices** (such as covariance matrices) have real eigenvalues and mutually perpendicular eigenvectors. For a covariance matrix those eigenvectors are exactly the **principal axes** of the data: PCA.
 - **Repeated multiplication**: A^k v = λ^k v. The direction with the largest |λ| eventually dominates. That is the idea behind **power iteration** (and PageRank), and why recurrent networks explode when |λ| > 1 and vanish when |λ| < 1.` },
       { type: 'text', title: "Finding eigenvalues: the characteristic equation", md: `Rewrite A v = λ v as (A − λI) v = 0. A non-zero v can only solve this if A − λI flattens some direction to zero, which happens exactly when its determinant is zero:
 
@@ -97,7 +97,7 @@ r — min(m, n) for the "thin" SVD
 
 Read it right to left: **rotate** the input (Vᵀ), **stretch** along the axes (S), **rotate** into the output space (U). Every linear map is just that.
 
-Connections: the singular values are the square roots of the eigenvalues of AᵀA, and the columns of V are its eigenvectors. For centred data X, AᵀA is (proportional to) the covariance matrix — so the SVD of the data *is* PCA.` },
+Connections: the singular values are the square roots of the eigenvalues of AᵀA, and the columns of V are its eigenvectors. For centred data X, AᵀA is (proportional to) the covariance matrix, so the SVD of the data *is* PCA.` },
       { type: 'text', title: 'Rank and low-rank approximation', md: `The **rank** of a matrix is its number of non-zero singular values: how many independent directions it really uses. Writing the SVD as a sum of rank-1 pieces and keeping only the largest k gives the **best possible** rank-k approximation (the Eckart–Young theorem):
 
 $$ A_k = Σ_{i=1..k} σ_i · u_i v_iᵀ $$
@@ -170,24 +170,24 @@ for trial in range(3):                                       # refit on resample
 - Latent-factor models: recommender systems, latent semantic analysis of documents.
 - Solving least squares stably (the pseudo-inverse) and diagnosing ill-conditioned problems.
 - Stability analysis: eigenvalues of recurrent weight matrices, of Hessians in optimization, of graph Laplacians.`,
-    pitfalls: `- Using \`np.linalg.eig\` on symmetric matrices — \`eigh\` is faster, more accurate and returns sorted real eigenvalues.
+    pitfalls: `- Using \`np.linalg.eig\` on symmetric matrices: \`eigh\` is faster, more accurate and returns sorted real eigenvalues.
 - Comparing signs of eigenvectors or singular vectors: −v is just as valid as v.
 - Forgetting to centre the data before using the SVD for PCA.
 - Computing a full SVD of a huge matrix when a truncated or randomized SVD of the top k components would do.
 - Mixing up V and Vᵀ: NumPy returns Vᵀ (rows are the directions).`,
     takeaways: [
       'A matrix is a transformation; eigenvectors are the directions it only stretches: A v = λ v.',
-      'Symmetric matrices have perpendicular eigenvectors — for a covariance matrix they are the principal axes.',
+      'Symmetric matrices have perpendicular eigenvectors, for a covariance matrix they are the principal axes.',
       'Every matrix has an SVD A = U S Vᵀ: rotate, stretch, rotate.',
       'The rank is the number of non-zero singular values; keeping the top k gives the best rank-k approximation.',
-      'Fast-decaying singular values mean the matrix is compressible — the idea behind PCA, LoRA and matrix factorization.'
+      'Fast-decaying singular values mean the matrix is compressible: the idea behind PCA, LoRA and matrix factorization.'
     ],
     quiz: [
       { type: 'mcq', q: 'For A = [[3, 0], [0, 1]], which vector is an eigenvector with eigenvalue 3?', options: ['[0, 1]', '[1, 0]', '[1, 1]', '[3, 1]'], answer: 1, explain: 'A·[1, 0] = [3, 0] = 3·[1, 0].' },
       { type: 'fill', q: 'A 1000 × 500 matrix is stored as a rank-20 approximation (U_k, the singular values and V_k). How many numbers is that?', answer: ['30020', '30,020'], explain: '20 × (1000 + 500 + 1) = 30,020 instead of 500,000.' },
       { type: 'mcq', q: 'What does the number of non-zero singular values tell you?', options: ['The size of the matrix', 'Its rank: how many independent directions it really uses', 'Its largest entry', 'Its trace'], answer: 1, explain: 'Zero singular values mean collapsed directions.' },
       { type: 'tf', q: 'If a matrix\'s singular values decay quickly, a low-rank approximation of it will be accurate.', answer: true, explain: 'The error equals the energy in the dropped singular values.' },
-      { type: 'mcq', q: 'Why does LoRA relate to the SVD?', options: ['It computes an SVD at every training step', 'It assumes the weight update has low rank — only a few significant singular values', 'It uses eigenvalues as learning rates', 'It does not relate'], answer: 1, explain: 'B·A with small inner dimension r is a rank-r matrix.' },
+      { type: 'mcq', q: 'Why does LoRA relate to the SVD?', options: ['It computes an SVD at every training step', 'It assumes the weight update has low rank, only a few significant singular values', 'It uses eigenvalues as learning rates', 'It does not relate'], answer: 1, explain: 'B·A with small inner dimension r is a rank-r matrix.' },
       {"type":"mcq","q":"A 2 × 2 matrix has trace 5 and determinant 6. What are its eigenvalues?","options":["1 and 6","2 and 3","5 and 6","−2 and −3"],"answer":1,"explain":"The eigenvalues sum to the trace (5) and multiply to the determinant (6): λ² − 5λ + 6 = (λ − 2)(λ − 3)."},
       {"type":"mcq","q":"The condition number of a data matrix is 10⁸. What does that suggest for least-squares regression?","options":["The fit will be perfect","Some features are nearly linearly dependent, so the individual weights are unstable; remove redundant features or use ridge","Only more rows will help","Nothing: condition numbers do not matter for regression"],"answer":1,"explain":"A huge ratio of singular values means some direction is almost flat; dividing by its tiny singular value amplifies noise. Ridge damps exactly those directions."},
       {"type":"tf","q":"Power iteration converges fastest when the two largest eigenvalues are almost equal in size.","answer":false,"explain":"The error shrinks by |λ₂ / λ₁| per step, so a ratio close to 1 (almost equal eigenvalues) means very slow convergence. A large gap is fast."}
@@ -281,7 +281,7 @@ def rank_for_energy(A, energy=0.9):
     return int(np.searchsorted(fraction, energy - 1e-12) + 1)
 `,
         hints: ['`(U[:, :k] * S[:k]) @ Vt[:k]` scales the first k columns of U by the singular values.', '`np.cumsum(S ** 2) / np.sum(S ** 2)` is the captured energy for k = 1, 2, …', '`np.searchsorted` finds the first position that reaches the target.'],
-        explain: `The SVD orders directions by importance, so truncating it is optimal — no other rank-k matrix is closer in squared error. "Energy" (Σσ²) is the same quantity PCA reports as explained variance.`,
+        explain: `The SVD orders directions by importance, so truncating it is optimal: no other rank-k matrix is closer in squared error. "Energy" (Σσ²) is the same quantity PCA reports as explained variance.`,
         tests: [
           { name: 'a rank-1 matrix is reproduced exactly', call: 'low_rank(np.outer([1.0, 2.0, 3.0], [1.0, -1.0]), 1)', expect: 'np.outer([1.0, 2.0, 3.0], [1.0, -1.0])' },
           { call: 'relative_error(np.diag([3.0, 4.0]), 1)', expect: '0.6' },
@@ -292,9 +292,9 @@ def rank_for_energy(A, energy=0.9):
       }
     ],
     refs: [
-      { title: '3Blue1Brown — Essence of Linear Algebra (videos)', url: 'https://www.3blue1brown.com/topics/linear-algebra' },
-      { title: 'Gilbert Strang — Linear Algebra and Learning from Data', url: 'https://math.mit.edu/~gs/learningfromdata/' },
-      { title: 'Steve Brunton — Singular Value Decomposition (video series)', url: 'https://www.youtube.com/watch?v=gXbThCXjZFM' }
+      { title: '3Blue1Brown, Essence of Linear Algebra (videos)', url: 'https://www.3blue1brown.com/topics/linear-algebra' },
+      { title: 'Gilbert Strang, Linear Algebra and Learning from Data', url: 'https://math.mit.edu/~gs/learningfromdata/' },
+      { title: 'Steve Brunton, Singular Value Decomposition (video series)', url: 'https://www.youtube.com/watch?v=gXbThCXjZFM' }
     ]
   },
 
@@ -302,8 +302,8 @@ def rank_for_energy(A, energy=0.9):
   {
     id: 'mle-map', branch: 'ml', title: 'Maximum Likelihood & MAP Estimation', short: 'MLE & MAP', level: 2, minutes: 45, prereqs: ['probability', 'loss-functions'],
     tags: ['maximum likelihood', 'mle', 'map', 'likelihood', 'log-likelihood', 'negative log-likelihood', 'prior', 'posterior', 'regularization', 'bayesian'],
-    summary: 'Where loss functions come from: the likelihood of parameters given data, maximum-likelihood estimation, why squared error and cross-entropy are negative log-likelihoods, and how adding a prior turns MLE into MAP estimation — which is exactly L2 or L1 regularization.',
-    why: `Loss functions can look like arbitrary choices. They aren't: almost every standard loss is the **negative log-likelihood** of a probabilistic model of the data. Squared error assumes Gaussian noise; cross-entropy assumes a categorical distribution; training a language model is maximum-likelihood estimation on text. Add a prior belief about the parameters and you get **MAP** estimation — which turns out to be regularization. This one idea explains a large part of the course.`,
+    summary: 'Where loss functions come from: the likelihood of parameters given data, maximum-likelihood estimation, why squared error and cross-entropy are negative log-likelihoods, and how adding a prior turns MLE into MAP estimation, which is exactly L2 or L1 regularization.',
+    why: `Loss functions can look like arbitrary choices. They aren't: almost every standard loss is the **negative log-likelihood** of a probabilistic model of the data. Squared error assumes Gaussian noise; cross-entropy assumes a categorical distribution; training a language model is maximum-likelihood estimation on text. Add a prior belief about the parameters and you get **MAP** estimation, which turns out to be regularization. This one idea explains a large part of the course.`,
     objectives: [
       'Define the likelihood of parameters given data and compute maximum-likelihood estimates',
       'Show that MSE is the negative log-likelihood under Gaussian noise and cross-entropy under a categorical model',
@@ -323,9 +323,9 @@ p(x_i | θ) — the probability (or density) the model with parameters θ gives 
 log L(θ) — the log-likelihood: a sum instead of a product, which is numerically stable
 :::
 
-The likelihood is a function of θ with the data held fixed — it is *not* a probability distribution over θ.
+The likelihood is a function of θ with the data held fixed: it is *not* a probability distribution over θ.
 
-**Maximum-likelihood estimation (MLE)** picks the parameters that make the observed data most probable. Equivalently, it minimizes the **negative log-likelihood (NLL)** — which is why "training" so often means "minimizing an NLL".` },
+**Maximum-likelihood estimation (MLE)** picks the parameters that make the observed data most probable. Equivalently, it minimizes the **negative log-likelihood (NLL)**, which is why "training" so often means "minimizing an NLL".` },
       { type: 'text', title: 'Example: estimating a coin', md: `Flip a coin n times and see h heads. With θ = P(heads):
 
 $$ log L(θ) = h · log θ + (n − h) · log(1 − θ)          θ̂_MLE = h / n $$
@@ -336,7 +336,7 @@ h — the number of heads
 θ̂_MLE — "theta hat": the maximum-likelihood estimate, found by setting the derivative of log L to zero
 :::
 
-The MLE is simply the observed fraction — sensible. But with 3 flips and 3 heads it says θ̂ = 1: the coin can *never* land tails. With little data, MLE trusts the sample completely and **overfits**.` },
+The MLE is simply the observed fraction: sensible. But with 3 flips and 3 heads it says θ̂ = 1: the coin can *never* land tails. With little data, MLE trusts the sample completely and **overfits**.` },
       { type: 'chart', title: "The likelihood of a coin's bias, after 10 and after 100 flips", after: `Both curves peak at the same place, θ = 0.7: the maximum-likelihood estimate is the observed share of heads. But with 100 flips the curve is far narrower: many values that were plausible after 10 flips (0.5 or 0.9) are now very unlikely. The width of the likelihood is a measure of uncertainty, which is the bridge to confidence intervals and to Bayesian posteriors.`, chart: {"kind":"line","x":[0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1,0.11,0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.19,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.31,0.32,0.33,0.34,0.35,0.36,0.37,0.38,0.39,0.4,0.41,0.42,0.43,0.44,0.45,0.46,0.47,0.48,0.49,0.5,0.51,0.52,0.53,0.54,0.55,0.56,0.57,0.58,0.59,0.6,0.61,0.62,0.63,0.64,0.65,0.66,0.67,0.68,0.69,0.7,0.71,0.72,0.73,0.74,0.75,0.76,0.77,0.78,0.79,0.8,0.81,0.82,0.83,0.84,0.85,0.86,0.87,0.88,0.89,0.9,0.91,0.92,0.93,0.94,0.95,0.96,0.97,0.98,0.99],"points":false,"series":[{"name":"7 heads in 10 flips","y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.001,0.001,0.002,0.002,0.003,0.004,0.005,0.007,0.009,0.012,0.015,0.018,0.023,0.028,0.034,0.041,0.049,0.058,0.068,0.079,0.092,0.107,0.123,0.14,0.159,0.18,0.202,0.226,0.252,0.28,0.309,0.339,0.371,0.405,0.439,0.475,0.511,0.548,0.586,0.624,0.662,0.699,0.736,0.771,0.806,0.838,0.869,0.897,0.923,0.945,0.964,0.98,0.991,0.998,1,0.998,0.99,0.978,0.96,0.938,0.91,0.878,0.841,0.8,0.755,0.706,0.654,0.6,0.544,0.487,0.429,0.373,0.318,0.265,0.215,0.169,0.128,0.093,0.063,0.039,0.022,0.01,0.003,0]},{"name":"70 heads in 100 flips","y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.001,0.001,0.002,0.005,0.009,0.016,0.028,0.046,0.075,0.115,0.172,0.246,0.338,0.448,0.569,0.695,0.813,0.911,0.977,1,0.976,0.907,0.8,0.668,0.527,0.392,0.273,0.177,0.107,0.06,0.031,0.014,0.006,0.002,0.001,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}],"xLabel":"θ, the probability of heads","yLabel":"likelihood (scaled so the peak is 1)","vlines":[{"x":0.7,"label":"MLE θ = 0.7"}],"yMin":0} },
       { type: 'code', title: 'Maximum likelihood by brute force', code: `
 import numpy as np
@@ -410,7 +410,7 @@ y — the observed target
 log( σ √(2π) ) — a constant that does not depend on θ
 :::
 
-Minimizing the NLL over θ is therefore exactly minimizing the **squared error** — MSE *is* maximum likelihood under Gaussian noise. The same reasoning gives the other standard losses:
+Minimizing the NLL over θ is therefore exactly minimizing the **squared error**: MSE *is* maximum likelihood under Gaussian noise. The same reasoning gives the other standard losses:
 
 | Assumed distribution of the target | Negative log-likelihood = |
 | --- | --- |
@@ -435,8 +435,8 @@ p(θ | data) — the posterior: the updated belief after seeing the data
 :::
 
 Plug in common priors:
-- a **Gaussian prior** w ~ N(0, τ²) gives −log p(w) = Σ w² / (2τ²) + const — that is **L2 regularization** (ridge, weight decay), with a stronger penalty for a narrower prior;
-- a **Laplace prior** gives Σ |w| / b + const — **L1 regularization** (lasso);
+- a **Gaussian prior** w ~ N(0, τ²) gives −log p(w) = Σ w² / (2τ²) + const: that is **L2 regularization** (ridge, weight decay), with a stronger penalty for a narrower prior;
+- a **Laplace prior** gives Σ |w| / b + const: **L1 regularization** (lasso);
 - for the coin, a Beta(a, b) prior gives θ̂_MAP = (h + a − 1) / (n + a + b − 2). With a = b = 2 that is (h + 1) / (n + 2): **Laplace (add-one) smoothing** is a prior too.
 
 With more data the likelihood dominates and MAP approaches MLE. Fully **Bayesian** methods keep the whole posterior, not just its peak, which also gives uncertainty estimates.` },
@@ -459,7 +459,7 @@ w_map = np.linalg.solve(X.T @ X + 2.0 * np.eye(5), X.T @ y)
 print("true weights:         ", w_true)
 print("MLE (least squares):  ", w_mle.round(2), "  length", round(float(np.linalg.norm(w_mle)), 2))
 print("MAP (ridge, lambda=2):", w_map.round(2), "  length", round(float(np.linalg.norm(w_map)), 2))
-`, after: `With 3 flips the prior pulls the estimate away from the extreme; with 300 flips it barely matters. With only 8 examples for 5 weights, the MAP (ridge) weights are shrunk towards zero — a smaller, more cautious model.`, predict: {"type":"mcq","q":"A coin lands heads 3 times in 3 flips, so the maximum-likelihood estimate of P(heads) is 1.0. What is the MAP estimate with a Beta(2, 2) prior?","options":["1.0","0.8","0.6","0.5"],"answer":1,"explain":"(h + a − 1) / (n + a + b − 2) = (3 + 1) / (3 + 2) = 0.8. The prior acts like one extra head and one extra tail, pulling the estimate away from the extreme; with 300 heads in 300 flips it barely matters (0.997).","expect":["MAP, Beta(2,2) prior 0.800"]} },
+`, after: `With 3 flips the prior pulls the estimate away from the extreme; with 300 flips it barely matters. With only 8 examples for 5 weights, the MAP (ridge) weights are shrunk towards zero: a smaller, more cautious model.`, predict: {"type":"mcq","q":"A coin lands heads 3 times in 3 flips, so the maximum-likelihood estimate of P(heads) is 1.0. What is the MAP estimate with a Beta(2, 2) prior?","options":["1.0","0.8","0.6","0.5"],"answer":1,"explain":"(h + a − 1) / (n + a + b − 2) = (3 + 1) / (3 + 2) = 0.8. The prior acts like one extra head and one extra tail, pulling the estimate away from the extreme; with 300 heads in 300 flips it barely matters (0.997).","expect":["MAP, Beta(2,2) prior 0.800"]} },
       { type: 'text', title: "MLE, MAP or fully Bayesian?", md: `| | MLE | MAP | Full Bayesian |
 | --- | --- | --- | --- |
 | Result | one best parameter value | one best value, pulled towards the prior | a whole distribution over parameter values |
@@ -595,9 +595,9 @@ def ridge_map(X, y, lam):
       }
     ],
     refs: [
-      { title: 'Bishop — Pattern Recognition and Machine Learning, chapters 1–3 (free PDF)', url: 'https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/' },
-      { title: 'StatQuest — Maximum Likelihood, clearly explained (video)', url: 'https://www.youtube.com/watch?v=XepXtl9YKwc' },
-      { title: 'Murphy — Probabilistic Machine Learning: An Introduction (free book)', url: 'https://probml.github.io/pml-book/book1.html' }
+      { title: 'Bishop, Pattern Recognition and Machine Learning, chapters 1–3 (free PDF)', url: 'https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/' },
+      { title: 'StatQuest, Maximum Likelihood, clearly explained (video)', url: 'https://www.youtube.com/watch?v=XepXtl9YKwc' },
+      { title: 'Murphy, Probabilistic Machine Learning: An Introduction (free book)', url: 'https://probml.github.io/pml-book/book1.html' }
     ]
   },
 
@@ -606,7 +606,7 @@ def ridge_map(X, y, lam):
     id: 'stat-inference', branch: 'math', title: 'Statistical Inference: Confidence Intervals, Tests & A/B Testing', short: 'Statistical Inference', level: 2, minutes: 45, prereqs: ['statistics', 'probability'],
     tags: ['confidence interval', 'standard error', 'bootstrap', 'hypothesis test', 'p-value', 'permutation test', 'a/b test', 'statistical power', 'sample size', 'multiple comparisons'],
     summary: 'How to tell a real effect from noise: sampling variability and standard errors, confidence intervals (analytic and bootstrap), hypothesis tests and p-values, A/B tests for comparing models or products, statistical power and sample size, and traps such as peeking and multiple comparisons.',
-    why: `"Model B scored 0.83 and model A 0.81 — is B better?" Every metric is computed from a finite sample, so every number is noisy. **Statistical inference** tells you how large that noise is and whether a difference is likely to be real. It is essential for comparing models, running A/B tests, evaluating LLMs and reading research results critically — and it protects you from shipping changes that only looked better by luck.`,
+    why: `"Model B scored 0.83 and model A 0.81: is B better?" Every metric is computed from a finite sample, so every number is noisy. **Statistical inference** tells you how large that noise is and whether a difference is likely to be real. It is essential for comparing models, running A/B tests, evaluating LLMs and reading research results critically, and it protects you from shipping changes that only looked better by luck.`,
     objectives: [
       'Explain sampling variability and compute the standard error of a mean or proportion',
       'Build confidence intervals analytically and with the bootstrap',
@@ -633,7 +633,7 @@ SE — its standard error
 1.96 — the number of standard errors that covers 95% of a normal distribution
 :::
 
-Example: 0.83 accuracy on 500 examples: SE = √(0.83 · 0.17 / 500) ≈ 0.017, so the interval is about [0.80, 0.86]. A rival model at 0.81 sits comfortably inside it — on this test set alone you cannot claim one is better.
+Example: 0.83 accuracy on 500 examples: SE = √(0.83 · 0.17 / 500) ≈ 0.017, so the interval is about [0.80, 0.86]. A rival model at 0.81 sits comfortably inside it: on this test set alone you cannot claim one is better.
 
 **The bootstrap** gives intervals for *any* statistic (median, F1, AUC, a ratio) without formulas: resample the data **with replacement** many times, recompute the statistic each time, and take the 2.5th and 97.5th percentiles of the results.` },
       { type: 'chart', title: "How wide is a 95% confidence interval for an accuracy of 80%?", after: `With 100 test examples, an accuracy of 0.80 is really "somewhere between 0.72 and 0.88": two models that differ by 3 points cannot be told apart. The width shrinks like 1 / √n, so halving it needs four times as many examples.`, chart: {"kind":"line","x":[50,100,200,500,1000,2000,5000,10000],"xLog":true,"series":[{"name":"full width of the 95% interval","y":[0.2217,0.1568,0.1109,0.0701,0.0496,0.0351,0.0222,0.0157]}],"xLabel":"number of test examples (log scale)","yLabel":"interval width (accuracy points)"} },
@@ -798,17 +798,17 @@ Safety and reliability claims ("the model never leaks personal data") are exactl
     ],
     when: `- Comparing two models on a test set or an LLM evaluation set.
 - Product A/B tests: features, ranking changes, prompts.
-- Reporting any metric — always with an interval, not a bare number.
+- Reporting any metric: always with an interval, not a bare number.
 - Planning how much data (or how many users) an experiment needs.`,
     pitfalls: `- Reporting point estimates without uncertainty.
-- Reading p > 0.05 as "no difference" — it may just mean too little data.
+- Reading p > 0.05 as "no difference": it may just mean too little data.
 - Peeking, multiple comparisons and changing the metric after seeing the results (p-hacking).
 - Treating correlated samples (same user, same document) as independent.
 - Confusing statistical significance with practical importance.`,
     takeaways: [
       'Every metric is noisy: SE = √(p(1 − p)/n) for a proportion, shrinking with √n.',
       'A 95% CI ≈ estimate ± 1.96·SE; the bootstrap gives intervals for any statistic.',
-      'A p-value is the probability of data at least this extreme if there were no effect — not the probability of no effect.',
+      'A p-value is the probability of data at least this extreme if there were no effect, not the probability of no effect.',
       'Plan sample sizes with a power calculation; small effects need large samples.',
       'Avoid peeking and multiple comparisons; report effect sizes with intervals.'
     ],
@@ -854,7 +854,7 @@ def bootstrap_ci(data, stat, n_boot=1000, alpha=0.05, seed=0):
     return float(np.percentile(stats, 100 * alpha / 2)), float(np.percentile(stats, 100 * (1 - alpha / 2)))
 `,
         hints: ['`rng.integers(0, n, n)` draws n random indices with replacement.', '`np.percentile(values, [2.5, 97.5])` gives both ends at once for α = 0.05.'],
-        explain: `Resampling with replacement mimics drawing a fresh dataset from the same population. The variability of the statistic across resamples approximates its true sampling variability — no formula needed.`,
+        explain: `Resampling with replacement mimics drawing a fresh dataset from the same population. The variability of the statistic across resamples approximates its true sampling variability: no formula needed.`,
         tests: [
           { name: 'mean of a small sample vs reference', call: 'bootstrap_ci([2.0, 4.0, 4.0, 5.0, 7.0, 9.0], np.mean, n_boot=500, seed=1)' },
           { name: 'constant data has a zero-width interval', call: 'bootstrap_ci([3.0] * 20, np.median)', expect: '(3.0, 3.0)' },
@@ -916,8 +916,8 @@ def sample_size(p, delta, z_alpha=1.96, z_beta=0.84):
     ],
     refs: [
       { title: 'OpenIntro Statistics (free textbook)', url: 'https://www.openintro.org/book/os/' },
-      { title: 'Kohavi, Tang & Xu — Trustworthy Online Controlled Experiments', url: 'https://experimentguide.com/' },
-      { title: 'Evan Miller — How Not To Run an A/B Test (on peeking)', url: 'https://www.evanmiller.org/how-not-to-run-an-ab-test.html' }
+      { title: 'Kohavi, Tang & Xu, Trustworthy Online Controlled Experiments', url: 'https://experimentguide.com/' },
+      { title: 'Evan Miller, How Not To Run an A/B Test (on peeking)', url: 'https://www.evanmiller.org/how-not-to-run-an-ab-test.html' }
     ]
   },
 
@@ -925,8 +925,8 @@ def sample_size(p, delta, z_alpha=1.96, z_beta=0.84):
   {
     id: 'pandas-eda', branch: 'code', title: 'pandas & Exploratory Data Analysis', short: 'pandas & EDA', level: 1, minutes: 45, prereqs: ['python-essentials', 'numpy'],
     tags: ['pandas', 'dataframe', 'series', 'groupby', 'merge', 'pivot table', 'missing values', 'eda', 'visualization', 'matplotlib', 'histogram'],
-    summary: 'Working with real tables: pandas Series and DataFrames, selecting and filtering, cleaning types, missing values and duplicates, groupby aggregations, pivot tables and joins, and an exploratory-data-analysis routine with summary statistics and plots — the first step of every ML project.',
-    why: `Real data arrives as messy tables — CSV exports, database queries, logs — not as clean NumPy arrays. **pandas** is the standard Python tool for loading, cleaning, reshaping and summarizing tables, and **exploratory data analysis (EDA)** is how you find out what is actually in the data before modelling: missing values, outliers, skewed distributions, leaky columns, and how features relate to the target. Skipping EDA is the most common way to build a confident model on broken data.`,
+    summary: 'Working with real tables: pandas Series and DataFrames, selecting and filtering, cleaning types, missing values and duplicates, groupby aggregations, pivot tables and joins, and an exploratory-data-analysis routine with summary statistics and plots (the first step of every ML project).',
+    why: `Real data arrives as messy tables (CSV exports, database queries, logs) not as clean NumPy arrays. **pandas** is the standard Python tool for loading, cleaning, reshaping and summarizing tables, and **exploratory data analysis (EDA)** is how you find out what is actually in the data before modelling: missing values, outliers, skewed distributions, leaky columns, and how features relate to the target. Skipping EDA is the most common way to build a confident model on broken data.`,
     objectives: [
       'Create, inspect and select from pandas DataFrames',
       'Clean data: types, missing values, duplicates and derived columns',
@@ -962,11 +962,11 @@ df = df.drop_duplicates()                                  # rows 1 and 2 were i
 df["price_per_sqm"] = (df["price"] * 1000 / df["sqm"]).round(0)
 print(df[df["city"] == "Paris"].sort_values("price", ascending=False))
 ` },
-      { type: 'text', title: 'Cleaning data', md: `- **Missing values**: count them with \`df.isna().sum()\`; drop rows (\`dropna\`) or fill (\`fillna\`) — with statistics computed on the **training** data only, or you leak information from the test set.
+      { type: 'text', title: 'Cleaning data', md: `- **Missing values**: count them with \`df.isna().sum()\`; drop rows (\`dropna\`) or fill (\`fillna\`), with statistics computed on the **training** data only, or you leak information from the test set.
 - **Wrong types**: numbers stored as text ("1,200", "n/a") → \`pd.to_numeric(col, errors="coerce")\` turns unparseable values into NaN; dates → \`pd.to_datetime\`.
 - **Duplicates**: \`df.drop_duplicates()\`; check whether IDs should be unique.
 - **Inconsistent categories**: " Paris", "paris", "PARIS" → \`df["city"].str.strip().str.lower()\`.
-- **Impossible values**: negative ages, prices of 0, dates in the future — investigate, then fix or drop.
+- **Impossible values**: negative ages, prices of 0, dates in the future (investigate, then fix or drop).
 
 Keep cleaning in a function (or a scikit-learn pipeline) so exactly the same steps run on new data.` },
       { type: 'text', title: 'Groupby, pivot tables and joins', md: `**Split–apply–combine** with \`groupby\`: split rows into groups, apply an aggregation to each, combine the results.
@@ -985,6 +985,7 @@ sales = pd.DataFrame({"city": ["Paris", "Rome", "Paris", "Berlin", "Rome", "Pari
                       "revenue": [120, 80, 150, 95, 70, 160]})
 cities = pd.DataFrame({"city": ["Paris", "Rome", "Madrid"], "population_m": [2.1, 2.8, 3.3]})
 
+print(sales.head(), "\\n")
 print(sales.groupby("city")["revenue"].agg(["count", "sum", "mean"]))
 print(sales.pivot_table(index="city", columns="month", values="revenue", aggfunc="sum", fill_value=0))
 
@@ -1085,7 +1086,7 @@ print("\\nwide -> stacked Series:", stacked.shape, " first:", stacked.index[0], 
 \`pivot\` fails if an (index, column) pair occurs twice; \`pivot_table\` resolves that with an aggregation such as \`aggfunc="mean"\`. Tidy data, one observation per row and one variable per column, is the best starting point for most analyses.` },
       { type: 'check', question: { type: 'mcq', q: 'What does df.groupby("city")["price"].mean() return?', options: ['The overall mean price', 'The average price for each city', 'The cities sorted by price', 'The number of rows per city'], answer: 1, explain: 'One aggregated value per group.' } },
       { type: 'text', title: 'An EDA checklist', md: `1. **Shape and types**: rows, columns, dtypes, a few sample rows.
-2. **Missing values** per column — and whether "missing" itself carries information.
+2. **Missing values** per column, and whether "missing" itself carries information.
 3. **Distributions** of numeric columns (histograms): skewed data (incomes, prices) often benefits from a log transform.
 4. **Outliers and impossible values**.
 5. **The target**: its distribution, class balance, how it was measured.
@@ -1108,6 +1109,7 @@ import matplotlib.pyplot as plt
 rng = np.random.default_rng(0)
 df = pd.DataFrame({"sqm": rng.gamma(4, 18, 300)})
 df["price"] = 3.2 * df["sqm"] + rng.normal(0, 40, 300)
+print(df.head().round(1))
 
 fig, axes = plt.subplots(1, 2, figsize=(9, 3.2))
 axes[0].hist(df["price"], bins=30)
@@ -1126,7 +1128,7 @@ print(df.corr().round(2))
 - Feature engineering with group statistics, joins and date parts.
 - Reporting and quick analyses that don't need a model at all.
 - For data that doesn't fit in memory, the same ideas carry over to Polars, DuckDB, SQL or Spark.`,
-    pitfalls: `- Chained assignment (\`df[df.a > 0]["b"] = 1\`) that silently modifies a copy — use \`df.loc[mask, "b"] = 1\`.
+    pitfalls: `- Chained assignment (\`df[df.a > 0]["b"] = 1\`) that silently modifies a copy: use \`df.loc[mask, "b"] = 1\`.
 - Joins that multiply rows because of duplicate keys.
 - Computing fill values or encodings on the full dataset (leakage).
 - Looping over rows with Python instead of using vectorized column operations.
@@ -1230,7 +1232,7 @@ def add_population(df, cities):
     return df.merge(cities, on="city", how="left")
 `,
         hints: ['`df.assign(ppsqm=df["price"] / df["sqm"])` adds a helper column without modifying df.', 'Named aggregation: `.agg(new_name=("column", "function"))`.', '`merge(..., on="city", how="left")` keeps every row of df.'],
-        explain: `Named aggregations produce tidy, clearly labelled summary tables in one step. The left join keeps every original row — cities missing from the lookup table simply get NaN, which is easy to detect afterwards.`,
+        explain: `Named aggregations produce tidy, clearly labelled summary tables in one step. The left join keeps every original row: cities missing from the lookup table simply get NaN, which is easy to detect afterwards.`,
         tests: [
           { setup: 'import pandas as pd\ndf = pd.DataFrame({"city": ["a", "b", "a", "c", "b", "a"], "sqm": [50, 100, 70, 40, 80, 60], "price": [300, 400, 350, 100, 480, 310]})', call: 'city_summary(df).round(4).reset_index().to_dict("list")' },
           { name: 'left join keeps every row', setup: 'import pandas as pd\ndf = pd.DataFrame({"city": ["a", "b", "z"], "sqm": [1, 2, 3], "price": [10, 20, 30]})\ncities = pd.DataFrame({"city": ["a", "b"], "population": [5, 7]})', call: 'add_population(df, cities)["population"].tolist()', expect: '[5.0, 7.0, float("nan")]' },
@@ -1239,9 +1241,9 @@ def add_population(df, cities):
       }
     ],
     refs: [
-      { title: 'pandas — 10 minutes to pandas', url: 'https://pandas.pydata.org/docs/user_guide/10min.html' },
-      { title: 'Wes McKinney — Python for Data Analysis (free online edition)', url: 'https://wesmckinney.com/book/' },
-      { title: 'matplotlib — Quick start guide', url: 'https://matplotlib.org/stable/users/explain/quick_start.html' }
+      { title: 'pandas, 10 minutes to pandas', url: 'https://pandas.pydata.org/docs/user_guide/10min.html' },
+      { title: 'Wes McKinney, Python for Data Analysis (free online edition)', url: 'https://wesmckinney.com/book/' },
+      { title: 'matplotlib, Quick start guide', url: 'https://matplotlib.org/stable/users/explain/quick_start.html' }
     ]
   },
 
@@ -1250,7 +1252,7 @@ def add_population(df, cities):
     id: 'gmm-em', branch: 'ml', title: 'Gaussian Mixtures, EM & Other Clustering', short: 'GMMs & EM', level: 3, minutes: 45, prereqs: ['kmeans', 'mle-map'],
     tags: ['gaussian mixture model', 'em algorithm', 'soft clustering', 'responsibilities', 'bic', 'dbscan', 'hierarchical clustering', 'density-based clustering'],
     summary: 'Clustering beyond k-means: Gaussian mixture models give every point a probability of belonging to each cluster and are fitted with the expectation–maximization (EM) algorithm; DBSCAN finds clusters of any shape and flags noise; hierarchical clustering builds a tree of merges.',
-    why: `k-means makes hard assignments and assumes round clusters of similar size. Real groups overlap, stretch and differ in density. **Gaussian mixture models** fix this with soft, probabilistic clusters, and they are the textbook example of the **EM algorithm** — a general recipe for maximum likelihood when some variables are hidden. **DBSCAN** and **hierarchical clustering** handle the cases where you don't know how many clusters there are or where clusters have odd shapes.`,
+    why: `k-means makes hard assignments and assumes round clusters of similar size. Real groups overlap, stretch and differ in density. **Gaussian mixture models** fix this with soft, probabilistic clusters, and they are the textbook example of the **EM algorithm**: a general recipe for maximum likelihood when some variables are hidden. **DBSCAN** and **hierarchical clustering** handle the cases where you don't know how many clusters there are or where clusters have odd shapes.`,
     objectives: [
       'Describe a Gaussian mixture as a generative model with hidden cluster labels',
       'Run EM: compute responsibilities (E-step) and re-estimate the parameters (M-step)',
@@ -1269,7 +1271,7 @@ K — the number of components (clusters)
 N( x | μ, Σ ) — the Gaussian density at x
 :::
 
-Instead of a hard label, each point gets a **responsibility** for each component — the posterior probability that the component generated it:
+Instead of a hard label, each point gets a **responsibility** for each component, the posterior probability that the component generated it:
 
 $$ r_ik = π_k N( x_i | μ_k, Σ_k ) / Σ_j π_j N( x_i | μ_j, Σ_j ) $$
 :::where
@@ -1289,7 +1291,7 @@ n — the total number of points
 μ_k, σ_k² — the responsibility-weighted mean and variance of component k
 :::
 
-Each iteration never decreases the likelihood, so EM converges — but to a **local** maximum that depends on the starting point. Use several restarts (or initialize from k-means). k-means is the special case of EM with hard assignments and identical round clusters.` },
+Each iteration never decreases the likelihood, so EM converges, but to a **local** maximum that depends on the starting point. Use several restarts (or initialize from k-means). k-means is the special case of EM with hard assignments and identical round clusters.` },
       { type: 'code', title: 'EM for a one-dimensional mixture', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -1354,9 +1356,9 @@ for point in ([5.0, 1.0], [10.0, 10.0]):
     print(f"point {point}: log-density {d:6.1f} -> {'anomaly' if d < threshold else 'normal'}")
 new_points, components = gmm.sample(3)                       # a density model can also generate data
 print("three generated points:", new_points.round(2).tolist())`, after: `The BIC drops sharply up to 3 components and then rises slowly: each extra component costs more parameters than it gains in likelihood. A point at the centre of a cluster has a high log-density, while the point at (10, 10) lies far below the threshold set by the least likely 1% of the training data.`, predict: {"type":"mcq","q":"The data comes from 3 Gaussian blobs. Which number of components will the BIC choose?","options":["1","2","3","6"],"answer":2,"explain":"More components always raise the likelihood, but after 3 the gain no longer pays for the extra parameters, so the BIC is lowest at the true number of blobs.","expect":["BIC chooses 3 components: True"]} },
-      { type: 'text', title: 'DBSCAN and hierarchical clustering', md: `**DBSCAN** (density-based clustering) has two settings: a radius eps and a minimum number of neighbours. Points with enough neighbours within eps are **core points**; clusters are chains of connected core points plus their neighbours; everything else is **noise**. It finds clusters of arbitrary shape, needs no K, and labels outliers — but struggles when clusters differ in density, and in high dimensions.
+      { type: 'text', title: 'DBSCAN and hierarchical clustering', md: `**DBSCAN** (density-based clustering) has two settings: a radius eps and a minimum number of neighbours. Points with enough neighbours within eps are **core points**; clusters are chains of connected core points plus their neighbours; everything else is **noise**. It finds clusters of arbitrary shape, needs no K, and labels outliers, but struggles when clusters differ in density, and in high dimensions.
 
-**Hierarchical (agglomerative) clustering** starts with every point as its own cluster and repeatedly merges the two closest clusters, producing a tree (a **dendrogram**). Cutting the tree at some height gives the clusters. The **linkage** defines "closest": single (nearest points — follows chains), complete (farthest points), average, or Ward (smallest increase in variance). Great for small data and nested structure, but its memory grows with n².
+**Hierarchical (agglomerative) clustering** starts with every point as its own cluster and repeatedly merges the two closest clusters, producing a tree (a **dendrogram**). Cutting the tree at some height gives the clusters. The **linkage** defines "closest": single (nearest points, follows chains), complete (farthest points), average, or Ward (smallest increase in variance). Great for small data and nested structure, but its memory grows with n².
 
 | Method | Cluster shapes | Needs K? | Soft assignments | Handles noise |
 | --- | --- | --- | --- | --- |
@@ -1390,9 +1392,9 @@ for name, make in models.items():
 - **EM** in general: any maximum-likelihood problem with hidden variables (mixtures, missing data, hidden Markov models).
 - **DBSCAN**: arbitrary shapes, unknown number of clusters, outliers to discard (e.g. GPS points).
 - **Hierarchical**: small datasets, nested groupings (taxonomies), when you want to inspect the dendrogram.`,
-    pitfalls: `- EM converging to a poor local maximum — use multiple restarts.
-- Components collapsing onto single points (variance → 0) — add a small variance floor or regularization.
-- Choosing K by likelihood alone — use BIC or held-out likelihood.
+    pitfalls: `- EM converging to a poor local maximum: use multiple restarts.
+- Components collapsing onto single points (variance → 0): add a small variance floor or regularization.
+- Choosing K by likelihood alone: use BIC or held-out likelihood.
 - Unscaled features distorting distances and covariances.
 - DBSCAN with one eps for clusters of very different density.`,
     takeaways: [
@@ -1519,7 +1521,7 @@ def em(x, pi, mu, sigma, iters=50):
     return pi, mu, sigma, lls
 `,
         hints: ['Sum the responsibilities down each column to get N_k.', 'Weighted means: `(r * x[:, None]).sum(axis=0) / Nk`.', 'Compute the variance around the new means.'],
-        explain: `The hidden tests check EM's guarantee — the log-likelihood never goes down — and that it recovers the true parameters of well-separated data from a rough start.`,
+        explain: `The hidden tests check EM's guarantee (the log-likelihood never goes down) and that it recovers the true parameters of well-separated data from a rough start.`,
         tests: [
           { name: 'M-step with hard assignments', call: 'm_step([0.0, 2.0, 10.0, 12.0], [[1, 0], [1, 0], [0, 1], [0, 1]])', expect: '(np.array([0.5, 0.5]), np.array([1.0, 11.0]), np.array([1.0, 1.0]))' },
           { name: 'log-likelihood of one point', call: 'log_likelihood([0.0], np.array([1.0]), np.array([0.0]), np.array([1.0]))', expect: '-np.log(np.sqrt(2 * np.pi))' },
@@ -1529,9 +1531,9 @@ def em(x, pi, mu, sigma, iters=50):
       }
     ],
     refs: [
-      { title: 'scikit-learn — Gaussian mixture models', url: 'https://scikit-learn.org/stable/modules/mixture.html' },
-      { title: 'scikit-learn — Clustering (overview and comparison)', url: 'https://scikit-learn.org/stable/modules/clustering.html' },
-      { title: 'Ester et al. — A Density-Based Algorithm for Discovering Clusters (DBSCAN)', url: 'https://cdn.aaai.org/KDD/1996/KDD96-037.pdf' }
+      { title: 'scikit-learn, Gaussian mixture models', url: 'https://scikit-learn.org/stable/modules/mixture.html' },
+      { title: 'scikit-learn, Clustering (overview and comparison)', url: 'https://scikit-learn.org/stable/modules/clustering.html' },
+      { title: 'Ester et al., A Density-Based Algorithm for Discovering Clusters (DBSCAN)', url: 'https://cdn.aaai.org/KDD/1996/KDD96-037.pdf' }
     ]
   }
   ]);

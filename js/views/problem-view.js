@@ -69,7 +69,7 @@
       },
       stop() { MLA.python.stop(); this.running = false; },
       reset() { MLA.ui.confirm('Replace your code with the original starter code? Your current code will be lost (download it first if you want to keep it).', { okLabel: 'Reset code', danger: true }).then(ok => { if (ok) { this.code = this.p.starter; this.P.saveDraft(this.p.id, this.p.starter); } }); },
-      download() { const head = '# ML Atlas — ' + this.p.title + ' (' + this.p.difficulty + ')\n# Concept: ' + this.c.title + '\n\n'; MLA.util.download(this.p.id + '.py', head + this.code, 'text/x-python'); },
+      download() { const head = '# ML Atlas: ' + this.p.title + ' (' + this.p.difficulty + ')\n# Concept: ' + this.c.title + '\n\n'; MLA.util.download(this.p.id + '.py', head + this.code, 'text/x-python'); },
       copyCode() { MLA.util.copyText(this.code).then(ok => MLA.ui.toast(ok ? 'Code copied.' : 'Could not copy.', ok ? 'success' : 'error')); },
       showHint() { const n = this.hintsShown + 1; this.P.showHint(this.p.id, n); },
       revealSolution() {
@@ -109,20 +109,20 @@
             </div>
           </template>
           <template v-else-if="left==='hints'">
-            <p class="small muted">Hints reveal one at a time. Using hints does not reduce your XP — only viewing the full solution before solving does.</p>
+            <p class="small muted">Hints reveal one at a time. Using hints does not reduce your XP; only viewing the full solution before solving does.</p>
             <div v-for="(h,i) in p.hints.slice(0, hintsShown)" :key="i" class="callout tip"><div class="callout-title">Hint {{ i+1 }}</div><mla-md :src="h" /></div>
             <button v-if="hintsShown < p.hints.length" class="btn" @click="showHint"><mla-icon name="hint" :size="16"/> Show hint {{ hintsShown+1 }} of {{ p.hints.length }}</button>
             <p v-else-if="p.hints.length" class="small muted">That's every hint. Still stuck? Check the Solution tab.</p>
-            <p v-else class="small muted">No hints for this one — try the lesson's code samples.</p>
+            <p v-else class="small muted">No hints for this one: try the lesson's code samples.</p>
           </template>
           <template v-else>
             <div v-if="!solutionOpen" class="card">
               <h3 style="margin-top:0">Reference solution</h3>
-              <p class="small muted">Give it a real try first — struggling productively is where the learning happens. Revealing before you solve halves the XP for this problem.</p>
+              <p class="small muted">Give it a real try first: struggling productively is where the learning happens. Revealing before you solve halves the XP for this problem.</p>
               <button class="btn" @click="revealSolution"><mla-icon name="eye" :size="16"/> Reveal solution</button>
             </div>
             <template v-else>
-              <div v-if="accepted && accepted.first" class="callout tip"><div class="callout-title">Accepted 🎉</div>Nice work! Compare your approach with the reference below — there is often more than one good way.</div>
+              <div v-if="accepted && accepted.first" class="callout tip"><div class="callout-title">Accepted</div>Nice work. Compare your approach with the reference below: there is often more than one good way.</div>
               <div v-if="p.explain" class="lesson-section" style="padding:16px"><div class="sec-head"><mla-icon name="sparkles" :size="16"/><h3>How it works</h3></div><mla-md :src="p.explain" /></div>
               <code-sample :code="p.solution" lang="python" />
               <div class="btn-row mt"><button class="btn sm" @click="loadSolution">Copy into editor</button><button v-if="ps.accepted" class="btn sm ghost" @click="loadAccepted">Load my accepted code</button></div>
@@ -165,15 +165,15 @@
             </template>
             <template v-else-if="con==='result'">
               <div v-if="running" class="ro-status"><span class="spinner"></span> {{ py.ready ? (mode==='submit' ? 'Running all tests…' : 'Running examples…') : (py.message || 'Starting Python…') }}</div>
-              <div v-else-if="failure" class="ro-error"><div class="ro-err-msg">{{ failure.kind==='timeout' ? '⏱ Time Limit Exceeded' : failure.kind==='stopped' ? 'Stopped' : 'Could not run' }}</div><div class="small">{{ failure.message }}</div></div>
+              <div v-else-if="failure" class="ro-error"><div class="ro-err-msg">{{ failure.kind==='timeout' ? 'Time Limit Exceeded' : failure.kind==='stopped' ? 'Stopped' : 'Could not run' }}</div><div class="small">{{ failure.message }}</div></div>
               <template v-else-if="result">
                 <div class="verdict" :class="summary.kind">
                   <span class="verdict-label">{{ summary.label }}</span>
                   <span class="small">{{ summary.passed }}/{{ summary.total }} tests passed · {{ result.ms }} ms</span>
                 </div>
-                <div v-if="accepted" class="callout tip" style="margin-top:8px"><div class="callout-title">{{ accepted.first ? 'Solved!' : 'Accepted again' }}</div>
+                <div v-if="accepted" class="callout tip" style="margin-top:8px"><div class="callout-title">{{ accepted.first ? 'Solved' : 'Accepted again' }}</div>
                   <div class="btn-row"><button v-if="next" class="btn sm primary" @click="go('/problem/'+next.id)">Next problem <mla-icon name="chevron" :size="14"/></button><button class="btn sm" @click="go('/concept/'+c.id)">Back to {{ c.title }}</button></div></div>
-                <div v-if="mode==='run' && summary.kind==='ok' && hiddenCount" class="small muted mt-sm">Great — now <b>Submit</b> to run the {{ hiddenCount }} hidden test{{ hiddenCount>1?'s':'' }} too.</div>
+                <div v-if="mode==='run' && summary.kind==='ok' && hiddenCount" class="small muted mt-sm">The visible tests pass. Now <b>Submit</b> to run the {{ hiddenCount }} hidden test{{ hiddenCount>1?'s':'' }} too.</div>
                 <div v-if="topError" class="ro-error mt-sm">
                   <div class="ro-err-msg">{{ topError.message }}</div><pre v-if="topError.trace" class="ro-trace">{{ topError.trace }}</pre>
                   <div v-if="topHint" class="ro-hint"><mla-icon name="hint" :size="14"/> <mla-md :src="topHint" inline /></div>

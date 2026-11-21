@@ -3,7 +3,14 @@
 (function (global) {
   const MLA = global.MLA;
   const C = MLA.components;
-  const { palette, setup, frame, curve, dot, gauss, canvasPoint, redrawOnChange } = MLA.demoKit;
+  const { palette, setup, frame, curve, dot, gauss, canvasPoint, redrawOnChange, kbCursor } = MLA.demoKit;
+  // Arrow keys on a focused direction plot turn the direction by 5° (15° with Shift); Right and Up turn it anticlockwise.
+  function turnKey(e, theta, period) {
+    const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[e.key];
+    if (!d) return null;
+    e.preventDefault();
+    return ((Math.round(theta) + d * (e.shiftKey ? 15 : 5)) % period + period) % period;
+  }
 
   // Equal-aspect axes centred on the canvas, `scale` pixels per unit, a grid line every unit.
   function eqFrame(ctx, W, H, scale, P) {
@@ -77,6 +84,7 @@
       setPreset(k) { const m = EIG_PRESETS[k]; this.a = m[0]; this.b = m[1]; this.c = m[2]; this.d = m[3]; },
       isPreset(k) { const m = EIG_PRESETS[k]; return this.a === m[0] && this.b === m[1] && this.c === m[2] && this.d === m[3]; },
       pick(e) { const [px, py] = canvasPoint(this.$refs.cv, e, 300, 300); if (Math.hypot(px - 150, py - 150) < 4) return; this.theta = deg(150 - py, px - 150); },
+      turn(e) { const t = turnKey(e, this.theta, 360); if (t !== null) this.theta = t; },
       powerStep() { const [p, q] = this.Av; if (Math.hypot(p, q) < 1e-9) return; this.theta = deg(q, p); },
       snap() {
         const [x, y] = this.v; let best = null, bestDot = -2;
@@ -107,7 +115,8 @@
     <div class="card demo-card">
       <div class="pills"><button v-for="(m, k) in presets" :key="k" :class="{active: isPreset(k)}" @click="setPreset(k)">{{ k }}</button></div>
       <div class="small muted">A = [[{{ a.toFixed(1) }}, {{ b.toFixed(1) }}], [{{ c.toFixed(1) }}, {{ d.toFixed(1) }}]] · {{ eigText }} · det(A) = <b>{{ f2(eig.det) }}</b> · singular values σ₁ = <b>{{ f2(sv.s1) }}</b>, σ₂ = <b>{{ f2(sv.s2) }}</b></div>
-      <canvas ref="cv" class="demo-canvas square clickable" @click="pick"></canvas>
+      <canvas ref="cv" class="demo-canvas square clickable" tabindex="0" role="application" aria-label="The unit circle and its image under A, with the vector v and A v. Arrow keys turn v." @click="pick" @keydown="turn"></canvas>
+      <p class="sr-only" aria-live="polite">v points at {{ theta.toFixed(0) }} degrees{{ rel.parallel ? ' and is an eigenvector' : '' }}.</p>
       <p v-if="rel.parallel" class="feedback ok">A v = {{ f2(rel.l) }} · v, so v is an eigenvector{{ rel.n < 1e-6 ? ': A squashes it to zero (λ = 0)' : rel.l < 0 ? ': A flips it' : '' }}.</p>
       <p v-else class="small muted">A v is turned {{ rel.angle.toFixed(0) }}° away from v (and has length {{ f2(rel.n) }}), so v is not an eigenvector.</p>
       <div class="demo-controls">
@@ -118,7 +127,7 @@
         <label>Direction of v <b>{{ theta.toFixed(0) }}°</b><input type="range" min="0" max="359" step="1" v-model.number="theta"></label>
       </div>
       <div class="btn-row"><button class="btn sm primary" @click="powerStep">Power-iteration step: v ← Av / ‖Av‖</button><button class="btn sm" :disabled="!eig.vecs.length" @click="snap">Snap v to the nearest eigenvector</button></div>
-      <p class="small muted mt">The dashed circle holds every unit vector; the blue ellipse is where A sends them. Amber: a unit vector v (use the slider or click the plot); pink: A v. Green dashed lines are the eigenvector directions, where A v points along v, scaled by λ. Purple: the ellipse's semi-axes, whose lengths are the singular values σ₁ ≥ σ₂ of the SVD; |det A| = σ₁σ₂ is how much A scales areas. Press the power-iteration button a few times: v swings towards the eigenvector with the largest |λ|. Then try the presets: a rotation has no real eigenvectors, a shear has only one, and a rank-1 matrix squashes the circle onto a line (σ₂ = 0, det = 0).</p>
+      <p class="small muted mt">The dashed circle holds every unit vector; the blue ellipse is where A sends them. Amber: a unit vector v (use the slider, click the plot, or focus the plot and press the arrow keys); pink: A v. Green dashed lines are the eigenvector directions, where A v points along v, scaled by λ. Purple: the ellipse's semi-axes, whose lengths are the singular values σ₁ ≥ σ₂ of the SVD; |det A| = σ₁σ₂ is how much A scales areas. Press the power-iteration button a few times: v swings towards the eigenvector with the largest |λ|. Then try the presets: a rotation has no real eigenvectors, a shear has only one, and a rank-1 matrix squashes the circle onto a line (σ₂ = 0, det = 0).</p>
     </div>`
   };
 
@@ -221,7 +230,7 @@
     template: `
     <div class="card demo-card">
       <div class="pills"><button v-for="(ab, name) in priors" :key="name" :class="{active: a === ab[0] && b === ab[1]}" @click="a = ab[0]; b = ab[1]">{{ name }}</button></div>
-      <div class="small muted">posterior Beta({{ post.pa }}, {{ post.pb }}) · mean <b>{{ post.mean.toFixed(3) }}</b> · 95% credible interval <b>{{ post.lo.toFixed(3) }} – {{ post.hi.toFixed(3) }}</b> · the data alone (k / n) <b>{{ n ? (k / n).toFixed(3) : '—' }}</b></div>
+      <div class="small muted">posterior Beta({{ post.pa }}, {{ post.pb }}) · mean <b>{{ post.mean.toFixed(3) }}</b> · 95% credible interval <b>{{ post.lo.toFixed(3) }} – {{ post.hi.toFixed(3) }}</b> · the data alone (k / n) <b>{{ n ? (k / n).toFixed(3) : 'no data yet' }}</b></div>
       <canvas ref="cv" class="demo-canvas"></canvas>
       <div class="demo-controls">
         <label>Prior a (like earlier successes) <b>{{ a }}</b><input type="range" min="0.5" max="40" step="0.5" v-model.number="a"></label>
@@ -277,15 +286,23 @@
     return { mean, sd, lml, cov };
   }
   C['demo-gp'] = {
-    mixins: [redrawOnChange],
+    mixins: [redrawOnChange, kbCursor],
     data() { return { pts: GP_START.map(p => p.slice()), ell: 1, sf: 1, sn: 0.1, samples: false }; },
     computed: { fit() { return gpFit(this.pts, this.ell, this.sf, this.sn, GP_XS, this.samples); } },
     methods: {
-      add(e) {
-        if (!this._T || this.pts.length >= 40) return;
-        const [px, py] = canvasPoint(this.$refs.cv, e, 560, 300); const [x, y] = this._T.inv(px, py);
-        if (x < 0 || x > 10 || y < -3 || y > 3) return;
+      add(e) { const [px, py] = canvasPoint(this.$refs.cv, e, 560, 300); this.addAt(px, py); },
+      addAt(px, py) {
+        if (!this._T) return '';
+        if (this.pts.length >= 40) return 'This example holds at most 40 observations.';
+        const [x, y] = this._T.inv(px, py);
+        if (x < 0 || x > 10 || y < -3 || y > 3) return '';
         this.pts.push([+x.toFixed(2), +y.toFixed(2)]);
+        return 'Added an observation at x ' + x.toFixed(1) + ', y ' + y.toFixed(1) + '. ' + this.pts.length + ' observations.';
+      },
+      kbDescribe(x, y) {
+        let i = 0; GP_XS.forEach((g, k) => { if (Math.abs(g - x) < Math.abs(GP_XS[i] - x)) i = k; });
+        const { mean, sd } = this.fit;
+        return 'Cross-hair at x ' + x.toFixed(1) + ', y ' + y.toFixed(1) + '. Posterior mean there ' + mean[i].toFixed(2) + ', plus or minus ' + (2 * sd[i]).toFixed(2) + '.';
       },
       clear() { this.pts = []; },
       reset() { this.pts = GP_START.map(p => p.slice()); this.ell = 1; this.sf = 1; this.sn = 0.1; },
@@ -320,12 +337,14 @@
         xs.forEach((x, i) => { const py = T.Y(cl(mean[i])); i ? ctx.lineTo(T.X(x), py) : ctx.moveTo(T.X(x), py); });
         ctx.stroke();
         for (const [x, y] of this.pts) dot(ctx, T.X(x), T.Y(y), 4.5, P.amber, P.panel);
+        this.kbDraw(ctx, P);
       }
     },
     template: `
     <div class="card demo-card">
-      <div class="small muted">{{ pts.length }} observations · length scale ℓ = <b>{{ ell.toFixed(2) }}</b> · signal σ_f = <b>{{ sf.toFixed(2) }}</b> · noise σ_n = <b>{{ sn.toFixed(2) }}</b> · log marginal likelihood <b>{{ fit.lml === null ? '—' : fit.lml.toFixed(2) }}</b></div>
-      <canvas ref="cv" class="demo-canvas clickable" @click="add"></canvas>
+      <div class="small muted">{{ pts.length }} observations · length scale ℓ = <b>{{ ell.toFixed(2) }}</b> · signal σ_f = <b>{{ sf.toFixed(2) }}</b> · noise σ_n = <b>{{ sn.toFixed(2) }}</b> · log marginal likelihood <b>{{ fit.lml === null ? 'none yet' : fit.lml.toFixed(2) }}</b></div>
+      <canvas ref="cv" class="demo-canvas clickable" tabindex="0" role="application" aria-label="Gaussian-process fit with its uncertainty band. Arrow keys move a cross-hair and report the posterior there; Enter adds an observation." @click="add" @keydown="kbKey($event, 560, 300, addAt)" @blur="kbBlur"></canvas>
+      <p class="sr-only" aria-live="polite">{{ said }}</p>
       <div class="demo-controls">
         <label>Length scale ℓ <b>{{ ell.toFixed(2) }}</b><input type="range" min="0.1" max="3" step="0.05" v-model.number="ell"></label>
         <label>Signal σ_f <b>{{ sf.toFixed(2) }}</b><input type="range" min="0.2" max="2" step="0.05" v-model.number="sf"></label>
@@ -333,7 +352,7 @@
       </div>
       <label class="checkbox"><input type="checkbox" v-model="samples"> show three functions sampled from the posterior</label>
       <div class="btn-row"><button class="btn sm primary" @click="optimize">Fit ℓ, σ_f and σ_n (maximize the marginal likelihood)</button><button class="btn sm" @click="reset">Reset example</button><button class="btn sm ghost" @click="clear">Clear points</button></div>
-      <p class="small muted mt">Click the plot to add observations (the prior mean is 0). Blue line: the posterior mean; shaded band: ±2 posterior standard deviations of the function. The band pinches near the data and widens back to the prior (±2σ_f) far from it. A short ℓ wiggles through every point, a long ℓ gives a smooth, almost straight fit, and a larger σ_n treats the points as noisy and stops passing through them. The fit button tries a grid of settings and keeps the one with the highest log marginal likelihood: the GP's built-in Occam's razor.</p>
+      <p class="small muted mt">Click the plot to add observations, or focus it with Tab, move the cross-hair with the arrow keys and press Enter (the prior mean is 0). Blue line: the posterior mean; shaded band: ±2 posterior standard deviations of the function. The band pinches near the data and widens back to the prior (±2σ_f) far from it. A short ℓ wiggles through every point, a long ℓ gives a smooth, almost straight fit, and a larger σ_n treats the points as noisy and stops passing through them. The fit button tries a grid of settings and keeps the one with the highest log marginal likelihood: the GP's built-in Occam's razor.</p>
     </div>`
   };
 
@@ -358,6 +377,7 @@
       varAt(dg) { const t = dg * Math.PI / 180, c = Math.cos(t), s = Math.sin(t), v = this.cov; return v.xx * c * c + 2 * v.xy * c * s + v.yy * s * s; },
       snap(k) { this.theta = +((this.pc1 + (k === 2 ? 90 : 0)) % 180).toFixed(1); },
       pick(e) { const [px, py] = canvasPoint(this.$refs.cv, e, 560, 300); if (Math.hypot(px - 280, py - 150) < 6) return; this.theta = +(deg(150 - py, px - 280) % 180).toFixed(1); },
+      turn(e) { const t = turnKey(e, this.theta, 180); if (t !== null) this.theta = t; },
       draw() {
         const P = palette(), cv = this.$refs.cv, cv2 = this.$refs.cv2;
         if (cv) {
@@ -382,12 +402,13 @@
     template: `
     <div class="card demo-card">
       <div class="small muted">direction θ = <b>{{ theta.toFixed(0) }}°</b> · variance kept <b>{{ kept.toFixed(2) }}</b> ({{ (100 * kept / total).toFixed(1) }}%) · mean squared reconstruction error <b>{{ (total - kept).toFixed(2) }}</b> ({{ (100 - 100 * kept / total).toFixed(1) }}%) · total variance {{ total.toFixed(2) }}</div>
-      <canvas ref="cv" class="demo-canvas clickable" @click="pick"></canvas>
+      <canvas ref="cv" class="demo-canvas clickable" tabindex="0" role="application" aria-label="Points projected onto a line through the origin. Arrow keys turn the line." @click="pick" @keydown="turn"></canvas>
+      <p class="sr-only" aria-live="polite">Direction {{ theta.toFixed(0) }} degrees, {{ (100 * kept / total).toFixed(1) }}% of the variance kept.</p>
       <canvas ref="cv2" class="demo-canvas short"></canvas>
       <div class="demo-controls"><label>Direction of the line θ <b>{{ theta.toFixed(0) }}°</b><input type="range" min="0" max="179" step="1" v-model.number="theta"></label></div>
       <label class="checkbox"><input type="checkbox" v-model="showPC"> show PC1 (dashed green)</label>
       <div class="btn-row"><button class="btn sm primary" @click="snap(1)">Snap to PC1</button><button class="btn sm" @click="snap(2)">Snap to PC2</button></div>
-      <p class="small muted mt">Each blue point is projected onto the amber line (its score is the position along the line); the pink segments are the reconstruction errors, what the projection throws away. Turn the line with the slider or by clicking the plot: the variance kept and the squared error always add up to the total variance, so the direction that keeps the most variance (PC1) is exactly the one with the smallest reconstruction error. The lower plot shows the percentage of variance kept for every direction θ (horizontal axis, in degrees): one peak at PC1 and the minimum 90° away, at PC2.</p>
+      <p class="small muted mt">Each blue point is projected onto the amber line (its score is the position along the line); the pink segments are the reconstruction errors, what the projection throws away. Turn the line with the slider, by clicking the plot, or with the arrow keys on the focused plot: the variance kept and the squared error always add up to the total variance, so the direction that keeps the most variance (PC1) is exactly the one with the smallest reconstruction error. The lower plot shows the percentage of variance kept for every direction θ (horizontal axis, in degrees): one peak at PC1 and the minimum 90° away, at PC2.</p>
     </div>`
   };
 

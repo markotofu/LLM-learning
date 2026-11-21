@@ -18,8 +18,30 @@
   <script src="js/core/boot-theme.js"></script>
 </head>
 <body>
-  <div id="app"><div style="padding:40px;font-family:system-ui;color:#a3a7b0">Loading ML Atlas…</div></div>
-  <noscript>ML Atlas needs JavaScript enabled.</noscript>
+  <!-- Loading screen: plain HTML and CSS (see "Loading screen" in css/app.css), replaced when the app mounts. -->
+  <div id="app">
+    <div class="boot" role="status">
+      <div class="boot-card">
+        <svg class="boot-map" viewBox="0 0 240 150" aria-hidden="true">
+          <g class="boot-edges">
+            <path pathLength="100" d="M120 24 60 70"/><path pathLength="100" d="M120 24v46"/><path pathLength="100" d="M120 24l60 46"/>
+            <path pathLength="100" d="M60 70 30 122"/><path pathLength="100" d="M60 70l25 52"/><path pathLength="100" d="M120 70 85 122"/>
+            <path pathLength="100" d="M120 70l25 52"/><path pathLength="100" d="M180 70l-35 52"/><path pathLength="100" d="M180 70l25 52"/>
+          </g>
+          <g class="boot-nodes">
+            <circle cx="120" cy="24" r="9"/>
+            <circle cx="60" cy="70" r="7.5"/><circle cx="120" cy="70" r="7.5"/><circle cx="180" cy="70" r="7.5"/>
+            <circle cx="30" cy="122" r="6.5"/><circle cx="85" cy="122" r="6.5"/><circle cx="145" cy="122" r="6.5"/><circle cx="205" cy="122" r="6.5"/>
+          </g>
+        </svg>
+        <div class="boot-title">ML Atlas</div>
+        <p class="boot-sub">Laying out the map of machine learning<span class="sr-only">. Loading.</span></p>
+        <div class="boot-bar" aria-hidden="true"><span></span></div>
+        <p class="boot-slow">This is taking longer than usual. Check your connection, then reload the page.</p>
+        <noscript><p class="boot-noscript">ML Atlas needs JavaScript. Turn it on in your browser and reload the page.</p><style>.boot-bar, .boot-sub, .boot-slow { display: none; }</style></noscript>
+      </div>
+    </div>
+  </div>
 
   <!-- Framework (vendored: no build step, works on GitHub Pages and from file://) -->
   <script src="vendor/vue.global.prod.js"></script>
@@ -60,6 +82,8 @@
   <script src="js/data/concepts-frontier-plus.js"></script>
   <script src="js/data/concepts-frontier-more.js"></script>
   <script src="js/data/concepts-roadmap.js"></script>
+  <script src="js/data/concepts-topics-1.js"></script>
+  <script src="js/data/concepts-topics-2.js"></script>
   <script src="js/data/concepts-capstones.js"></script>
   <script src="js/data/legacy-sections.js"></script>
   <script src="js/data/glossary.js"></script>

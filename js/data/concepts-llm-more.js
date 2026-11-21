@@ -7,7 +7,7 @@
   {
     id: 'gpt', branch: 'llm', title: 'GPT: Decoder-Only Language Models', short: 'GPT', level: 3, minutes: 45, prereqs: ['transformer-block', 'language-models', 'tokenization'],
     tags: ['gpt', 'decoder-only', 'next token prediction', 'logits', 'weight tying', 'context window', 'kv cache'],
-    summary: 'The complete GPT architecture: token and position embeddings, a stack of causal transformer blocks and a language-model head — trained with next-token cross-entropy on shifted sequences, and used to generate text one token at a time.',
+    summary: 'The complete GPT architecture: token and position embeddings, a stack of causal transformer blocks and a language-model head, trained with next-token cross-entropy on shifted sequences, and used to generate text one token at a time.',
     why: `GPT ("Generative Pre-trained Transformer") is the architecture behind ChatGPT, Claude, Llama, Gemini, Mistral and nearly every modern LLM. It is surprisingly simple: everything from the previous lessons wired end to end. Once you can trace the data flow (ids → embeddings → blocks → logits), understand the training trick (every position predicts its own next token, all in parallel) and count the parameters, you can read model cards, estimate memory, and build one yourself.`,
     objectives: [
       'Trace a batch of token ids through a GPT to logits, with the shape at every step',
@@ -57,7 +57,7 @@ log — the natural logarithm; the minus sign turns log-probabilities into a pos
 :::
 
 :::tip Sanity check
-At initialization the model knows nothing, so its predictions are roughly uniform and the loss should be close to **ln V** — about 10.8 for GPT-2's 50,257 tokens. A much higher starting loss means a bug (or a bad initialization).
+At initialization the model knows nothing, so its predictions are roughly uniform and the loss should be close to **ln V**, about 10.8 for GPT-2's 50,257 tokens. A much higher starting loss means a bug (or a bad initialization).
 :::` },
       { type: 'code', title: 'A complete GPT forward pass and loss in NumPy', code: `
 import numpy as np
@@ -98,10 +98,10 @@ loss = -np.take_along_axis(logp, y[..., None], axis=-1).mean()
 print("logits shape:", logits.shape)
 print(f"loss at init: {loss:.3f}    ln(V) = {np.log(V):.3f}")
 `, after: `The untrained model's loss is almost exactly ln V: it spreads probability evenly over the vocabulary. Training pushes it down.`, predict: {"type":"mcq","q":"This untrained GPT has a vocabulary of V = 20 tokens and tiny random weights. Roughly what cross-entropy loss does it report before any training?","options":["About 0","About 1","About 3 (that is, ln 20)","About 20"],"answer":2,"explain":"3.000, almost exactly ln 20 = 2.996. Tiny weights give nearly uniform predictions, and a uniform guess over V tokens has a loss of ln V. A first loss far from ln V usually means a bug.","expect":["loss at init: 3.000"]} },
-      { type: 'check', question: { type: 'mcq', q: 'One training sequence has T = 1,024 input tokens (targets shifted by one). How many next-token predictions are trained in one forward pass?', options: ['1', '1,024 — one per position', '1,024²', '50,257'], answer: 1, explain: 'Every position predicts its own next token; the causal mask makes all of them valid examples simultaneously.' } },
+      { type: 'check', question: { type: 'mcq', q: 'One training sequence has T = 1,024 input tokens (targets shifted by one). How many next-token predictions are trained in one forward pass?', options: ['1', '1,024: one per position', '1,024²', '50,257'], answer: 1, explain: 'Every position predicts its own next token; the causal mask makes all of them valid examples simultaneously.' } },
       { type: 'text', title: 'Weight tying, the context window and the KV cache', md: `- **Weight tying.** The LM head reuses the token-embedding matrix: logits = x · wteᵀ. That saves V·d parameters (38.6M in GPT-2 small) and often helps quality, because "which token is this?" and "which token comes next?" use the same vector space. Many large models untie them.
 - **Context window.** The maximum T the model was trained with (GPT-2: 1,024; GPT-3: 2,048; recent models: 128k or more). Learned position embeddings literally have no row beyond it. Longer inputs must be truncated, chunked or summarized.
-- **Generation.** Run the model on the prompt, take the logits at the **last** position, choose a token (see *Decoding*), append it and repeat. Because of the causal mask, earlier positions never change when you append, so their keys and values can be stored — the **KV cache** — and each new token only computes its own query, key and value. That turns the cost of each step from re-processing the whole sequence into a single new position.` },
+- **Generation.** Run the model on the prompt, take the logits at the **last** position, choose a token (see *Decoding*), append it and repeat. Because of the causal mask, earlier positions never change when you append, so their keys and values can be stored (the **KV cache**) and each new token only computes its own query, key and value. That turns the cost of each step from re-processing the whole sequence into a single new position.` },
       { type: 'text', title: 'Counting parameters exactly', md: `For a GPT-2-style model (learned positions, biases, LayerNorm, tied head):
 
 $$ embeddings:   V·d + T_max·d $$
@@ -131,7 +131,7 @@ for name, (d, layers) in sizes.items():
     emb, rest = gpt2_params(d, layers)
     print(f"GPT-2 {name:<6}: {(emb + rest) / 1e6:7.1f} M parameters ({emb / (emb + rest):.0%} in the embeddings)")
 print("GPT-2 small has about 124 M parameters:", round(sum(gpt2_params(768, 12)) / 1e6) == 124)`, after: `The formula reproduces the published sizes: 124 million, 355 million, 774 million and 1.56 billion. The share held by the embeddings falls from about a third to about 5% as the models grow.`, predict: {"type":"mcq","q":"Roughly what share of GPT-2 small's 124 million parameters is in its embedding tables?","options":["About 3%","About 30%","About 60%","About 90%"],"answer":1,"explain":"The token table alone is 50,257 × 768 ≈ 38.6 million parameters, about 31% of the total.","expect":["about 124 M parameters: True"]} },
-      { type: 'check', question: { type: 'tf', q: 'With weight tying, the output layer reuses the token embedding matrix.', answer: true, explain: 'logits = x · wteᵀ — the same (V, d) matrix is used for input lookup and output scoring.' } }
+      { type: 'check', question: { type: 'tf', q: 'With weight tying, the output layer reuses the token embedding matrix.', answer: true, explain: 'logits = x · wteᵀ: the same (V, d) matrix is used for input lookup and output scoring.' } }
     ],
     when: `- Decoder-only GPT models are the default for generative LLMs: chat, code, reasoning, agents.
 - Pick a model size from your memory and latency budget: parameters × bytes per parameter, plus the KV cache.
@@ -140,7 +140,7 @@ print("GPT-2 small has about 124 M parameters:", round(sum(gpt2_params(768, 12))
 - Forgetting the causal mask in training: the loss drops to near zero because the model copies the answer, then generation fails.
 - Feeding sequences longer than the context window.
 - Using the wrong position's logits during generation (you want the last one).
-- An initial loss far from ln V — a sign of a bug in the model or the loss.`,
+- An initial loss far from ln V: a sign of a bug in the model or the loss.`,
     takeaways: [
       'A GPT = token + position embeddings → N causal transformer blocks → final norm → LM head (logits over the vocabulary).',
       'Training shifts the sequence by one; every position predicts its next token; loss = mean cross-entropy.',
@@ -201,8 +201,8 @@ def make_batch(ids, starts, block_size):
         id: 'next-token-loss', title: 'The Next-Token Loss', difficulty: 'medium',
         prompt: `Implement:
 
-1. \`log_softmax(z)\` — a numerically stable log-softmax over the **last** axis: subtract the max, then subtract the log of the sum of exponentials.
-2. \`next_token_loss(logits, targets)\` — \`logits\` has shape (B, T, V) and \`targets\` (B, T) holds the correct next-token ids. Pick each target's log-probability (\`np.take_along_axis\`) and return the **mean negative log-probability** as a float.
+1. \`log_softmax(z)\`: a numerically stable log-softmax over the **last** axis: subtract the max, then subtract the log of the sum of exponentials.
+2. \`next_token_loss(logits, targets)\`: \`logits\` has shape (B, T, V) and \`targets\` (B, T) holds the correct next-token ids. Pick each target's log-probability (\`np.take_along_axis\`) and return the **mean negative log-probability** as a float.
 
 \`\`\`text
 All-zero logits are a uniform guess, so the loss is ln(V) for any targets.
@@ -266,7 +266,7 @@ def gpt2_params(vocab_size, context, d_model, n_layers):
     return embeddings + n_layers * (attention + mlp + norms) + 2 * d
 `,
         hints: ['Add up the pieces of one block, multiply by n_layers, then add the embeddings and the final LayerNorm.', 'A LayerNorm has a gain and a bias vector: 2d parameters.'],
-        explain: `Per block this is 12d² + 13d. GPT-2 medium (d = 1024, 24 layers) gives 354,823,168 and XL (d = 1600, 48 layers) 1,557,611,200 — the numbers on the official model cards.`,
+        explain: `Per block this is 12d² + 13d. GPT-2 medium (d = 1024, 24 layers) gives 354,823,168 and XL (d = 1600, 48 layers) 1,557,611,200: the numbers on the official model cards.`,
         tests: [
           { call: 'gpt2_params(50257, 1024, 768, 12)', expect: '124439808' },
           { name: 'GPT-2 medium', call: 'gpt2_params(50257, 1024, 1024, 24)', expect: '354823168' },
@@ -276,9 +276,9 @@ def gpt2_params(vocab_size, context, d_model, n_layers):
       }
     ],
     refs: [
-      { title: 'Radford et al. — Language Models are Unsupervised Multitask Learners (GPT-2)', url: 'https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf' },
-      { title: 'Brown et al. — Language Models are Few-Shot Learners (GPT-3)', url: 'https://arxiv.org/abs/2005.14165' },
-      { title: 'Karpathy — nanoGPT', url: 'https://github.com/karpathy/nanoGPT', note: 'a clean, minimal GPT training codebase' }
+      { title: 'Radford et al., Language Models are Unsupervised Multitask Learners (GPT-2)', url: 'https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf' },
+      { title: 'Brown et al., Language Models are Few-Shot Learners (GPT-3)', url: 'https://arxiv.org/abs/2005.14165' },
+      { title: 'Karpathy, nanoGPT', url: 'https://github.com/karpathy/nanoGPT', note: 'a clean, minimal GPT training codebase' }
     ]
   },
 
@@ -286,7 +286,7 @@ def gpt2_params(vocab_size, context, d_model, n_layers):
   {
     id: 'decoding', branch: 'llm', title: 'Decoding: Greedy, Sampling, Temperature, Top-k & Top-p', short: 'Decoding', level: 3, minutes: 35, prereqs: ['gpt'],
     tags: ['decoding', 'sampling', 'temperature', 'top-k', 'top-p', 'nucleus sampling', 'greedy', 'beam search', 'repetition penalty'],
-    summary: 'How a language model turns next-token probabilities into text: greedy decoding, sampling, temperature, top-k and nucleus (top-p) filtering, beam search, stop conditions — and which settings suit which tasks.',
+    summary: 'How a language model turns next-token probabilities into text: greedy decoding, sampling, temperature, top-k and nucleus (top-p) filtering, beam search, stop conditions, and which settings suit which tasks.',
     why: `A language model only outputs a probability distribution over the next token; **decoding** decides what actually gets written. The same model can be dull and repetitive, creative, or incoherent depending on these settings. Every LLM API exposes temperature and top_p. Understanding them lets you choose deterministic settings for code and extraction, diverse ones for brainstorming, and reproducible ones for evaluation.`,
     objectives: [
       'Generate text autoregressively and explain stop conditions',
@@ -306,9 +306,9 @@ repeat until a stop token, a stop string, or max_new_tokens:
 \`\`\`
 
 Generation is **autoregressive**: each new token becomes input for the next step. That's why generation is slow (one forward pass per token), why the KV cache matters, and why an early mistake can snowball.` },
-      { type: 'text', title: 'Greedy, sampling and beam search', md: `- **Greedy** — always take the most probable token. Deterministic and fine for short factual answers, but it produces bland text and easily falls into loops ("I think that I think that…").
-- **Sampling** — draw the next token at random according to the probabilities. Diverse and human-like, but occasionally picks a low-probability token that derails the text.
-- **Beam search** — keep the b most probable partial sequences, extend each, keep the best b again. Good when there is one "right" output (translation, speech recognition); rarely used for open-ended chat because it favours generic, repetitive text.` },
+      { type: 'text', title: 'Greedy, sampling and beam search', md: `- **Greedy**: always take the most probable token. Deterministic and fine for short factual answers, but it produces bland text and easily falls into loops ("I think that I think that…").
+- **Sampling**: draw the next token at random according to the probabilities. Diverse and human-like, but occasionally picks a low-probability token that derails the text.
+- **Beam search**: keep the b most probable partial sequences, extend each, keep the best b again. Good when there is one "right" output (translation, speech recognition); rarely used for open-ended chat because it favours generic, repetitive text.` },
       { type: 'text', title: 'Temperature', md: `Divide the logits by a temperature T before the softmax:
 
 $$ pᵢ = exp(zᵢ / T) / Σⱼ exp(zⱼ / T) $$
@@ -320,17 +320,17 @@ exp — e to the power of its argument
 pᵢ — the resulting probability of choosing token i
 :::
 
-- **T = 1** — the model's own distribution.
-- **T < 1** — sharper: likely tokens get even more probability; as T → 0 it becomes greedy.
-- **T > 1** — flatter: more randomness, more mistakes.
+- **T = 1**: the model's own distribution.
+- **T < 1**: sharper: likely tokens get even more probability; as T → 0 it becomes greedy.
+- **T > 1**: flatter: more randomness, more mistakes.
 
 Temperature never changes the *ranking* of tokens, only how peaked the distribution is.` },
       { type: 'demo', title: 'Interactive: temperature, top-k and top-p', md: `Move the sliders, then sample many tokens and watch how often each word is chosen. The entropy readout shows how uncertain the final distribution is.`, demo: 'softmax' },
-      { type: 'text', title: 'Top-k and top-p (nucleus) sampling', md: `Even at a sensible temperature, the long tail of thousands of unlikely tokens holds real probability mass in total — sample long enough and you will hit garbage. Filters cut the tail before sampling:
+      { type: 'text', title: 'Top-k and top-p (nucleus) sampling', md: `Even at a sensible temperature, the long tail of thousands of unlikely tokens holds real probability mass in total: sample long enough and you will hit garbage. Filters cut the tail before sampling:
 
-- **top-k** — keep only the k most likely tokens and renormalize. Simple, but a fixed k is too many when the model is confident and too few when many continuations are plausible.
-- **top-p (nucleus)** — keep the *smallest* set of top tokens whose cumulative probability reaches p (e.g. 0.9), then renormalize. The set adapts: one or two tokens when the model is sure, dozens when it isn't.
-- **min-p** — keep tokens whose probability is at least min_p × the top probability; another adaptive rule.
+- **top-k**: keep only the k most likely tokens and renormalize. Simple, but a fixed k is too many when the model is confident and too few when many continuations are plausible.
+- **top-p (nucleus)**: keep the *smallest* set of top tokens whose cumulative probability reaches p (e.g. 0.9), then renormalize. The set adapts: one or two tokens when the model is sure, dozens when it isn't.
+- **min-p**: keep tokens whose probability is at least min_p × the top probability; another adaptive rule.
 
 Other knobs: **repetition / frequency / presence penalties** lower the scores of tokens that already appeared; **stop sequences** end generation; a fixed **seed** makes sampling reproducible.` },
       { type: 'chart', title: "How many tokens top-p keeps", md: `Two next-token distributions over a 1,000-token vocabulary, one peaked and one flat:`, after: `With p = 0.9, top-p keeps only 6 tokens when the model is confident but 668 when it is uncertain: the candidate set adapts to the situation. A fixed top-k cannot do this; k = 40 would either cut off plausible options in the flat case or let unlikely tokens through in the peaked one.`, chart: {"kind":"line","x":[0.5,0.6,0.7,0.8,0.85,0.9,0.93,0.95,0.97,0.99],"yLog":true,"series":[{"name":"confident model (steep distribution)","y":[1,1,2,3,4,6,9,12,20,57]},{"name":"uncertain model (flat distribution)","y":[86,156,265,430,538,668,756,821,889,962]}],"xLabel":"top-p threshold","yLabel":"tokens kept (of 1,000, log scale)"} },
@@ -411,7 +411,7 @@ Two caveats: temperature 0 on a served model is *nearly* but not perfectly deter
 - **Beam search**: short, constrained outputs where likelihood matters (translation, speech recognition).
 - **Penalties and stop sequences**: control repetition and length.`,
     pitfalls: `- Raising temperature and top-p together until text becomes incoherent.
-- Expecting temperature 0 to make a model *correct* — it only makes it consistent.
+- Expecting temperature 0 to make a model *correct*: it only makes it consistent.
 - Assuming every library applies temperature, top-k and top-p in the same order.
 - Forgetting a stop condition and paying for tokens up to the limit.
 - Comparing models that were evaluated with different decoding settings.`,
@@ -564,8 +564,8 @@ def generate(next_logits, prompt, max_new, eos=None):
       }
     ],
     refs: [
-      { title: 'Holtzman et al. — The Curious Case of Neural Text Degeneration (nucleus sampling)', url: 'https://arxiv.org/abs/1904.09751' },
-      { title: 'Hugging Face — How to generate text: decoding methods', url: 'https://huggingface.co/blog/how-to-generate' }
+      { title: 'Holtzman et al., The Curious Case of Neural Text Degeneration (nucleus sampling)', url: 'https://arxiv.org/abs/1904.09751' },
+      { title: 'Hugging Face, How to generate text: decoding methods', url: 'https://huggingface.co/blog/how-to-generate' }
     ]
   },
 
@@ -573,8 +573,8 @@ def generate(next_logits, prompt, max_new, eos=None):
   {
     id: 'pretraining', branch: 'llm', title: 'Pretraining & Scaling Laws', short: 'Pretraining', level: 3, minutes: 40, prereqs: ['gpt'],
     tags: ['pretraining', 'scaling laws', 'chinchilla', 'compute', 'flops', 'data', 'deduplication', 'base model', 'emergent abilities'],
-    summary: 'How base models are made: web-scale data pipelines, next-token training at scale, the C ≈ 6·N·D compute rule, scaling laws and compute-optimal (Chinchilla) training — and what a base model can and cannot do.',
-    why: `Pretraining is where an LLM acquires nearly all of its knowledge and abilities — and where nearly all of the cost goes (millions of GPU-hours for frontier models). Scaling laws turned model building from guesswork into engineering: they predict how the loss improves with more parameters, data and compute, and how to split a budget between them. Even if you never pretrain a model, these ideas explain model sizes, the debates about training data, and why "a smaller model trained for longer" became the norm.`,
+    summary: 'How base models are made: web-scale data pipelines, next-token training at scale, the C ≈ 6·N·D compute rule, scaling laws and compute-optimal (Chinchilla) training, and what a base model can and cannot do.',
+    why: `Pretraining is where an LLM acquires nearly all of its knowledge and abilities, and where nearly all of the cost goes (millions of GPU-hours for frontier models). Scaling laws turned model building from guesswork into engineering: they predict how the loss improves with more parameters, data and compute, and how to split a budget between them. Even if you never pretrain a model, these ideas explain model sizes, the debates about training data, and why "a smaller model trained for longer" became the norm.`,
     objectives: [
       'Describe the pretraining pipeline: collection, filtering, deduplication, mixing, tokenization, training',
       'Estimate training compute with C ≈ 6·N·D and convert it to GPU time',
@@ -582,7 +582,7 @@ def generate(next_logits, prompt, max_new, eos=None):
       'Explain what a base model is and why it still needs fine-tuning to be an assistant'
     ],
     sections: [
-      { type: 'text', title: 'The pretraining recipe', md: `1. **Collect** text: web crawls (Common Crawl), books, Wikipedia, code, scientific papers, forums — trillions of tokens.
+      { type: 'text', title: 'The pretraining recipe', md: `1. **Collect** text: web crawls (Common Crawl), books, Wikipedia, code, scientific papers, forums (trillions of tokens).
 2. **Filter**: drop spam, boilerplate, machine-generated junk and toxic content (heuristics plus small quality classifiers), remove personal information, keep the languages you want.
 3. **Deduplicate**: remove exact and near-duplicate documents (e.g. MinHash over word n-grams). Duplicates waste compute and encourage memorization.
 4. **Mix**: choose the proportion of each source; upweight high-quality text; code and math help reasoning.
@@ -602,7 +602,7 @@ D — the number of training tokens
 
 About 2·N floating-point operations per token for the forward pass and 4·N for the backward pass. (Generating one token at inference costs about 2·N.)
 
-**Example.** A 7B model on 2T tokens: 6 × 7·10⁹ × 2·10¹² = 8.4·10²² FLOPs. An H100 GPU peaks at roughly 10¹⁵ bf16 FLOP/s; at a realistic 40% utilization (MFU) that's 8.4·10²² / 4·10¹⁴ ≈ 2.1·10⁸ GPU-seconds ≈ **2,430 GPU-days** — about 2.5 days on 1,000 GPUs.` },
+**Example.** A 7B model on 2T tokens: 6 × 7·10⁹ × 2·10¹² = 8.4·10²² FLOPs. An H100 GPU peaks at roughly 10¹⁵ bf16 FLOP/s; at a realistic 40% utilization (MFU) that's 8.4·10²² / 4·10¹⁴ ≈ 2.1·10⁸ GPU-seconds ≈ **2,430 GPU-days**, about 2.5 days on 1,000 GPUs.` },
       { type: 'code', title: 'Compute and time for famous models', code: `
 def train_flops(n_params, n_tokens):
     return 6 * n_params * n_tokens
@@ -629,9 +629,9 @@ N^α — N raised to the power α
 
 E is the irreducible loss (the inherent unpredictability of text); the other two terms shrink as you add parameters or data, with diminishing returns. Because the curves are so smooth, labs fit them on small runs and *predict* the loss of a run 100× bigger before paying for it.
 
-**Compute-optimal training.** For a fixed budget C = 6ND, the loss is lowest when N and D grow together — about **20 training tokens per parameter**. GPT-3 (175B parameters, 300B tokens) was heavily under-trained; Chinchilla (70B parameters, 1.4T tokens) used about the same compute as the 280B-parameter Gopher and beat it.
+**Compute-optimal training.** For a fixed budget C = 6ND, the loss is lowest when N and D grow together, about **20 training tokens per parameter**. GPT-3 (175B parameters, 300B tokens) was heavily under-trained; Chinchilla (70B parameters, 1.4T tokens) used about the same compute as the 280B-parameter Gopher and beat it.
 
-**Beyond compute-optimal.** Chinchilla-optimal minimizes *training* cost. A model that will answer billions of requests should be smaller and trained far longer (Llama 3 8B: ~1,900 tokens per parameter), because inference cost grows with N. Today, high-quality data — not compute — is often the bottleneck.` },
+**Beyond compute-optimal.** Chinchilla-optimal minimizes *training* cost. A model that will answer billions of requests should be smaller and trained far longer (Llama 3 8B: ~1,900 tokens per parameter), because inference cost grows with N. Today, high-quality data (not compute) is often the bottleneck.` },
       { type: 'check', question: { type: 'fill', q: 'Using C ≈ 6·N·D, how many FLOPs does training a 1B-parameter model on 20B tokens take? (e.g. 3.4e19)', answer: ['1.2e20', '1.2e+20', '1.2 × 10^20', '1.2x10^20', '1.2*10^20', '120000000000000000000'], display: '1.2·10²⁰', explain: '6 × 10⁹ × 2·10¹⁰ = 1.2·10²⁰ FLOPs.' } },
       { type: 'code', title: 'The compute-optimal trade-off', code: `
 import numpy as np
@@ -659,7 +659,7 @@ for N in [5e9, 20e9, 70e9, 150e9, 400e9, 1e12]:
 - **The data wall.** The stock of high-quality public human text is finite, estimated at a few hundred trillion tokens, and frontier training runs already use tens of trillions. This is why so much effort now goes into data quality, synthetic data and learning from interaction (reinforcement learning) rather than ever larger crawls.` },
       { type: 'text', title: 'Base models and emergent abilities', md: `Pretraining produces a **base model**: a superb document completer, not an assistant. Ask a base model "What is the capital of France?" and it may continue with more quiz questions, because that's what such text looks like on the web. Instruction tuning and preference tuning (the next lessons) turn it into a helpful assistant, but almost all of its knowledge and skills come from pretraining.
 
-As models scale, some abilities — multi-step arithmetic, following few-shot examples, writing working code — improve sharply, which is often called **emergence**. Part of the apparent jump comes from all-or-nothing metrics (an answer is right or wrong) while the underlying loss improves smoothly, but the practical effect is real.` },
+As models scale, some abilities (multi-step arithmetic, following few-shot examples, writing working code) improve sharply, which is often called **emergence**. Part of the apparent jump comes from all-or-nothing metrics (an answer is right or wrong) while the underlying loss improves smoothly, but the practical effect is real.` },
       { type: 'check', question: { type: 'tf', q: 'A base model that has only been pretrained reliably follows instructions like a chat assistant.', answer: false, explain: 'It continues documents; following instructions comes from fine-tuning.' } }
     ],
     when: `- Pretrain from scratch only with a large budget or a domain/language poorly covered by existing models (code, biology, a low-resource language).
@@ -667,7 +667,7 @@ As models scale, some abilities — multi-step arithmetic, following few-shot ex
 - Use scaling-law fits on small runs to choose model size and token count before a big run.`,
     pitfalls: `- Training on unfiltered, duplicated data and blaming the architecture.
 - Contaminating training data with benchmark test sets (inflated scores).
-- Picking the model size first and the data second — plan both from the compute budget.
+- Picking the model size first and the data second: plan both from the compute budget.
 - Forgetting that inference cost, not just training cost, matters for a deployed model.
 - Mistaking a base model's document-style completions for a bug.`,
     takeaways: [
@@ -765,7 +765,7 @@ def compute_optimal(C, tokens_per_param=20):
     return N, tokens_per_param * N
 `,
         hints: ['Substitute D = r·N into C = 6·N·D.', 'Use `** 0.5` or `math.sqrt` for the square root.'],
-        explain: `Plug in Chinchilla's own budget (≈ 5.76e23 FLOPs) and you get ≈ 69B parameters and ≈ 1.4T tokens — the model they actually trained.`,
+        explain: `Plug in Chinchilla's own budget (≈ 5.76e23 FLOPs) and you get ≈ 69B parameters and ≈ 1.4T tokens: the model they actually trained.`,
         tests: [
           { call: 'compute_optimal(6 * 20 * 1e18)', expect: '(1e9, 2e10)' },
           { call: 'scaling_loss(70e9, 1.4e12)', expect: '1.69 + 406.4 / 70e9 ** 0.34 + 410.7 / 1.4e12 ** 0.28' },
@@ -824,7 +824,7 @@ def dedup(docs, threshold=0.5, n=3):
     return kept
 `,
         hints: ['A set comprehension over `range(len(words) - n + 1)` builds the n-grams.', 'Python sets support `&` (intersection) and `|` (union).', 'Store the shingle sets of kept documents so you only compute them once.'],
-        explain: `Comparing every pair is O(n²) — fine for thousands of documents, impossible for billions. Production pipelines estimate the same Jaccard similarity with **MinHash** signatures and locality-sensitive hashing, so only likely duplicates are ever compared.`,
+        explain: `Comparing every pair is O(n²): fine for thousands of documents, impossible for billions. Production pipelines estimate the same Jaccard similarity with **MinHash** signatures and locality-sensitive hashing, so only likely duplicates are ever compared.`,
         tests: [
           { call: 'shingles("A b c d", 3)', expect: '{("a", "b", "c"), ("b", "c", "d")}' },
           { call: 'jaccard({1, 2, 3}, {2, 3, 4})', expect: '0.5' },
@@ -836,10 +836,10 @@ def dedup(docs, threshold=0.5, n=3):
       }
     ],
     refs: [
-      { title: 'Kaplan et al. — Scaling Laws for Neural Language Models', url: 'https://arxiv.org/abs/2001.08361' },
-      { title: 'Hoffmann et al. — Training Compute-Optimal Large Language Models (Chinchilla)', url: 'https://arxiv.org/abs/2203.15556' },
-      { title: 'Besiroglu et al. — Chinchilla Scaling: A Replication Attempt', url: 'https://arxiv.org/abs/2404.10102' },
-      { title: 'Hugging Face — FineWeb: decanting the web for the finest text data', url: 'https://huggingface.co/spaces/HuggingFaceFW/blogpost-fineweb-v1' }
+      { title: 'Kaplan et al., Scaling Laws for Neural Language Models', url: 'https://arxiv.org/abs/2001.08361' },
+      { title: 'Hoffmann et al., Training Compute-Optimal Large Language Models (Chinchilla)', url: 'https://arxiv.org/abs/2203.15556' },
+      { title: 'Besiroglu et al., Chinchilla Scaling: A Replication Attempt', url: 'https://arxiv.org/abs/2404.10102' },
+      { title: 'Hugging Face, FineWeb: decanting the web for the finest text data', url: 'https://huggingface.co/spaces/HuggingFaceFW/blogpost-fineweb-v1' }
     ]
   },
 
@@ -848,7 +848,7 @@ def dedup(docs, threshold=0.5, n=3):
     id: 'fine-tuning', branch: 'llm', title: 'Fine-Tuning & Instruction Tuning', short: 'Fine-Tuning', level: 3, minutes: 40, prereqs: ['pretraining'],
     tags: ['fine-tuning', 'sft', 'instruction tuning', 'chat template', 'loss masking', 'transfer learning', 'catastrophic forgetting'],
     summary: 'Adapting a pretrained model to follow instructions or do a task: supervised fine-tuning (SFT), chat templates and special tokens, masking the loss to the assistant\'s tokens, data quality, hyperparameters, and when fine-tuning beats prompting or RAG.',
-    why: `A base model completes documents; an assistant follows instructions. The bridge is **fine-tuning**: continuing training on a smaller, curated dataset of examples of the behaviour you want. It's also how teams specialize open models (Llama, Mistral, Qwen, Gemma) for their domain, tone or output format. Knowing how SFT data is formatted and how the loss is masked is essential for doing it correctly — and knowing when *not* to fine-tune saves a lot of time and money.`,
+    why: `A base model completes documents; an assistant follows instructions. The bridge is **fine-tuning**: continuing training on a smaller, curated dataset of examples of the behaviour you want. It's also how teams specialize open models (Llama, Mistral, Qwen, Gemma) for their domain, tone or output format. Knowing how SFT data is formatted and how the loss is masked is essential for doing it correctly, and knowing when *not* to fine-tune saves a lot of time and money.`,
     objectives: [
       'Explain transfer learning and supervised fine-tuning (SFT) of LLMs',
       'Format conversations with a chat template and special tokens',
@@ -868,8 +868,8 @@ What is 2 + 2?<|end|>
 2 + 2 = 4.<|end|>
 \`\`\`
 
-Every model family has its own exact template (ChatML, Llama 3's header tokens, Gemma's turn markers…). Using a different template at inference than in training badly degrades a fine-tuned model, so libraries ship it with the tokenizer: in Hugging Face, \`tokenizer.apply_chat_template(messages)\`. At inference the prompt ends with the assistant header — the *generation prompt* — so the model's next tokens are the reply.` },
-      { type: 'text', title: 'Masking the loss', md: `In SFT we usually train only on the **assistant's** tokens: the model should learn to *produce* answers, not to predict users' questions or the system prompt. Give every other token the label −100 (PyTorch's \`ignore_index\` for cross-entropy), so those positions contribute nothing to the loss or the gradient — the model still *reads* them through attention.
+Every model family has its own exact template (ChatML, Llama 3's header tokens, Gemma's turn markers…). Using a different template at inference than in training badly degrades a fine-tuned model, so libraries ship it with the tokenizer: in Hugging Face, \`tokenizer.apply_chat_template(messages)\`. At inference the prompt ends with the assistant header (the *generation prompt*) so the model's next tokens are the reply.` },
+      { type: 'text', title: 'Masking the loss', md: `In SFT we usually train only on the **assistant's** tokens: the model should learn to *produce* answers, not to predict users' questions or the system prompt. Give every other token the label −100 (PyTorch's \`ignore_index\` for cross-entropy), so those positions contribute nothing to the loss or the gradient: the model still *reads* them through attention.
 
 \`\`\`text
 tokens:  <|user|>  What  is  2+2  ?  <|end|>  <|assistant|>  4    .    <|end|>
@@ -900,14 +900,14 @@ mask = np.array(labels) != -100
 print("mean loss over all tokens:", round(token_losses.mean(), 3), "| SFT loss (assistant tokens only):", round(token_losses[mask].mean(), 3))
 ` },
       { type: 'check', question: { type: 'mcq', q: 'Why are user and system tokens usually given the label −100 during SFT?', options: ['To make training faster', 'So the loss only teaches the model to produce assistant replies, not to predict user messages', 'Because they are padding', 'To hide them from attention'], answer: 1, explain: 'They are still visible through attention; they just don\'t contribute to the loss.' } },
-      { type: 'text', title: 'When to fine-tune — and when not to', md: `| Goal | Best first tool |
+      { type: 'text', title: 'When to fine-tune, and when not to', md: `| Goal | Best first tool |
 | --- | --- |
-| Answer from private or changing knowledge (docs, tickets, policies) | **RAG** — facts stay updatable and answers can cite sources |
+| Answer from private or changing knowledge (docs, tickets, policies) | **RAG**: facts stay updatable and answers can cite sources |
 | A consistent format, tone or style | prompting with examples; **fine-tune** if prompts get long or unreliable |
-| A narrow, high-volume skill (classify tickets, extract fields) at low cost | **fine-tune** a small model — it can rival a large prompted one |
+| A narrow, high-volume skill (classify tickets, extract fields) at low cost | **fine-tune** a small model: it can rival a large prompted one |
 | Make the model "know" new facts | usually RAG; fine-tuning on facts is unreliable and can increase hallucination |
 
-Risks: **catastrophic forgetting** (losing general abilities — mix in general data, use a low learning rate or LoRA), **overfitting** small datasets (watch validation loss; 1–3 epochs), faithfully learning the flaws of noisy data, and safety regressions (fine-tuning can undo safety training).` },
+Risks: **catastrophic forgetting** (losing general abilities, mix in general data, use a low learning rate or LoRA), **overfitting** small datasets (watch validation loss; 1–3 epochs), faithfully learning the flaws of noisy data, and safety regressions (fine-tuning can undo safety training).` },
       { type: 'text', title: "Data and settings that matter", md: `**Quality beats quantity.** A few thousand carefully written, diverse examples often teach a format or a behaviour better than a million scraped ones (the LIMA experiments used just 1,000). Good fine-tuning data is:
 - **representative** of the real requests, including the hard and unusual ones;
 - **consistent**: the same kind of question always gets the same kind of answer, otherwise the model learns the inconsistency;
@@ -930,6 +930,9 @@ from sklearn.datasets import load_digits
 from sklearn.neural_network import MLPClassifier
 warnings.filterwarnings("ignore")
 X, y = load_digits(return_X_y=True)
+print(f"X: {X.shape[0]} images x {X.shape[1]} pixels (8 x 8 grey levels, 0 to 16). The first one, a {y[0]}:")
+for row in X[0].reshape(8, 8).astype(int):
+    print("  ", " ".join(f"{v:2d}" for v in row))
 X = X / 16.0
 rng = np.random.default_rng(0)
 order = rng.permutation(len(X))
@@ -988,13 +991,13 @@ for step in range(3):
 - Try prompting first, RAG for knowledge, and fine-tuning when those plateau.`,
     pitfalls: `- Training on the prompt tokens too (no masking), or using a different chat template at inference.
 - Too high a learning rate or too many epochs → forgetting and overfitting.
-- Low-quality or inconsistent examples — the model learns their flaws faithfully.
+- Low-quality or inconsistent examples: the model learns their flaws faithfully.
 - No held-out evaluation set and no comparison with a well-prompted baseline.
 - Expecting fine-tuning to inject reliable factual knowledge.`,
     takeaways: [
       'SFT continues training a pretrained model on curated (instruction, response) examples.',
       'Conversations are serialized with a model-specific chat template and special tokens.',
-      'Mask non-assistant tokens (label −100) so only replies are learned — including the end-of-turn token.',
+      'Mask non-assistant tokens (label −100) so only replies are learned, including the end-of-turn token.',
       'Small, high-quality datasets with low learning rates and 1–3 epochs work best.',
       'Prompting → RAG → fine-tuning: fine-tune for behaviour and narrow skills, use RAG for knowledge.'
     ],
@@ -1018,7 +1021,7 @@ for step in range(3):
 
 (literally \`<|\` + role + \`|>\`, a newline, the content, \`<|end|>\`, a newline), and the messages are concatenated in order. If \`add_generation_prompt\` is True, append \`<|assistant|>\` followed by a newline.
 
-Then implement \`extract_reply(generated)\` → the text before the first \`<|end|>\` (the whole string if there is none) — how a stop sequence cuts the model's output.
+Then implement \`extract_reply(generated)\` → the text before the first \`<|end|>\` (the whole string if there is none): how a stop sequence cuts the model's output.
 
 \`\`\`text
 format_chat([{"role": "user", "content": "Hi"}], add_generation_prompt=True)
@@ -1047,7 +1050,7 @@ def extract_reply(generated):
     return generated.split("<|end|>")[0]
 `,
         hints: ['Build the string with a loop, or with `"".join(...)` over the messages.', '`str.split("<|end|>")[0]` returns everything before the first marker.'],
-        explain: `Real templates (ChatML, Llama 3) are exactly this kind of string formatting, usually written as Jinja templates shipped with the tokenizer. Getting one character wrong — a missing newline — measurably hurts a fine-tuned model.`,
+        explain: `Real templates (ChatML, Llama 3) are exactly this kind of string formatting, usually written as Jinja templates shipped with the tokenizer. Getting one character wrong (a missing newline) measurably hurts a fine-tuned model.`,
         tests: [
           { call: 'format_chat([{"role": "user", "content": "Hi"}], add_generation_prompt=True)', expect: '"<|user|>\\nHi<|end|>\\n<|assistant|>\\n"' },
           { call: 'extract_reply("Hello!<|end|>\\n<|user|>\\n...")', expect: '"Hello!"' },
@@ -1109,9 +1112,9 @@ def masked_mean_loss(token_losses, labels):
       }
     ],
     refs: [
-      { title: 'Ouyang et al. — Training language models to follow instructions with human feedback (InstructGPT)', url: 'https://arxiv.org/abs/2203.02155' },
-      { title: 'Zhou et al. — LIMA: Less Is More for Alignment', url: 'https://arxiv.org/abs/2305.11206' },
-      { title: 'Hugging Face — Chat templates', url: 'https://huggingface.co/docs/transformers/main/en/chat_templating' }
+      { title: 'Ouyang et al., Training language models to follow instructions with human feedback (InstructGPT)', url: 'https://arxiv.org/abs/2203.02155' },
+      { title: 'Zhou et al., LIMA: Less Is More for Alignment', url: 'https://arxiv.org/abs/2305.11206' },
+      { title: 'Hugging Face, Chat templates', url: 'https://huggingface.co/docs/transformers/main/en/chat_templating' }
     ]
   },
 
@@ -1120,7 +1123,7 @@ def masked_mean_loss(token_losses, labels):
     id: 'lora', branch: 'llm', title: 'LoRA & Parameter-Efficient Fine-Tuning', short: 'LoRA', level: 3, minutes: 40, prereqs: ['fine-tuning', 'eigen-svd'],
     tags: ['lora', 'qlora', 'peft', 'adapters', 'low-rank', 'fine-tuning', 'memory'],
     summary: 'Fine-tuning huge models cheaply: freeze the pretrained weights and learn a small low-rank update. How LoRA works, its hyperparameters (rank, alpha, target modules), merging, QLoRA, and other parameter-efficient methods.',
-    why: `Full fine-tuning of a 7B model needs memory for the weights, gradients and Adam states of all 7 billion parameters — roughly 16 bytes each, over 100 GB. **LoRA** trains well under 1% of the parameters while matching full fine-tuning on most tasks, so a single consumer GPU can fine-tune a 7B model (and with QLoRA, much larger ones). It is the most common way open models are customized, and the resulting adapters are tiny files that can be swapped per task or per customer.`,
+    why: `Full fine-tuning of a 7B model needs memory for the weights, gradients and Adam states of all 7 billion parameters, roughly 16 bytes each, over 100 GB. **LoRA** trains well under 1% of the parameters while matching full fine-tuning on most tasks, so a single consumer GPU can fine-tune a 7B model (and with QLoRA, much larger ones). It is the most common way open models are customized, and the resulting adapters are tiny files that can be swapped per task or per customer.`,
     objectives: [
       'Explain why full fine-tuning is memory-hungry',
       'Describe LoRA: a frozen W plus a trainable low-rank update (α/r)·B·A',
@@ -1139,7 +1142,7 @@ def masked_mean_loss(token_losses, labels):
 | Adam second moment (v) | 4 |
 | **Total** | **≈ 16** |
 
-A 7B model therefore needs ≈ 112 GB before counting activations — several data-centre GPUs — and every fine-tuned variant is another full 14 GB copy of the weights.` },
+A 7B model therefore needs ≈ 112 GB before counting activations (several data-centre GPUs) and every fine-tuned variant is another full 14 GB copy of the weights.` },
       { type: 'text', title: 'Low-rank adaptation', md: `Hu et al. (2021) hypothesized that the weight *change* needed to adapt a model has a low "intrinsic rank". So instead of learning a full update ΔW, learn two thin matrices and keep W frozen:
 
 $$ h = W x + (α / r) · B A x          W: d_out × d_in (frozen)     A: r × d_in     B: d_out × r $$
@@ -1156,7 +1159,7 @@ h — the layer's output, of length d_out
 - A starts random and **B starts at zero**, so at step 0 BA = 0 and the model is exactly the pretrained one.
 - α/r scales the update (α is often r or 2r), which keeps the effective learning rate stable when you change r.
 
-**Parameter count**: a full d × d matrix has d² weights; LoRA trains r·(d_in + d_out). For d = 4096 and r = 8 that's 65,536 instead of 16.8M — 0.4%.
+**Parameter count**: a full d × d matrix has d² weights; LoRA trains r·(d_in + d_out). For d = 4096 and r = 8 that's 65,536 instead of 16.8M (0.4%).
 
 In code with row-vector inputs (x of shape (n, d_in), W stored as (d_in, d_out)), the same thing reads h = x W + (α/r)·(x A) B with A: (d_in, r) and B: (r, d_out).` },
       { type: 'demo', title: 'Diagram: a LoRA adapter', demo: 'dg-lora' },
@@ -1181,11 +1184,11 @@ for step in range(301):
         print(f"step {step:3d}   loss {loss:.8f}")
 print(f"trainable parameters: {A.size + B.size} vs {W.size} in W ({(A.size + B.size) / W.size:.1%})")
 `, after: `With just 12.5% of W's parameter count (and far less for real 4096-wide layers) the adapter recovers the rank-2 change almost perfectly, while W never changes.` },
-      { type: 'check', question: { type: 'fill', q: 'How many trainable parameters does LoRA with rank r = 16 add to one 4096 × 4096 weight matrix?', answer: ['131072', '131,072'], explain: '16 × (4096 + 4096) = 131,072 — about 0.8% of the 16.8M weights.' } },
+      { type: 'check', question: { type: 'fill', q: 'How many trainable parameters does LoRA with rank r = 16 add to one 4096 × 4096 weight matrix?', answer: ['131072', '131,072'], explain: '16 × (4096 + 4096) = 131,072, about 0.8% of the 16.8M weights.' } },
       { type: 'text', title: 'Using LoRA in practice', md: `- **Target modules**: the original paper adapted only the attention query and value projections; today all linear layers (q, k, v, o and the MLP) are common for the best quality.
-- **Rank** 8–16 is a good default; raise it for big domain shifts. **Alpha** ≈ r or 2r. **Learning rate** ≈ 1e-4 to 2e-4 — higher than full fine-tuning.
+- **Rank** 8–16 is a good default; raise it for big domain shifts. **Alpha** ≈ r or 2r. **Learning rate** ≈ 1e-4 to 2e-4: higher than full fine-tuning.
 - **Merging**: after training compute W' = W + (α/r)·B·A once, and inference costs exactly the same as the base model. Or keep adapters separate and hot-swap them, serving one base model with many adapters.
-- **QLoRA** (Dettmers et al., 2023): store the frozen base model in **4-bit** (NF4) and train bf16 LoRA adapters on top — enough to fine-tune a 65B model on a single 48 GB GPU.
+- **QLoRA** (Dettmers et al., 2023): store the frozen base model in **4-bit** (NF4) and train bf16 LoRA adapters on top (enough to fine-tune a 65B model on a single 48 GB GPU).
 - **Other PEFT methods**: adapters (small bottleneck MLPs inserted in each block), prefix and prompt tuning (learned virtual tokens), IA³, DoRA.` },
       { type: 'chart', title: "Memory to fine-tune a 7-billion-parameter model", md: `A Llama-style 7B model (32 layers), with LoRA on all its linear layers; activations, which depend on batch size and sequence length, are not included:`, after: `Full fine-tuning needs about 16 bytes per parameter, roughly 108 GB, so it takes several large GPUs. LoRA freezes the base weights (2 bytes each, no gradients or optimizer state) and trains only 40 million adapter parameters, about 0.6% of the model: about 14 GB. QLoRA stores the frozen weights in 4 bits and fits in about 4.0 GB, within reach of a single consumer GPU.`, chart: {"kind":"bar","x":["full fine-tuning","LoRA (r = 16)","QLoRA (r = 16)"],"series":[{"name":"weights + gradients + optimizer state (GB, before activations)","y":[107.8,14.1,4]}],"xLabel":"method","yLabel":"GPU memory (GB)","yMin":0} },
       { type: 'text', title: "The parameter-efficient family", md: `LoRA is the most popular member of a family of **parameter-efficient fine-tuning** (PEFT) methods, which all freeze the pretrained weights and train something small:
@@ -1231,7 +1234,7 @@ merged = model.merge_and_unload()         # fold (alpha/r)·B·A into W for fast
 - Serving many task- or customer-specific variants of one base model (swap small adapters).
 - Most instruction and domain fine-tuning, where full fine-tuning brings little extra.
 - Prefer full fine-tuning when you have the compute and need maximum quality on a big distribution shift (e.g. a new language).`,
-    pitfalls: `- Initializing both A and B randomly — the model no longer starts from its pretrained behaviour.
+    pitfalls: `- Initializing both A and B randomly: the model no longer starts from its pretrained behaviour.
 - Forgetting the α/r scale when merging, so merged weights don't match the trained adapter.
 - Too small a rank for a large domain shift, or a learning rate as low as full fine-tuning uses.
 - Adapting only attention layers when the task needs MLP changes.
@@ -1289,7 +1292,7 @@ def trainable_fraction(n_lora, n_total):
     return n_lora / (n_total + n_lora)
 `,
         hints: ['A is r × d_in and B is d_out × r.', 'Sum over the listed matrices, then multiply by the number of layers.'],
-        explain: `Even LoRA on every linear layer of a Llama-style 8B model at rank 16 is about 42M parameters — roughly half a percent — which is why adapters are megabytes, not gigabytes.`,
+        explain: `Even LoRA on every linear layer of a Llama-style 8B model at rank 16 is about 42M parameters (roughly half a percent) which is why adapters are megabytes, not gigabytes.`,
         tests: [
           { call: 'lora_params(4096, 4096, 8)', expect: '65536' },
           { call: 'lora_model_params(32, [(4096, 4096), (4096, 4096)], 8)', expect: '4194304' },
@@ -1305,7 +1308,7 @@ def trainable_fraction(n_lora, n_total):
 - \`lora_forward(x, W, A, B, alpha)\` → x @ W + (alpha / r) · (x @ A) @ B
 - \`merge_lora(W, A, B, alpha)\` → a **new** matrix W + (alpha / r) · A @ B (do not modify W), so that \`x @ merge_lora(...)\` equals \`lora_forward(...)\`.
 
-In the forward pass compute \`(x @ A) @ B\` — two thin matrix products — instead of forming the full A @ B.
+In the forward pass compute \`(x @ A) @ B\` (two thin matrix products) instead of forming the full A @ B.
 
 \`\`\`text
 With B = 0:  lora_forward(x, W, A, B, alpha) == x @ W
@@ -1333,7 +1336,7 @@ def merge_lora(W, A, B, alpha):
     return W + (alpha / r) * (A @ B)
 `,
         hints: ['Read r from `A.shape[1]`.', '`W + ...` creates a new array; `W += ...` would modify the caller\'s weights.'],
-        explain: `(x A) B costs n·r·(d_in + d_out) operations instead of d_in·d_out for forming A B — a big saving when r is small. Merging folds the update into W once, so the deployed model has no extra cost.`,
+        explain: `(x A) B costs n·r·(d_in + d_out) operations instead of d_in·d_out for forming A B: a big saving when r is small. Merging folds the update into W once, so the deployed model has no extra cost.`,
         tests: [
           { name: 'zero B gives the base model', setup: 'rng = np.random.default_rng(0)\nx = rng.normal(size=(3, 6)); W = rng.normal(size=(6, 5)); A = rng.normal(size=(6, 2)); B = np.zeros((2, 5))', call: 'lora_forward(x, W, A, B, 4)', expect: 'x @ W' },
           { name: 'small example', call: 'lora_forward(np.array([[1.0, 2.0]]), np.eye(2), np.array([[1.0], [1.0]]), np.array([[1.0, -1.0]]), 2)', expect: 'np.array([[7.0, -4.0]])' },
@@ -1383,7 +1386,7 @@ def train_lora(X, Y, W, r, alpha, steps, lr, seed=0):
     return A, B, losses
 `,
         hints: ['Compute both gradients before updating either matrix.', 'At step 0, B = 0 so dA = 0: only B moves first, then A starts learning.', 'The first recorded loss is the base model\'s loss: mean((X @ W − Y)²).'],
-        explain: `Notice that W never receives a gradient — that's the whole point. The chain rule through H = X A gives dA = Xᵀ (dpred Bᵀ), the same pattern as backprop through two stacked linear layers.`,
+        explain: `Notice that W never receives a gradient: that's the whole point. The chain rule through H = X A gives dA = Xᵀ (dpred Bᵀ), the same pattern as backprop through two stacked linear layers.`,
         tests: [
           { name: 'loss drops by over 1000x', setup: 'rng = np.random.default_rng(1)\nW = rng.normal(0, 0.1, (16, 12))\ndelta = rng.normal(0, 0.3, (16, 2)) @ rng.normal(0, 0.3, (2, 12))\nX = rng.normal(size=(200, 16)); Y = X @ (W + delta)', code: 'A, B, losses = train_lora(X, Y, W, 2, 4, 300, 0.5)\nassert len(losses) == 300\nassert losses[-1] < losses[0] / 1000, (losses[0], losses[-1])\nassert A.shape == (16, 2) and B.shape == (2, 12)' },
           { name: 'starts at the base model', setup: 'rng = np.random.default_rng(2)\nW = rng.normal(0, 0.1, (8, 8))\nX = rng.normal(size=(50, 8)); Y = X @ (W + 0.05)', code: 'A, B, losses = train_lora(X, Y, W, 2, 2, 5, 0.5)\nassert np.isclose(losses[0], np.mean((X @ W - Y) ** 2))' },
@@ -1393,9 +1396,9 @@ def train_lora(X, Y, W, r, alpha, steps, lr, seed=0):
       }
     ],
     refs: [
-      { title: 'Hu et al. — LoRA: Low-Rank Adaptation of Large Language Models', url: 'https://arxiv.org/abs/2106.09685' },
-      { title: 'Dettmers et al. — QLoRA: Efficient Finetuning of Quantized LLMs', url: 'https://arxiv.org/abs/2305.14314' },
-      { title: 'Hugging Face — PEFT documentation', url: 'https://huggingface.co/docs/peft' }
+      { title: 'Hu et al., LoRA: Low-Rank Adaptation of Large Language Models', url: 'https://arxiv.org/abs/2106.09685' },
+      { title: 'Dettmers et al., QLoRA: Efficient Finetuning of Quantized LLMs', url: 'https://arxiv.org/abs/2305.14314' },
+      { title: 'Hugging Face, PEFT documentation', url: 'https://huggingface.co/docs/peft' }
     ]
   },
 
@@ -1403,8 +1406,8 @@ def train_lora(X, Y, W, r, alpha, steps, lr, seed=0):
   {
     id: 'alignment', branch: 'llm', title: 'RLHF, DPO & Alignment', short: 'RLHF & DPO', level: 3, minutes: 45, prereqs: ['fine-tuning', 'deep-rl'],
     tags: ['alignment', 'rlhf', 'dpo', 'reward model', 'ppo', 'preference data', 'constitutional ai', 'bradley-terry', 'kl penalty', 'reward hacking'],
-    summary: 'Teaching models to be helpful, honest and harmless from preferences: preference data, reward models (Bradley-Terry), RLHF with PPO and a KL penalty, Direct Preference Optimization, AI feedback and verifiable rewards — and failure modes like reward hacking.',
-    why: `SFT teaches the *format* of good answers, but many qualities — helpfulness, honesty, tone, declining harmful requests, not making things up — are much easier to **judge** than to **demonstrate**. Preference-based training (RLHF, DPO) uses comparisons ("answer A is better than B") to optimize directly for what people prefer. It is what turned GPT-3 into ChatGPT, it underpins every modern assistant, and it is where a lot of AI safety work happens.`,
+    summary: 'Teaching models to be helpful, honest and harmless from preferences: preference data, reward models (Bradley-Terry), RLHF with PPO and a KL penalty, Direct Preference Optimization, AI feedback and verifiable rewards, and failure modes like reward hacking.',
+    why: `SFT teaches the *format* of good answers, but many qualities (helpfulness, honesty, tone, declining harmful requests, not making things up) are much easier to **judge** than to **demonstrate**. Preference-based training (RLHF, DPO) uses comparisons ("answer A is better than B") to optimize directly for what people prefer. It is what turned GPT-3 into ChatGPT, it underpins every modern assistant, and it is where a lot of AI safety work happens.`,
     objectives: [
       'Explain the RLHF pipeline: SFT → preference data → reward model → RL with a KL penalty',
       'Train a reward model with the Bradley-Terry pairwise loss',
@@ -1421,7 +1424,7 @@ rejected:  "Quantum computing leverages superposition..."
 \`\`\`
 
 The responses are usually sampled from the model itself and compared by human labelers or by an AI judge. In the InstructGPT paper (2022), people preferred the outputs of a 1.3B-parameter model trained this way over the 175B-parameter GPT-3.` },
-      { type: 'text', title: 'Step 1 — a reward model', md: `A reward model r(x, y) — typically the SFT model with its LM head replaced by a single scalar output — scores how good response y is for prompt x. It's trained on comparisons with the **Bradley-Terry** model of preferences:
+      { type: 'text', title: 'Step 1: a reward model', md: `A reward model r(x, y) (typically the SFT model with its LM head replaced by a single scalar output) scores how good response y is for prompt x. It's trained on comparisons with the **Bradley-Terry** model of preferences:
 
 $$ P(chosen ≻ rejected) = σ( r(x, y_c) − r(x, y_r) ) $$
 $$ loss = −log σ( r_c − r_r ) $$
@@ -1434,8 +1437,8 @@ r(x, y) — the reward model's score for response y to prompt x; r_c and r_r are
 loss — the negative log-probability that the reward model ranks the pair correctly
 :::
 
-Only the *difference* between the two scores matters: the loss pushes the chosen response's score above the rejected one's. A trained reward model is judged by its pairwise accuracy on held-out comparisons (often only 65–75% — people disagree too).` },
-      { type: 'text', title: 'Step 2 — reinforcement learning with a KL leash', md: `Next, the policy (the LLM) is optimized with reinforcement learning — usually **PPO** — to maximize the reward on fresh prompts: each generated response is an episode, scored by the reward model. A **KL penalty** keeps the policy close to the SFT reference model:
+Only the *difference* between the two scores matters: the loss pushes the chosen response's score above the rejected one's. A trained reward model is judged by its pairwise accuracy on held-out comparisons (often only 65–75%: people disagree too).` },
+      { type: 'text', title: 'Step 2: reinforcement learning with a KL leash', md: `Next, the policy (the LLM) is optimized with reinforcement learning (usually **PPO**) to maximize the reward on fresh prompts: each generated response is an episode, scored by the reward model. A **KL penalty** keeps the policy close to the SFT reference model:
 
 $$ maximize   E[ r(x, y) ]  −  β · KL( π(·|x) ‖ π_ref(·|x) ) $$
 :::where
@@ -1448,7 +1451,7 @@ KL( π ‖ π_ref ) — the KL divergence: how far the policy has drifted from t
 
 In practice the reward for a sampled response is r(x, y) − β · Σₜ (log π(yₜ) − log π_ref(yₜ)).
 
-Without the leash the policy finds **reward hacking** exploits: outputs the reward model scores highly that people don't actually want — excessive length, flattery, confident-sounding nonsense. This is Goodhart's law: *when a measure becomes a target, it ceases to be a good measure.*` },
+Without the leash the policy finds **reward hacking** exploits: outputs the reward model scores highly that people don't actually want (excessive length, flattery, confident-sounding nonsense). This is Goodhart's law: *when a measure becomes a target, it ceases to be a good measure.*` },
       { type: 'code', title: 'Reward-model loss and a KL-penalized reward', code: `
 import numpy as np
 def log_sigmoid(x):
@@ -1483,7 +1486,7 @@ log π_ref(y|x) — the same quantity under the frozen reference model
 margin — how much more the policy, relative to the reference, favours the chosen response over the rejected one
 :::
 
-Here log π(y|x) is the **summed** log-probability of the whole response (prompt tokens masked) under the model being trained, and π_ref is the frozen SFT model. The term β·(log π − log π_ref) acts as an **implicit reward**. DPO raises the likelihood of chosen responses relative to rejected ones, measured against the reference so the model can't drift arbitrarily far. It is stable and cheap — no sampling during training, just forward passes — and is widely used for open models; variants include IPO, KTO, ORPO and SimPO.` },
+Here log π(y|x) is the **summed** log-probability of the whole response (prompt tokens masked) under the model being trained, and π_ref is the frozen SFT model. The term β·(log π − log π_ref) acts as an **implicit reward**. DPO raises the likelihood of chosen responses relative to rejected ones, measured against the reference so the model can't drift arbitrarily far. It is stable and cheap (no sampling during training, just forward passes) and is widely used for open models; variants include IPO, KTO, ORPO and SimPO.` },
       { type: 'code', title: 'Computing the DPO loss', code: `
 import numpy as np
 def dpo_loss(pi_c, pi_r, ref_c, ref_r, beta=0.1):
@@ -1518,8 +1521,8 @@ for n in (1, 4, 16, 64, 256, 1024):
     print(f"n = {n:5d}: reward-model score {score[rows, best].mean():6.2f}   true quality {true_quality[n]:+.2f}")
 print("true quality peaks before the largest n:", true_quality[1024] < max(true_quality.values()))`, after: `The reward model's score for the chosen answer climbs steadily, from 0 to about 25. True quality rises at first, to about +1 standard deviation at n = 16, then falls back towards 0 (about +0.2 at n = 1,024): the larger the pool, the more likely the winner is an answer whose reward-model error is enormous rather than one that is genuinely good. Light optimisation against a proxy helps; heavy optimisation hurts.`, predict: {"type":"mcq","q":"As n grows from 16 to 1,024, what happens to the true quality of the answer the reward model picks?","options":["It keeps rising","It falls","It stays exactly the same","It drops to random at once"],"answer":1,"explain":"With many candidates, the top score increasingly belongs to an answer whose reward-model error happens to be huge, not to a genuinely better answer.","expect":["true quality peaks before the largest n: True"]} },
       { type: 'chart', title: "Best-of-n: the proxy reward keeps rising, the true quality does not", md: `Sample n answers, keep the one the reward model likes best. Each answer's true quality is random; the reward model sees it plus an error that is usually small but occasionally huge (heavy-tailed):`, after: `Choosing from more candidates always raises the reward model's score of the winner. True quality improves at first, peaking at about 1.00 standard deviations with n ≈ 16, and then declines: with many candidates the winner is increasingly an answer the reward model merely over-rates. That is reward hacking in its simplest form, and why RLHF limits how far the policy may move (the KL penalty) and why reward models are re-trained on the policy's new outputs.`, chart: {"kind":"line","x":[1,2,4,8,16,32,64,128,256,512,1024],"xLog":true,"series":[{"name":"reward-model score of the chosen answer","y":[0.009,0.901,1.747,2.54,3.582,4.625,6.154,8.944,12.938,17.965,23.949]},{"name":"true quality of the chosen answer","y":[-0.034,0.414,0.732,0.947,1.004,0.972,0.836,0.617,0.444,0.271,0.177]}],"xLabel":"n, the number of candidate answers to choose from (log scale)","yLabel":"average score (true quality has mean 0, sd 1)"} },
-      { type: 'text', title: 'Beyond human labels', md: `- **RLAIF and Constitutional AI** (Anthropic, 2022): an AI model critiques, revises and compares responses according to a written set of principles — a "constitution" — producing feedback at scale. People write and refine the principles instead of labelling every pair.
-- **RL with verifiable rewards**: for math and code the reward can be checked automatically (is the final answer right? do the unit tests pass?). Large-scale RL on such tasks — for example with GRPO, a PPO variant without a value network — produced "reasoning" models that learn to work through problems step by step.
+      { type: 'text', title: 'Beyond human labels', md: `- **RLAIF and Constitutional AI** (Anthropic, 2022): an AI model critiques, revises and compares responses according to a written set of principles (a "constitution") producing feedback at scale. People write and refine the principles instead of labelling every pair.
+- **RL with verifiable rewards**: for math and code the reward can be checked automatically (is the final answer right? do the unit tests pass?). Large-scale RL on such tasks (for example with GRPO, a PPO variant without a value network) produced "reasoning" models that learn to work through problems step by step.
 - **Open problems**: reward hacking, sycophancy (telling users what they want to hear), evaluating outputs that are hard for people to check, and keeping models honest about uncertainty. Alignment is an active research field, not a solved pipeline step.` },
       { type: 'check', question: { type: 'tf', q: 'DPO requires training a separate reward model and running PPO.', answer: false, explain: 'DPO optimizes the policy directly from preference pairs, with the reference model providing the implicit reward.' } }
     ],
@@ -1530,7 +1533,7 @@ print("true quality peaks before the largest n:", true_quality[1024] < max(true_
     pitfalls: `- Over-optimizing a reward model (reward hacking): track KL and human evaluations, not just reward.
 - β too small → drift and degraded text; too large → hardly any change.
 - Noisy or biased labels (labelers favouring longer or more confident answers).
-- Summing DPO log-probs over prompt tokens too — mask the prompt.
+- Summing DPO log-probs over prompt tokens too: mask the prompt.
 - Evaluating only with the same reward model you optimized against.`,
     takeaways: [
       'Preference data = (prompt, chosen, rejected); easier to collect than perfect demonstrations.',
@@ -1603,8 +1606,8 @@ def pairwise_accuracy(r_chosen, r_rejected):
         id: 'dpo-loss', title: 'The DPO Loss', difficulty: 'medium',
         prompt: `The inputs are arrays (one entry per preference pair) of **summed** log-probabilities of the chosen and rejected responses under the policy (\`pi_c\`, \`pi_r\`) and under the frozen reference model (\`ref_c\`, \`ref_r\`). Implement \`dpo(pi_c, pi_r, ref_c, ref_r, beta=0.1)\` returning a dict of Python floats:
 
-- \`"loss"\`: mean of −log σ(margin), with margin = β · ((pi_c − ref_c) − (pi_r − ref_r)) — use \`np.logaddexp(0, -margin)\`
-- \`"chosen_reward"\`: mean of β · (pi_c − ref_c), and \`"rejected_reward"\`: mean of β · (pi_r − ref_r) — the implicit rewards
+- \`"loss"\`: mean of −log σ(margin), with margin = β · ((pi_c − ref_c) − (pi_r − ref_r)), use \`np.logaddexp(0, -margin)\`
+- \`"chosen_reward"\`: mean of β · (pi_c − ref_c), and \`"rejected_reward"\`: mean of β · (pi_r − ref_r) (the implicit rewards)
 - \`"accuracy"\`: fraction of pairs with margin > 0
 
 \`\`\`text
@@ -1686,9 +1689,9 @@ def per_token_rewards(rm_score, logp_policy, logp_ref, beta):
       }
     ],
     refs: [
-      { title: 'Ouyang et al. — Training language models to follow instructions with human feedback', url: 'https://arxiv.org/abs/2203.02155' },
-      { title: 'Rafailov et al. — Direct Preference Optimization', url: 'https://arxiv.org/abs/2305.18290' },
-      { title: 'Bai et al. — Constitutional AI: Harmlessness from AI Feedback', url: 'https://arxiv.org/abs/2212.08073' }
+      { title: 'Ouyang et al., Training language models to follow instructions with human feedback', url: 'https://arxiv.org/abs/2203.02155' },
+      { title: 'Rafailov et al., Direct Preference Optimization', url: 'https://arxiv.org/abs/2305.18290' },
+      { title: 'Bai et al., Constitutional AI: Harmlessness from AI Feedback', url: 'https://arxiv.org/abs/2212.08073' }
     ]
   },
 
@@ -1697,7 +1700,7 @@ def per_token_rewards(rm_score, logp_policy, logp_ref, beta):
     id: 'quantization', branch: 'llm', title: 'Quantization & Efficient Inference', short: 'Quantization', level: 3, minutes: 40, prereqs: ['gpt'],
     tags: ['quantization', 'int8', 'int4', 'bf16', 'fp16', 'kv cache', 'memory', 'inference', 'speculative decoding', 'distillation'],
     summary: 'Making LLMs fit and run fast: number formats (fp32, bf16, int8, 4-bit), absmax and block-wise quantization, the memory math for weights and the KV cache, and other inference tricks such as batching, speculative decoding and distillation.',
-    why: `A 70B-parameter model needs 280 GB in fp32 — but only about 35–40 GB in 4-bit, small enough for a pair of consumer GPUs or a high-end laptop. Quantization is why you can run capable LLMs locally (llama.cpp, Ollama, MLX) and a big reason serving costs keep falling. The memory math (weights + KV cache) tells you whether a model fits on your hardware and how many users it can serve at once.`,
+    why: `A 70B-parameter model needs 280 GB in fp32, but only about 35–40 GB in 4-bit, small enough for a pair of consumer GPUs or a high-end laptop. Quantization is why you can run capable LLMs locally (llama.cpp, Ollama, MLX) and a big reason serving costs keep falling. The memory math (weights + KV cache) tells you whether a model fits on your hardware and how many users it can serve at once.`,
     objectives: [
       'Compare number formats and compute the memory needed for model weights',
       'Implement absmax and block-wise quantization and measure the error',
@@ -1712,7 +1715,7 @@ def per_token_rewards(rm_score, logp_policy, logp_ref, beta):
 | int8 / fp8 | 1 | 7 GB | 70 GB | near-lossless with good methods |
 | 4-bit (int4, NF4) | 0.5 | 3.5 GB | 35 GB | local inference; small quality loss |
 
-Add a little for scales, activations and the KV cache. **bf16** keeps fp32's exponent range with fewer mantissa bits, so it rarely overflows — that's why it replaced fp16 for training.
+Add a little for scales, activations and the KV cache. **bf16** keeps fp32's exponent range with fewer mantissa bits, so it rarely overflows: that's why it replaced fp16 for training.
 
 During single-stream generation the GPU spends most of its time **reading weights from memory**, not multiplying. Fewer bytes per weight therefore means proportionally faster tokens, not just a smaller download.` },
       { type: 'text', title: 'Absmax quantization and the outlier problem', md: `Map floats to integers with one scale per tensor (or per block):
@@ -1729,7 +1732,7 @@ round — round to the nearest whole number
 
 int8 q plus one float scale takes about ¼ of fp32's memory, and each weight's rounding error is at most scale / 2.
 
-**Outliers** spoil this: a single large weight sets the scale for everyone, and all the small weights collapse onto a few integer levels. Remedies: **block-wise** quantization (a separate scale for every 32–128 weights — llama.cpp's GGUF formats and bitsandbytes' NF4 do this), keeping outlier features in higher precision (LLM.int8()), and error-aware methods that adjust the remaining weights to compensate for rounding (GPTQ, AWQ).` },
+**Outliers** spoil this: a single large weight sets the scale for everyone, and all the small weights collapse onto a few integer levels. Remedies: **block-wise** quantization (a separate scale for every 32–128 weights, llama.cpp's GGUF formats and bitsandbytes' NF4 do this), keeping outlier features in higher precision (LLM.int8()), and error-aware methods that adjust the remaining weights to compensate for rounding (GPTQ, AWQ).` },
       { type: 'demo', title: 'Interactive: bits, scales and outliers', md: `Lower the bit width and switch on the outlier to see how the reconstruction error changes.`, demo: 'quantization' },
       { type: 'code', title: 'Quantize a weight vector', code: `
 import numpy as np
@@ -1803,7 +1806,7 @@ batch — how many sequences are served at once
 bytes_per_value — 2 for fp16/bf16, 1 for an 8-bit cache
 :::
 
-Llama 2 7B (32 layers, 32 KV heads of 128 dims, fp16) at 4,096 tokens: 2 × 32 × 32 × 128 × 4,096 × 2 bytes = **2 GiB per sequence**. Serve 16 users at once and the cache (32 GiB) is more than twice the weights (14 GB)! That's why grouped-query attention (8 KV heads instead of 32: a 4× smaller cache), KV-cache quantization and memory managers such as vLLM's **PagedAttention** matter so much for long contexts and high throughput.` },
+Llama 2 7B (32 layers, 32 KV heads of 128 dims, fp16) at 4,096 tokens: 2 × 32 × 32 × 128 × 4,096 × 2 bytes = **2 GiB per sequence**. Serve 16 users at once and the cache (32 GiB) is more than twice the weights (14 GB). That's why grouped-query attention (8 KV heads instead of 32: a 4× smaller cache), KV-cache quantization and memory managers such as vLLM's **PagedAttention** matter so much for long contexts and high throughput.` },
       { type: 'code', title: 'Will it fit? A memory calculator', code: `
 def weights_gb(n_params, bits):
     return n_params * bits / 8 / 1e9
@@ -1816,12 +1819,12 @@ print("Llama 3 8B weights:  bf16 %.1f GB | int8 %.1f GB | 4-bit %.1f GB" % (weig
 for ctx in (8_192, 32_768, 131_072):
     print(f"KV cache, {ctx:>7,} tokens: {kv_cache_gb(32, 8, 128, ctx):6.2f} GB per sequence   (with 32 KV heads: {kv_cache_gb(32, 32, 128, ctx):6.2f} GB)")
 `, predict: {"type":"mcq","q":"How much memory do the weights of an 8-billion-parameter model take in bf16 (16 bits per weight)?","options":["8 GB","16 GB","32 GB","128 GB"],"answer":1,"explain":"8 × 10⁹ weights × 2 bytes = 16 GB. Halve it for int8 (8 GB) and again for 4-bit (4 GB). Rule of thumb: billions of parameters × 2 = gigabytes in bf16.","expect":["Llama 3 8B weights:  bf16 16.0 GB"]} },
-      { type: 'text', title: 'Other inference optimizations', md: `- **Batching / continuous batching** — serve many requests together so each weight read is shared; the main lever for throughput.
-- **Speculative decoding** — a small draft model proposes several tokens; the large model checks them all in one forward pass and keeps the accepted prefix. Often 2–3× faster, with the large model's output distribution preserved exactly.
-- **Distillation** — train a small "student" to imitate a large "teacher's" output probabilities (DistilBERT, many small chat models).
-- **Pruning and sparsity** — remove the least important weights, heads or layers.
-- **FlashAttention and fused kernels** — compute attention block by block in fast on-chip memory.
-- **Mixture of Experts (MoE)** — only a few expert MLPs run per token, so a model with many parameters costs like a much smaller one per token (Mixtral, DeepSeek-V3); all experts still have to fit in memory.` },
+      { type: 'text', title: 'Other inference optimizations', md: `- **Batching / continuous batching**: serve many requests together so each weight read is shared; the main lever for throughput.
+- **Speculative decoding**: a small draft model proposes several tokens; the large model checks them all in one forward pass and keeps the accepted prefix. Often 2–3× faster, with the large model's output distribution preserved exactly.
+- **Distillation**: train a small "student" to imitate a large "teacher's" output probabilities (DistilBERT, many small chat models).
+- **Pruning and sparsity**: remove the least important weights, heads or layers.
+- **FlashAttention and fused kernels**: compute attention block by block in fast on-chip memory.
+- **Mixture of Experts (MoE)**: only a few expert MLPs run per token, so a model with many parameters costs like a much smaller one per token (Mixtral, DeepSeek-V3); all experts still have to fit in memory.` },
       { type: 'check', question: { type: 'tf', q: 'Speculative decoding changes the model\'s output distribution in exchange for speed.', answer: false, explain: 'With the standard acceptance rule the outputs follow exactly the large model\'s distribution.' } }
     ],
     when: `- Running models locally or on small GPUs: 4-bit (GGUF Q4_K_M, AWQ, GPTQ) or 8-bit weights.
@@ -1829,15 +1832,15 @@ for ctx in (8_192, 32_768, 131_072):
 - Long contexts: models with GQA, KV-cache quantization.
 - Always re-check quality on your own task after quantizing.`,
     pitfalls: `- Forgetting the KV cache and activations when estimating memory.
-- Per-tensor quantization of weights with outliers — use block-wise or outlier-aware methods.
+- Per-tensor quantization of weights with outliers: use block-wise or outlier-aware methods.
 - Going below ~4 bits without checking quality: 2–3-bit models degrade noticeably.
 - Comparing speed numbers measured at different batch sizes or context lengths.
-- Training large models in fp16 (overflow) — prefer bf16.`,
+- Training large models in fp16 (overflow): prefer bf16.`,
     takeaways: [
       'Weight memory = parameters × bytes per parameter (fp32 4, bf16 2, int8 1, 4-bit 0.5).',
       'Absmax: scale = max|w| / 127, q = round(w / scale); dequantize with q · scale.',
       'Outliers ruin per-tensor scales; block-wise scales over 32–128 weights fix most of it.',
-      'KV cache = 2 · layers · kv_heads · head_dim · tokens · batch · bytes — it can exceed the weights.',
+      'KV cache = 2 · layers · kv_heads · head_dim · tokens · batch · bytes: it can exceed the weights.',
       'Batching, speculative decoding, distillation, MoE and FlashAttention make inference cheaper.'
     ],
     quiz: [
@@ -1984,7 +1987,7 @@ def max_batch(gpu_bytes, n_params, bits, n_layers, n_kv_heads, head_dim, seq_len
     return int(free // per_sequence)
 `,
         hints: ['The leading 2 counts keys and values.', 'Subtract the weights from the GPU memory, then divide by one sequence\'s cache with `//`.'],
-        explain: `On an 80 GB GPU, Llama 3 8B in bf16 leaves room for about 59 sequences of 8k tokens — thanks to its 8 KV heads. With 32 KV heads it would be only 14. Real servers also reserve memory for activations, so actual numbers are a bit lower.`,
+        explain: `On an 80 GB GPU, Llama 3 8B in bf16 leaves room for about 59 sequences of 8k tokens: thanks to its 8 KV heads. With 32 KV heads it would be only 14. Real servers also reserve memory for activations, so actual numbers are a bit lower.`,
         tests: [
           { call: 'kv_cache_bytes(32, 32, 128, 4096)', expect: '2147483648' },
           { call: 'weight_bytes(7e9, 4)', expect: '3.5e9' },
@@ -1995,10 +1998,10 @@ def max_batch(gpu_bytes, n_params, bits, n_layers, n_kv_heads, head_dim, seq_len
       }
     ],
     refs: [
-      { title: 'Dettmers et al. — LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale', url: 'https://arxiv.org/abs/2208.07339' },
-      { title: 'Frantar et al. — GPTQ: Accurate Post-Training Quantization', url: 'https://arxiv.org/abs/2210.17323' },
-      { title: 'Kwon et al. — Efficient Memory Management for LLM Serving with PagedAttention (vLLM)', url: 'https://arxiv.org/abs/2309.06180' },
-      { title: 'Leviathan et al. — Fast Inference from Transformers via Speculative Decoding', url: 'https://arxiv.org/abs/2211.17192' }
+      { title: 'Dettmers et al., LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale', url: 'https://arxiv.org/abs/2208.07339' },
+      { title: 'Frantar et al., GPTQ: Accurate Post-Training Quantization', url: 'https://arxiv.org/abs/2210.17323' },
+      { title: 'Kwon et al., Efficient Memory Management for LLM Serving with PagedAttention (vLLM)', url: 'https://arxiv.org/abs/2309.06180' },
+      { title: 'Leviathan et al., Fast Inference from Transformers via Speculative Decoding', url: 'https://arxiv.org/abs/2211.17192' }
     ]
   },
 
@@ -2024,7 +2027,7 @@ def max_batch(gpu_bytes, n_params, bits, n_layers, n_kv_heads, head_dim, seq_len
 \`\`\`
 
 **Character-level** models are perfect for learning: a tiny vocabulary (~65 symbols for English text), no tokenizer to train, and you can watch the samples go from random characters to word-like text as training progresses. Real LLMs use the same pipeline with BPE tokens instead of characters.` },
-      { type: 'code', title: 'Step 1 — characters in, characters out', code: `
+      { type: 'code', title: 'Step 1: characters in, characters out', code: `
 text = "hello world, hello transformers"
 chars = sorted(set(text))
 stoi = {c: i for i, c in enumerate(chars)}          # string -> id
@@ -2041,7 +2044,7 @@ x, y = ids[0:block_size], ids[1:block_size + 1]       # one window = 8 training 
 for t in range(block_size):
     print(f"context {decode(x[:t + 1])!r:12} -> next {decode([y[t]])!r}")
 ` },
-      { type: 'code', title: 'Step 2 — train a neural language model in your browser', timeoutSec: 90, code: `
+      { type: 'code', title: 'Step 2: train a neural language model in your browser', timeoutSec: 90, code: `
 import numpy as np
 text = ("the model reads the text one character at a time. it learns which letters tend to follow which, "
         "then which words follow which. with more data and more layers it learns grammar, facts and style. "
@@ -2113,7 +2116,7 @@ print(f"uniform: {math.log(V):.3f} nats   unigram: {unigram:.3f} nats   bigram: 
 print(f"perplexities: {V}, {math.exp(unigram):.1f}, {math.exp(bigram):.1f}")
 print("more context, lower loss:", math.log(V) > unigram > bigram)`, after: `With 25 distinct characters a uniform guess costs 3.22 nats. Letter frequencies cut that to 2.81, and knowing the previous character to 1.85 (a perplexity of about 6: on average the model chooses among six characters). The 4-character network's final loss, about 0.15, is far below anything genuine language modelling achieves: it has memorised this short text.`, predict: {"type":"mcq","q":"Which baseline gives the lowest loss on this text?","options":["A uniform guess","Letter frequencies (unigram)","The previous character (bigram)","They are all equal"],"answer":2,"explain":"Each additional piece of context can only help: the previous character narrows down the next one far more than overall letter frequencies.","expect":["more context, lower loss: True"]} },
       { type: 'check', question: { type: 'mcq', q: 'In the model above, what does `np.add.at(gC, X[bi], ...)` do?', options: ['Adds noise to the embeddings', 'Accumulates gradient into each embedding row that was used, even if a character appears several times in the batch', 'Normalizes the embeddings', 'Computes the loss'], answer: 1, explain: 'Plain fancy-index assignment would keep only one update per repeated index; add.at sums them.' } },
-      { type: 'text', title: 'Step 3 — from MLP to GPT', md: `To turn this into a GPT, replace "concatenate 4 embeddings → MLP" with the transformer stack you built in earlier lessons:
+      { type: 'text', title: 'Step 3: from MLP to GPT', md: `To turn this into a GPT, replace "concatenate 4 embeddings → MLP" with the transformer stack you built in earlier lessons:
 
 \`\`\`text
 x = wte[ids] + wpe[0..T-1]                   (T, d)   token + position embeddings
@@ -2128,8 +2131,8 @@ What changes:
 - attention lets each position decide which earlier characters matter, instead of a fixed window;
 - during generation you must **crop** the input to the last block_size tokens, because there are no position embeddings beyond that.
 
-The practice problems have you implement exactly this forward pass and generation loop in NumPy. Training it needs backpropagation through attention and LayerNorm — which is where an autograd library earns its keep: the PyTorch version below is about 100 lines.` },
-      { type: 'code', title: 'Step 4 — the complete GPT in PyTorch (run on a GPU or in Colab)', lang: 'pytorch', code: `
+The practice problems have you implement exactly this forward pass and generation loop in NumPy. Training it needs backpropagation through attention and LayerNorm, which is where an autograd library earns its keep: the PyTorch version below is about 100 lines.` },
+      { type: 'code', title: 'Step 4: the complete GPT in PyTorch (run on a GPU or in Colab)', lang: 'pytorch', code: `
 # A complete character-level GPT in the style of nanoGPT.
 #   pip install torch     then put any text file next to this script as input.txt
 import torch, torch.nn as nn, torch.nn.functional as F
@@ -2221,7 +2224,7 @@ model.eval()
 start = torch.zeros((1, 1), dtype=torch.long, device=device)
 print("".join(itos[i] for i in model.generate(start, 500)[0].tolist()))
 ` },
-      { type: 'text', title: 'Step 5 — scaling up', md: `The script above (~10M parameters) learns to write convincing pseudo-Shakespeare from a 1 MB text file in minutes on a single GPU. Turning it into a real LLM is "just" scaling and engineering:
+      { type: 'text', title: 'Step 5: scaling up', md: `The script above (~10M parameters) learns to write convincing pseudo-Shakespeare from a 1 MB text file in minutes on a single GPU. Turning it into a real LLM is "just" scaling and engineering:
 
 | Change | Why |
 | --- | --- |
@@ -2233,14 +2236,14 @@ print("".join(itos[i] for i in model.generate(start, 500)[0].tolist()))
 | Gradient accumulation and DistributedDataParallel | big effective batches across many GPUs |
 | Checkpoints and evaluations (validation loss, HellaSwag) | track progress and recover from crashes |
 
-Karpathy's nanoGPT and llm.c reproduce GPT-2 (124M) this way for the price of a few hours of rented GPUs. After pretraining, the next steps are the ones in this branch: supervised fine-tuning to follow instructions, preference tuning, quantization for deployment — and then building applications with prompting, RAG and agents.` },
-      { type: 'check', question: { type: 'mcq', q: 'During generation, why is the input cropped to the last block_size tokens?', options: ['To save disk space', 'The model has position embeddings for — and was trained on — at most block_size positions', 'To make sampling deterministic', 'Because attention cannot handle short inputs'], answer: 1, explain: 'Position block_size + 1 has no embedding row.' } }
+Karpathy's nanoGPT and llm.c reproduce GPT-2 (124M) this way for the price of a few hours of rented GPUs. After pretraining, the next steps are the ones in this branch: supervised fine-tuning to follow instructions, preference tuning, quantization for deployment, and then building applications with prompting, RAG and agents.` },
+      { type: 'check', question: { type: 'mcq', q: 'During generation, why is the input cropped to the last block_size tokens?', options: ['To save disk space', 'The model has position embeddings for (and was trained on) at most block_size positions', 'To make sampling deterministic', 'Because attention cannot handle short inputs'], answer: 1, explain: 'Position block_size + 1 has no embedding row.' } }
     ],
     when: `- To understand transformers deeply, debug real models, or teach.
 - Small character- or byte-level models for toy tasks, research experiments or tiny devices.
-- For real applications, start from a pretrained open model and fine-tune it — training from scratch is for research, huge budgets, or very specialized domains.`,
+- For real applications, start from a pretrained open model and fine-tune it: training from scratch is for research, huge budgets, or very specialized domains.`,
     pitfalls: `- Training on windows in a fixed order instead of random mini-batches.
-- Watching only training loss — always keep a validation split to spot memorization.
+- Watching only training loss: always keep a validation split to spot memorization.
 - Forgetting to crop the context to block_size during generation.
 - Too high a learning rate for transformers without warmup (loss spikes, NaNs).
 - Expecting a tiny model trained on tiny data to produce meaningful text.`,
@@ -2299,7 +2302,7 @@ def decode(ids, itos):
     return "".join(itos[int(i)] for i in ids)
 `,
         hints: ['`sorted(set(text))` gives the vocabulary in order.', 'Use dict comprehensions with `enumerate`.', '`"".join(...)` turns a list of characters back into a string.'],
-        explain: `This is the entire tokenizer of a character-level GPT. A BPE tokenizer has the same interface (encode/decode) — just with learned multi-character tokens.`,
+        explain: `This is the entire tokenizer of a character-level GPT. A BPE tokenizer has the same interface (encode/decode), just with learned multi-character tokens.`,
         tests: [
           { call: 'build_vocab("hello")', expect: '({"e": 0, "h": 1, "l": 2, "o": 3}, {0: "e", 1: "h", 2: "l", 3: "o"})' },
           { setup: 'stoi, itos = build_vocab("hello")', call: 'encode("hell", stoi)', expect: '[1, 0, 2, 2]' },
@@ -2365,7 +2368,7 @@ def count_bigram_loss(ids, V):
     return float(-np.log(P[ids[:-1], ids[1:]]).mean())
 `,
         hints: ['`p[np.arange(N), y]` picks each row\'s probability of the true next character.', 'Softmax + cross-entropy has the gradient p − onehot(y) with respect to the logits.', 'Count pairs with `np.add.at(C, (ids[:-1], ids[1:]), 1)`.'],
-        explain: `The trained network converges to the same probabilities you get by counting — a neural network with one-hot inputs and no hidden layer *is* a bigram table. Its advantage only appears when you add embeddings, hidden layers and longer contexts, which let it generalize to combinations it has never counted.`,
+        explain: `The trained network converges to the same probabilities you get by counting: a neural network with one-hot inputs and no hidden layer *is* a bigram table. Its advantage only appears when you add embeddings, hidden layers and longer contexts, which let it generalize to combinations it has never counted.`,
         tests: [
           { name: 'starts at ln V and approaches the counting optimum', setup: 'text = "the cat sat on the mat. the dog sat on the log. a cat and a dog are friends."\nchars = sorted(set(text)); stoi = {c: i for i, c in enumerate(chars)}\nids = [stoi[c] for c in text]; V = len(chars)', code: 'W, losses = train_bigram(ids, V, 200, 10.0)\nassert np.isclose(losses[0], np.log(V)), "all-zero logits give loss ln V"\nopt = count_bigram_loss(ids, V)\nassert abs(losses[-1] - opt) < 0.05, (losses[-1], opt)\nassert W.shape == (V, V)' },
           { name: 'count-based loss', call: 'count_bigram_loss([0, 1, 0, 1, 1], 2)', expect: '-(np.log(1.0) + np.log(0.5) + np.log(1.0) + np.log(0.5)) / 4' },
@@ -2385,7 +2388,7 @@ x = layer_norm(x, params["lnf_g"], params["lnf_b"])    # final LayerNorm (provid
 logits = x @ params["wte"].T                           # tied LM head  (T, V)
 \`\`\`
 
-Then implement \`generate_greedy(ids, params, n_heads, n_new, block_size)\`: start from a copy of \`ids\` (a list) and repeat \`n_new\` times — crop to the last \`block_size\` ids, run \`gpt_forward\`, append the argmax of the **last** row as an \`int\`. Return the full list.
+Then implement \`generate_greedy(ids, params, n_heads, n_new, block_size)\`: start from a copy of \`ids\` (a list) and repeat \`n_new\` times, crop to the last \`block_size\` ids, run \`gpt_forward\`, append the argmax of the **last** row as an \`int\`. Return the full list.
 
 \`layer_norm\` and \`block\` are provided in the starter. The tests build random parameters with a helper \`_make_params(seed)\` (vocabulary 11, width 8, 2 blocks, 6 positions).`,
         prelude: `
@@ -2471,7 +2474,7 @@ def generate_greedy(ids, params, n_heads, n_new, block_size):
     return ids
 `,
         hints: ['`params["wte"][ids]` looks up one embedding row per token.', 'Slice the position table with `params["wpe"][:T]`.', 'In generation, `ids[-block_size:]` keeps at most block_size tokens; take `logits[-1]`.'],
-        explain: `That's a complete GPT inference engine: the same computation (with more layers, wider matrices and trained weights) runs inside every LLM. The causality test confirms that the logits for earlier positions don't depend on later tokens — the property that makes parallel training and the KV cache possible.`,
+        explain: `That's a complete GPT inference engine: the same computation (with more layers, wider matrices and trained weights) runs inside every LLM. The causality test confirms that the logits for earlier positions don't depend on later tokens: the property that makes parallel training and the KV cache possible.`,
         tests: [
           { name: 'logits vs reference', setup: 'params = _make_params(1)\nids = np.array([3, 1, 4, 1, 5])', call: 'gpt_forward(ids, params, 2)' },
           { name: 'shape', setup: 'params = _make_params(1)', code: 'out = gpt_forward(np.array([0, 2, 4]), params, 2)\nassert out.shape == (3, 11), out.shape' },
@@ -2482,10 +2485,10 @@ def generate_greedy(ids, params, n_heads, n_new, block_size):
       }
     ],
     refs: [
-      { title: 'Karpathy — Let\'s build GPT: from scratch, in code, spelled out (video)', url: 'https://www.youtube.com/watch?v=kCc8FmEb1nY' },
-      { title: 'Karpathy — nanoGPT', url: 'https://github.com/karpathy/nanoGPT' },
-      { title: 'Karpathy — llm.c (GPT-2 training in raw C/CUDA)', url: 'https://github.com/karpathy/llm.c' },
-      { title: 'Bengio et al. — A Neural Probabilistic Language Model (2003)', url: 'https://www.jmlr.org/papers/volume3/bengio03a/bengio03a.pdf' }
+      { title: 'Karpathy, Let\'s build GPT: from scratch, in code, spelled out (video)', url: 'https://www.youtube.com/watch?v=kCc8FmEb1nY' },
+      { title: 'Karpathy, nanoGPT', url: 'https://github.com/karpathy/nanoGPT' },
+      { title: 'Karpathy, llm.c (GPT-2 training in raw C/CUDA)', url: 'https://github.com/karpathy/llm.c' },
+      { title: 'Bengio et al., A Neural Probabilistic Language Model (2003)', url: 'https://www.jmlr.org/papers/volume3/bengio03a/bengio03a.pdf' }
     ]
   }
   ]);

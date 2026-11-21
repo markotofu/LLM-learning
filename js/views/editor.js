@@ -137,7 +137,7 @@
         <div v-if="hint" class="ro-hint"><mla-icon name="hint" :size="14"/> <mla-md :src="hint" inline /></div>
       </div>
       <div v-if="failure" class="ro-error"><div class="ro-err-msg">{{ failure.message }}</div><div v-if="failure.kind==='load'" class="ro-hint">Tip: once Python has loaded successfully one time, it is cached and works offline.</div></div>
-      <div v-if="empty" class="ro-empty">Ran successfully with no output — use <code>print()</code> to show values.</div>
+      <div v-if="empty" class="ro-empty">Ran successfully with no output: use <code>print()</code> to show values.</div>
       <div v-if="result && !running && result.ms != null" class="ro-meta">{{ result.ms }} ms</div>
     </div>`
   };
@@ -199,6 +199,6 @@
       s.playground.files.unshift(f); s.playground.active = f.id;
       return f;
     },
-    openWith(name, code) { this.newFile(name, code); MLA.router.navigate('/playground'); MLA.ui.toast('Opened in the playground — edit and run it freely.', 'info'); }
+    openWith(name, code) { this.newFile(name, code); MLA.router.navigate('/playground'); MLA.ui.toast('Opened in the playground: edit and run it freely.', 'info'); }
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

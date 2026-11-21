@@ -102,7 +102,7 @@
       p.completedAt = new Date().toISOString();
       G().addXP(XP.conceptComplete, 'Concept complete: ' + c.title, 'concept');
       const unlocked = graph().children[id].filter(k => !isCompleted(k) && prereqsMet(k)).map(concept);
-      if (unlocked.length && MLA.ui) setTimeout(() => MLA.ui.toast('🔓 Ready next: ' + unlocked.map(u => u.title).slice(0, 3).join(', '), 'success', 5500), 700);
+      if (unlocked.length && MLA.ui) setTimeout(() => MLA.ui.toast('Ready next: ' + unlocked.map(u => u.title).slice(0, 3).join(', '), 'success', 5500), 700);
     }
     if (p.completedAt && !p.masteredAt && pr.solved === pr.problems && (!pr.hasQuiz || pr.quizBest >= 90)) {
       p.masteredAt = new Date().toISOString();
@@ -196,8 +196,8 @@
     if (next) return { concept: concept(next), reason: goal ? 'Next step on “' + goal.title + '”' : 'Next in the learning order' };
     const any = scope.find(id => !isCompleted(id));
     if (any) return { concept: concept(any), reason: 'Next concept' };
-    if (goal) return { concept: null, reason: 'Track complete! Pick a new goal.' };
-    return { concept: null, reason: 'Everything is complete — amazing work!' };
+    if (goal) return { concept: null, reason: 'Track complete. Pick a new goal.' };
+    return { concept: null, reason: 'Everything is complete. Well done.' };
   }
   function readyList(limit) {
     return MLA.graph.topoOrder(graph()).filter(id => !isCompleted(id) && prereqsMet(id)).slice(0, limit || 6).map(concept);
