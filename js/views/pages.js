@@ -94,6 +94,46 @@
     </div>`
   };
 
+  // ---------- Projects and case studies (js/data/projects.js) ----------
+  MLA.components['view-projects'] = {
+    props: { route: Object },
+    data() { const t = this.route && this.route.query && this.route.query.tab; return { tab: t === 'cases' ? 'cases' : 'projects', q: '', level: 'all', cat: 'all' }; },
+    computed: {
+      cats() { return MLA.data.branches.filter(b => MLA.data.concepts.some(c => c.branch === b.id && (c.projects.length || c.cases.length))); },
+      all() {
+        const out = { projects: [], cases: [] };
+        for (const c of MLA.data.concepts) {
+          c.projects.forEach((p, i) => out.projects.push({ key: c.id + '-p' + i, p, c }));
+          c.cases.forEach((k, i) => out.cases.push({ key: c.id + '-c' + i, k, c }));
+        }
+        return out;
+      },
+      items() {
+        const q = this.q.trim().toLowerCase();
+        const keep = (c, words) => (this.cat === 'all' || c.branch === this.cat) && (!q || words.toLowerCase().includes(q));
+        if (this.tab === 'cases') return this.all.cases.filter(x => keep(x.c, [x.k.title, x.k.when, x.k.story, x.c.title].join(' ')));
+        return this.all.projects.filter(x => (this.level === 'all' || x.p.level === this.level) && keep(x.c, [x.p.title, x.p.goal, x.p.data, x.p.skills.join(' '), x.c.title].join(' ')));
+      }
+    },
+    template: `
+    <div class="stack">
+      <section-head title="Projects and case studies" :sub="all.projects.length + ' projects to build on your own machine with real data, and ' + all.cases.length + ' documented cases of machine learning in the real world. Each one belongs to a lesson.'" />
+      <div class="pills"><button :class="{active: tab==='projects'}" @click="tab='projects'"><mla-icon name="flask" :size="14"/> Sample projects</button><button :class="{active: tab==='cases'}" @click="tab='cases'"><mla-icon name="book" :size="14"/> Case studies</button></div>
+      <div class="filters">
+        <div class="map-search grow"><mla-icon name="search" :size="15"/><input type="search" v-model="q" :placeholder="tab==='cases' ? 'Search case studies…' : 'Search projects, datasets, skills…'" aria-label="Search"></div>
+        <select v-if="tab==='projects'" v-model="level" aria-label="Level"><option value="all">All levels</option><option value="starter">Starter</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select>
+        <select v-model="cat" aria-label="Branch"><option value="all">All branches</option><option v-for="b in cats" :key="b.id" :value="b.id">{{ b.name }}</option></select>
+      </div>
+      <div v-if="tab==='projects'" class="stack project-list">
+        <project-card v-for="x in items" :key="x.key" :p="x.p" :lesson="x.c" />
+      </div>
+      <div v-else class="stack">
+        <div v-for="x in items" :key="x.key" class="card"><case-study :k="x.k" :lesson="x.c" /></div>
+      </div>
+      <empty-state v-if="!items.length" icon="search" text="Nothing matches these filters." />
+    </div>`
+  };
+
   // ---------- Flashcards ----------
   MLA.components['view-review'] = {
     props: { route: Object },

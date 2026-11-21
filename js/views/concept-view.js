@@ -184,6 +184,16 @@
               <div class="sec-head"><mla-icon name="star" :size="18"/><h3>Key takeaways</h3><span class="spacer"></span><button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne('takeaways')" aria-label="Listen to: Key takeaways" title="Listen to this part"><mla-icon name="volume" :size="16"/></button></div>
               <ul class="takeaways"><li v-for="(t,i) in c.takeaways" :key="i"><mla-md :src="t" inline /></li></ul>
             </div>
+            <div v-if="c.cases.length" class="lesson-section cases-card" data-narr="cases" :class="{speaking: speaking('cases')}">
+              <div class="sec-head"><mla-icon name="book" :size="18"/><h3>{{ c.cases.length > 1 ? 'Case studies' : 'Case study' }}</h3><span class="spacer"></span><button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne('cases')" aria-label="Listen to: Case studies" title="Listen to this part"><mla-icon name="volume" :size="16"/></button></div>
+              <p class="small muted">What happened when these ideas met the real world.</p>
+              <case-study v-for="(k,i) in c.cases" :key="i" :k="k" />
+            </div>
+            <div v-if="c.projects.length" class="lesson-section projects-card" data-narr="projects" :class="{speaking: speaking('projects')}">
+              <div class="sec-head"><mla-icon name="flask" :size="18"/><h3>Build it: {{ c.projects.length > 1 ? 'sample projects' : 'a sample project' }}</h3><span class="spacer"></span><button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne('projects')" aria-label="Listen to: Sample projects" title="Listen to this part"><mla-icon name="volume" :size="16"/></button></div>
+              <p class="small muted">A project to do on your own machine with real data, from a first version to stretch goals. <a tabindex="0" @click="go('/projects')" @keydown.enter="go('/projects')">See all projects</a>.</p>
+              <project-card v-for="(p,i) in c.projects" :key="i" :p="p" :open="c.projects.length === 1" />
+            </div>
             <div v-if="c.refs && c.refs.length" class="lesson-section">
               <div class="sec-head"><mla-icon name="external" :size="16"/><h3>Go deeper</h3></div>
               <ul><li v-for="r in c.refs" :key="r.url"><a :href="r.url" target="_blank" rel="noopener">{{ r.title }}</a><span v-if="r.note" class="tiny dim">: {{ r.note }}</span></li></ul>

@@ -10,6 +10,8 @@ The user asked for a voice feature that reads the site aloud (a button for the w
 - Charts (`js/views/charts.js`): end labels for up to four lines, peak and low markers, value labels on small bar charts, and a "Describe this chart in words" panel linked with `aria-describedby`.
 - Tests: `tests/narrate.test.js` (in `npm test`) narrates every lesson and fails on leftover markdown or raw symbols; it also drives the engine with a fake `speechSynthesis`. The e2e suite has a read-aloud test with a stubbed `speechSynthesis`.
 - Limits: browsers stop speech when a phone locks its screen or the tab is discarded; voices differ by device; Firefox on Linux may have no local voices (the buttons then explain that).
+- Later in the session: the skill radar (components.js `branch-radar`) now wraps long branch names, shows each percentage and sizes its viewBox to fit every label; it was cutting off labels in the Baroque look.
+- Case studies (31, in 30 lessons) and sample projects (27) in `js/data/projects.js`, attached to lessons in `MLA.content.init`, rendered by the `case-study` and `project-card` components, narrated, and listed on a new Projects & Cases page (`#/projects`, `view-projects` in pages.js). The content test checks their fields and style.
 - `CLAUDE.md` (auto-loaded by Claude Code) and `tools/lesson-info.js` were added so future sessions can find lessons and sections without reading the large data files.
 
 ## STATUS UPDATE (session 9, end): two looks, Baroque and Classic

@@ -26,7 +26,7 @@ test('every lesson renders, without errors, and fits a phone screen', async ({ p
 test('the other pages render and fit a phone screen', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   const errors = await boot(page, '/home');
-  const routes = [['/home', 'Dashboard'], ['/map', 'Concept Map'], ['/problems', 'Practice Problems'], ['/problem/dot-product', 'Dot Product'], ['/playground', 'Python Playground'], ['/tracks', 'Learning Tracks'], ['/track/build-llm', ''], ['/review', 'Review'], ['/glossary', 'Glossary'], ['/achievements', 'Achievements'], ['/profile', 'Progress'], ['/selftest', 'Self-test'], ['/terms', 'Terms'], ['/privacy', 'Privacy']];
+  const routes = [['/home', 'Dashboard'], ['/map', 'Concept Map'], ['/problems', 'Practice Problems'], ['/problem/dot-product', 'Dot Product'], ['/playground', 'Python Playground'], ['/tracks', 'Learning Tracks'], ['/track/build-llm', ''], ['/review', 'Review'], ['/glossary', 'Glossary'], ['/projects', 'Projects'], ['/achievements', 'Achievements'], ['/profile', 'Progress'], ['/selftest', 'Self-test'], ['/terms', 'Terms'], ['/privacy', 'Privacy']];
   const bad = [];
   for (const [r, t] of routes) {
     await go(page, r, t || undefined);

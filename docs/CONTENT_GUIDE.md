@@ -248,6 +248,14 @@ The text should read as if a careful teacher wrote it:
 - **Two looks.** Style new pages with the theme tokens so they work in both looks. Decorative rules that belong to the Baroque look (gold, rays, clouds, serif type) go in the "Fresco ornaments" section of `css/app.css` with the `:where(:root:not([data-style="classic"]))` prefix.
 - **Keyboard first.** A new demo that reacts to clicks needs a keyboard path too: the `kbCursor` mixin in `js/views/demos.js` gives a canvas an arrow-key cross-hair with Enter to act and a live region for screen readers.
 
+## 6b. Case studies and sample projects
+
+They live in `js/data/projects.js`, keyed by lesson id, and appear after a lesson's key takeaways and on the Projects & Cases page. Add them only where they fit; not every lesson needs one.
+
+- **Case study** `{ title, when, story, lesson, source: { title, url } }`: a real, documented event. Every number must come from the named source; leave out anything you cannot check. `story` says what happened (two short paragraphs), `lesson` says what a practitioner should take from it. Prefer Wikipedia, arXiv or the publisher for `url`, and omit `url` rather than guess one.
+- **Project** `{ title, level, hours, goal, data, steps, done, stretch, skills }`: something a learner builds on their own machine with real public data. Name the dataset exactly (size, source, how to load it), give 4 to 7 concrete steps that include a baseline and an honest evaluation, a measurable finish line in `done`, and one to three stretch goals.
+- Both are read aloud and checked by `tests/content.test.js` (fields, levels, house style).
+
 ## 7. Glossary, tracks and achievements
 
 - Add 2–4 glossary terms for every new concept: `G('Term', 'One- or two-sentence definition.', 'branch', 'concept-id')`. Terms must be unique; each one becomes a flashcard. The tests require at least one glossary term per concept.

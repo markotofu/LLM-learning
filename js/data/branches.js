@@ -70,6 +70,9 @@
     c.quiz = c.quiz || [];
     c.objectives = c.objectives || [];
     c.takeaways = c.takeaways || [];
+    // case studies and sample projects live in js/data/projects.js, keyed by lesson id
+    c.cases = ((MLA.data.cases || {})[c.id] || c.cases || []).map(k => Object.assign({}, k, { story: d(k.story), lesson: d(k.lesson) }));
+    c.projects = ((MLA.data.projects || {})[c.id] || c.projects || []).map(p => Object.assign({}, p));
     c.problems = (c.problems || []).map((p, k) => normalizeProblem(p, c, k));
     c._normalized = true;
     return c;

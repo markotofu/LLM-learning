@@ -114,19 +114,79 @@
     </svg>` };
 
   // Radar chart of progress per branch
+  // Skill radar: one spoke per branch, labelled with the branch and its percentage. Long names wrap onto two lines and the
+  // viewBox grows to fit every label, so nothing is cut off at the card's width. Font sizes are in viewBox units.
   C['branch-radar'] = { props: { items: Array, size: { default: 260 } }, computed: {
     pts() {
-      const n = this.items.length; const cx = this.size / 2, cy = this.size / 2, R = this.size / 2 - 42;
-      const ring = p => this.items.map((s, i) => { const a = (Math.PI * 2 * i / n) - Math.PI / 2; const r = R * (p != null ? p : Math.max(0.03, s.pct / 100)); return (cx + r * Math.cos(a)).toFixed(1) + ',' + (cy + r * Math.sin(a)).toFixed(1); }).join(' ');
-      const labels = this.items.map((s, i) => { const a = (Math.PI * 2 * i / n) - Math.PI / 2; return { x: cx + (R + 20) * Math.cos(a), y: cy + (R + 20) * Math.sin(a), name: s.branch.short || s.branch.name, color: s.branch.color, anchor: Math.cos(a) > 0.3 ? 'start' : Math.cos(a) < -0.3 ? 'end' : 'middle' }; });
-      return { data: ring(), grid: [0.25, 0.5, 0.75, 1].map(ring), labels };
+      const n = this.items.length, R = this.size / 2 - 34, FS = 13, LH = 15;
+      const at = (i, r) => { const a = (Math.PI * 2 * i / n) - Math.PI / 2; return { x: r * Math.cos(a), y: r * Math.sin(a), cos: Math.cos(a), sin: Math.sin(a) }; };
+      const ring = p => this.items.map((s, i) => { const q = at(i, R * (p != null ? p : Math.max(0.03, s.pct / 100))); return q.x.toFixed(1) + ',' + q.y.toFixed(1); }).join(' ');
+      const split = name => {
+        if (name.length <= 12 || name.indexOf(' ') < 0) return [name];
+        let cut = -1;
+        for (let k = 0; k < name.length; k++) if (name[k] === ' ' && (cut < 0 || Math.abs(k - name.length / 2) < Math.abs(cut - name.length / 2))) cut = k;
+        return [name.slice(0, cut), name.slice(cut + 1)];
+      };
+      let x0 = -R, x1 = R, y0 = -R, y1 = R;
+      const labels = this.items.map((s, i) => {
+        const q = at(i, R + 10);
+        const lines = split(s.branch.short || s.branch.name).map(t => ({ t, pct: false })).concat([{ t: Math.round(s.pct) + '%', pct: true }]);
+        const anchor = q.cos > 0.3 ? 'start' : q.cos < -0.3 ? 'end' : 'middle';
+        const w = Math.max(...lines.map(l => l.t.length)) * FS * 0.62, h = lines.length * LH;
+        const top = q.sin < -0.5 ? q.y - h : q.sin > 0.5 ? q.y : q.y - h / 2;
+        const x = anchor === 'start' ? q.x + 2 : anchor === 'end' ? q.x - 2 : q.x;
+        const left = anchor === 'start' ? x : anchor === 'end' ? x - w : x - w / 2;
+        x0 = Math.min(x0, left); x1 = Math.max(x1, left + w); y0 = Math.min(y0, top); y1 = Math.max(y1, top + h);
+        return { x, anchor, color: s.branch.color, lines: lines.map((l, k) => Object.assign(l, { y: top + LH * (k + 0.5) })) };
+      });
+      const pad = 6, box = [x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad].map(v => +v.toFixed(1));
+      const summary = 'Skill radar: ' + this.items.map(s => (s.branch.short || s.branch.name) + ' ' + Math.round(s.pct) + '%').join(', ');
+      return { data: ring(), grid: [0.25, 0.5, 0.75, 1].map(ring), labels, viewBox: box.join(' '), width: box[2], summary };
     }
   }, template: `
-    <svg :width="size" :height="size" :viewBox="'0 0 '+size+' '+size" class="radar" style="max-width:100%;height:auto">
+    <svg :width="pts.width" :viewBox="pts.viewBox" class="radar" style="max-width:100%;height:auto" role="img" :aria-label="pts.summary">
       <polygon v-for="(g,i) in pts.grid" :key="i" :points="g" fill="none" stroke="var(--border)" stroke-width="1"/>
       <polygon :points="pts.data" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
-      <text v-for="(l,i) in pts.labels" :key="i" :x="l.x" :y="l.y" :text-anchor="l.anchor" dominant-baseline="central" :fill="l.color">{{ l.name }}</text>
+      <text v-for="(l,i) in pts.labels" :key="i" :text-anchor="l.anchor" dominant-baseline="central" font-size="13">
+        <tspan v-for="(ln,k) in l.lines" :key="k" :x="l.x" :y="ln.y" :fill="ln.pct ? 'var(--muted)' : l.color" :font-size="ln.pct ? 11 : 13">{{ ln.t }}</tspan>
+      </text>
     </svg>` };
+
+  // A case study (js/data/projects.js): what happened, what to take from it, and where it is documented.
+  C['case-study'] = { props: { k: Object, lesson: Object },
+    methods: { go(p) { MLA.router.navigate(p); } },
+    template: `
+    <article class="case">
+      <div class="case-head"><h4>{{ k.title }}</h4><span class="chip tiny">{{ k.when }}</span></div>
+      <mla-md :src="k.story" />
+      <div class="case-lesson"><strong>What to take from it.</strong> <mla-md :src="k.lesson" inline /></div>
+      <div class="tiny dim case-source">Source: <a v-if="k.source && k.source.url" :href="k.source.url" target="_blank" rel="noopener">{{ k.source.title }}</a><span v-else-if="k.source">{{ k.source.title }}</span></div>
+      <a v-if="lesson" class="tiny case-link" tabindex="0" @click="go('/concept/' + lesson.id)" @keydown.enter="go('/concept/' + lesson.id)">From the lesson: {{ lesson.title }}</a>
+    </article>` };
+
+  // A sample project: goal, data, steps, how to know it is done, and stretch goals. A <details> that shows its summary
+  // line (title, level, hours) until it is opened.
+  C['project-card'] = { props: { p: Object, lesson: Object, open: Boolean },
+    computed: { levelClass() { return { starter: 'green', intermediate: 'amber', advanced: 'red' }[this.p.level] || ''; } },
+    methods: { go(p) { MLA.router.navigate(p); } },
+    template: `
+    <details class="project" :open="open">
+      <summary>
+        <span class="project-title">{{ p.title }}</span>
+        <span class="project-meta"><span class="chip tiny project-level" :class="levelClass">{{ p.level }}</span><span class="chip tiny"><mla-icon name="clock" :size="12"/> about {{ p.hours }} hours</span></span>
+      </summary>
+      <div class="project-body">
+        <div class="project-row"><strong>Goal.</strong> <mla-md :src="p.goal" inline /></div>
+        <div class="project-row"><strong>Data and tools.</strong> <mla-md :src="p.data" inline /></div>
+        <div class="project-row"><strong>Steps</strong></div>
+        <ol class="project-steps"><li v-for="(s,i) in p.steps" :key="i"><mla-md :src="s" inline /></li></ol>
+        <div class="project-row"><strong>Done when.</strong> <mla-md :src="p.done" inline /></div>
+        <div class="project-row"><strong>Go further</strong></div>
+        <ul class="project-steps"><li v-for="(s,i) in p.stretch" :key="i"><mla-md :src="s" inline /></li></ul>
+        <div class="chips" aria-label="Skills you practise"><span v-for="s in p.skills" :key="s" class="chip tiny accent">{{ s }}</span></div>
+        <a v-if="lesson" class="tiny case-link" tabindex="0" @click="go('/concept/' + lesson.id)" @keydown.enter="go('/concept/' + lesson.id)">From the lesson: {{ lesson.title }}</a>
+      </div>
+    </details>` };
 
   C['list-tile'] = { props: { icon: String, title: String, sub: String, done: Boolean, to: String, badge: String, badgeKind: String, color: String },
     methods: { go() { if (this.to) MLA.router.navigate(this.to); } },

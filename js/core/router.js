@@ -10,6 +10,7 @@
     { name: 'problems', pattern: '/problems', title: 'Practice Problems' },
     { name: 'problem', pattern: '/problem/:id', title: 'Problem', full: true },
     { name: 'playground', pattern: '/playground', title: 'Python Playground', full: true },
+    { name: 'projects', pattern: '/projects', title: 'Projects & Case Studies' },
     { name: 'tracks', pattern: '/tracks', title: 'Learning Tracks' },
     { name: 'track', pattern: '/track/:id', title: 'Learning Track' },
     { name: 'review', pattern: '/review', title: 'Review' },

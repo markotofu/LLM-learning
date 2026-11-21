@@ -136,4 +136,39 @@ for (const t of D.tracks) { if (t.custom || t.all) continue; for (const id of t.
 T.ok('achievements unique', new Set(D.achievements.map(a => a.id)).size === D.achievements.length);
 
 console.log(concepts.length + ' concepts, ' + problems.length + ' problems, ' + concepts.reduce((s, c) => s + c.quiz.length, 0) + ' quiz questions, ' + (D.glossary || []).length + ' glossary terms');
+// Case studies and sample projects (js/data/projects.js): attached to real lessons, complete, and in the house style
+// (no em dashes, exclamation marks or emojis in prose; sources named for every case study).
+{
+  const D2 = MLA.data;
+  for (const id of Object.keys(D2.cases || {})) T.ok('case studies: lesson ' + id + ' exists', !!MLA.content.byId[id]);
+  for (const id of Object.keys(D2.projects || {})) T.ok('projects: lesson ' + id + ' exists', !!MLA.content.byId[id]);
+  const style = (where, t) => {
+    t = String(t || '');
+    T.ok(where + ': no em dash', !t.includes('—'));
+    T.ok(where + ': no exclamation mark', !/!(?!=)/.test(t.replace(/`[^`]*`/g, '')));
+    T.ok(where + ': no emoji', !/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(t));
+    T.ok(where + ': no "undefined"', !t.includes('undefined'));
+  };
+  let nc = 0, np = 0;
+  for (const c of concepts) {
+    for (const k of c.cases) {
+      nc++;
+      const w = 'case "' + k.title + '" (' + c.id + ')';
+      T.ok(w + ': has a title, a date, a story, a lesson and a source', !!(k.title && k.when && k.story && k.lesson && k.source && k.source.title));
+      T.ok(w + ': story is a real account (300+ characters)', k.story.length >= 300, String(k.story.length));
+      T.ok(w + ': source link, when given, is https or a known http site', !k.source.url || /^https:[/][/]/.test(k.source.url) || /^http:[/][/]www[.]paulgraham[.]com[/]/.test(k.source.url));
+      style(w, [k.title, k.when, k.story, k.lesson, k.source.title].join(' '));
+    }
+    for (const pr of c.projects) {
+      np++;
+      const w = 'project "' + pr.title + '" (' + c.id + ')';
+      T.ok(w + ': level is starter, intermediate or advanced', ['starter', 'intermediate', 'advanced'].includes(pr.level));
+      T.ok(w + ': hours between 1 and 40', typeof pr.hours === 'number' && pr.hours >= 1 && pr.hours <= 40);
+      T.ok(w + ': has a goal, data, 4+ steps, a finish line, stretch goals and 3+ skills', !!(pr.goal && pr.data && pr.done) && pr.steps.length >= 4 && pr.stretch.length >= 1 && pr.skills.length >= 3);
+      style(w, [pr.title, pr.goal, pr.data, pr.done].concat(pr.steps, pr.stretch, pr.skills).join(' '));
+    }
+  }
+  T.ok('there are case studies and projects', nc >= 20 && np >= 20, nc + ' case studies, ' + np + ' projects');
+}
+
 T.done();

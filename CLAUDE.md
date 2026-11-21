@@ -24,7 +24,7 @@ An interactive learning site, from ML basics to LLMs. It is static (GitHub Pages
 | `css/app.css` | all styles. Top: theme tokens for six themes. Baroque look: `:root` Fresco, `[data-theme="dark"]` Vault, `[data-theme="darker"]` Lapis. Classic look: the same under `[data-style="classic"]` (Paper, Graphite, Midnight). End: "Fresco ornaments", every rule prefixed `:where(:root:not([data-style="classic"]))` |
 | `js/core/` | `util.js` (markdown renderer, slug, seeded RNG), `store.js` (state, export, import, merge), `router.js`, `ui.js` (icons, toasts, modal, `applyTheme(theme, style)`), `progress.js`, `gamification.js`, `mistakes.js`, `highlight.js`, `boot-theme.js`, `narrate.js` (lesson, formula and chart to spoken text), `speech.js` (read-aloud player on the Web Speech API, on-device voices only) |
 | `js/engines/` | `python.js` (Pyodide worker, `MLA.python.exec`), `quiz.js` (question types and grading), `graph.js` (prerequisite graph), `srs.js` |
-| `js/data/` | `concepts-*.js` (lessons, grouped by topic rather than by branch), `glossary.js`, `tracks.js`, `achievements.js`, `branches.js`, `legal.js`, `legacy-sections.js` (generated) |
+| `js/data/` | `concepts-*.js` (lessons, grouped by topic rather than by branch), `projects.js` (case studies and sample projects, keyed by lesson id), `glossary.js`, `tracks.js`, `achievements.js`, `branches.js`, `legal.js`, `legacy-sections.js` (generated) |
 | `js/views/` | `concept-view.js` (lesson page), `components.js`, `charts.js` (chart renderer), `demos.js` and `demos-more.js` (canvas demos), `diagrams.js` (SVG diagrams), `problem-view.js`, `map-view.js`, `profile.js` (settings), `dashboard.js`, `pages.js`, `quiz-view.js`, `playground.js`, `editor.js` |
 | `tools/` | `lesson-patch.js` (applies lesson patch files), `lesson-info.js`, `legacy-sections.js`, `make-icons.js`, `visual-diff.js`, `charts/*.py` (the scripts that compute chart data) |
 | `tests/` | `*.test.js` (Node), `_load.js` (loads the app in Node), `e2e/` (Playwright) |
@@ -32,6 +32,7 @@ An interactive learning site, from ML basics to LLMs. It is static (GitHub Pages
 
 ## Content model
 - A concept has id, branch (start, math, code, ml, dl, llm, apps, spec), title, level, minutes, prereqs, tags, summary, why, objectives, sections, when, pitfalls, takeaways, quiz, problems and refs.
+- Optional `cases` and `projects` come from `js/data/projects.js` (keyed by lesson id, attached in `MLA.content.init`); case studies must be real, documented events with a named source.
 - Section types: `text` (md); `code` (md, code, after, predict, `run: false`, lang, timeoutSec); `demo` (a canvas demo name, or `dg-<name>` for a diagram); `chart` (spec, md, after); `check` (question).
 - Section ids are slugs of the titles, with punctuation ignored. Saved progress uses them, so keep a title's words when rewording it.
 - Add or replace sections with patch files: `node tools/lesson-patch.js patch.txt` (`### INSERT` / `### REPLACE` blocks; see the content guide).

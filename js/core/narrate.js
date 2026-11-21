@@ -453,6 +453,12 @@
     else if (s.type === 'check') parts.push(question(s.question, 'Quick check.'));
     return { key: s.id, title, text: parts.filter(Boolean).join(' ') };
   }
+  function project(p) {
+    return sentence(text(p.title)) + ' ' + sentence('A ' + p.level + ' project of about ' + p.hours + ' hours') + ' Goal: ' + md(p.goal) + ' Data and tools: ' + md(p.data) +
+      ' The steps. ' + p.steps.map((s, i) => 'Step ' + (i + 1) + '. ' + md(s)).join(' ') + ' How you know it is done: ' + md(p.done) +
+      ' To go further: ' + p.stretch.map(s => md(s)).join(' ');
+  }
+
   function lesson(c) {
     const items = [{ key: 'intro', title: c.title, text: sentence('Lesson: ' + text(c.title)) + ' ' + sentence(text(c.summary || '')) }];
     if (c.why) items.push({ key: 'why', title: 'Why this matters', text: 'Why this matters. ' + md(c.why) });
@@ -461,6 +467,10 @@
     if (c.when) items.push({ key: 'when', title: 'When to use it', text: 'When to use it, and when not to. ' + md(c.when) });
     if (c.pitfalls) items.push({ key: 'pitfalls', title: 'Common pitfalls', text: 'Common pitfalls. ' + md(c.pitfalls) });
     if (c.takeaways && c.takeaways.length) items.push({ key: 'takeaways', title: 'Key takeaways', text: 'Key takeaways. ' + c.takeaways.map(t => sentence(text(t))).join(' ') });
+    if (c.cases && c.cases.length) items.push({ key: 'cases', title: c.cases.length > 1 ? 'Case studies' : 'Case study',
+      text: (c.cases.length > 1 ? 'Case studies. ' : 'Case study. ') + c.cases.map(k => sentence(text(k.title)) + ' ' + sentence(text(k.when)) + ' ' + md(k.story) + ' What to take from it: ' + md(k.lesson)).join(' ') });
+    if (c.projects && c.projects.length) items.push({ key: 'projects', title: 'Sample projects',
+      text: (c.projects.length > 1 ? 'Sample projects to build. ' : 'A sample project to build. ') + c.projects.map(project).join(' ') });
     const q = (c.quiz || []).length, p = (c.problems || []).length;
     items.push({ key: 'end', title: 'End of the lesson', text: 'That is the end of ' + text(c.title) + '.' + (q || p ? ' To finish it, ' + [q ? 'take the quiz of ' + q + ' questions' : '', p ? 'solve ' + (p === 1 ? 'the practice problem' : 'one of the ' + p + ' practice problems') : ''].filter(Boolean).join(' and ') + ' on the lesson page.' : '') });
     return items.filter(it => it.text && it.text.trim());
