@@ -790,6 +790,34 @@ pre.hl { margin: 0; border: 0; border-radius: 0; background: transparent; paddin
   .boot-slow { animation: boot-fade 0.01s linear 12s forwards; }
 }
 
+/* ---------- Read aloud (js/core/speech.js, the player in js/views/components.js) ---------- */
+.listen-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 12px; }
+.listen-row .tiny { flex: 1 1 260px; }
+.sec-listen { width: 30px; height: 30px; flex: none; color: var(--muted); }
+.sec-listen:hover { color: var(--accent2); }
+[data-narr] { scroll-margin-top: calc(var(--topbar-h) + 14px); }
+.lesson-section.speaking, .concept-hero.speaking, .next-card.speaking { box-shadow: 0 0 0 2px var(--accent), var(--shadow); transition: box-shadow 0.25s; }
+.player { position: fixed; z-index: 70; left: calc(var(--sidebar-w) + 16px); right: 16px; bottom: calc(var(--bottom-h) + 14px); max-width: 760px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px 10px 16px;
+  background: var(--panel); border: 1px solid var(--border2); border-radius: var(--radius); box-shadow: var(--shadow); }
+.player-info { min-width: 0; flex: 1; }
+.player-title { font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player-controls { display: flex; align-items: center; gap: 4px; flex: none; }
+.player-controls .icon-btn { color: var(--text); }
+.player-main { background: var(--accent); color: var(--on-accent) !important; border-radius: 50%; }
+.player-main:hover { background: color-mix(in srgb, var(--accent) 86%, #000); }
+.player-rate { width: auto; padding: 4px 6px; font-size: 0.82rem; border-radius: 8px; }
+.app.has-player .view { padding-bottom: 110px; }
+@media (max-width: 900px) { .player { left: 10px; right: 10px; bottom: calc(var(--bottom-h) + 8px); padding: 8px 8px 8px 12px; } }
+@media (max-width: 420px) { .player-rate { display: none; } }
+
+/* Chart annotations and the description in words */
+.chart .ch-annot { font-size: 11px; font-weight: 650; paint-order: stroke; stroke: var(--editor-bg); stroke-width: 3.5px; stroke-linejoin: round; }
+.chart .ch-annot-ring { fill: none; stroke-width: 1.8; }
+.chart-desc { margin-top: 6px; }
+.chart-desc summary { cursor: pointer; color: var(--muted); }
+.chart-desc p { margin: 6px 0 0; color: var(--text); line-height: 1.55; }
+
 /* ---------- Fresco ornaments (the Baroque look): golden light, clouds and gilding, in CSS and inline SVG only.
  * Every rule is scoped to the Baroque look; :where() adds no specificity, so the rules rank as if unscoped. ---------- */
 :root { --orn-rule: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 150 10'%3E%3Cpath d='M0 5h59M91 5h59' stroke='%23000' stroke-width='1.3'/%3E%3Cpath d='M75 0.5l4.5 4.5-4.5 4.5-4.5-4.5z'/%3E%3Ccircle cx='65' cy='5' r='1.7'/%3E%3Ccircle cx='85' cy='5' r='1.7'/%3E%3C/svg%3E"); --orn-clouds: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1000' height='320'%3E%3Cfilter id='c' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0042 0.0125' numOctaves='5' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 3.1 -1.32'/%3E%3CfeGaussianBlur stdDeviation='1.4'/%3E%3C/filter%3E%3Crect width='1000' height='320' filter='url%28%23c%29'/%3E%3C/svg%3E"); --orn-dentils: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='6'%3E%3Crect x='1' y='0' width='7' height='4.5' rx='0.6'/%3E%3C/svg%3E"); }

@@ -1,5 +1,17 @@
 # ML Atlas: build handoff
 
+## STATUS UPDATE (session 10): read aloud, chart annotations, CLAUDE.md
+
+The user asked for a voice feature that reads the site aloud (a button for the whole lesson and one per box), for charts that are annotated and explained so a listener understands them without the page, with no AI services, on static GitHub Pages.
+
+- `js/core/narrate.js` turns a lesson into spoken text: `MLA.narrate.lesson(c)` returns `[{ key, title, text }]` (intro, why, objectives, every section by id, when, pitfalls, takeaways, end). Formulas are read in words with their `:::where` legends, tables row by row, code is announced but not read, quick checks and predictions read the options, then `PAUSE`, then the answer. `MLA.narrate.chart(spec)` describes a chart: axes, trend per series (rises, falls, peak, valley, levels off), crossings that persist, reference lines, bar values, correlation for scatter series.
+- `js/core/speech.js` is the player engine on the Web Speech API. Only voices with `localService === true` are offered, so nothing is sent to a cloud voice. Text is spoken in chunks of at most 220 characters (Chrome cuts long utterances), which also makes pause, back and next precise. Profile keys: `voice`, `speechRate`, `speechFollow`.
+- UI: "Listen to the lesson" in the lesson header, a speaker button on every box (plays that box alone), the `mla-player` bar (components.js) fixed at the bottom, follow-along scrolling, settings in Progress & Sync → Settings (voice, speed, follow, "Try the voice").
+- Charts (`js/views/charts.js`): end labels for up to four lines, peak and low markers, value labels on small bar charts, and a "Describe this chart in words" panel linked with `aria-describedby`.
+- Tests: `tests/narrate.test.js` (in `npm test`) narrates every lesson and fails on leftover markdown or raw symbols; it also drives the engine with a fake `speechSynthesis`. The e2e suite has a read-aloud test with a stubbed `speechSynthesis`.
+- Limits: browsers stop speech when a phone locks its screen or the tab is discarded; voices differ by device; Firefox on Linux may have no local voices (the buttons then explain that).
+- `CLAUDE.md` (auto-loaded by Claude Code) and `tools/lesson-info.js` were added so future sessions can find lessons and sections without reading the large data files.
+
 ## STATUS UPDATE (session 9, end): two looks, Baroque and Classic
 
 The rebrand is on `main`; the state before it is the branch `pre-rebrand`. The user then asked for a theme setting that lets learners switch between both designs.

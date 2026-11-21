@@ -17,6 +17,11 @@ Possible improvements, ranked by how much they help a learner per unit of effort
 
 **Impact** is the expected gain in learning, reach or safety.
 
+## Done in the seventh round (21 November 2026)
+
+- **Read aloud:** a lesson, or any single box, read by an on-device voice, with a player bar (back, pause, next, speed, stop). Formulas, legends, tables, quick checks and charts are turned into sentences (`js/core/narrate.js`, `js/core/speech.js`).
+- **Charts explain themselves:** end labels, peak and low markers, bar values and a description in words under every chart.
+
 ## Rebrand (merged into `main`; the pre-rebrand state is kept on the `pre-rebrand` branch)
 
 - **Two looks, switchable by learners:** Baroque (the default) and Classic (the original design), each with three themes, chosen in Progress & Sync → Settings or with the palette button in the top bar.

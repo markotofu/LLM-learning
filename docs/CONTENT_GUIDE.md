@@ -226,6 +226,8 @@ Good problems give a small worked example in the prompt, a visible test that mat
 
 ## 6. Authoring gotchas
 
+Lessons are also read aloud (`js/core/narrate.js`), so write markdown that sounds right: use the Unicode math the narrator knows (Σ, √, ‖x‖, x², x_i, ∂L/∂w), give every formula its `:::where` legend (it is read right after the formula), and keep long tables for the "Show the numbers" view. `node tests/narrate.test.js` fails when a lesson leaves markdown or a symbol it cannot read; teach the narrator the new notation instead of avoiding it.
+
 Content sits inside JavaScript template literals (backtick strings):
 
 - Escape markdown backticks as `` \` `` (e.g. code fences become `` \`\`\` ``).

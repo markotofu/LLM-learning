@@ -35,7 +35,7 @@
   };
 
   const Root = {
-    data() { return { sidebarOpen: false, route: MLA.router.route, state: MLA.store.state }; },
+    data() { return { sidebarOpen: false, route: MLA.router.route, state: MLA.store.state, speech: MLA.speech.state }; },
     computed: {
       current() { return ROUTE_VIEW[this.route.name] || { comp: 'view-notfound', nav: '' }; },
       viewProps() { return { route: this.route }; },
@@ -76,7 +76,7 @@
       else if (this.state.profile.preloadPython) setTimeout(() => MLA.python.warmup(), 1500);
     },
     template: `
-    <div class="app" :class="{'full-route': route.full}">
+    <div class="app" :class="{'full-route': route.full, 'has-player': speech.playing}">
       <a class="skip-link" href="#main">Skip to content</a>
       <aside class="sidebar" :class="{open: sidebarOpen}">
         <div class="brand" @click="go('/home')">
@@ -113,7 +113,7 @@
       <nav class="bottom-nav" aria-label="Quick">
         <a v-for="n in bottomNav" :key="n.name" :class="{active: isActive(n.name)}" :href="'#'+n.path" @click.prevent="go(n.path)"><span v-html="icon(n.icon)"></span><span>{{ n.label.split(' ')[n.name==='problems' || n.name==='playground' ? 1 : 0] }}</span></a>
       </nav>
-      <mla-toasts /><mla-modal />
+      <mla-player /><mla-toasts /><mla-modal />
     </div>`
   };
 

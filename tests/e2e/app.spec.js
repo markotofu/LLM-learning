@@ -138,6 +138,36 @@ test('sync code: export, then merge it back without losing anything', async ({ p
   expect(await page.evaluate(() => MLA.store.state.problems['dot-product'].solved)).toBe(true);
 });
 
+test('read aloud: the lesson plays part by part with an on-device voice, and the player stops', async ({ page }) => {
+  // A stand-in for the browser's speech synthesis: one on-device voice, every utterance "ends" after 300 ms.
+  await page.addInitScript(() => {
+    const voice = { voiceURI: 'test-local', name: 'Test voice', lang: 'en-US', localService: true, default: true };
+    window.__spoken = [];
+    window.SpeechSynthesisUtterance = function (text) { this.text = text; };
+    Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: {
+      speaking: false, paused: false, pending: false, getVoices: () => [voice], addEventListener() {}, removeEventListener() {},
+      cancel() {}, pause() {}, resume() {},
+      speak(u) { window.__spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 300); }
+    } });
+  });
+  const errors = await boot(page, '/home');
+  await go(page, '/concept/linear-regression', 'Linear');
+  await page.getByRole('button', { name: 'Listen to the lesson' }).click();
+  const player = page.getByRole('region', { name: 'Read aloud' });
+  await expect(player).toContainText('part 1 of');
+  await expect(page.locator('.concept-hero.speaking')).toHaveCount(1);
+  await player.getByRole('button', { name: 'Next part' }).click();
+  await expect(player).toContainText('part 2 of');
+  expect(await page.evaluate(() => window.__spoken.length)).toBeGreaterThan(0);
+  await player.getByRole('button', { name: 'Stop reading' }).click();
+  await expect(player).toHaveCount(0);
+  // one box alone: the takeaways play and the player closes after them
+  await page.locator('[data-narr="takeaways"] .sec-listen').click();
+  await expect(page.getByRole('region', { name: 'Read aloud' })).toContainText('Key takeaways');
+  await expect(page.getByRole('region', { name: 'Read aloud' })).toHaveCount(0, { timeout: 20000 });
+  expect(errors).toEqual([]);
+});
+
 test.describe('in-browser Python (downloads Pyodide from the CDN)', () => {
   test('a lesson code sample runs and prints its output', async ({ page }) => {
     await boot(page, '/home');

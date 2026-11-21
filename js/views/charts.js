@@ -57,7 +57,13 @@
     // Lay out the legend first: long legends wrap onto extra rows, and the plot area moves down to make room.
     const legend = []; let lpos = 66, lrow = 0;
     series.forEach((s, k) => { if (!s.name) return; const w = 30 + String(s.name).length * 6.6; if (lpos + w > W - 18 && lpos > 66) { lrow++; lpos = 66; } legend.push({ x: lpos, row: lrow, name: s.name, k }); lpos += w; });
-    const PAD = { l: 58, r: 18, t: legend.length ? 30 + lrow * 16 : 18, b: 50 };
+    // Annotations: each line's last value is written just right of its end (up to four lines), so the right margin
+    // grows to fit the widest of those labels.
+    const lineIdx = bar || kind === 'scatter' ? [] : series.map((s, k) => k).filter(k => !series[k].scatter);
+    const lastPoint = s => { const sx = xs(s); for (let i = s.y.length - 1; i >= 0; i--) if (s.y[i] != null && isFinite(s.y[i]) && isFinite(sx[i])) return { x: sx[i], y: s.y[i] }; return null; };
+    const ends = lineIdx.length && lineIdx.length <= 4 ? lineIdx.map(k => ({ k, p: lastPoint(series[k]) })).filter(e => e.p) : [];
+    const endW = ends.length ? Math.max(...ends.map(e => fmt(e.p.y).length)) * 6.4 + 10 : 0;
+    const PAD = { l: 58, r: 18 + endW, t: legend.length ? 30 + lrow * 16 : 18, b: 50 };
     const pw = W - PAD.l - PAD.r, ph = H - PAD.t - PAD.b;
     const lx = v => spec.xLog ? Math.log10(v) : v, ly = v => spec.yLog ? Math.log10(v) : v;
     const X = v => PAD.l + (lx(v) - lx(xlo)) / ((lx(xhi) - lx(xlo)) || 1) * pw;
@@ -100,6 +106,40 @@
       }
     });
     out += '</g>' + refLabels;
+    // annotations, on top of the data and with a halo (.ch-annot): end values, notable peaks and dips, bar values
+    let annot = '';
+    const inPlot = y => Math.min(PAD.t + ph - 2, Math.max(PAD.t + 8, y));
+    const placed = [];                                                    // label anchors, to avoid writing labels on top of each other
+    const free = (x, y, w) => placed.every(p => Math.abs(p.x - x) > (p.w + w) / 2 + 4 || Math.abs(p.y - y) > 12);
+    if (ends.length) {
+      const L = ends.map(e => ({ k: e.k, x: X(e.p.x) + 6, y: inPlot(Y(e.p.y) + 4), t: fmt(e.p.y) })).sort((a, b) => a.y - b.y);
+      for (let i = 1; i < L.length; i++) if (L[i].y - L[i - 1].y < 13) L[i].y = L[i - 1].y + 13;           // keep the labels apart
+      for (const l of L) { annot += '<text x="' + l.x.toFixed(1) + '" y="' + l.y.toFixed(1) + '" class="ch-annot ch-' + (l.k % 6) + '">' + esc(l.t) + '</text>'; placed.push({ x: l.x + l.t.length * 3.2, y: l.y, w: l.t.length * 6.4 }); }
+    }
+    if (MLA.narrate && lineIdx.length && lineIdx.length <= 4) {
+      for (const k of lineIdx) {
+        const s = series[k], sx = xs(s), pts = [];
+        s.y.forEach((y, i) => { if (y != null && isFinite(y) && isFinite(sx[i])) pts.push({ x: sx[i], y }); });
+        if (pts.length < 5) continue;
+        const t = MLA.narrate.trend(pts);
+        if (t.kind !== 'peak' && t.kind !== 'valley') continue;
+        const cx = X(t.at.x), cy = Y(t.at.y), up = t.kind === 'peak';
+        const label = (up ? 'peak ' : 'low ') + fmt(t.at.y), ly2 = inPlot(up ? cy - 10 : cy + 18), w = label.length * 6.4;
+        if (!free(cx, ly2, w)) continue;                                   // no room: the description still mentions it
+        annot += '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="5" class="ch-annot-ring ch-' + (k % 6) + '"/>' +
+          '<text x="' + cx.toFixed(1) + '" y="' + ly2.toFixed(1) + '" text-anchor="middle" class="ch-annot ch-' + (k % 6) + '">' + esc(label) + '</text>';
+        placed.push({ x: cx, y: ly2, w });
+      }
+    }
+    if (bar && cats.length * series.length <= 16) {
+      const band = pw / cats.length, bw = band * 0.72 / series.length;
+      series.forEach((s, k) => s.y.forEach((y, i) => {
+        if (y == null || !isFinite(y)) return;
+        const x = PAD.l + band * i + band * 0.14 + bw * k + Math.max(1, bw - 2) / 2;
+        annot += '<text x="' + x.toFixed(1) + '" y="' + inPlot(y >= 0 ? Y(y) - 5 : Y(y) + 13).toFixed(1) + '" text-anchor="middle" class="ch-annot ch-' + (k % 6) + '">' + esc(fmt(y)) + '</text>';
+      }));
+    }
+    out += annot;
     // legend
     for (const it of legend) out += ((kind === 'scatter' || series[it.k].scatter) ? '<circle cx="' + (it.x + 7) + '" cy="' + (13 + it.row * 16) + '" r="3.6" class="ch-key ch-' + (it.k % 6) + '"/>' : '<rect x="' + it.x + '" y="' + (11 + it.row * 16) + '" width="14" height="4" rx="2" class="ch-key ch-' + (it.k % 6) + '"/>') + '<text x="' + (it.x + 19) + '" y="' + (17 + it.row * 16) + '" class="ch-legend">' + esc(it.name) + '</text>';
     if (spec.xLabel) out += '<text x="' + (PAD.l + pw / 2) + '" y="' + (H - 8) + '" text-anchor="middle" class="ch-label">' + esc(spec.xLabel) + '</text>';
@@ -108,10 +148,14 @@
   }
 
   MLA.charts = { render };
+  let descSeq = 0;
   MLA.components['mla-chart'] = {
     props: { spec: Object, title: String },
+    data() { return { descId: 'chdesc' + (++descSeq) }; },
     computed: {
       svg() { try { return render(this.spec || {}); } catch (e) { return '<text x="20" y="40" class="ch-label">Chart error: ' + esc(e.message) + '</text>'; } },
+      // The chart in words (js/core/narrate.js): the same text the read-aloud player speaks, and the SVG's description.
+      desc() { try { return MLA.narrate ? MLA.narrate.chart(this.spec || {}) : ''; } catch (e) { return ''; } },
       // Series with their own x values (scatter plots, paths) are listed point by point; shared-x data as one row per x.
       long() { return ((this.spec && this.spec.series) || []).some(x => Array.isArray(x.x)); },
       rows() {
@@ -129,7 +173,8 @@
     methods: { cell(v) { return typeof v === 'number' ? String(+v.toFixed(4)) : v == null ? '' : v; } },
     template: `
     <div class="card demo-card chart-card">
-      <div class="diagram-wrap"><svg class="diagram chart" viewBox="0 0 640 320" role="img" :aria-label="title || 'chart'" v-html="svg"></svg></div>
+      <div class="diagram-wrap"><svg class="diagram chart" viewBox="0 0 640 320" role="img" :aria-label="title || 'chart'" :aria-describedby="desc ? descId : null" v-html="svg"></svg></div>
+      <details v-if="desc" class="chart-desc tiny"><summary>Describe this chart in words</summary><p :id="descId">{{ desc }}</p></details>
       <details class="chart-data tiny"><summary>Show the numbers</summary>
         <table class="mini-table"><thead><tr v-if="long"><th>series</th><th>{{ (spec && spec.xLabel) || 'x' }}</th><th>{{ (spec && spec.yLabel) || 'y' }}</th></tr><tr v-else><th>{{ (spec && spec.xLabel) || 'x' }}</th><th v-for="s in (spec && spec.series) || []" :key="s.name">{{ s.name || (spec && spec.yLabel) || 'y' }}</th></tr></thead>
         <tbody><tr v-for="(r, i) in rows" :key="i"><td v-for="(v, j) in r" :key="j" class="mono">{{ cell(v) }}</td></tr></tbody></table>

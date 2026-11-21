@@ -58,6 +58,32 @@
   C['mla-toasts'] = { computed: { toasts() { return MLA.ui.toasts; } }, template: `
     <div class="toasts" aria-live="polite"><div v-for="t in toasts" :key="t.id" class="toast" :class="t.kind">{{ t.msg }}</div></div>` };
 
+  // The read-aloud player: shown while a lesson (or one part of it) is being read; it stays while you browse elsewhere.
+  C['mla-player'] = {
+    data() { return { s: MLA.speech.state, profile: MLA.store.state.profile, rates: [0.75, 1, 1.25, 1.5, 1.75, 2] }; },
+    computed: {
+      rate: { get() { return Number(this.profile.speechRate) || 1; }, set(v) { MLA.speech.setRate(Number(v)); } },
+      onLesson() { const r = MLA.router.route; return r.name === 'concept' && r.params.id === this.s.source; }
+    },
+    methods: {
+      back() { MLA.router.navigate('/concept/' + this.s.source); }
+    },
+    template: `
+    <div v-if="s.playing" class="player" role="region" aria-label="Read aloud">
+      <div class="player-info">
+        <div class="tiny dim">{{ s.paused ? 'Paused' : 'Reading aloud' }}<span v-if="s.total > 1"> · part {{ s.index + 1 }} of {{ s.total }}</span></div>
+        <div class="player-title">{{ s.title }}</div>
+        <a v-if="s.source && !onLesson" class="tiny" href="#" @click.prevent="back">Back to {{ s.lessonTitle }}</a>
+      </div>
+      <div class="player-controls">
+        <button class="icon-btn" @click="MLA.speech.prev()" aria-label="Previous part" title="Previous part"><mla-icon name="skipBack" :size="17"/></button>
+        <button class="icon-btn player-main" @click="MLA.speech.toggle()" :aria-label="s.paused ? 'Resume' : 'Pause'" :title="s.paused ? 'Resume' : 'Pause'"><mla-icon :name="s.paused ? 'play' : 'pause'" :size="17"/></button>
+        <button class="icon-btn" @click="MLA.speech.next()" aria-label="Next part" title="Next part"><mla-icon name="skipForward" :size="17"/></button>
+        <select v-model="rate" class="player-rate" aria-label="Reading speed" title="Reading speed"><option v-for="r in rates" :key="r" :value="r">{{ r }}×</option></select>
+        <button class="icon-btn" @click="MLA.speech.stop()" aria-label="Stop reading" title="Stop"><mla-icon name="stop" :size="17"/></button>
+      </div>
+    </div>` };
+
   C['mla-modal'] = {
     computed: { m() { return MLA.ui.modal; }, comp() { return this.m.component ? MLA.components[this.m.component] : null; } },
     methods: { act(a) { MLA.ui.closeModal(a.value); }, bg(e) { if (e.target === e.currentTarget && this.m.dismissible) MLA.ui.closeModal(null); }, key(e) { if (e.key === 'Escape' && this.m.open && this.m.dismissible) MLA.ui.closeModal(null); } },

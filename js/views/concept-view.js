@@ -5,7 +5,7 @@
 
   MLA.components['view-concept'] = {
     props: { route: Object },
-    data() { return { state: MLA.store.state, tab: (this.route && this.route.query.tab) || 'learn', checkDone: {}, quizQs: null, preview: false }; },
+    data() { return { state: MLA.store.state, tab: (this.route && this.route.query.tab) || 'learn', checkDone: {}, quizQs: null, preview: false, speech: MLA.speech.state }; },
     computed: {
       P() { return MLA.progress; },
       c() { return this.P.concept(this.route.params.id); },
@@ -20,9 +20,18 @@
       reqText() { return this.P.requirementsText(this.c.id); },
       problems() { return this.c.problems.map(p => ({ p, status: this.P.problemStatus(p.id), preview: (p.prompt || '').split('\n').find(l => l.trim() && !/^[#|>`]/.test(l.trim())) || '' })); },
       note: { get() { return this.state.notes[this.c.id] || ''; }, set(v) { this.state.notes[this.c.id] = v; } },
-      statusText() { return { mastered: 'Mastered', completed: 'Completed', started: 'In progress', ready: 'Ready to learn', locked: 'Prerequisites recommended first' }[this.status]; }
+      statusText() { return { mastered: 'Mastered', completed: 'Completed', started: 'In progress', ready: 'Ready to learn', locked: 'Prerequisites recommended first' }[this.status]; },
+      // Read aloud: the lesson as spoken parts (js/core/narrate.js), about 15 characters a second at normal speed.
+      narration() { return this.c ? MLA.narrate.lesson(this.c) : []; },
+      listenMinutes() { return Math.max(1, Math.round(this.narration.reduce((n, it) => n + it.text.length, 0) / 15 / 60)); },
+      readingHere() { return this.speech.playing && this.c && this.speech.source === this.c.id; }
     },
     watch: {
+      'speech.key'(key) {                                   // follow along: scroll to the part being read
+        if (!key || !this.readingHere || this.tab !== 'learn' || this.state.profile.speechFollow === false || !this.$el || !this.$el.querySelector) return;
+        const el = this.$el.querySelector('[data-narr="' + key + '"]');
+        if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      },
       tab(v) { if (v === 'quiz' && !this.quizQs) this.startQuiz(); if (v === 'learn') this.$nextTick(this.observe); },
       'route.query.tab'(v) { if (v) this.tab = v; }
     },
@@ -69,7 +78,13 @@
         if (passed) MLA.ui.toast('Quiz passed. ' + (this.pr.solved < this.pr.needSolved ? 'Solve a practice problem to complete the concept.' : ''), 'success', 4500);
       },
       retryQuiz() { this.quizQs = MLA.quiz.prepare(this.c.quiz, MLA.util.seededRng(Date.now() >>> 0)); },
-      openProblem(p) { this.go('/problem/' + p.id); }
+      openProblem(p) { this.go('/problem/' + p.id); },
+      listen() { MLA.speech.play(this.narration, 0, { source: this.c.id, lessonTitle: this.c.title }); },
+      listenOne(key) {
+        const i = this.narration.findIndex(it => it.key === key);
+        if (i >= 0) MLA.speech.play(this.narration, i, { single: true, source: this.c.id, lessonTitle: this.c.title });
+      },
+      speaking(key) { return this.readingHere && this.speech.key === key; }
     },
     template: `
     <div v-if="!c"><empty-state text="Concept not found."><button class="btn primary mt" @click="go('/map')">Open the concept map</button></empty-state></div>
@@ -79,9 +94,13 @@
         <div class="row" style="gap:6px"><branch-chip :id="c.branch"/><level-badge :level="c.level"/><span class="chip"><mla-icon name="clock" :size="13"/> {{ c.minutes }} min</span></div>
       </div>
 
-      <div class="concept-hero">
+      <div class="concept-hero" data-narr="intro" :class="{speaking: speaking('intro')}">
         <div class="row" style="gap:10px;align-items:center"><status-dot :status="status" :size="26"/><h2 style="margin:0">{{ c.title }}</h2></div>
         <p class="muted" style="margin:6px 0 10px">{{ c.summary }}</p>
+        <div v-if="speech.supported" class="listen-row">
+          <button class="btn sm" @click="listen"><mla-icon name="headphones" :size="16"/> {{ readingHere ? 'Start again from the top' : 'Listen to the lesson' }}</button>
+          <span class="tiny dim">About {{ listenMinutes }} min read aloud, with formulas, charts and quick checks explained in words. Each part also has its own <mla-icon name="volume" :size="12"/> button.</span>
+        </div>
         <mla-progress :value="pr.pct" :color="branch.color" :label="statusText + (pr.completed ? '' : ' · ' + pr.pct + '% explored')" />
         <div v-if="reqText && !pr.completed" class="tiny dim mt-sm">{{ reqText }}</div>
       </div>
@@ -103,21 +122,22 @@
             </div>
             <div v-else-if="prereqs.length" class="builds-on small"><span class="muted">Builds on:</span> <a v-for="m in prereqs" :key="m.id" class="chip clickable" @click="go('/concept/'+m.id)"><status-dot :status="P.status(m.id)" :size="15"/> {{ m.title }}</a></div>
 
-            <div v-if="c.why" class="lesson-section why-card">
-              <div class="sec-head"><mla-icon name="sparkles" :size="18"/><h3>Why this matters</h3></div>
+            <div v-if="c.why" class="lesson-section why-card" data-narr="why" :class="{speaking: speaking('why')}">
+              <div class="sec-head"><mla-icon name="sparkles" :size="18"/><h3>Why this matters</h3><span class="spacer"></span><button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne('why')" aria-label="Listen to: Why this matters" title="Listen to this part"><mla-icon name="volume" :size="16"/></button></div>
               <mla-md :src="c.why" />
             </div>
-            <div v-if="c.objectives.length" class="lesson-section">
-              <div class="sec-head"><mla-icon name="target" :size="18"/><h3>By the end you will be able to</h3></div>
+            <div v-if="c.objectives.length" class="lesson-section" data-narr="objectives" :class="{speaking: speaking('objectives')}">
+              <div class="sec-head"><mla-icon name="target" :size="18"/><h3>By the end you will be able to</h3><span class="spacer"></span><button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne('objectives')" aria-label="Listen to: the objectives" title="Listen to this part"><mla-icon name="volume" :size="16"/></button></div>
               <ul class="objectives"><li v-for="(o,i) in c.objectives" :key="i"><mla-md :src="o" inline /></li></ul>
             </div>
 
-            <section v-for="(s,i) in c.sections" :key="i" :id="'sec-'+i" class="lesson-section" :class="['sec-'+s.type, {read: isRead(s.id)}]">
+            <section v-for="(s,i) in c.sections" :key="i" :id="'sec-'+i" class="lesson-section" :data-narr="s.id" :class="['sec-'+s.type, {read: isRead(s.id), speaking: speaking(s.id)}]">
               <div class="sec-head">
                 <mla-icon :name="secIcon(s)" :size="17"/>
                 <h3>{{ s.title || (s.type==='check' ? 'Quick check' : 'Section ' + (i+1)) }}</h3>
                 <span class="spacer"></span>
                 <span v-if="isRead(s.id)" class="chip green tiny"><mla-icon name="check" :size="11"/> read</span>
+                <button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne(s.id)" :aria-label="'Listen to: ' + (s.title || 'this quick check')" title="Listen to this part"><mla-icon name="volume" :size="16"/></button>
               </div>
               <template v-if="s.type==='text'"><mla-md :src="s.md" /></template>
               <template v-else-if="s.type==='code'">
@@ -152,16 +172,16 @@
               <div v-if="s.type!=='check'" class="sec-end" :data-sid="s.id"></div>
             </section>
 
-            <div v-if="c.when" class="lesson-section when-card">
-              <div class="sec-head"><mla-icon name="route" :size="18"/><h3>When to use it (and when not to)</h3></div>
+            <div v-if="c.when" class="lesson-section when-card" data-narr="when" :class="{speaking: speaking('when')}">
+              <div class="sec-head"><mla-icon name="route" :size="18"/><h3>When to use it (and when not to)</h3><span class="spacer"></span><button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne('when')" aria-label="Listen to: When to use it" title="Listen to this part"><mla-icon name="volume" :size="16"/></button></div>
               <mla-md :src="c.when" />
             </div>
-            <div v-if="c.pitfalls" class="lesson-section pitfalls-card">
-              <div class="sec-head"><mla-icon name="warning" :size="18"/><h3>Common pitfalls</h3></div>
+            <div v-if="c.pitfalls" class="lesson-section pitfalls-card" data-narr="pitfalls" :class="{speaking: speaking('pitfalls')}">
+              <div class="sec-head"><mla-icon name="warning" :size="18"/><h3>Common pitfalls</h3><span class="spacer"></span><button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne('pitfalls')" aria-label="Listen to: Common pitfalls" title="Listen to this part"><mla-icon name="volume" :size="16"/></button></div>
               <mla-md :src="c.pitfalls" />
             </div>
-            <div v-if="c.takeaways.length" class="lesson-section takeaways-card">
-              <div class="sec-head"><mla-icon name="star" :size="18"/><h3>Key takeaways</h3></div>
+            <div v-if="c.takeaways.length" class="lesson-section takeaways-card" data-narr="takeaways" :class="{speaking: speaking('takeaways')}">
+              <div class="sec-head"><mla-icon name="star" :size="18"/><h3>Key takeaways</h3><span class="spacer"></span><button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne('takeaways')" aria-label="Listen to: Key takeaways" title="Listen to this part"><mla-icon name="volume" :size="16"/></button></div>
               <ul class="takeaways"><li v-for="(t,i) in c.takeaways" :key="i"><mla-md :src="t" inline /></li></ul>
             </div>
             <div v-if="c.refs && c.refs.length" class="lesson-section">
@@ -169,7 +189,7 @@
               <ul><li v-for="r in c.refs" :key="r.url"><a :href="r.url" target="_blank" rel="noopener">{{ r.title }}</a><span v-if="r.note" class="tiny dim">: {{ r.note }}</span></li></ul>
             </div>
 
-            <div class="card next-card">
+            <div class="card next-card" data-narr="end" :class="{speaking: speaking('end')}">
               <h3 style="margin-top:0">Prove it</h3>
               <p class="small muted">Understanding shows up when you can use it. {{ reqText || 'This concept is complete. The remaining problems and a 90%+ quiz score earn mastery.' }}</p>
               <div class="btn-row">

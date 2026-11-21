@@ -24,7 +24,7 @@
   }
 
   MLA.components['view-profile'] = {
-    data() { return { state: MLA.store.state, nameEdit: MLA.store.state.profile.name, mode: 'merge', syncOut: '', syncIn: '', busy: false }; },
+    data() { return { state: MLA.store.state, nameEdit: MLA.store.state.profile.name, mode: 'merge', syncOut: '', syncIn: '', busy: false, speech: MLA.speech.state }; },
     computed: {
       G() { return MLA.gamification; }, P() { return MLA.progress; },
       level() { return this.G.levelInfo(); }, streak() { return this.G.streakStatus(); },
@@ -46,6 +46,8 @@
       saveName() { this.state.profile.name = (this.nameEdit || 'Learner').trim().slice(0, 24) || 'Learner'; MLA.ui.toast('Name updated.', 'success'); },
       setTheme(t) { this.state.profile.theme = t; MLA.ui.applyTheme(t, this.state.profile.style); },
       setLook(s) { this.state.profile.style = s; MLA.ui.applyTheme(this.state.profile.theme, s); },
+      setRate(r) { MLA.speech.setRate(Number(r)); },
+      trySpeech() { MLA.speech.sample(); },
       exportFile() {
         this.state.stats.exports = (this.state.stats.exports || 0) + 1; MLA.gamification.checkAchievements();
         const name = 'ml-atlas-progress-' + MLA.util.todayKey() + '.json';
@@ -127,6 +129,13 @@
           <div class="card-title"><h3><mla-icon name="settings" :size="18"/> Settings</h3></div>
           <div class="field"><label>Look</label><div class="pills"><button :class="{active:look==='baroque'}" @click="setLook('baroque')" title="After baroque ceiling frescoes: gold, clouds and serif type">Baroque</button><button :class="{active:look==='classic'}" @click="setLook('classic')" title="The original design: clean and minimal">Classic</button></div></div>
           <div class="field"><label>Theme</label><div class="pills"><button v-for="o in themeOptions" :key="o.id" :class="{active:theme===o.id}" @click="setTheme(o.id)" :title="o.hint">{{ o.label }}</button></div></div>
+          <div class="field"><label>Read-aloud voice</label>
+            <select v-model="state.profile.voice" :disabled="!speech.supported || !speech.voices.length" aria-label="Read-aloud voice"><option value="">Automatic (an English voice on this device)</option><option v-for="v in speech.voices" :key="v.uri" :value="v.uri">{{ v.name }} ({{ v.lang }})</option></select>
+            <div class="tiny dim mt-sm">{{ !speech.supported ? 'This browser cannot read text aloud.' : speech.voices.length ? 'Only voices installed on this device are offered, so lesson text never leaves it.' : 'No voice is installed on this device for the browser to use.' }}</div>
+          </div>
+          <div class="field"><label>Reading speed: {{ state.profile.speechRate || 1 }}×</label><input type="range" min="0.5" max="2" step="0.25" :value="state.profile.speechRate || 1" @input="setRate($event.target.value)" aria-label="Reading speed"></div>
+          <label class="checkbox"><input type="checkbox" v-model="state.profile.speechFollow"> Scroll to the part being read</label>
+          <div class="btn-row mt-sm"><button class="btn sm" :disabled="!speech.supported" @click="trySpeech"><mla-icon name="volume" :size="15"/> Try the voice</button></div>
           <div class="field"><label>Code editor font size: {{ state.profile.editorFontSize }}px</label><input type="range" min="11" max="22" step="1" v-model.number="state.profile.editorFontSize"></div>
           <div class="field"><label>Time limit per run: {{ state.profile.timeoutSec }} s (stops infinite loops)</label><input type="range" min="5" max="120" step="5" v-model.number="state.profile.timeoutSec"></div>
           <label class="checkbox"><input type="checkbox" v-model="state.profile.preloadPython"> Load Python in the background when the app opens</label>
