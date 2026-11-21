@@ -921,7 +921,23 @@ print(pred.astype(int) + 2 * gt.astype(int))          # 3 = correct, 2 = missed,
 - **Open-vocabulary detectors** (OWL-ViT, Grounding DINO) take a text prompt such as "a red backpack" and find matching objects, building on image–text pretraining as in CLIP, so new categories need no new labels.
 - **Segment Anything (SAM)** is a promptable segmentation model: given a point, a box or a rough mask, it returns the object's mask; it was trained on over a billion masks. Combined with an open-vocabulary detector, it can segment objects named in text.
 
-Detection metrics depend on the IoU threshold (a box that overlaps by 0.5 may count at one threshold and not at another), so always report which variant of mAP you use.` }
+Detection metrics depend on the IoU threshold (a box that overlaps by 0.5 may count at one threshold and not at another), so always report which variant of mAP you use.` },
+      { type: 'code', title: "Counting objects with a pretrained detector", lang: 'pytorch', md: `Most practical detection starts from a model pretrained on COCO (80 everyday object classes) and either uses it directly or fine-tunes it. Here torchvision's Faster R-CNN counts the cars in a photo. Run it locally (\`pip install torch torchvision\`).`, code: `import torch
+from torchvision.io import read_image
+from torchvision.models.detection import fasterrcnn_resnet50_fpn, FasterRCNN_ResNet50_FPN_Weights
+
+weights = FasterRCNN_ResNet50_FPN_Weights.DEFAULT
+model = fasterrcnn_resnet50_fpn(weights=weights).eval()
+preprocess = weights.transforms()
+names = weights.meta["categories"]                 # COCO category names, indexed by label id
+
+img = read_image("street.jpg")                     # a uint8 tensor of shape (3, H, W)
+with torch.no_grad():
+    out = model([preprocess(img)])[0]              # a dict of boxes, labels and scores
+
+keep = (out["scores"] > 0.6) & (out["labels"] == names.index("car"))
+print(int(keep.sum()), "cars")
+print(out["boxes"][keep])                          # each box is [x1, y1, x2, y2] in pixels`, after: `The detector has already applied non-maximum suppression; the confidence threshold (0.6 here) is the knob you tune. Choose it on images you have counted by hand: a high threshold misses small or partly hidden objects, a low one counts some objects twice or counts shadows. For classes COCO does not have, fine-tune the same model on a few hundred labelled images of your own.` }
     ],
     when: `- Detection for counting and locating objects: vehicles, people, products, defects, text regions.
 - Semantic segmentation for per-pixel understanding: medical scans, satellite imagery, road scenes, background removal.
@@ -1180,7 +1196,39 @@ print("triangles in each graph:", round(np.trace(np.linalg.matrix_power(six_ring
 - **Leakage in link prediction**: the edges you test on must be removed from the graph the model sees during training.
 - **Expressiveness**: standard message passing cannot distinguish some differently structured graphs (it is bounded by the Weisfeiler–Lehman test).` },
       { type: 'chart', title: "Over-smoothing: node vectors become indistinguishable", md: `Random features on a 40-node graph with two communities, propagated with the normalised adjacency Â of a GCN (no learned weights), measuring how much the directions of the node vectors still differ:`, after: `Each propagation step averages every node with its neighbours, so the differences shrink geometrically: after a few dozen layers every node's vector points in the same direction (only its length still depends on its degree), and a classifier on top can no longer tell the nodes apart. Keeping half of each node's own vector at every step (a residual-style update) slows the collapse considerably. This is why most GNNs use only 2 to 4 layers, plus residual connections, normalisation or jumping-knowledge readouts when they need more.`, chart: {"kind":"line","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48],"yLog":true,"points":false,"series":[{"name":"plain propagation: H ← ÂH","y":[0.9748,0.8378,0.6442,0.4955,0.3851,0.3022,0.2388,0.1894,0.1507,0.1202,0.09605,0.07687,0.06161,0.04943,0.0397,0.0319,0.02566,0.02065,0.01662,0.01338,0.01078,0.008689,0.007004,0.005646,0.004553,0.003672,0.002962,0.002389,0.001927,0.001555,0.001255,0.001012,0.0008169,0.0006592,0.000532,0.0004293,0.0003465,0.0002796,0.0002257,0.0001821,0.000147,0.0001186,0.00009573,0.00007726,0.00006236,0.00005033,0.00004062,0.00003278,0.00002646]},{"name":"half residual: H ← ½H + ½ÂH","y":[0.9748,0.9338,0.8687,0.7868,0.6989,0.6158,0.5418,0.4774,0.4215,0.3731,0.3313,0.2948,0.2629,0.2349,0.2101,0.1881,0.1686,0.1512,0.1357,0.1219,0.1095,0.09842,0.08851,0.07962,0.07165,0.0645,0.05807,0.05231,0.04712,0.04246,0.03827,0.0345,0.0311,0.02804,0.02529,0.02281,0.02058,0.01857,0.01675,0.01512,0.01364,0.01231,0.01111,0.01003,0.009055,0.008175,0.007381,0.006664,0.006017]}],"xLabel":"number of message-passing layers","yLabel":"spread of node-vector directions (log scale)"} },
-      { type: 'check', question: { type: 'tf', q: 'A GNN\'s output for a node changes if you renumber the nodes of the graph.', answer: false, explain: 'Shared weights and order-independent aggregation make it permutation-equivariant.' } }
+      { type: 'check', question: { type: 'tf', q: 'A GNN\'s output for a node changes if you renumber the nodes of the graph.', answer: false, explain: 'Shared weights and order-independent aggregation make it permutation-equivariant.' } },
+      { type: 'code', title: "A GCN on a citation graph with PyTorch Geometric", lang: 'pytorch', md: `The GCN from this lesson, with a library that handles sparse graphs efficiently. Cora is a standard benchmark: 2,708 papers, their citation links, and 140 labelled papers to train on. Run it locally (\`pip install torch torch_geometric\`).`, code: `import torch
+import torch.nn.functional as F
+from torch_geometric.datasets import Planetoid
+from torch_geometric.nn import GCNConv
+
+data = Planetoid(root="data", name="Cora")[0]    # features, edges, labels and the standard split masks
+
+class GCN(torch.nn.Module):
+    def __init__(self, d_in, d_hidden, n_classes):
+        super().__init__()
+        self.conv1 = GCNConv(d_in, d_hidden)
+        self.conv2 = GCNConv(d_hidden, n_classes)
+
+    def forward(self, x, edge_index):
+        x = F.dropout(x, p=0.5, training=self.training)
+        x = F.relu(self.conv1(x, edge_index))
+        x = F.dropout(x, p=0.5, training=self.training)
+        return self.conv2(x, edge_index)
+
+model = GCN(data.num_features, 16, 7)
+opt = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
+for epoch in range(200):
+    model.train()
+    opt.zero_grad()
+    out = model(data.x, data.edge_index)
+    F.cross_entropy(out[data.train_mask], data.y[data.train_mask]).backward()
+    opt.step()
+
+model.eval()
+pred = model(data.x, data.edge_index).argmax(dim=1)
+acc = (pred[data.test_mask] == data.y[data.test_mask]).float().mean().item()
+print(f"test accuracy {acc:.3f}")`, after: `Expect a test accuracy of about 0.8, against roughly 0.55 to 0.6 for an MLP that sees each paper's words but not its citations: the graph carries much of the signal. Results vary by a point or two between random seeds, so report a mean over several seeds. Two layers is typical; more layers start to over-smooth, as this lesson showed.` }
     ],
     when: `- Molecules and materials (property prediction, generation), proteins.
 - Social, citation and transaction networks: classification, fraud rings, recommendation.
@@ -1428,7 +1476,19 @@ print("one wrong word in nine is about 11%:", round(wer(reference, "please book 
 - **Neural audio codecs** compress audio into sequences of discrete **tokens** (using residual vector quantization), so a language model can read and generate audio just like text.
 - **Speech-native LLMs** take audio tokens or features in and produce audio out directly: lower latency than chaining speech-to-text, an LLM and text-to-speech, and they keep tone and emotion.
 - **Responsibility**: voice cloning enables impersonation and fraud; use consent, disclosure and audio watermarking.` },
-      { type: 'check', question: { type: 'tf', q: 'In CTC decoding, repeated characters are collapsed first and blanks are removed afterwards.', answer: true, explain: 'That order lets a blank separate genuine double letters.' } }
+      { type: 'check', question: { type: 'tf', q: 'In CTC decoding, repeated characters are collapsed first and blanks are removed afterwards.', answer: true, explain: 'That order lets a blank separate genuine double letters.' } },
+      { type: 'code', title: "Transcribing audio and measuring the error", lang: 'pytorch', md: `A pretrained Whisper model through the Hugging Face pipeline, and the word error rate against a transcript you typed yourself. Run it locally (\`pip install transformers torch jiwer\`; decoding audio files also needs ffmpeg).`, code: `import re
+import jiwer
+from transformers import pipeline
+
+asr = pipeline("automatic-speech-recognition", model="openai/whisper-small")
+result = asr("interview.wav", chunk_length_s=30)     # long audio is processed in 30-second windows
+hypothesis = result["text"]
+
+reference = "the transcript you typed while listening"
+normalize = lambda s: re.sub(r"[^a-z0-9' ]", " ", s.lower()).split()
+print(hypothesis)
+print("WER:", jiwer.wer(" ".join(normalize(reference)), " ".join(normalize(hypothesis))))`, after: `Normalize both texts the same way before computing WER (lower case, no punctuation), or the score measures formatting rather than recognition. Test on audio like the audio you care about (accents, background noise, the microphone), because published WER figures come from cleaner benchmarks. Smaller Whisper models are faster and less accurate; compare two sizes on your own clips.` }
     ],
     when: `- Transcription, subtitles, voice commands and call analytics (speech recognition).
 - Voice interfaces and accessibility (text-to-speech), speaker identification, sound-event detection (alarms, machinery faults).

@@ -26,12 +26,12 @@ The effect was so large that it set off an alert designed to catch bugs. The tea
       `Intuition is a poor guide to which changes matter; a well-run experiment with enough traffic and guardrail metrics is a better one. A surprisingly large effect deserves suspicion first: check the setup, look for a bug, and replicate before you ship.`,
       { title: 'Kohavi and Thomke, "The Surprising Power of Online Experiments", Harvard Business Review, September 2017', url: 'https://hbr.org/2017/09/the-surprising-power-of-online-experiments' })],
 
-    'data-visualization': [C('Anscombe\'s quartet', '1973',
-      `The statistician Francis Anscombe built four small datasets of 11 points each. All four have the same mean of x (9) and of y (about 7.5), nearly the same variances, the same correlation (about 0.816) and the same least-squares line, y = 3 + 0.5x.
+    'data-visualization': [C('The Challenger launch decision', '1986',
+      `On the night before the space shuttle Challenger was launched on 28 January 1986, engineers at Morton Thiokol, the company that built its solid rocket boosters, recommended against launching in the forecast cold. Rubber O-rings sealed the joints of the boosters, several had been damaged on earlier flights, and the engineers believed that cold rubber sealed less well. Their charts did not persuade the managers, and the launch went ahead at an air temperature of about 36 °F (2 °C), far colder than any earlier launch; the coldest before had been 53 °F (12 °C). A joint failed, and the shuttle broke apart 73 seconds after lift-off. All seven crew members died.
 
-Plotted, they look nothing alike: a noisy linear cloud, a smooth curve, a perfect line with one outlier that tilts the fit, and a vertical stack of points with a single far-away point that creates the whole correlation.`,
-      `Summary statistics hide shape. Plot the data before you fit or report anything: a scatter plot shows curvature, outliers and single points with large influence, which a correlation coefficient or a regression table cannot show.`,
-      { title: 'Anscombe, "Graphs in Statistical Analysis", The American Statistician 27 (1973)', url: 'https://en.wikipedia.org/wiki/Anscombe%27s_quartet' })],
+The presidential commission that investigated the accident pointed to a flaw in how the evidence had been examined: the discussion before the launch looked only at the flights on which O-rings had been damaged, and in that subset temperature showed no clear pattern. Adding the flights without damage, which had all launched in warmer weather, made the relationship between cold and damage plain.`,
+      `Which data you plot decides what you can see. Include the cases where nothing happened, put the variable the decision depends on (here, temperature) on an axis, and make the comparison that matters as direct as possible.`,
+      { title: 'Report of the Presidential Commission on the Space Shuttle Challenger Accident (1986)', url: 'https://en.wikipedia.org/wiki/Space_Shuttle_Challenger_disaster' })],
 
     'cross-validation': [C('Hundreds of COVID-19 imaging models, none ready for the clinic', '2020 to 2021',
       `In 2020 many research groups published machine learning models that diagnosed COVID-19 or predicted its course from chest X-rays and CT scans, often with very high reported accuracy. Roberts and colleagues screened more than 2,000 such papers and reviewed 62 in detail. They found none of potential clinical use, because of methodological flaws or underlying biases.

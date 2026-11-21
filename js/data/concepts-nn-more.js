@@ -1141,6 +1141,49 @@ print("weights of a 3x3 conv from 64 to 128 channels (no biases):", 3 * 3 * 64 *
 | large | fine-tune everything, still starting from the pretrained weights |
 
 Practical tips: replace the final layer to match your classes; give the pretrained layers a learning rate 10 to 100 times smaller than the new head; use the same preprocessing (resizing and normalisation) the backbone was trained with; and add **data augmentation** (flips, crops, colour changes) matching the variations you expect, so the model learns invariances instead of memorising the few images it has (see [Data-Centric ML](#/concept/data-centric)).` },
+      { type: 'code', title: "Fine-tuning a pretrained network in PyTorch", lang: 'pytorch', md: `The recipe from the section above, written out with torchvision: load a ResNet-18 trained on ImageNet, freeze it, replace its last layer with a new one for your classes, and train only that layer first. Run it locally (\`pip install torch torchvision\`); a GPU makes it much faster.`, code: `import torch
+import torch.nn as nn
+from torchvision import datasets, models, transforms
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+for p in model.parameters():
+    p.requires_grad = False                          # freeze the pretrained body
+model.fc = nn.Linear(model.fc.in_features, 10)       # a new head for 10 classes (trainable)
+model.to(device)
+
+mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]   # ImageNet statistics the network was trained with
+train_tf = transforms.Compose([transforms.RandomResizedCrop(224, scale=(0.6, 1.0)), transforms.RandomHorizontalFlip(),
+                               transforms.ToTensor(), transforms.Normalize(mean, std)])
+test_tf = transforms.Compose([transforms.Resize(224), transforms.ToTensor(), transforms.Normalize(mean, std)])
+train_set = datasets.CIFAR10("data", train=True, download=True, transform=train_tf)
+test_set = datasets.CIFAR10("data", train=False, download=True, transform=test_tf)
+train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True, num_workers=2)
+test_loader = torch.utils.data.DataLoader(test_set, batch_size=256, num_workers=2)
+
+def accuracy():
+    model.eval()
+    correct = 0
+    with torch.no_grad():
+        for x, y in test_loader:
+            correct += (model(x.to(device)).argmax(1) == y.to(device)).sum().item()
+    return correct / len(test_set)
+
+opt = torch.optim.AdamW(model.fc.parameters(), lr=1e-3)
+loss_fn = nn.CrossEntropyLoss()
+for epoch in range(2):
+    model.train()
+    for x, y in train_loader:
+        x, y = x.to(device), y.to(device)
+        opt.zero_grad()
+        loss_fn(model(x), y).backward()
+        opt.step()
+    print(f"epoch {epoch}: test accuracy {accuracy():.3f}")
+
+# Stage 2: unfreeze everything and continue with a learning rate about ten times smaller.
+for p in model.parameters():
+    p.requires_grad = True
+opt = torch.optim.AdamW(model.parameters(), lr=1e-4)`, after: `Training only the new head is fast and already gives a useful model, because the frozen layers supply general features (edges, textures, parts). The second stage adapts those features to your images; the small learning rate keeps it from destroying what the network already knows. Watch validation accuracy after every epoch and keep the best checkpoint. The CIFAR-10 project at the end of this lesson builds on this code.` },
       { type: 'text', title: 'Landmark architectures', md: `- **LeNet-5** (1998): digit recognition for cheques; the original CNN design.
 - **AlexNet** (2012): deep CNN on GPUs with ReLU and dropout; won ImageNet by a huge margin.
 - **VGG** (2014): simple stacks of 3×3 convolutions.

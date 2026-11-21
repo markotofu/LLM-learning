@@ -1659,7 +1659,24 @@ Very large neural networks can fit random labels perfectly, yet generalize well 
 | **Overfitting** | more training data; data augmentation; regularization (L1/L2, dropout); a simpler model; fewer features; early stopping; ensembles |
 
 And always: diagnose with a **validation set** (or cross-validation), never with the training set.` },
-      { type: 'check', question: { type: 'tf', q: 'Adding more training data is a good remedy for high bias (underfitting).', answer: false, explain: 'More data reduces variance. If the model family is too simple, more data won\'t fix it: increase capacity or improve features.' } }
+      { type: 'check', question: { type: 'tf', q: 'Adding more training data is a good remedy for high bias (underfitting).', answer: false, explain: 'More data reduces variance. If the model family is too simple, more data won\'t fix it: increase capacity or improve features.' } },
+      { type: 'text', title: "Diagnosing your own model, step by step", md: `When a model disappoints, do not start by changing it at random. Measure first, then pick the remedy that matches the problem.
+
+1. **Get three numbers** on the same metric: the training error, the validation error, and the error of a simple baseline (for example, always predicting the most common class or the mean). If you know it, add a fourth: the best error you could hope for, such as how often careful people disagree on the labels.
+2. **Read the gaps:**
+
+| What you see | What it means | What to try |
+| --- | --- | --- |
+| Training error high, close to validation error, not far below the baseline | underfitting (high bias) | a more flexible model, better features, less regularization, longer training |
+| Training error low, validation error much higher | overfitting (high variance) | more data, more regularization, a simpler model, early stopping, augmentation |
+| Both low and close together | a good fit | stop tuning, and check the test set once |
+| Validation error far above training error even for very simple models | the splits may differ | look for distribution shift between splits, duplicates or leakage |
+
+3. **Plot learning curves** (both errors against the number of training examples). If the validation error is still falling as you add data, more data will help. If both curves have flattened at a high error, more of the same data will not help; you need a better model or better features.
+4. **Change one thing at a time** and compare on the same validation split or folds, keeping a short log of what you tried and what happened. Several changes at once make it impossible to know which one helped.
+5. **Be suspicious of good news.** A validation score far better than expected, or a test score far from the validation score, more often means leakage or an unrepresentative split than a great model.
+
+A worked example: a gradient-boosted classifier has 2% training error and 15% validation error, and the majority-class baseline has 20%. It has learned something (it beats the baseline), but the 13-point gap says variance. Good next steps are shallower trees, a larger minimum leaf size, fewer boosting rounds chosen by early stopping, or more data; a bigger model would make the gap worse.` }
     ],
     when: `- Check for under/overfitting **every time** you train: compare training and validation metrics.
 - Use **learning curves** to decide whether to collect more data (helps overfitting) or change the model (needed for underfitting).

@@ -142,7 +142,23 @@ for fps in (1, 2):
 - **Counting, spatial relations and fine detail**: often weaker than general description; higher resolution or cropping helps.
 - **Text in images**: models read it, which also means **prompt injection** can arrive inside an image (see *Adversarial ML, Security & Privacy*).
 - **Privacy**: photos and documents may contain faces, names, addresses and IDs (handle them under the same rules as any personal data).` },
-      { type: 'check', question: { type: 'fill', q: 'A ViT uses 14-pixel patches. How many image tokens does a 448 × 448 image produce without pooling?', answer: ['1024'], explain: '448 / 14 = 32 patches per side, 32 × 32 = 1024.' } }
+      { type: 'check', question: { type: 'fill', q: 'A ViT uses 14-pixel patches. How many image tokens does a 448 × 448 image produce without pooling?', answer: ['1024'], explain: '448 / 14 = 32 patches per side, 32 × 32 = 1024.' } },
+      { type: 'code', title: "Zero-shot image classification with CLIP", lang: 'pytorch', md: `A contrastive image-text model can sort images into categories that you only describe in words, with no training. Run it locally (\`pip install transformers torch pillow\`).`, code: `import torch
+from PIL import Image
+from transformers import CLIPModel, CLIPProcessor
+
+model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+
+labels = ["food", "a person", "a pet", "a landscape", "a document"]
+prompts = [f"a photo of {label}" for label in labels]     # a sentence works better than a bare word
+image = Image.open("photo.jpg")
+
+inputs = processor(text=prompts, images=image, return_tensors="pt", padding=True)
+with torch.no_grad():
+    probs = model(**inputs).logits_per_image.softmax(dim=-1)[0]
+for label, p in sorted(zip(labels, probs.tolist()), key=lambda t: -t[1]):
+    print(f"{label:12s} {p:.2f}")`, after: `The model embeds the image and each prompt into the same space, and the softmax over their similarities turns them into probabilities over your labels. These probabilities only compare the labels you gave: a photo of a car will still get a "best" label from this list. Measure accuracy on a hundred photos you have labelled yourself before trusting it, and try several prompt templates per label. The project at the end of this lesson builds a photo sorter on this.` }
     ],
     when: `- Documents, screenshots, charts, forms and photos as input to LLM applications.
 - Voice interfaces (speech in and out) and audio understanding.

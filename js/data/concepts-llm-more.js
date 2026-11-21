@@ -1825,7 +1825,20 @@ for ctx in (8_192, 32_768, 131_072):
 - **Pruning and sparsity**: remove the least important weights, heads or layers.
 - **FlashAttention and fused kernels**: compute attention block by block in fast on-chip memory.
 - **Mixture of Experts (MoE)**: only a few expert MLPs run per token, so a model with many parameters costs like a much smaller one per token (Mixtral, DeepSeek-V3); all experts still have to fit in memory.` },
-      { type: 'check', question: { type: 'tf', q: 'Speculative decoding changes the model\'s output distribution in exchange for speed.', answer: false, explain: 'With the standard acceptance rule the outputs follow exactly the large model\'s distribution.' } }
+      { type: 'check', question: { type: 'tf', q: 'Speculative decoding changes the model\'s output distribution in exchange for speed.', answer: false, explain: 'With the standard acceptance rule the outputs follow exactly the large model\'s distribution.' } },
+      { type: 'code', title: "Loading a model in 4 bits", lang: 'pytorch', md: `With Hugging Face \`transformers\` and \`bitsandbytes\` (on an NVIDIA GPU), quantizing a model is a loading option. Run it locally (\`pip install transformers accelerate bitsandbytes torch\`).`, code: `import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+
+name = "Qwen/Qwen2.5-1.5B-Instruct"                  # any small open model works
+four_bit = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4",
+                              bnb_4bit_compute_dtype=torch.bfloat16)
+model = AutoModelForCausalLM.from_pretrained(name, quantization_config=four_bit, device_map="auto")
+tokenizer = AutoTokenizer.from_pretrained(name)
+print(f"weights in memory: {model.get_memory_footprint() / 1e9:.2f} GB")
+
+inputs = tokenizer("The capital of France is", return_tensors="pt").to(model.device)
+out = model.generate(**inputs, max_new_tokens=20, do_sample=False)
+print(tokenizer.decode(out[0], skip_special_tokens=True))`, after: `The weights are stored in 4 bits and expanded to 16-bit numbers block by block during each matrix multiplication, so memory drops about fourfold while the arithmetic stays in higher precision. On a CPU or a Mac, llama.cpp does the same with GGUF files: \`llama-quantize\` converts a model to a format such as Q4_K_M, and \`llama-perplexity\` measures what the conversion cost. Always measure quality on your own task after quantizing, not only perplexity.` }
     ],
     when: `- Running models locally or on small GPUs: 4-bit (GGUF Q4_K_M, AWQ, GPTQ) or 8-bit weights.
 - High-throughput serving: bf16/fp8 weights, continuous batching and a paged KV cache (vLLM, TGI, TensorRT-LLM).

@@ -898,7 +898,17 @@ for adv in (+1.0, -1.0):
 - **Offline RL** learns from a fixed log of past interactions without exploring, using conservative methods that avoid over-trusting actions the data never tried.
 - **Exploration** bonuses (curiosity, novelty) help when rewards are sparse.
 - **Sim-to-real** transfer trains robots in simulation with randomized physics before deploying them.
-- **RL for language models**: RLHF with PPO, direct preference methods (DPO), and RL with verifiable rewards for reasoning.` }
+- **RL for language models**: RLHF with PPO, direct preference methods (DPO), and RL with verifiable rewards for reasoning.` },
+      { type: 'code', title: "Training PPO with a library", lang: 'pytorch', md: `Writing PPO yourself is the best way to understand it; for real work, a tested implementation avoids many subtle bugs. Stable-Baselines3 trains PPO on a Gymnasium environment in a few lines. Run it locally (\`pip install stable-baselines3 gymnasium\`).`, code: `import gymnasium as gym
+from stable_baselines3 import PPO
+from stable_baselines3.common.evaluation import evaluate_policy
+
+env = gym.make("CartPole-v1")
+model = PPO("MlpPolicy", env, seed=0, verbose=0)
+model.learn(total_timesteps=100000)
+mean_return, std_return = evaluate_policy(model, env, n_eval_episodes=20)
+print(f"mean episode return {mean_return:.0f} (std {std_return:.0f}); the maximum is 500")
+model.save("ppo_cartpole")`, after: `Run it with three or more seeds before drawing conclusions: deep RL results vary a lot between seeds, and a single lucky run is easy to mistake for a good setting. Plot the episode return during training rather than only checking the final number, and change one hyperparameter at a time (learning rate, number of steps per update, entropy coefficient).` }
     ],
     when: `- Sequential decision problems where actions affect future states: control, robotics, games, resource allocation, recommendation sequences.
 - Fine-tuning generative models towards rewards that are easy to judge but hard to demonstrate (RLHF, RL from verifiable rewards).
@@ -1426,7 +1436,15 @@ $$ cost per 1M tokens = GPU cost per hour / ( tokens per second × 3600 / 1,000,
 :::where
 GPU cost per hour — what the hardware costs to rent or own, per hour
 tokens per second — the sustained total throughput across all requests
-:::` }
+:::` },
+      { type: 'code', title: "Serving an open model with vLLM", lang: 'pytorch', md: `vLLM implements the ideas in this lesson (continuous batching and a paged KV cache) behind a simple interface. It needs a GPU; run it locally (\`pip install vllm\`).`, code: `from vllm import LLM, SamplingParams
+
+llm = LLM(model="Qwen/Qwen2.5-1.5B-Instruct")      # loads the weights and reserves GPU memory for the KV cache
+params = SamplingParams(temperature=0.7, top_p=0.9, max_tokens=128)
+prompts = [f"Write one sentence about the number {i}." for i in range(64)]
+outputs = llm.generate(prompts, params)              # all 64 requests are batched together
+for o in outputs[:3]:
+    print(o.outputs[0].text.strip())`, after: `For an application, start the server instead: \`vllm serve Qwen/Qwen2.5-1.5B-Instruct\` exposes an OpenAI-compatible HTTP API (port 8000 by default), so existing client code works unchanged. Then measure what this lesson describes under a realistic load: time to first token, time per output token, and throughput as the number of concurrent requests grows.` }
     ],
     when: `- Sizing hardware and estimating the cost of an LLM feature before launch.
 - Choosing batch sizes, context limits and quantization levels against latency targets.

@@ -154,7 +154,35 @@ A_t — the advantage: how much better the action turned out than expected (the 
 :::
 
 REINFORCE uses this directly; **actor–critic** methods learn a value function as the baseline; **PPO** clips each update so the policy can't change too much at once, which makes training stable: it is the algorithm behind classic RLHF. For an LLM the recipe reads: sample a reply, score it, and raise the log-probability of the tokens in good replies while lowering it in bad ones.` },
-      { type: 'check', question: { type: 'tf', q: 'In Q-learning, the update moves Q(s, a) towards the reward plus the discounted value of the best action in the next state.', answer: true, explain: 'That target comes from the Bellman optimality equation.' } }
+      { type: 'check', question: { type: 'tf', q: 'In Q-learning, the update moves Q(s, a) towards the reward plus the discounted value of the best action in the next state.', answer: true, explain: 'That target comes from the Bellman optimality equation.' } },
+      { type: 'code', title: "The same loop with Gymnasium", run: false, md: `Gymnasium (the maintained successor of OpenAI Gym) gives standard environments with one interface: \`reset\` starts an episode and \`step\` applies an action. Here is tabular Q-learning on its FrozenLake grid. Run it locally (\`pip install gymnasium numpy\`).`, code: `import gymnasium as gym
+import numpy as np
+
+env = gym.make("FrozenLake-v1", is_slippery=True)    # 16 states, 4 actions, slippery ice
+Q = np.zeros((env.observation_space.n, env.action_space.n))
+alpha, gamma, eps = 0.1, 0.99, 1.0
+rng = np.random.default_rng(0)
+
+for episode in range(20000):
+    s, _ = env.reset(seed=episode)
+    done = False
+    while not done:
+        a = env.action_space.sample() if rng.random() < eps else int(Q[s].argmax())
+        s2, r, terminated, truncated, _ = env.step(a)
+        target = r + gamma * Q[s2].max() * (not terminated)   # no future value after the episode ends
+        Q[s, a] += alpha * (target - Q[s, a])
+        s, done = s2, terminated or truncated
+    eps = max(0.05, eps * 0.9995)                         # explore less as the estimates improve
+
+wins = 0
+for episode in range(1000):                               # evaluate the greedy policy
+    s, _ = env.reset(seed=100000 + episode)
+    done = False
+    while not done:
+        s, r, terminated, truncated, _ = env.step(int(Q[s].argmax()))
+        done = terminated or truncated
+    wins += r
+print("success rate:", wins / 1000)`, after: `The difference between \`terminated\` (the episode really ended: a hole or the goal) and \`truncated\` (a time limit cut it short) matters for the target: only a real ending means there is no future value. On the slippery lake even the best policy fails sometimes, so expect a success rate of roughly 0.7, far above the 1 to 2% of random moves. The project at the end of this lesson starts from this code.` }
     ],
     when: `- Sequential decisions with delayed rewards where you can simulate or interact cheaply: games, robotics in simulation, control, scheduling, resource allocation.
 - Bandits for online choices with immediate feedback: A/B tests, ads, recommendations.
@@ -750,6 +778,21 @@ Strong inductive biases help when data is scarce; with enough data, ViTs learn t
 - **Modern CNNs** (ConvNeXt) showed that convolutional networks updated with transformer-era training recipes remain competitive.
 
 The patch size is the main cost knob: halving it quadruples the number of tokens and multiplies the cost of global attention by sixteen.` },
+      { type: 'code', title: "Using a pretrained ViT", lang: 'pytorch', md: `In practice you rarely train a ViT from scratch: the data it needs is enormous. You load one pretrained on a large dataset and either use it directly or fine-tune it. Two common routes, to run locally (\`pip install transformers timm torch pillow\`):`, code: `from transformers import pipeline
+
+# 1. Use it as it is: an ImageNet classifier with 1,000 classes
+classify = pipeline("image-classification", model="google/vit-base-patch16-224")
+for guess in classify("photo.jpg")[:3]:
+    print(f"{guess['label']:30s} {guess['score']:.2f}")
+
+# 2. Fine-tune it for your own classes with timm
+import timm
+model = timm.create_model("vit_small_patch16_224", pretrained=True, num_classes=5)
+data_cfg = timm.data.resolve_model_data_config(model)
+train_transform = timm.data.create_transform(**data_cfg, is_training=True)
+eval_transform = timm.data.create_transform(**data_cfg, is_training=False)
+# Train with the same loop as a CNN, using AdamW, a learning rate around 1e-4 or lower,
+# a few epochs, and the transforms above (they match how the model was pretrained).`, after: `The transforms matter: a pretrained model expects images resized, cropped and normalized exactly as in its own training, and the helper functions read those settings from the model. ViTs are more sensitive than CNNs to the learning rate when fine-tuning, so start small and use a short warm-up.` },
       { type: 'code', title: "Global attention versus windowed attention", code: `def attention_pairs(image_side, patch, window=None):
     grid = image_side // patch                     # patches per side
     tokens = grid * grid
