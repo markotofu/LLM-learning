@@ -118,6 +118,10 @@
       retryQuiz() { this.quizQs = MLA.quiz.prepare(this.c.quiz, MLA.util.seededRng(Date.now() >>> 0)); },
       openProblem(p) { this.go('/problem/' + p.id); },
       listen(from) { MLA.speech.play(this.narration, from || 0, { source: this.c.id, lessonTitle: this.c.title }); },
+      copyLink() {                             // the lesson's static page (tools/snapshots.js) previews well in chats and search results
+        const url = location.origin + location.pathname.replace(/index\.html$/, '') + 'lessons/' + this.c.id + '.html';
+        Promise.resolve(MLA.util.copyText(url)).then(ok => MLA.ui.toast(ok === false ? url : 'Link copied. It opens a readable page for this lesson, with a button into the interactive version.', ok === false ? 'info' : 'success', 5000));
+      },
       highlight(text) {                       // the sentence being read, marked without touching the DOM (CSS Custom Highlight API)
         const H = window.CSS && CSS.highlights;
         if (!H || typeof Highlight === 'undefined') return;
@@ -147,6 +151,7 @@
         <div v-if="speech.supported" class="listen-row">
           <button class="btn sm" @click="listen(readingHere ? 0 : resumeIndex)"><mla-icon name="headphones" :size="16"/> {{ readingHere ? 'Start again from the top' : resumeIndex ? 'Resume listening' : 'Listen to the lesson' }}</button>
           <button v-if="resumeIndex && !readingHere" class="btn sm ghost" @click="listen(0)">From the start</button>
+          <button class="btn sm ghost" @click="copyLink" title="Copy a link to this lesson"><mla-icon name="copy" :size="14"/> Copy link</button>
           <span v-if="resumeIndex && !readingHere" class="tiny dim">You stopped at "{{ narration[resumeIndex].title }}".</span>
           <span v-else class="tiny dim">About {{ listenMinutes }} min read aloud, with formulas, charts and quick checks explained in words. Each part also has its own <mla-icon name="volume" :size="12"/> button.</span>
         </div>

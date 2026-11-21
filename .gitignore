@@ -29,3 +29,8 @@ ml-atlas-code-*.py
 
 # Local dev tooling
 .claude/
+
+# Generated at deploy time by tools/snapshots.js (static lesson pages for search engines and link previews)
+lessons/
+sitemap.xml
+robots.txt
