@@ -15,6 +15,7 @@
       concepts: {},   // id -> { read:[], checks:{}, quizBest, quizAttempts, quizPassed, completedAt, masteredAt, visitedAt }
       problems: {},   // id -> { draft, draftAt, solved, solvedAt, attempts, runs, assisted, solutionViewed, hintsShown, lastStatus, accepted:{code,at} }
       notes: {},      // conceptId -> text
+      datasets: {},   // uploaded data files: name -> { name, type, size, rows, columns, updatedAt } (contents in IndexedDB: js/core/datasets.js)
       projects: {},   // 'lessonId:project-slug' -> { steps: [step numbers done], notes, startedAt, updatedAt, completedAt } (js/views/components.js)
       playground: { files: [], active: null },
       flashcards: {}, // cardId -> SRS state
@@ -32,7 +33,7 @@
     if (!saved || typeof saved !== 'object') return base;
     const merged = Object.assign({}, base, saved);
     for (const k of ['profile', 'streak', 'stats', 'playground']) merged[k] = Object.assign({}, base[k], saved[k] || {});
-    for (const k of ['concepts', 'problems', 'notes', 'projects', 'flashcards', 'mistakes', 'achievements', 'daily']) if (!merged[k] || typeof merged[k] !== 'object' || Array.isArray(merged[k])) merged[k] = {};
+    for (const k of ['concepts', 'problems', 'notes', 'projects', 'datasets', 'flashcards', 'mistakes', 'achievements', 'daily']) if (!merged[k] || typeof merged[k] !== 'object' || Array.isArray(merged[k])) merged[k] = {};
     for (const k of ['activity', 'quizHistory']) if (!Array.isArray(merged[k])) merged[k] = [];
     if (!Array.isArray(merged.playground.files)) merged.playground.files = [];
     merged.app = APP_ID; merged.version = VERSION;
@@ -158,7 +159,7 @@
     Object.assign(state, next);
     saveNow();
   }
-  const MAX_IMPORT_CHARS = 40 * 1024 * 1024;   // far above any real progress file (localStorage itself holds about 5 MB)
+  const MAX_IMPORT_CHARS = 120 * 1024 * 1024;  // progress itself stays under 5 MB (localStorage); exports can carry up to 60 MB of datasets as base64
   // mode: 'merge' (default, safe) or 'replace'
   function importJSON(text, mode) {
     let data;
@@ -167,17 +168,31 @@
     try { data = JSON.parse(text, (k, v) => (k === '__proto__' || k === 'constructor' || k === 'prototype') ? undefined : v); } catch (e) { throw new Error('Could not read the file: it is not valid JSON.'); }
     validate(data);
     delete data.exportedAt;
+    // Dataset contents travel separately (datasetFiles); the names and sizes on this device stay as they are, and
+    // imported files are added (or replace older copies) once their contents are stored.
+    const files = data.datasetFiles;
+    delete data.datasetFiles;
+    lastDatasets = Array.isArray(files) && files.length && MLA.datasets ? MLA.datasets.importAll(files) : Promise.resolve(0);
     if (MLA.progress && MLA.progress.migrateSections) MLA.progress.migrateSections(data);
     const next = mode === 'replace' ? mergeDefaults(data) : mergeStates(state, data);
+    next.datasets = JSON.parse(JSON.stringify(state.datasets || {}));
     next.stats.imports = (next.stats.imports || 0) + 1;
     replaceState(next);
     return next;
   }
+  // The file export carries everything, uploaded datasets included; the sync code leaves their contents out (too long to paste).
+  let lastDatasets = Promise.resolve(0);
+  async function exportFull() {
+    const obj = exportObject();
+    obj.datasetFiles = MLA.datasets ? await MLA.datasets.exportAll() : [];
+    return JSON.stringify(obj, null, 1);
+  }
+  const datasetImport = () => lastDatasets;
   async function exportSyncCode() { return MLA.util.packText(JSON.stringify(exportObject())); }
   async function importSyncCode(code, mode) { const text = await MLA.util.unpackText(code); return importJSON(text, mode); }
 
-  function reset() { replaceState(defaultState()); }
+  function reset() { replaceState(defaultState()); if (MLA.datasets) MLA.datasets.clearAll(); }      // erasing progress also deletes uploaded files
   function onSave(fn) { listeners.push(fn); }
 
-  MLA.store = { state, save, saveNow, exportJSON, exportObject, importJSON, exportSyncCode, importSyncCode, mergeStates, mergeDefaults, reset, onSave, defaultState, storageInfo, KEY };
+  MLA.store = { state, save, saveNow, exportJSON, exportObject, exportFull, datasetImport, importJSON, exportSyncCode, importSyncCode, mergeStates, mergeDefaults, reset, onSave, defaultState, storageInfo, KEY, MAX_IMPORT_CHARS };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

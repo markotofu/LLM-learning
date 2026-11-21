@@ -824,6 +824,14 @@ pre.hl { margin: 0; border: 0; border-radius: 0; background: transparent; paddin
 .chart-desc summary { cursor: pointer; color: var(--muted); }
 .chart-desc p { margin: 6px 0 0; color: var(--text); line-height: 1.55; }
 
+/* ---------- Datasets in the playground (js/core/datasets.js) ---------- */
+.pg-data { margin-top: 14px; padding: 10px; border: 1px dashed var(--border2); border-radius: var(--radius-sm); }
+.pg-data.dragging { border-color: var(--accent); background: var(--accent-soft); }
+.pg-ds { padding: 6px 0; border-top: 1px solid var(--border); }
+.pg-ds:first-of-type { border-top: 0; }
+.pg-ds-name { font-size: 0.85rem; font-weight: 600; display: flex; gap: 6px; align-items: center; word-break: break-all; }
+.pg-ds-actions { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
+
 /* ---------- Search (js/views/search.js) ---------- */
 .search-overlay { position: fixed; inset: 0; z-index: 90; background: color-mix(in srgb, #000 45%, transparent); display: flex; justify-content: center; align-items: flex-start; padding: 10vh 16px 16px; }
 .search-box { width: 100%; max-width: 640px; max-height: 76vh; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border2); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }

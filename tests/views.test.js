@@ -80,7 +80,7 @@ T.ok('markdown rendered', mdCount > 0);
   T.ok('import: prototype keys do not pollute', ({}).polluted === undefined && ({}).bad === undefined && Object.prototype.polluted === undefined);
   T.ok('import: object prototypes untouched', Object.getPrototypeOf(MLA.store.state) === Object.prototype);
   let big = null;
-  try { MLA.store.importJSON(' '.repeat(41 * 1024 * 1024), 'merge'); } catch (e) { big = e; }
+  try { MLA.store.importJSON(' '.repeat(MLA.store.MAX_IMPORT_CHARS + 1), 'merge'); } catch (e) { big = e; }
   T.ok('import: oversized input rejected', big && /too large/.test(big.message));
   MLA.store.importJSON(before, 'replace');    // restore the state for the tests below
   T.ok('import: evil file either imported safely or rejected', threw === null || threw instanceof Error);
@@ -208,4 +208,29 @@ T.ok('rejects foreign JSON', threw);
   T.ok('search: an empty query returns nothing', res('   ').length === 0);
 }
 
-T.done();
+// Uploaded datasets: stored (in memory under Node, IndexedDB in browsers), read back as bytes, exported with their
+// contents in the progress file, and restored by an import into a fresh state; sync codes leave them out.
+(async () => {
+  const D = MLA.datasets, S = MLA.store;
+  const csv = 'a,b' + String.fromCharCode(10) + '1,2' + String.fromCharCode(10) + '3,4' + String.fromCharCode(10);
+  const file = (name, text) => ({ name, size: Buffer.byteLength(text), arrayBuffer: async () => new Uint8Array(Buffer.from(text)).buffer });
+  const meta = await D.add(file('my data.csv', csv));
+  T.ok('datasets: a name with spaces becomes a safe path', meta.name === 'my_data.csv' && meta.rows === 2 && meta.columns === 2, JSON.stringify(meta));
+  T.ok('datasets: listed after the built-in ones, and found by code', D.list().some(d => d.name === 'my_data.csv' && !d.bundled) && D.referenced('pd.read_csv("data/my_data.csv")').includes('my_data.csv'));
+  T.ok('datasets: contents read back exactly', Buffer.from(await D.read('my_data.csv')).toString() === csv);
+  let refused = null; try { await D.add(file('bad.exe', 'x')); } catch (e) { refused = e; }
+  T.ok('datasets: other file types are refused', !!refused);
+  let dup = null; try { await D.add(file('my data.csv', csv)); } catch (e) { dup = e; }
+  T.ok('datasets: re-uploading asks before replacing', !!(dup && dup.exists));
+  const full = JSON.parse(await S.exportFull());
+  T.ok('datasets: the progress file carries the contents', Array.isArray(full.datasetFiles) && full.datasetFiles.some(f => f.name === 'my_data.csv' && Buffer.from(f.data, 'base64').toString() === csv));
+  T.ok('datasets: the sync code does not', !('datasetFiles' in S.exportObject()));
+  await D.remove('my_data.csv');
+  T.ok('datasets: deleting removes it', !D.find('my_data.csv'));
+  S.importJSON(JSON.stringify(full), 'merge');
+  const n = await S.datasetImport();
+  T.ok('datasets: an import restores them', n === 1 && Buffer.from(await D.read('my_data.csv')).toString() === csv, String(n));
+  T.ok('datasets: pandas code to load each kind', D.readCode('x.xlsx').includes('read_excel') && D.readCode('y.tsv').includes('sep=') && D.readCode('z.csv').includes('read_csv'));
+  await D.remove('my_data.csv');
+  T.done();
+})();

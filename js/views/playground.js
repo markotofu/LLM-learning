@@ -14,13 +14,14 @@
   ];
 
   MLA.components['view-playground'] = {
-    data() { return { state: MLA.store.state, running: false, stdout: '', result: null, failure: null, showNew: false, renaming: null, renameVal: '' }; },
+    data() { return { state: MLA.store.state, running: false, stdout: '', result: null, failure: null, showNew: false, renaming: null, renameVal: '', dragging: false, uploading: false }; },
     computed: {
       files() { return this.state.playground.files; },
       active() { return this.files.find(f => f.id === this.state.playground.active) || this.files[0] || null; },
       py() { return MLA.python.status; },
       templates() { return TEMPLATES; },
-      ran() { return this.running || this.result || this.failure || this.stdout; }
+      ran() { return this.running || this.result || this.failure || this.stdout; },
+      datasets() { this.state.datasets; return MLA.datasets.list(); }
     },
     created() { if (!this.files.length) MLA.playground.newFile('scratch.py', TEMPLATES[1].code); else if (!this.active) this.state.playground.active = this.files[0].id; },
     methods: {
@@ -45,7 +46,41 @@
       },
       stop() { MLA.python.stop(); this.running = false; this.failure = { message: 'Stopped. Python was restarted.', kind: 'stopped' }; },
       clear() { this.stdout = ''; this.result = null; this.failure = null; },
-      ago(f) { return MLA.util.timeAgo(f.updatedAt); }
+      ago(f) { return MLA.util.timeAgo(f.updatedAt); },
+      // ---- datasets: upload once, then read them in any code as data/<name> (js/core/datasets.js)
+      pickData() { this.$refs.dataFile.click(); },
+      onData(e) { const files = [...e.target.files]; e.target.value = ''; this.upload(files); },
+      dropData(e) { this.dragging = false; this.upload([...((e.dataTransfer && e.dataTransfer.files) || [])]); },
+      async upload(files) {
+        if (!files.length) return;
+        this.uploading = true;
+        for (const f of files) {
+          try {
+            let meta;
+            try { meta = await MLA.datasets.add(f); } catch (err) {
+              if (!err.exists) throw err;
+              if (!(await MLA.ui.confirm('**' + MLA.util.escapeHtml(f.name) + '** is already uploaded. Replace it with this file?', { okLabel: 'Replace' }))) continue;
+              meta = await MLA.datasets.add(f, { replace: true });
+            }
+            MLA.ui.toast('Uploaded ' + meta.name + ': read it in code as data/' + meta.name, 'success', 5000);
+          } catch (err) { MLA.ui.toast(err.message, 'error', 6000); }
+        }
+        this.uploading = false;
+      },
+      insertData(d) {                          // add the line that loads it to the open file
+        if (!this.active) return;
+        const code = this.active.code || '', lines = [];
+        if (d.type !== 'txt' && !/import pandas as pd/.test(code)) lines.push('import pandas as pd');
+        lines.push(MLA.datasets.readCode(d.name));
+        if (d.type !== 'txt') lines.push('print(df.shape)', 'print(df.head())');
+        this.active.code = code.replace(/\s*$/, '') + (code.trim() ? String.fromCharCode(10, 10) : '') + lines.join(String.fromCharCode(10)) + String.fromCharCode(10);
+        this.touch();
+      },
+      downloadData(d) { MLA.datasets.download(d.name).catch(e => MLA.ui.toast(e.message, 'error')); },
+      removeData(d) {
+        MLA.ui.confirm('Delete the dataset **' + MLA.util.escapeHtml(d.name) + '** from this browser? Code that reads it will stop working until you upload it again.', { okLabel: 'Delete', danger: true })
+          .then(ok => { if (ok) MLA.datasets.remove(d.name); });
+      }
     },
     template: `
     <div class="playground">
@@ -63,6 +98,16 @@
         <button class="btn xs ghost block" @click="importPy"><mla-icon name="upload" :size="12"/> Import a .py file</button>
         <input ref="file" type="file" accept=".py,.txt,text/x-python,text/plain" style="display:none" @change="onFile">
         <p class="tiny dim">Files are saved in this browser and included in progress exports. Double-click a name to rename it.</p>
+        <div class="pg-data" :class="{dragging}" @dragover.prevent="dragging = true" @dragleave="dragging = false" @drop.prevent="dropData">
+          <div class="row between"><strong class="small upper dim">Datasets</strong><button class="btn xs" :disabled="uploading" @click="pickData"><mla-icon name="upload" :size="12"/> {{ uploading ? 'Uploading…' : 'Upload' }}</button></div>
+          <div v-for="d in datasets" :key="d.name" class="pg-ds">
+            <div class="pg-ds-name" :title="d.desc || d.name"><mla-icon name="file" :size="13"/> {{ d.name }}</div>
+            <div class="tiny dim">{{ d.bundled ? 'built-in practice data' : MLA.util.formatBytes(d.size) }}<span v-if="d.rows"> · {{ d.rows.toLocaleString() }} rows</span></div>
+            <div class="pg-ds-actions"><button class="btn xs ghost" @click="insertData(d)" :aria-label="'Use ' + d.name + ' in the open file'">Use in code</button><button v-if="!d.bundled" class="btn xs ghost" @click="downloadData(d)">Download</button><button v-if="!d.bundled" class="btn xs ghost" @click="removeData(d)" :aria-label="'Delete ' + d.name">Delete</button></div>
+          </div>
+          <input ref="dataFile" type="file" multiple accept=".csv,.tsv,.txt,.json,.jsonl,.xlsx,.xls,.parquet" style="display:none" @change="onData" aria-label="Upload datasets">
+          <p class="tiny dim">Upload or drop CSV, Excel, JSON, Parquet or text files (up to 20 MB each). Code reads them as data/ followed by the file name. They stay in this browser and are included when you export your progress.</p>
+        </div>
       </aside>
       <section class="pg-main" v-if="active">
         <div class="pv-toolbar">

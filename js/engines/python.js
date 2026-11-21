@@ -361,6 +361,7 @@ def _mla_exec(code):
       return loading;
     }
     var loadFailures = [];                             // packages that failed to download during this job (network, not "unknown package")
+    var readerFailures = [];                           // file readers (openpyxl, pyarrow, xlrd) that could not be loaded for this job
     async function loadImports(srcs) {
       loadFailures = [];
       for (var i = 0; i < srcs.length; i++) {
@@ -382,11 +383,24 @@ def _mla_exec(code):
       try {
         await init();
         if (msg.type === 'init') { post({ id: id, type: 'done', result: { ok: true } }); return; }
+        var readers = {};
         (msg.files || []).forEach(function (f) {         // datasets the code reads, as data/<name> under the working directory
           var full = '/home/pyodide/' + f.path;
           try { py.FS.mkdirTree(full.slice(0, full.lastIndexOf('/'))); } catch (e) { /* exists */ }
           py.FS.writeFile(full, f.data);
+          var ext = (f.path.match(/\.([a-z0-9]+)$/i) || [])[1];
+          if (ext) ext = ext.toLowerCase();
+          if (ext === 'xlsx') readers.openpyxl = 1; else if (ext === 'xls') readers.xlrd = 1; else if (ext === 'parquet') readers.pyarrow = 1;
         });
+        readerFailures = [];
+        for (var pkg in readers) {                        // pandas imports these lazily, so their imports cannot be detected
+          try {
+            if (pkg === 'openpyxl') {                     // not built for Pyodide: install the pure-Python wheel from PyPI (needs a connection)
+              await py.loadPackage('micropip');
+              await py.runPythonAsync("import importlib.util\nif importlib.util.find_spec('openpyxl') is None:\n    import micropip\n    await micropip.install('openpyxl')");
+            } else await py.loadPackage(pkg);
+          } catch (e) { readerFailures.push(pkg + ': ' + String((e && e.message) || e).slice(0, 120)); }
+        }
         var out;
         if (msg.type === 'exec') {
           await loadImports([msg.code]);
@@ -406,9 +420,10 @@ def _mla_exec(code):
           out = py.runPython('_mla_run_tests(_mla_code, _mla_payload)');
         }
         var res = JSON.parse(out);
-        if (loadFailures.length) {                     // a missing module after a failed download is a network problem
-          var why = loadFailures.join('; ').slice(0, 200);
-          var mark = function (e) { if (e && /ModuleNotFoundError|No module named/.test((e.type || '') + ' ' + (e.message || ''))) e.loadFailed = why; };
+        var failures = loadFailures.concat(readerFailures);
+        if (failures.length) {                         // a missing module after a failed download is a network problem
+          var why = failures.join('; ').slice(0, 200);
+          var mark = function (e) { if (e && /ModuleNotFoundError|No module named|Missing optional dependency/.test((e.type || '') + ' ' + (e.message || ''))) e.loadFailed = why; };
           mark(res.error);
           (res.tests || []).forEach(function (t) { mark(t.error); });
         }
@@ -524,6 +539,8 @@ def _mla_exec(code):
   function explain(err) {
     if (!err) return '';
     const m = (err.message || '') + ' ' + (err.type || '');
+    if (/Missing optional dependency '(\w+)'/.test(m)) return 'Reading this kind of file needs the ' + RegExp.$1 + ' package, which the in-browser Python could not load. Save the data as CSV (for example with File, Save As in a spreadsheet) and read it with pd.read_csv.';
+    if (/FileNotFoundError.*data\//.test(m)) return 'No dataset by that name. Upload it in the Playground (Datasets), or check the spelling: the path is data/ followed by the exact file name.';
     if (err.loadFailed) return 'Python could not download a package this code needs (' + err.loadFailed + '). Check your internet connection and run the code again: each package downloads once, then stays cached in this browser.';
     if (/No module named '(torch|tensorflow|transformers|jax|keras|torchvision)/.test(m)) return 'That library is not available in the in-browser Python runtime. These exercises use NumPy instead; the ideas are the same. Run PyTorch or TensorFlow code on your own machine or in Google Colab.';
     if (/No module named/.test(m)) return 'That package is not available in the browser runtime. NumPy, pandas, scikit-learn, SciPy and matplotlib are.';

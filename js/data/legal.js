@@ -7,7 +7,7 @@
   const legal = {
     owner: 'markotofu',                          // copyright holder shown in the app and in the legal texts
     year: '2026',
-    updated: '21 November 2026',
+    updated: '22 November 2026',
     contact: 'https://github.com/markotofu',     // where people can reach the owner
     codeLicense: 'MIT License',
     terms: `
@@ -82,6 +82,7 @@ This policy explains what happens to your information when you use ML Atlas, a f
 ML Atlas saves the following in your browser so that it works across visits. It never leaves your device unless you export it yourself.
 
 - **Your learning data** (local storage key \`mla.state.v1\`): concepts read, quiz and problem results, the code you write in problems and the playground, notes, flashcard schedules, the review queue of questions and problems you answered incorrectly, a short log of recent activity (what you did and when), XP, streaks, achievements, settings (theme, editor size, learning goal) and an optional display name (default "Learner").
+- **Datasets you upload** (the browser's IndexedDB storage, database \`ml-atlas-datasets\`): the files you add in the Playground so that your Python code can read them. Their names and sizes are listed with your learning data.
 - **A technical preference** (local storage key \`mla.pyMirror\`): which download server for the Python runtime responded fastest.
 - **Cached app files**: the app's own files are kept in your browser's cache storage so it works offline, and the Python runtime is kept in the browser's normal download cache.
 
@@ -89,7 +90,7 @@ You can delete all of this at any time with **Progress & Sync â†’ Danger zone â†
 
 ### 2. Export, import and sync codes
 
-When you export your progress, the app creates a file or a "sync code" **on your device**. It contains your learning data, including your notes and code in readable form. You decide where it goes: treat it like any other personal file, and use it to move your own progress between your own devices rather than sharing it publicly. Importing reads such a file or code locally; nothing is uploaded. Import only files and codes you created yourself or fully trust: the app checks imported data and never runs anything it contains, but an import from someone else adds their notes, code and settings to yours.
+When you export your progress, the app creates a file or a "sync code" **on your device**. It contains your learning data, including your notes and code in readable form; a file export also contains the datasets you uploaded (a sync code leaves them out). You decide where it goes: treat it like any other personal file, and use it to move your own progress between your own devices rather than sharing it publicly. Importing reads such a file or code locally; nothing is uploaded. Import only files and codes you created yourself or fully trust: the app checks imported data and never runs anything it contains, but an import from someone else adds their notes, code and settings to yours.
 
 ### Security
 
@@ -99,6 +100,7 @@ The app tells your browser, through a content security policy, to run scripts on
 
 - **Hosting.** The app's files are served by its web host (for example GitHub Pages). When your browser requests them, the host receives standard request information such as your IP address, browser type and the time of the request, and may keep logs for security and operation. See the [GitHub General Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). If you run ML Atlas from your own computer or another server, that server's policies apply instead.
 - **Python runtime.** The first time you run code, your browser downloads the Pyodide Python runtime and Python packages from the jsDelivr content delivery network (cdn.jsdelivr.net or one of its alternative hosts). jsDelivr receives the same kind of request information. See the [jsDelivr privacy policy](https://www.jsdelivr.com/terms/privacy-policy-jsdelivr-net).
+- **Excel files.** Reading an uploaded Excel workbook (.xlsx) in Python needs a package (openpyxl) that the Python runtime does not include, so your browser downloads it from the Python Package Index (pypi.org and files.pythonhosted.org), which receives the same kind of request information. Your file itself is not sent anywhere. See the [Python Software Foundation privacy notice](https://policies.python.org/python.org/Privacy-Notice/).
 - **Links.** If you follow a link from a lesson to another website, that website's own privacy policy applies.
 
 ### 4. Cookies and tracking

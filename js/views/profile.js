@@ -40,6 +40,7 @@
       storage() { this.state.xp; return MLA.store.storageInfo(); },
       py() { return MLA.python.status; },
       tracks() { return this.P.tracks().filter(t => !t.hidden); },
+      datasetCount() { return Object.keys(this.state.datasets || {}).length; },
       codeCount() { return Object.values(this.state.problems).filter(p => p.draft != null || p.accepted).length + this.state.playground.files.length; }
     },
     methods: {
@@ -48,10 +49,11 @@
       setLook(s) { this.state.profile.style = s; MLA.ui.applyTheme(this.state.profile.theme, s); },
       setRate(r) { MLA.speech.setRate(Number(r)); },
       trySpeech() { MLA.speech.sample(); },
-      exportFile() {
+      async exportFile() {                     // everything, including the contents of uploaded datasets
         this.state.stats.exports = (this.state.stats.exports || 0) + 1; MLA.gamification.checkAchievements();
         const name = 'ml-atlas-progress-' + MLA.util.todayKey() + '.json';
-        if (MLA.util.download(name, MLA.store.exportJSON())) MLA.ui.toast('Saved ' + name + ': import it on your other device.', 'success', 4500);
+        const text = await MLA.store.exportFull();
+        if (MLA.util.download(name, text)) MLA.ui.toast('Saved ' + name + ' (' + MLA.util.formatBytes(text.length) + '): import it on your other device.', 'success', 4500);
       },
       exportCode() { MLA.util.download('ml-atlas-code-' + MLA.util.todayKey() + '.py', codeBundle(), 'text/x-python'); },
       pickFile() { this.$refs.file.click(); },
@@ -60,7 +62,7 @@
       onFile(e) {
         const f = e.target.files[0]; e.target.value = ''; if (!f) return;
         const r = new FileReader();
-        r.onload = async () => { if (!(await this.confirmReplace())) return; try { MLA.store.importJSON(String(r.result), this.mode); this.afterImport('Progress imported'); } catch (err) { MLA.ui.toast('Import failed: ' + err.message, 'error', 6000); } };
+        r.onload = async () => { if (!(await this.confirmReplace())) return; try { MLA.store.importJSON(String(r.result), this.mode); const n = await MLA.store.datasetImport(); this.afterImport('Progress imported' + (n ? ' with ' + n + (n > 1 ? ' datasets' : ' dataset') : '')); } catch (err) { MLA.ui.toast('Import failed: ' + err.message, 'error', 6000); } };
         r.readAsText(f);
       },
       async makeSync() {
@@ -101,19 +103,19 @@
       </div>
 
       <div class="card sync-card">
-        <div class="card-title"><h3><mla-icon name="sync" :size="18"/> Move your progress between devices</h3><span class="tiny dim">{{ MLA.util.formatBytes(storage.bytes) }} stored · {{ codeCount }} code files</span></div>
-        <p class="small muted">Your progress, code drafts, accepted solutions, notes, playground files and flashcard schedule live in this browser's local storage. To continue on another device, export here and import there. <b>Merge</b> (recommended) combines both devices and never loses work: best scores, every solved problem and the newest version of each draft are kept.</p>
+        <div class="card-title"><h3><mla-icon name="sync" :size="18"/> Move your progress between devices</h3><span class="tiny dim">{{ MLA.util.formatBytes(storage.bytes) }} stored · {{ codeCount }} code files<span v-if="datasetCount"> · {{ datasetCount }} datasets ({{ MLA.util.formatBytes(MLA.datasets.usage()) }})</span></span></div>
+        <p class="small muted">Your progress, settings, code drafts, accepted solutions, lesson notes, project checklists and notes, playground files, uploaded datasets and review schedules live in this browser. To continue on another device, export here and import there. <b>Merge</b> (recommended) combines both devices and never loses work: best scores, every solved problem and the newest version of each draft are kept.</p>
         <div class="field"><label>When importing</label><div class="pills"><button :class="{active:mode==='merge'}" @click="mode='merge'">Merge with this device</button><button :class="{active:mode==='replace'}" @click="mode='replace'">Replace this device's data</button></div></div>
         <div class="grid cols-2">
           <div class="card pad-sm">
             <h4>Option 1 · Progress file</h4>
-            <p class="small muted">Download a <code>.json</code> file, send it to your other device (email, cloud drive, USB), and import it there.</p>
+            <p class="small muted">Download a <code>.json</code> file with everything, uploaded datasets included, send it to your other device (email, cloud drive, USB), and import it there.</p>
             <div class="btn-row"><button class="btn primary" @click="exportFile"><mla-icon name="download" :size="16"/> Export progress</button><button class="btn" @click="pickFile"><mla-icon name="upload" :size="16"/> Import a file</button></div>
             <input ref="file" type="file" accept="application/json,.json" style="display:none" @change="onFile">
           </div>
           <div class="card pad-sm">
             <h4>Option 2 · Sync code (copy &amp; paste)</h4>
-            <p class="small muted">A compressed text version of everything. Copy it here, paste it into this box on the other device (e.g. via a note-to-self message).</p>
+            <p class="small muted">A compressed text version of everything except uploaded datasets (they would make it far too long to paste). Copy it here, paste it into this box on the other device, for example through a note to yourself.</p>
             <div class="btn-row"><button class="btn primary" :disabled="busy" @click="makeSync"><mla-icon name="copy" :size="16"/> Create &amp; copy sync code</button></div>
             <textarea v-if="syncOut" class="sync-box mono" readonly :value="syncOut" @focus="$event.target.select()"></textarea>
             <textarea v-model="syncIn" class="sync-box mono" placeholder="Paste a sync code from another device here…"></textarea>

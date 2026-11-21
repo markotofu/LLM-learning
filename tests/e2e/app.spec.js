@@ -177,6 +177,21 @@ test.describe('in-browser Python (downloads Pyodide from the CDN)', () => {
     await expect(sample.locator('.ro-stdout')).toContainText('P(condition | positive) ~ 0.167', { timeout: 150 * 1000 });
   });
 
+  test('an uploaded dataset is readable from Python and travels in the progress export', async ({ page }) => {
+    await boot(page, '/home');
+    await go(page, '/playground', 'Python Playground');
+    await page.locator('.pg-data input[type=file]').setInputFiles({ name: 'shop sales.csv', mimeType: 'text/csv', buffer: Buffer.from('city,sales\nA,10\nB,5\nA,20\n') });
+    await expect(page.locator('.pg-ds-name', { hasText: 'shop_sales.csv' })).toBeVisible();
+    const out = await page.evaluate(async () => {
+      let o = '';
+      await MLA.python.exec('import pandas as pd\nprint(pd.read_csv("data/shop_sales.csv").sales.sum())', { onStdout: t => { o += t; }, timeoutMs: 150000 });
+      return o.trim();
+    });
+    expect(out).toBe('35');
+    const exported = await page.evaluate(async () => JSON.parse(await MLA.store.exportFull()).datasetFiles.map(f => f.name));
+    expect(exported).toContain('shop_sales.csv');
+  });
+
   test('a practice problem: the starter fails, the reference solution is accepted', async ({ page }) => {
     await boot(page, '/home');
     await go(page, '/problem/dot-product', 'Dot Product');

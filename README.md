@@ -22,10 +22,10 @@ It is a static site: it runs on GitHub Pages, from any web server, or straight f
 | **Search** | Press Ctrl+K (Cmd+K on a Mac) or "/" anywhere, or use the search button: one box searches pages, lessons, sections, glossary terms, problems, projects, case studies and tracks, and the full text of the lessons, and opens results at the right section. |
 | **Learning tracks** | Guided paths: ML Foundations, Classical ML Practitioner, Data Science & Experiments, ML Theory & Probabilistic Methods, Deep Learning from Scratch, Build an LLM from Scratch, LLM Application Engineer, Fine-tuning, Alignment & Serving, Frontier Deep Learning, the Complete Atlas, or set any concept as a custom goal. |
 | **Review** | Flashcards for 683 glossary terms, plus **mistakes to revisit**: every quiz question, quick check or prediction you get wrong, and every problem you could only solve with the solution, comes back after a day, then a week, then a few weeks (spaced repetition), until it sticks. |
-| **Playground** | A multi-file Python scratchpad with templates (NumPy, linear regression, matplotlib, softmax & attention, pandas, scikit-learn). |
+| **Playground** | A multi-file Python scratchpad with templates (NumPy, linear regression, matplotlib, softmax & attention, pandas, scikit-learn). **Upload your own data** (CSV, TSV, Excel .xlsx and .xls, JSON, Parquet or text, up to 20 MB per file and 60 MB in total) and read it in any code as `data/<file name>`, for example `pd.read_excel("data/sales.xlsx")`; three built-in practice datasets are there too. |
 | **Progress** | XP, levels, streaks and achievements. Everything is stored in your browser (localStorage). |
 | **Looks and themes** | Two looks: **Baroque**, after baroque ceiling frescoes (gold, clouds and serif type), and **Classic**, the original clean design. Each has a light, a dark and a night theme. Switch looks with the palette button in the top bar, or pick both in **Progress & Sync → Settings**. |
-| **Sync across devices** | Export your progress and code as a file (or a copyable sync code) and import it on another device: imports *merge* by default, so nothing is lost. You can also download all your code as one `.py` file. |
+| **Sync across devices** | Export your progress and code as a file (or a copyable sync code) and import it on another device: imports *merge* by default, so nothing is lost. You can also download all your code as one `.py` file. The export file carries everything you did, uploaded datasets included; a sync code carries everything except the datasets. |
 | **Works offline** | Installable as an app (PWA). The first page loads a small lesson index (about 60 KB compressed) instead of every lesson; each lesson loads when you open it, and the rest download quietly in the background so that, after the first visit, the site and the Python runtime work offline. |
 
 ### The branches
@@ -67,6 +67,7 @@ No build step is involved in development: the site is plain HTML, CSS and JavaSc
 ## Your progress and data
 
 - Progress, notes, code drafts and settings are saved in your browser's `localStorage` under the key `mla.state.v1`. Nothing is sent anywhere.
+- Uploaded datasets are kept in the browser's IndexedDB (database `ml-atlas-datasets`); their names and sizes are part of the progress data. Python reads them from its in-browser file system, so the files never leave your device. (Reading an .xlsx file downloads the openpyxl package from PyPI once per session; the Python runtime itself comes from jsDelivr, never from this site's host.)
 - **Progress & Sync → Export progress / Sync code**: download a backup file, or copy a compact *sync code* and paste it on another device. Import offers **Merge** (keeps the best of both: solved problems, best quiz scores, newest drafts) or **Replace**. **Export all my code (.py)** downloads every solution and playground file as one Python file.
 - Clearing your browser's site data erases local progress, so export a backup first.
 
