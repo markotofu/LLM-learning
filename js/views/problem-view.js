@@ -11,6 +11,10 @@
       P() { return MLA.progress; },
       p() { return this.P.problem(this.route.params.id); },
       c() { return this.p ? this.P.concept(this.p.concept) : null; },
+      checkpoint() {                           // capstone checkpoints (concept.checkpoints): where this problem sits, and the next one
+        const list = (this.c && this.c.checkpoints) || [], i = list.findIndex(k => k.problem === this.p.id);
+        return i < 0 ? null : { n: i + 1, of: list.length, step: list[i].step, next: list[i + 1] ? list[i + 1].problem : null };
+      },
       ps() { return (this.p && this.P.peekP(this.p.id)) || {}; },
       py() { return MLA.python.status; },
       siblings() { return this.c ? this.c.problems : []; },
@@ -92,6 +96,7 @@
         </div>
         <div class="pv-scroll">
           <template v-if="left==='desc'">
+            <div v-if="checkpoint" class="checkpoint-banner small"><mla-icon name="flag" :size="14"/> Checkpoint {{ checkpoint.n }} of {{ checkpoint.of }}: {{ checkpoint.step }}, in <a @click="go('/concept/' + c.id)">{{ c.title }}</a><button v-if="checkpoint.next && P.isSolved(p.id)" class="btn sm" @click="go('/problem/' + checkpoint.next)">Next checkpoint</button></div>
             <div class="row between" style="flex-wrap:nowrap;align-items:flex-start"><h2 class="pv-title">{{ p.title }}</h2><status-dot :status="status" :size="24"/></div>
             <div class="row" style="gap:6px;margin-bottom:10px"><diff-chip :d="p.difficulty"/><a class="chip clickable" @click="go('/concept/'+c.id)"><mla-icon name="book" :size="12"/> {{ c.title }}</a><span v-if="ps.solved" class="chip green tiny">Solved{{ ps.assisted ? ' (with solution)' : '' }}</span></div>
             <mla-md :src="p.prompt" />

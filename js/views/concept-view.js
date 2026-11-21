@@ -31,6 +31,7 @@
     data() { return { state: MLA.store.state, tab: (this.route && this.route.query.tab) || 'learn', checkDone: {}, quizQs: null, preview: false, speech: MLA.speech.state }; },
     computed: {
       P() { return MLA.progress; },
+      checkpointsDone() { return (this.c && this.c.checkpoints || []).filter(k => this.P.isSolved(k.problem)).length; },
       c() { return this.P.concept(this.route.params.id); },
       cs() { return (this.c && this.P.peekC(this.c.id)) || { read: [], checks: {} }; },
       pr() { return this.c ? this.P.conceptProgress(this.c.id) : null; },
@@ -183,6 +184,17 @@
             <div v-if="c.objectives.length" class="lesson-section" data-narr="objectives" :class="{speaking: speaking('objectives')}">
               <div class="sec-head"><mla-icon name="target" :size="18"/><h3>By the end you will be able to</h3><span class="spacer"></span><button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne('objectives')" aria-label="Listen to: the objectives" title="Listen to this part"><mla-icon name="volume" :size="16"/></button></div>
               <ul class="objectives"><li v-for="(o,i) in c.objectives" :key="i"><mla-md :src="o" inline /></li></ul>
+            </div>
+            <div v-if="c.checkpoints && c.checkpoints.length" class="lesson-section checkpoints-card">
+              <div class="sec-head"><mla-icon name="flag" :size="18"/><h3>Checkpoints</h3><span class="spacer"></span><span class="chip tiny" :class="checkpointsDone === c.checkpoints.length ? 'green' : 'accent'">{{ checkpointsDone }} of {{ c.checkpoints.length }} passed</span></div>
+              <p class="small muted">Each step of this project has a task that is checked automatically. Pass them in order as you work through the steps below.</p>
+              <ol class="checkpoints">
+                <li v-for="(k,i) in c.checkpoints" :key="k.problem" :class="{done: P.isSolved(k.problem)}">
+                  <span class="cp-mark" :aria-label="P.isSolved(k.problem) ? 'Passed' : 'Not passed yet'"><mla-icon :name="P.isSolved(k.problem) ? 'check' : 'target'" :size="16"/></span>
+                  <span class="cp-text"><strong>{{ k.step }}</strong><span class="small muted">{{ k.goal }}</span></span>
+                  <button class="btn sm" @click="go('/problem/' + k.problem)">{{ P.isSolved(k.problem) ? 'Review' : 'Start' }}</button>
+                </li>
+              </ol>
             </div>
 
             <section v-for="(s,i) in c.sections" :key="i" :id="'sec-'+i" class="lesson-section" :data-narr="s.id" :class="['sec-'+s.type, {read: isRead(s.id), speaking: speaking(s.id)}]">

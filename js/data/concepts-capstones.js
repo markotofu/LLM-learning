@@ -408,7 +408,145 @@ print("calibrated after concept drift:", calibrated["concept drift: calls hurt m
       {"type":"mcq","q":"Shuffling the region column leaves the model's test PR-AUC unchanged. What does that tell you?","options":["Region causes churn","The model does not rely on region for its predictions","The model is broken","Region must be removed for fairness reasons"],"answer":1,"explain":"Permutation importance describes what the fitted model uses. A score of about zero means the model's predictions do not depend on that column."},
       {"type":"tf","q":"Under data drift, where only the mix of customers changes, a model that has learned well how churn depends on the features keeps its probabilities calibrated.","answer":true,"explain":"The relationship between features and churn has not changed, so the predictions follow the new mix. Concept drift, where that relationship changes, is what breaks calibration."}
     ],
+    checkpoints: [
+      { step: 'Step 2: find the leak', problem: 'leak-detector', goal: 'A detector that flags refund_issued, a feature recorded after the outcome.' },
+      { step: 'Step 3: a leak-free pipeline', problem: 'tabular-pipeline', goal: 'All preprocessing inside one pipeline that copes with missing values and new categories.' },
+      { step: 'Step 4: choose the threshold by cost', problem: 'cost-threshold', goal: 'The decision threshold with the lowest expected cost, not the default 0.5.' },
+      { step: 'Step 5: evaluate honestly', problem: 'bootstrap-slices', goal: 'Bootstrap intervals for the metric, overall and for each slice of customers.' }
+    ],
     problems: [
+      {
+        id: 'leak-detector', title: 'Checkpoint: Find the Leaky Feature', difficulty: 'medium',
+        prompt: `A feature that is only recorded after the outcome (a refund issued because the customer has already left) predicts the label almost perfectly offline, then is useless in production. Write a screen for such features.
+
+Implement \`suspicious_features(X, y, threshold=0.95)\` → the names of the numeric columns of the DataFrame \`X\`, in column order, whose ROC AUC as a single score against the 0/1 labels \`y\` is at least \`threshold\` or at most \`1 - threshold\` (near perfect in either direction). Skip columns that are not numeric, and fill a column's missing values with its median before scoring it.
+
+A column's AUC is the probability that a random positive example has a higher value than a random negative one, with ties counting half. From the average ranks r of all the values: AUC = (sum of r over the positives − n₁(n₁ + 1)/2) / (n₁ · n₀), where n₁ and n₀ are the numbers of positives and negatives.`,
+        starter: `
+import numpy as np
+import pandas as pd
+
+def suspicious_features(X, y, threshold=0.95):
+    # TODO: score each numeric column with ROC AUC and keep the near-perfect ones
+    return []
+`,
+        solution: `
+import numpy as np
+import pandas as pd
+
+def auc(score, y):
+    y = np.asarray(y)
+    r = pd.Series(np.asarray(score, dtype=float)).rank().to_numpy()
+    pos = y == 1
+    n1, n0 = pos.sum(), (~pos).sum()
+    return float((r[pos].sum() - n1 * (n1 + 1) / 2) / (n1 * n0))
+
+def suspicious_features(X, y, threshold=0.95):
+    out = []
+    for col in X.columns:
+        if not pd.api.types.is_numeric_dtype(X[col]):
+            continue
+        a = auc(X[col].fillna(X[col].median()), y)
+        if a >= threshold or a <= 1 - threshold:
+            out.append(col)
+    return out
+`,
+        hints: ['`pd.Series(values).rank()` returns average ranks, so ties are handled for you.', 'Use `pd.api.types.is_numeric_dtype(X[col])` to skip text columns.', 'An AUC near 0 is as suspicious as one near 1: the feature then predicts the opposite label.'],
+        explain: `Leakage is the most common reason a model looks excellent offline and fails in production. A single feature with an AUC near 1 (or near 0) decides the label almost on its own, which genuine causes rarely do, so the right question is when that value gets recorded. Here refund_issued is set after the customer cancels, so it cannot be known at prediction time. The detector is a screen, not a verdict: a flagged column can be legitimately strong, and the final call needs someone who knows how the data is collected.`,
+        tests: [
+          { name: 'flags the refund column', setup: `import pandas as pd
+rng = np.random.default_rng(0); n = 400
+y = (rng.random(n) < 0.3).astype(int)
+X = pd.DataFrame({'tenure': rng.integers(0, 60, n) - 10 * y, 'monthly': rng.normal(60, 10, n) + 5 * y, 'refund_issued': np.where(rng.random(n) < 0.02, 1 - y, y), 'support_calls': rng.poisson(1 + y), 'plan': rng.choice(['basic', 'plus'], n)})`, call: 'suspicious_features(X, y)', expect: "['refund_issued']" },
+          { name: 'a leak can point the other way', setup: `import pandas as pd
+rng = np.random.default_rng(0); n = 400
+y = (rng.random(n) < 0.3).astype(int)
+X = pd.DataFrame({'tenure': rng.integers(0, 60, n) - 10 * y, 'monthly': rng.normal(60, 10, n) + 5 * y, 'refund_issued': np.where(rng.random(n) < 0.02, 1 - y, y), 'support_calls': rng.poisson(1 + y), 'plan': rng.choice(['basic', 'plus'], n)})
+X2 = X.assign(days_since_cancel=np.where(y == 1, 0, 30) + rng.integers(0, 3, n))`, call: 'sorted(suspicious_features(X2, y))', expect: "['days_since_cancel', 'refund_issued']" },
+          { name: 'missing values are filled first', setup: `import pandas as pd
+rng = np.random.default_rng(0); n = 400
+y = (rng.random(n) < 0.3).astype(int)
+X = pd.DataFrame({'tenure': rng.integers(0, 60, n) - 10 * y, 'monthly': rng.normal(60, 10, n) + 5 * y, 'refund_issued': np.where(rng.random(n) < 0.02, 1 - y, y), 'support_calls': rng.poisson(1 + y), 'plan': rng.choice(['basic', 'plus'], n)})
+X.loc[::7, 'monthly'] = np.nan`, call: 'suspicious_features(X, y)', expect: "['refund_issued']" },
+          { name: 'a lower threshold flags more columns', setup: `import pandas as pd
+rng = np.random.default_rng(0); n = 400
+y = (rng.random(n) < 0.3).astype(int)
+X = pd.DataFrame({'tenure': rng.integers(0, 60, n) - 10 * y, 'monthly': rng.normal(60, 10, n) + 5 * y, 'refund_issued': np.where(rng.random(n) < 0.02, 1 - y, y), 'support_calls': rng.poisson(1 + y), 'plan': rng.choice(['basic', 'plus'], n)})`, call: 'suspicious_features(X, y, threshold=0.6)', hidden: true },
+          { name: 'another dataset', setup: `import pandas as pd
+rng = np.random.default_rng(5); m = 300
+yh = (rng.random(m) < 0.4).astype(int)
+Xh = pd.DataFrame({'a': rng.normal(size=m) + yh, 'leak': yh * 10 + rng.random(m), 'b': rng.normal(size=m)})`, call: 'suspicious_features(Xh, yh)', hidden: true }
+        ]
+      },
+      {
+        id: 'tabular-pipeline', title: 'Checkpoint: A Leak-Free Preprocessing Pipeline', difficulty: 'medium',
+        prompt: `Preprocessing that is fitted on all the data before splitting leaks information from the validation folds into training. Put every step inside one scikit-learn pipeline instead, so cross-validation and production see exactly the same steps.
+
+Implement \`build_pipeline(numeric, categorical)\` → an unfitted \`Pipeline\` that:
+
+- fills missing values in the \`numeric\` columns with the median, then standardizes them;
+- fills missing values in the \`categorical\` columns with the most frequent value, then one-hot encodes them, ignoring categories that were not seen in training (\`handle_unknown="ignore"\`);
+- ends with \`LogisticRegression(max_iter=1000)\`.
+
+\`numeric\` and \`categorical\` are lists of column names. Use a \`ColumnTransformer\` to treat the two kinds of column differently.`,
+        starter: `
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.linear_model import LogisticRegression
+
+def build_pipeline(numeric, categorical):
+    # TODO: one preprocessing pipeline per kind of column, then the model
+    return None
+`,
+        solution: `
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.linear_model import LogisticRegression
+
+def build_pipeline(numeric, categorical):
+    prep = ColumnTransformer([
+        ('num', Pipeline([('impute', SimpleImputer(strategy='median')), ('scale', StandardScaler())]), numeric),
+        ('cat', Pipeline([('impute', SimpleImputer(strategy='most_frequent')), ('onehot', OneHotEncoder(handle_unknown='ignore'))]), categorical)])
+    return Pipeline([('prep', prep), ('model', LogisticRegression(max_iter=1000))])
+`,
+        hints: ['A `ColumnTransformer` takes a list of (name, transformer, columns) triples.', 'Each kind of column needs two steps, so its transformer is itself a small `Pipeline`.', '`OneHotEncoder(handle_unknown="ignore")` turns a category it has never seen into all zeros instead of raising an error.'],
+        explain: `Because the imputer, the scaler and the encoder are fitted inside the pipeline, cross-validation refits them on each training fold, and the medians, means and categories of the validation fold never leak into training. The same object then goes to production, so the steps cannot drift apart. Ignoring unknown categories matters in production too: a new plan name should not crash the service.`,
+        tests: [
+          { name: 'returns a Pipeline', call: "type(build_pipeline(['tenure'], ['plan'])).__name__", expect: "'Pipeline'" },
+          { name: 'fits data with missing values and predicts probabilities', setup: `import pandas as pd
+rng = np.random.default_rng(1); n = 600
+plan = rng.choice(['basic', 'plus', 'pro'], n)
+tenure = rng.integers(0, 60, n).astype(float); calls = rng.poisson(2, n).astype(float)
+z = -1 + 0.8 * (plan == 'basic') - 0.05 * tenure + 0.5 * calls
+yy = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)
+D = pd.DataFrame({'tenure': tenure, 'calls': calls * 1000, 'plan': plan})
+D.loc[::9, 'tenure'] = np.nan
+D.loc[::11, 'plan'] = np.nan
+pipe = build_pipeline(['tenure', 'calls'], ['plan']).fit(D.iloc[:400], yy[:400])`, call: 'pipe.predict_proba(D.iloc[400:]).shape', expect: '(200, 2)' },
+          { name: 'copes with a category it never saw', setup: `import pandas as pd
+rng = np.random.default_rng(1); n = 600
+plan = rng.choice(['basic', 'plus', 'pro'], n)
+tenure = rng.integers(0, 60, n).astype(float); calls = rng.poisson(2, n).astype(float)
+z = -1 + 0.8 * (plan == 'basic') - 0.05 * tenure + 0.5 * calls
+yy = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)
+D = pd.DataFrame({'tenure': tenure, 'calls': calls * 1000, 'plan': plan})
+pipe = build_pipeline(['tenure', 'calls'], ['plan']).fit(D.iloc[:400], yy[:400])`, call: "pipe.predict(pd.DataFrame({'tenure': [5.0], 'calls': [3000.0], 'plan': ['enterprise']})).shape", expect: '(1,)' },
+          { name: 'same probabilities as the reference pipeline', setup: `import pandas as pd
+rng = np.random.default_rng(1); n = 600
+plan = rng.choice(['basic', 'plus', 'pro'], n)
+tenure = rng.integers(0, 60, n).astype(float); calls = rng.poisson(2, n).astype(float)
+z = -1 + 0.8 * (plan == 'basic') - 0.05 * tenure + 0.5 * calls
+yy = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)
+D = pd.DataFrame({'tenure': tenure, 'calls': calls * 1000, 'plan': plan})
+D.loc[::9, 'tenure'] = np.nan
+D.loc[::11, 'plan'] = np.nan
+pipe = build_pipeline(['tenure', 'calls'], ['plan']).fit(D.iloc[:400], yy[:400])`, call: 'pipe.predict_proba(D.iloc[400:410])[:, 1]', tol: 0.001, hidden: true }
+        ]
+      },
       {
         id: 'cost-threshold', title: 'Cost-Based Decision Threshold', difficulty: 'medium',
         prompt: `Implement:
@@ -801,7 +939,57 @@ Count the labels before fixing anything. If most failures are in retrieval, a be
       {"type":"mcq","q":"Why can a correct answer get a low token F1?","options":["Token F1 ignores the gold answer","It uses different or extra words compared with the short gold answer","Its citations are wrong","F1 only measures recall"],"answer":1,"explain":"Token F1 counts shared words. Rewording lowers recall, and extra (even correct) words lower precision."},
       {"type":"mcq","q":"A production question was answered wrongly, and a reviewer has confirmed the right answer. What should happen to it?","options":["Nothing: production questions are not part of evaluation","Add it to the evaluation set as a new test case","Add it to the system prompt as an example","Remove the documents it came from"],"answer":1,"explain":"Growing the evaluation set from real failures keeps it focused on the cases that matter, and protects against the same failure coming back later."}
     ],
+    checkpoints: [
+      { step: 'Step 2: keyword retrieval', problem: 'bm25-scores', goal: 'BM25 scores that put the passage with the rare query words first.' },
+      { step: 'Step 3: merge rankings and measure recall', problem: 'rag-pipeline-eval', goal: 'Sliding-window chunks, two rankings merged, and the context recall of the result.' },
+      { step: 'Step 4: cite and check', problem: 'citation-check', goal: 'Every citation points to a real passage, and every quotation is really in one.' }
+    ],
     problems: [
+      {
+        id: 'citation-check', title: 'Checkpoint: Check Every Citation', difficulty: 'medium',
+        prompt: `A grounded answer cites its sources as [1], [2] and so on (positions in the list of retrieved passages, starting at 1), and anything it quotes word for word must really be in a passage it cites. Code can check both before an answer reaches a user.
+
+Implement \`check_citations(answer, sources)\` → a list of the problems found, in this order:
+
+1. \`'no citations'\` if the answer cites nothing;
+2. \`'missing source n'\` for each cited number n, in increasing order and once each, that has no passage;
+3. \`'quote not found: ...'\` (with the quoted text) for each passage in double quotes, in order, that does not appear, ignoring case, in any of the cited passages that exist.
+
+Return an empty list when the answer passes every check. \`sources\` is a list of strings.`,
+        starter: `
+import re
+
+def check_citations(answer, sources):
+    # TODO: find the [n] citations and the "quoted" passages, then check them
+    return []
+`,
+        solution: `
+import re
+
+def check_citations(answer, sources):
+    problems = []
+    cited = sorted({int(n) for n in re.findall(r'\\[(\\d+)\\]', answer)})
+    if not cited:
+        problems.append('no citations')
+    for n in cited:
+        if not 1 <= n <= len(sources):
+            problems.append('missing source ' + str(n))
+    texts = [sources[n - 1].lower() for n in cited if 1 <= n <= len(sources)]
+    for quote in re.findall(r'"([^"]+)"', answer):
+        if not any(quote.lower() in t for t in texts):
+            problems.append('quote not found: ' + quote)
+    return problems
+`,
+        hints: ['Use `re.findall` with a pattern that captures the digits between square brackets; the matches come back as strings.', 'A set removes repeated citations; sort it to report them in order.', 'Lower-case both the quote and the passages before searching.'],
+        explain: `A language model can produce citations that look right and point nowhere, and quotations that no source contains. These checks are cheap, deterministic and catch both before a user sees them: a missing source or an invented quote should block the answer or send it back for regeneration. They do not prove the answer is correct, only that it is anchored to text you retrieved, which is what grounding promises.`,
+        tests: [
+          { name: 'a correct citation', setup: "S = ['The refund window is 30 days from delivery.', 'Gift cards cannot be refunded.']", call: "check_citations('You have 30 days to ask for a refund [1].', S)", expect: '[]' },
+          { name: 'no citation at all', setup: "S = ['The refund window is 30 days from delivery.', 'Gift cards cannot be refunded.']", call: "check_citations('Refunds take 30 days.', S)", expect: "['no citations']" },
+          { name: 'a citation with no source', setup: "S = ['The refund window is 30 days from delivery.', 'Gift cards cannot be refunded.']", call: "check_citations('See [3] and [1].', S)", expect: "['missing source 3']" },
+          { name: 'a quote that is in the cited passage', setup: "S = ['The refund window is 30 days from delivery.', 'Gift cards cannot be refunded.']", call: `check_citations('The policy says "the refund window is 30 days" [1].', S)`, hidden: true },
+          { name: 'a quote that is not', setup: "S = ['The refund window is 30 days from delivery.', 'Gift cards cannot be refunded.']", call: `check_citations('It says "within 14 days" [1][2] and [2].', S)`, hidden: true }
+        ]
+      },
       {
         id: 'bm25-scores', title: 'BM25 Scores', difficulty: 'medium',
         prompt: `Implement \`bm25_scores(query_tokens, docs_tokens, k1=1.5, b=0.75)\` → a NumPy array with one BM25 score per document. \`docs_tokens\` is a list of token lists; \`query_tokens\` a list of tokens (a token repeated in the query counts every time).
@@ -1316,7 +1504,47 @@ tok.save_pretrained("my-merged-model")
       {"type":"mcq","q":"Every rank in the sweep forgot the old style badly. What does that show?","options":["LoRA does not work","The rank controls capacity for the new task, not forgetting; replay is what protects the old skill","Higher ranks forget less, so the rank should be maximized","The base model was not pretrained"],"answer":1,"explain":"Old-style losses stayed between about 3.6 and 5.0 at every rank, while replay kept them near 0.3. Forgetting is driven by what the training data asks for, not by the size of the adapter."},
       {"type":"mcq","q":"Why do real LoRA implementations scale the adapter's output by α / r?","options":["To make the adapter smaller","So that changing the rank does not change the effective size of the updates, and the learning rate need not be re-tuned","To quantize the adapter","To make merging possible"],"answer":1,"explain":"With the α / r factor, α acts like a learning-rate multiplier that stays meaningful when r changes, which is why many recipes simply set α to r or 2r."}
     ],
+    checkpoints: [
+      { step: 'Step 1: size the adapter', problem: 'lora-param-count', goal: 'How many parameters LoRA trains, and what fraction of the model that is.' },
+      { step: 'Step 2: train only the adapter', problem: 'lora-gradients', goal: 'The gradients of A and B, with the base weights frozen.' },
+      { step: 'Step 3: merge and quantize', problem: 'lora-merge-quantize', goal: 'Fold the adapter into the weights, then quantize the result.' }
+    ],
     problems: [
+      {
+        id: 'lora-param-count', title: 'Checkpoint: How Many Parameters Does LoRA Train?', difficulty: 'easy',
+        prompt: `LoRA adds two small matrices to each layer it adapts, B with shape (d_out, r) and A with shape (r, d_in), so a layer of shape (d_out, d_in) gains r · (d_in + d_out) trainable parameters while its own d_out · d_in weights stay frozen.
+
+Implement:
+
+- \`lora_params(shapes, r, targets)\` → the total number of LoRA parameters when every layer whose name contains any of the strings in \`targets\` is adapted with rank r. \`shapes\` maps layer names to (d_out, d_in).
+- \`lora_fraction(shapes, r, targets)\` → that number divided by the total number of weights in all the layers of \`shapes\`.`,
+        starter: `
+def lora_params(shapes, r, targets):
+    # TODO
+    return 0
+
+def lora_fraction(shapes, r, targets):
+    # TODO
+    return 0.0
+`,
+        solution: `
+def lora_params(shapes, r, targets):
+    return sum(r * (d_in + d_out) for name, (d_out, d_in) in shapes.items() if any(t in name for t in targets))
+
+def lora_fraction(shapes, r, targets):
+    total = sum(d_out * d_in for d_out, d_in in shapes.values())
+    return lora_params(shapes, r, targets) / total
+`,
+        hints: ['Loop over `shapes.items()` and keep a layer when `any(t in name for t in targets)`.', 'Each adapted layer adds r * (d_in + d_out) parameters.'],
+        explain: `This is the arithmetic behind LoRA's appeal. Adapting the query and value projections of a 512-wide layer at rank 8 trains about half a percent of that block's weights, so the optimizer state and gradients shrink by the same factor, and the adapter can be saved as a file of a few megabytes for a model of several gigabytes. Raising the rank or adapting more layers grows the count linearly, which is the trade-off you tune.`,
+        tests: [
+          { name: 'query and value projections at rank 8', setup: "L = {'layer0.q_proj': (512, 512), 'layer0.k_proj': (512, 512), 'layer0.v_proj': (512, 512), 'layer0.o_proj': (512, 512), 'layer0.mlp.up': (2048, 512), 'layer0.mlp.down': (512, 2048)}", call: "lora_params(L, 8, ['q_proj', 'v_proj'])", expect: '16384' },
+          { name: 'as a fraction of all the weights', setup: "L = {'layer0.q_proj': (512, 512), 'layer0.k_proj': (512, 512), 'layer0.v_proj': (512, 512), 'layer0.o_proj': (512, 512), 'layer0.mlp.up': (2048, 512), 'layer0.mlp.down': (512, 2048)}", call: "lora_fraction(L, 8, ['q_proj', 'v_proj'])" },
+          { name: 'no matching layer', setup: "L = {'layer0.q_proj': (512, 512), 'layer0.mlp.up': (2048, 512)}", call: "lora_params(L, 8, ['nothing'])", expect: '0' },
+          { name: 'every projection and the MLP at rank 4', setup: "L = {'layer0.q_proj': (512, 512), 'layer0.k_proj': (512, 512), 'layer0.v_proj': (512, 512), 'layer0.o_proj': (512, 512), 'layer0.mlp.up': (2048, 512), 'layer0.mlp.down': (512, 2048)}", call: "lora_params(L, 4, ['proj', 'mlp'])", hidden: true },
+          { name: 'one large attention layer', call: "lora_params({'q_proj': (4096, 4096)}, 16, ['q_proj'])", expect: '131072', hidden: true }
+        ]
+      },
       {
         id: 'lora-merge-quantize', title: 'Merging and Quantizing an Adapter', difficulty: 'easy',
         prompt: `Implement:
