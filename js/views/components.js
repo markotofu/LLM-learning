@@ -63,7 +63,8 @@
     data() { return { s: MLA.speech.state, profile: MLA.store.state.profile, rates: [0.75, 1, 1.25, 1.5, 1.75, 2] }; },
     computed: {
       rate: { get() { return Number(this.profile.speechRate) || 1; }, set(v) { MLA.speech.setRate(Number(v)); } },
-      onLesson() { const r = MLA.router.route; return r.name === 'concept' && r.params.id === this.s.source; }
+      onLesson() { const r = MLA.router.route; return r.name === 'concept' && r.params.id === this.s.source; },
+      captions() { return this.profile.speechCaptions !== false; }
     },
     methods: {
       back() { MLA.router.navigate('/concept/' + this.s.source); }
@@ -73,6 +74,7 @@
       <div class="player-info">
         <div class="tiny dim">{{ s.paused ? 'Paused' : 'Reading aloud' }}<span v-if="s.total > 1"> · part {{ s.index + 1 }} of {{ s.total }}</span></div>
         <div class="player-title">{{ s.title }}</div>
+        <div v-if="captions && s.caption" class="player-caption" aria-hidden="true">{{ s.caption }}</div>
         <a v-if="s.source && !onLesson" class="tiny" href="#" @click.prevent="back">Back to {{ s.lessonTitle }}</a>
       </div>
       <div class="player-controls">
@@ -81,6 +83,16 @@
         <button class="icon-btn" @click="MLA.speech.next()" aria-label="Next part" title="Next part"><mla-icon name="skipForward" :size="17"/></button>
         <select v-model="rate" class="player-rate" aria-label="Reading speed" title="Reading speed"><option v-for="r in rates" :key="r" :value="r">{{ r }}×</option></select>
         <button class="icon-btn" @click="MLA.speech.stop()" aria-label="Stop reading" title="Stop"><mla-icon name="stop" :size="17"/></button>
+      </div>
+    </div>
+    <div v-else-if="s.upNext" class="player" role="region" aria-label="Read aloud">
+      <div class="player-info">
+        <div class="tiny dim">Lesson finished{{ profile.speechContinue ? '. The next one starts in a moment.' : '' }}</div>
+        <div class="player-title">Up next: {{ s.upNext.title }}</div>
+      </div>
+      <div class="player-controls">
+        <button class="btn sm primary" @click="MLA.speech.playNext()"><mla-icon name="play" :size="15"/> Play the next lesson</button>
+        <button class="icon-btn" @click="MLA.speech.dismiss()" aria-label="Close" title="Close"><mla-icon name="x" :size="17"/></button>
       </div>
     </div>` };
 

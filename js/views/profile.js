@@ -135,6 +135,9 @@
           </div>
           <div class="field"><label>Reading speed: {{ state.profile.speechRate || 1 }}×</label><input type="range" min="0.5" max="2" step="0.25" :value="state.profile.speechRate || 1" @input="setRate($event.target.value)" aria-label="Reading speed"></div>
           <label class="checkbox"><input type="checkbox" v-model="state.profile.speechFollow"> Scroll to the part being read</label>
+          <label class="checkbox"><input type="checkbox" :checked="state.profile.speechCaptions !== false" @change="state.profile.speechCaptions = $event.target.checked"> Show the sentence being read (captions in the player, highlight in the lesson)</label>
+          <label class="checkbox"><input type="checkbox" v-model="state.profile.speechContinue"> Go on to the next lesson automatically when one ends</label>
+          <p class="tiny dim">Lessons remember where you stopped. In browsers that support media controls for web pages, the lock screen, notification area and headphone buttons can pause, resume and skip; phones may still stop speech when the screen locks.</p>
           <div class="btn-row mt-sm"><button class="btn sm" :disabled="!speech.supported" @click="trySpeech"><mla-icon name="volume" :size="15"/> Try the voice</button></div>
           <div class="field"><label>Code editor font size: {{ state.profile.editorFontSize }}px</label><input type="range" min="11" max="22" step="1" v-model.number="state.profile.editorFontSize"></div>
           <div class="field"><label>Time limit per run: {{ state.profile.timeoutSec }} s (stops infinite loops)</label><input type="range" min="5" max="120" step="5" v-model.number="state.profile.timeoutSec"></div>

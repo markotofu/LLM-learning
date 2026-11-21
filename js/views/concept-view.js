@@ -3,6 +3,29 @@
   const MLA = global.MLA;
   MLA.components = MLA.components || {};
 
+  // The sentence being read aloud, found inside a lesson box so it can be highlighted. Narration rewrites formulas
+  // and code into words, so this is best effort: it looks for the sentence's first few words in the box's text.
+  function findSentence(root, sentence) {
+    const words = (String(sentence).match(/[A-Za-z0-9']+/g) || []).filter(w => w.length > 1).slice(0, 5);
+    if (words.length < 3) return null;
+    const at = [], chars = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const p = n.parentElement;
+      if (!p || p.closest('.sec-head, button, pre, svg, .chart, .editor')) continue;
+      for (let i = 0; i < n.nodeValue.length; i++) { at.push([n, i]); chars.push(n.nodeValue[i].toLowerCase()); }
+    }
+    const hay = chars.join('');
+    const m = new RegExp(words.map(w => w.toLowerCase()).join("[^a-z0-9']+")).exec(hay);
+    if (!m) return null;
+    const rest = hay.slice(m.index + m[0].length), stop = rest.search(/[.?!:;](\s|$)/);
+    const end = Math.min(m.index + m[0].length + (stop >= 0 ? stop + 1 : rest.length), m.index + sentence.length + 40, at.length);
+    const range = document.createRange();
+    range.setStart(at[m.index][0], at[m.index][1]);
+    range.setEnd(at[end - 1][0], at[end - 1][1] + 1);
+    return range;
+  }
+
   MLA.components['view-concept'] = {
     props: { route: Object },
     data() { return { state: MLA.store.state, tab: (this.route && this.route.query.tab) || 'learn', checkDone: {}, quizQs: null, preview: false, speech: MLA.speech.state }; },
@@ -24,9 +47,11 @@
       // Read aloud: the lesson as spoken parts (js/core/narrate.js), about 15 characters a second at normal speed.
       narration() { return this.c ? MLA.narrate.lesson(this.c) : []; },
       listenMinutes() { return Math.max(1, Math.round(this.narration.reduce((n, it) => n + it.text.length, 0) / 15 / 60)); },
-      readingHere() { return this.speech.playing && this.c && this.speech.source === this.c.id; }
+      readingHere() { return this.speech.playing && this.c && this.speech.source === this.c.id; },
+      resumeIndex() { const k = this.c && MLA.speech.resumeKey(this.c.id); const i = k ? this.narration.findIndex(it => it.key === k) : -1; return i > 0 ? i : 0; }
     },
     watch: {
+      'speech.caption'(text) { this.highlight(text); },
       'speech.key'(key) {                                   // follow along: scroll to the part being read
         if (!key || !this.readingHere || this.tab !== 'learn' || this.state.profile.speechFollow === false || !this.$el || !this.$el.querySelector) return;
         const el = this.$el.querySelector('[data-narr="' + key + '"]');
@@ -79,7 +104,16 @@
       },
       retryQuiz() { this.quizQs = MLA.quiz.prepare(this.c.quiz, MLA.util.seededRng(Date.now() >>> 0)); },
       openProblem(p) { this.go('/problem/' + p.id); },
-      listen() { MLA.speech.play(this.narration, 0, { source: this.c.id, lessonTitle: this.c.title }); },
+      listen(from) { MLA.speech.play(this.narration, from || 0, { source: this.c.id, lessonTitle: this.c.title }); },
+      highlight(text) {                       // the sentence being read, marked without touching the DOM (CSS Custom Highlight API)
+        const H = window.CSS && CSS.highlights;
+        if (!H || typeof Highlight === 'undefined') return;
+        H.delete('mla-reading');
+        if (!text || !this.readingHere || this.state.profile.speechCaptions === false || !this.$el || !this.$el.querySelector) return;
+        const box = this.$el.querySelector('[data-narr="' + this.speech.key + '"]');
+        const range = box && (findSentence(box, text) || findSentence(box, text.replace(/^[^.:?]*[.:?]\s+/, '')));   // without a leading heading
+        if (range) H.set('mla-reading', new Highlight(range));
+      },
       listenOne(key) {
         const i = this.narration.findIndex(it => it.key === key);
         if (i >= 0) MLA.speech.play(this.narration, i, { single: true, source: this.c.id, lessonTitle: this.c.title });
@@ -98,8 +132,10 @@
         <div class="row" style="gap:10px;align-items:center"><status-dot :status="status" :size="26"/><h2 style="margin:0">{{ c.title }}</h2></div>
         <p class="muted" style="margin:6px 0 10px">{{ c.summary }}</p>
         <div v-if="speech.supported" class="listen-row">
-          <button class="btn sm" @click="listen"><mla-icon name="headphones" :size="16"/> {{ readingHere ? 'Start again from the top' : 'Listen to the lesson' }}</button>
-          <span class="tiny dim">About {{ listenMinutes }} min read aloud, with formulas, charts and quick checks explained in words. Each part also has its own <mla-icon name="volume" :size="12"/> button.</span>
+          <button class="btn sm" @click="listen(readingHere ? 0 : resumeIndex)"><mla-icon name="headphones" :size="16"/> {{ readingHere ? 'Start again from the top' : resumeIndex ? 'Resume listening' : 'Listen to the lesson' }}</button>
+          <button v-if="resumeIndex && !readingHere" class="btn sm ghost" @click="listen(0)">From the start</button>
+          <span v-if="resumeIndex && !readingHere" class="tiny dim">You stopped at "{{ narration[resumeIndex].title }}".</span>
+          <span v-else class="tiny dim">About {{ listenMinutes }} min read aloud, with formulas, charts and quick checks explained in words. Each part also has its own <mla-icon name="volume" :size="12"/> button.</span>
         </div>
         <mla-progress :value="pr.pct" :color="branch.color" :label="statusText + (pr.completed ? '' : ' · ' + pr.pct + '% explored')" />
         <div v-if="reqText && !pr.completed" class="tiny dim mt-sm">{{ reqText }}</div>

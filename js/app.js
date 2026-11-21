@@ -78,7 +78,7 @@
       else if (this.state.profile.preloadPython) setTimeout(() => MLA.python.warmup(), 1500);
     },
     template: `
-    <div class="app" :class="{'full-route': route.full, 'has-player': speech.playing}">
+    <div class="app" :class="{'full-route': route.full, 'has-player': speech.playing || speech.upNext}">
       <a class="skip-link" href="#main">Skip to content</a>
       <aside class="sidebar" :class="{open: sidebarOpen}">
         <div class="brand" @click="go('/home')">
