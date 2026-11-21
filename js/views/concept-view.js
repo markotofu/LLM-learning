@@ -52,6 +52,7 @@
     },
     watch: {
       'speech.caption'(text) { this.highlight(text); },
+      'route.query.s'() { this.toSection(); },
       'speech.key'(key) {                                   // follow along: scroll to the part being read
         if (!key || !this.readingHere || this.tab !== 'learn' || this.state.profile.speechFollow === false || !this.$el || !this.$el.querySelector) return;
         const el = this.$el.querySelector('[data-narr="' + key + '"]');
@@ -61,10 +62,22 @@
       'route.query.tab'(v) { if (v) this.tab = v; }
     },
     created() { if (this.c) { this.P.visit(this.c.id); if (this.tab === 'quiz') this.startQuiz(); } },
-    mounted() { this.$nextTick(this.observe); },
+    mounted() { this.$nextTick(() => { this.observe(); this.toSection(); }); },
     unmounted() { if (this._io) this._io.disconnect(); },
     methods: {
       go(p) { MLA.router.navigate(p); },
+      toSection() {                            // ?s=<section id>: open the lesson at that part (links from search)
+        const sid = this.route && this.route.query && this.route.query.s;
+        if (!sid || !this.$el || !this.$el.querySelector) return;
+        if (this.tab !== 'learn') this.tab = 'learn';
+        this.$nextTick(() => {
+          const el = this.$el.querySelector('[data-narr="' + sid + '"]');
+          if (!el) return;
+          const open = el.querySelector('details'); if (open && (sid === 'projects' || sid === 'cases')) open.open = true;
+          el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+          el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1600);
+        });
+      },
       isRead(sid) { return (this.cs.read || []).includes(sid); },
       isRunnable(s) { return s.run !== false && (!s.lang || s.lang === 'python'); },
       secIcon(s) { if (s.type === 'demo' && String(s.demo).startsWith('dg-')) return 'layers'; return { text: 'book', code: 'code', demo: 'play', check: 'hint', chart: 'graph' }[s.type] || 'book'; },

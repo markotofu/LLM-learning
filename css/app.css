@@ -731,6 +731,10 @@ pre.hl { margin: 0; border: 0; border-radius: 0; background: transparent; paddin
   .bottom-nav { display: flex; position: fixed; left: 0; right: 0; bottom: 0; height: var(--bottom-h); background: var(--bg2); border-top: 1px solid var(--border); z-index: 30; padding-bottom: env(safe-area-inset-bottom); }
   .bottom-nav a { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px 2px; color: var(--muted); text-decoration: none; font-size: 0.66rem; }
   .bottom-nav a.active { color: var(--accent2); }
+  .more-sheet { position: fixed; inset: 0 0 var(--bottom-h) 0; z-index: 29; background: color-mix(in srgb, #000 35%, transparent); display: flex; align-items: flex-end; }
+  .more-panel { width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; padding: 12px; background: var(--bg2); border-top: 1px solid var(--border); border-radius: var(--radius) var(--radius) 0 0; }
+  .more-item { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: var(--radius-sm); color: var(--text); text-decoration: none; background: var(--panel); border: 1px solid var(--border); font: inherit; text-align: left; cursor: pointer; }
+  .more-item.active { border-color: var(--accent); color: var(--accent2); }
   .map-drawer { left: 8px; right: 8px; top: auto; bottom: 8px; width: auto; max-height: 58%; }
   .map-legend { display: none; }
   .playground { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
@@ -790,6 +794,9 @@ pre.hl { margin: 0; border: 0; border-radius: 0; background: transparent; paddin
   .boot-slow { animation: boot-fade 0.01s linear 12s forwards; }
 }
 
+.content-loading { padding: 48px 0; text-align: center; color: var(--muted); animation: mla-fade-in 0.4s ease 0.15s both; }
+@keyframes mla-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
 /* ---------- Read aloud (js/core/speech.js, the player in js/views/components.js) ---------- */
 .listen-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 12px; }
 .listen-row .tiny { flex: 1 1 260px; }
@@ -821,6 +828,24 @@ pre.hl { margin: 0; border: 0; border-radius: 0; background: transparent; paddin
 .chart-desc { margin-top: 6px; }
 .chart-desc summary { cursor: pointer; color: var(--muted); }
 .chart-desc p { margin: 6px 0 0; color: var(--text); line-height: 1.55; }
+
+/* ---------- Search (js/views/search.js) ---------- */
+.search-overlay { position: fixed; inset: 0; z-index: 90; background: color-mix(in srgb, #000 45%, transparent); display: flex; justify-content: center; align-items: flex-start; padding: 10vh 16px 16px; }
+.search-box { width: 100%; max-width: 640px; max-height: 76vh; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border2); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.search-input { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--muted); }
+.search-input input { flex: 1; border: 0; background: transparent; font-size: 1.05rem; color: var(--text); padding: 4px 0; outline: none; box-shadow: none; }
+.search-input kbd { font-size: 0.72rem; padding: 2px 6px; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); }
+.search-results { list-style: none; margin: 0; padding: 6px; overflow-y: auto; }
+.search-results li { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; }
+.search-results li.sel { background: var(--accent-soft); }
+.search-results .chip { flex: none; margin-top: 1px; min-width: 74px; justify-content: center; }
+.sr-text { display: flex; flex-direction: column; min-width: 0; }
+.sr-title { font-weight: 600; color: var(--text); }
+.sr-sub { overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.search-foot { display: flex; justify-content: space-between; gap: 12px; padding: 8px 14px; border-top: 1px solid var(--border); min-height: 34px; }
+.flash { animation: mla-flash 1.6s ease; }
+@keyframes mla-flash { 0%, 60% { box-shadow: 0 0 0 3px var(--accent); } 100% { box-shadow: none; } }
+@media (max-width: 600px) { .search-overlay { padding-top: 12px; } .search-results .chip { min-width: 0; } }
 
 /* ---------- Case studies and sample projects (js/data/projects.js) ---------- */
 .case { padding: 12px 0; border-top: 1px solid var(--border); }

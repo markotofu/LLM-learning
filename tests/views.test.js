@@ -185,4 +185,15 @@ T.ok('rejects foreign JSON', threw);
     T.ok('items whose content is gone are ignored', (() => { S.state.mistakes['quiz:attention:nope'] = { kind: 'quiz', concept: 'attention', ref: 'nope', card: { due: '2026-01-01' } }; return !M.all().some(x => x.id === 'quiz:attention:nope'); })());
   } finally { U.todayKey = realToday; S.reset(); }
 }
+// Search: one box finds lessons, sections, terms, problems, projects and case studies
+{
+  const res = q => MLA.search.query(q);
+  T.ok('search: a lesson title ranks first', (res('gradient descent')[0] || {}).route === '/concept/gradient-descent');
+  T.ok('search: finds case studies and projects', res('netflix').some(r => r.kind === 'Case study') && res('churn').some(r => r.kind === 'Project'));
+  T.ok('search: finds problems and glossary terms', res('causal mask').some(r => r.kind === 'Problem') && res('softmax').some(r => r.kind === 'Term'));
+  T.ok('search: sections link to their place in the lesson', res('causal mask').some(r => r.kind === 'Section' && /^[/]concept[/]attention[?]s=/.test(r.route)));
+  T.ok('search: searches inside lesson text', res('blending hundreds').length > 0 || res('wordpieces').some(r => r.kind === 'In the text'));
+  T.ok('search: an empty query returns nothing', res('   ').length === 0);
+}
+
 T.done();

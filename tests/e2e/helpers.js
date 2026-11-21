@@ -30,6 +30,7 @@ async function boot(page, route, extra) {
 async function go(page, route, titleStart) {
   await page.evaluate(r => { location.hash = '#' + r; }, route);
   if (titleStart) await page.waitForFunction(t => document.title.startsWith(t), titleStart);
+  await page.waitForFunction(() => !document.querySelector('.content-loading'));     // lesson files load on demand
   await page.waitForTimeout(80);
 }
 

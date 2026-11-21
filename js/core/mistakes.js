@@ -31,7 +31,7 @@
   // Turn a stored item into what the review screen needs; null if the content no longer exists.
   function resolve(id, item) {
     const c = item && MLA.content.byId[item.concept];
-    if (!c) return null;
+    if (!c || c._stub) return null;
     if (item.kind === 'quiz') { const q = c.quiz.find(x => qkey(x) === item.ref); return q && q.type !== 'match' ? { id, item, concept: c, question: q } : null; }
     if (item.kind === 'check') { const s = c.sections.find(x => x.id === item.ref && x.type === 'check'); return s ? { id, item, concept: c, question: s.question, section: s } : null; }
     if (item.kind === 'predict') { const s = c.sections.find(x => x.id === item.ref && x.predict); return s ? { id, item, concept: c, question: s.predict, section: s } : null; }
@@ -39,10 +39,15 @@
     return null;
   }
   function all() { const m = box(); return Object.keys(m).map(id => resolve(id, m[id])).filter(Boolean); }
+  // For counting: a mistake in a lesson whose file has not loaded yet still counts (it is resolved when reviewed).
+  function counted() {
+    const m = box();
+    return Object.keys(m).map(id => { const c = MLA.content.byId[m[id].concept]; return !c ? null : c._stub ? { id, item: m[id] } : resolve(id, m[id]); }).filter(Boolean);
+  }
   function dueItems(day) { day = day || today(); return all().filter(x => !x.item.graduated && x.item.card.due <= day); }
   function stats(day) {
     day = day || today();
-    const items = all();
+    const items = counted();
     const open = items.filter(x => !x.item.graduated);
     return { due: open.filter(x => x.item.card.due <= day).length, waiting: open.filter(x => x.item.card.due > day).length, graduated: items.length - open.length, total: items.length };
   }

@@ -16,7 +16,8 @@
     { name: 'achievements', label: 'Achievements', icon: 'trophy', path: '/achievements' },
     { name: 'profile', label: 'Progress & Sync', icon: 'sync', path: '/profile' }
   ];
-  const BOTTOM = ['home', 'map', 'problems', 'playground', 'profile'];
+  MLA.nav = NAV;
+  const BOTTOM = ['home', 'map', 'problems', 'playground'];       // on phones; every other page is under More
   const ROUTE_VIEW = {
     home: { comp: 'view-home', nav: 'home' },
     map: { comp: 'view-map', nav: 'map' },
@@ -37,7 +38,7 @@
   };
 
   const Root = {
-    data() { return { sidebarOpen: false, route: MLA.router.route, state: MLA.store.state, speech: MLA.speech.state }; },
+    data() { return { sidebarOpen: false, route: MLA.router.route, state: MLA.store.state, speech: MLA.speech.state, loading: false, loadError: '', moreOpen: false }; },
     computed: {
       current() { return ROUTE_VIEW[this.route.name] || { comp: 'view-notfound', nav: '' }; },
       viewProps() { return { route: this.route }; },
@@ -49,6 +50,8 @@
       },
       nav() { return NAV; },
       bottomNav() { return NAV.filter(n => BOTTOM.includes(n.name)); },
+      moreNav() { return NAV.filter(n => !BOTTOM.includes(n.name)); },
+      moreActive() { return this.moreNav.some(n => this.isActive(n.name)); },
       level() { return MLA.gamification.levelInfo(); },
       streak() { return MLA.gamification.streakStatus(); },
       py() { return MLA.python.status; },
@@ -56,11 +59,28 @@
       copyright() { return MLA.data.legal ? MLA.data.legal.copyright() : ''; }
     },
     watch: {
-      'route.path'() { this.sidebarOpen = false; },
+      'route.path': { immediate: true, handler() { this.sidebarOpen = false; this.moreOpen = false; this.loadContent(); } },
       title: { immediate: true, handler(t) { if (global.document) document.title = (t && t !== 'ML Atlas' ? t + ' · ' : '') + 'ML Atlas'; } }
     },
     methods: {
       go(path) { MLA.router.navigate(path); this.sidebarOpen = false; },
+      // Lesson files load on demand (js/data/branches.js): pages that show lesson bodies wait for theirs.
+      contentNeeded(r) {
+        if (r.name === 'concept') return [r.params.id];
+        if (r.name === 'problem') { const p = MLA.content.problemById[r.params.id]; return p ? [p.concept] : []; }
+        if (r.name === 'review') return Object.values(this.state.mistakes || {}).map(m => m && m.concept);
+        if (r.name === 'selftest') return MLA.data.concepts.map(c => c.id);
+        return [];
+      },
+      loadContent() {
+        const ids = this.contentNeeded(this.route).filter(id => id && MLA.content.byId[id] && !MLA.content.loaded(id));
+        this.loadError = '';
+        this.loading = ids.length > 0;
+        if (!this.loading) return;
+        const path = this.route.path;
+        MLA.content.ensure(ids).then(() => { if (this.route.path === path) this.loading = false; },
+          e => { if (this.route.path === path) { this.loading = false; this.loadError = e.message; } });
+      },
       isActive(name) { return this.current.nav === name; },
       icon(n) { return MLA.ui.iconSvg(n, 18); },
       lookLabel() { return this.state.profile.style === 'classic' ? 'Switch to the Baroque look' : 'Switch to the Classic look'; },
@@ -76,6 +96,12 @@
       try { MLA.gamification.touchStreak(); MLA.gamification.checkAchievements(); } catch (e) { /* ignore */ }
       if (!this.state.profile.onboarded) setTimeout(() => MLA.app.onboard(), 350);
       else if (this.state.profile.preloadPython) setTimeout(() => MLA.python.warmup(), 1500);
+      setTimeout(() => MLA.content.prefetchAll(), 8000);      // after the first page is up: keep every lesson available offline
+      document.addEventListener('keydown', e => {             // Ctrl+K or Cmd+K anywhere, or "/" when not typing: search
+        const t = e.target || {}, typing = /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName || '') || t.isContentEditable;
+        if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); MLA.search.open(); }
+        else if (e.key === '/' && !typing && !e.ctrlKey && !e.metaKey) { e.preventDefault(); MLA.search.open(); }
+      });
     },
     template: `
     <div class="app" :class="{'full-route': route.full, 'has-player': speech.playing || speech.upNext}">
@@ -102,6 +128,7 @@
           <button class="icon-btn menu-btn" aria-label="Open menu" @click="sidebarOpen=true" v-html="icon('menu')"></button>
           <h1 class="page-title">{{ title }}</h1>
           <div class="topbar-right">
+            <button class="icon-btn search-btn" title="Search (Ctrl+K)" aria-label="Search (Ctrl+K)" @click="MLA.search.open()" v-html="icon('search')"></button>
             <button class="icon-btn look-btn" :title="lookLabel()" :aria-label="lookLabel()" @click="toggleLook" v-html="icon('palette')"></button>
             <span class="chip py-chip" :title="py.message || pyLabel()" @click="go('/playground')"><span class="py-dot" :class="py.state"></span><span class="hide-sm">{{ pyLabel() }}</span></span>
             <span class="chip amber" title="Learning streak (days)" :aria-label="'Learning streak: ' + streak.current + ' days'"><span class="chip-ico" v-html="icon('flame')"></span>{{ streak.current }}</span>
@@ -109,13 +136,22 @@
           </div>
         </header>
         <div class="view" :class="{'view-full': route.full}">
-          <component :is="current.comp" v-bind="viewProps" :key="route.path" />
+          <div v-if="loading" class="content-loading" role="status">Loading…</div>
+          <empty-state v-else-if="loadError" icon="warning" :text="loadError"><button class="btn primary mt" @click="loadContent">Try again</button></empty-state>
+          <component v-else :is="current.comp" v-bind="viewProps" :key="route.path" />
         </div>
       </main>
       <nav class="bottom-nav" aria-label="Quick">
-        <a v-for="n in bottomNav" :key="n.name" :class="{active: isActive(n.name)}" :href="'#'+n.path" @click.prevent="go(n.path)"><span v-html="icon(n.icon)"></span><span>{{ n.label.split(' ')[n.name==='problems' || n.name==='playground' ? 1 : 0] }}</span></a>
+        <a v-for="n in bottomNav" :key="n.name" :class="{active: isActive(n.name)}" :href="'#'+n.path" @click.prevent="go(n.path)"><span v-html="icon(n.icon)"></span><span>{{ { home: 'Dashboard', map: 'Map', problems: 'Problems', playground: 'Playground' }[n.name] || n.label }}</span></a>
+        <a href="#" :class="{active: moreActive || moreOpen}" aria-haspopup="true" :aria-expanded="moreOpen ? 'true' : 'false'" @click.prevent="moreOpen = !moreOpen"><span v-html="icon('menu')"></span><span>More</span></a>
       </nav>
-      <mla-player /><mla-toasts /><mla-modal />
+      <div v-if="moreOpen" class="more-sheet" @click.self="moreOpen = false" @keydown.esc="moreOpen = false">
+        <div class="more-panel" role="dialog" aria-label="More pages">
+          <button class="more-item" @click="moreOpen = false; MLA.search.open()"><span v-html="icon('search')"></span><span>Search</span></button>
+          <a v-for="n in moreNav" :key="n.name" class="more-item" :class="{active: isActive(n.name)}" :href="'#'+n.path" @click.prevent="go(n.path)"><span v-html="icon(n.icon)"></span><span>{{ n.label }}</span></a>
+        </div>
+      </div>
+      <mla-player /><mla-search /><mla-toasts /><mla-modal />
     </div>`
   };
 

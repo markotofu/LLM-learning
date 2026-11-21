@@ -171,4 +171,13 @@ console.log(concepts.length + ' concepts, ' + problems.length + ' problems, ' + 
   T.ok('there are case studies and projects', nc >= 20 && np >= 20, nc + ' case studies, ' + np + ' projects');
 }
 
+{
+  const fs2 = require('fs');
+  const { generate, OUT } = require('../tools/build-catalog.js');
+  T.ok('js/data/catalog.js is up to date (run node tools/build-catalog.js)', fs2.readFileSync(OUT, 'utf8') === generate(MLA));
+  const listed = JSON.parse(fs2.readFileSync(require('path').join(__dirname, '../tools/content-files.json'), 'utf8'));
+  const onDisk = fs2.readdirSync(require('path').join(__dirname, '../js/data')).filter(f => /^concepts-.*[.]js$/.test(f));
+  T.ok('every lesson file is listed in tools/content-files.json', onDisk.every(f => listed.includes(f)) && listed.every(f => onDisk.includes(f)), onDisk.filter(f => !listed.includes(f)).join(', '));
+}
+
 T.done();

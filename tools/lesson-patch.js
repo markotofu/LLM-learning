@@ -144,3 +144,5 @@ function apply(op) {
 }
 
 for (const f of process.argv.slice(2)) for (const op of parse(fs.readFileSync(f, 'utf8'))) console.log(apply(op));
+// The page's lesson index (section ids and titles, quiz sizes) must follow the lessons: rebuild it in a fresh process.
+if (process.argv.length > 2) require('child_process').execFileSync(process.execPath, [path.join(__dirname, 'build-catalog.js')], { stdio: 'inherit' });
