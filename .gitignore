@@ -34,3 +34,6 @@ ml-atlas-code-*.py
 lessons/
 sitemap.xml
 robots.txt
+# Generated at deploy time by tools/precompile.js (and its local test page)
+js/precompiled.js
+index.strict.html

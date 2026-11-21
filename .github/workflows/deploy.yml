@@ -95,6 +95,8 @@ jobs:
           node-version: 20
       - name: Write static lesson pages, the sitemap and robots.txt (search engines and link previews)
         run: node tools/snapshots.js
+      - name: Precompile the Vue templates, so the published page's Content-Security-Policy can forbid eval
+        run: node tools/precompile.js
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .

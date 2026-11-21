@@ -43,7 +43,7 @@ function page(title, description, url, body, type) {
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
 <link rel="canonical" href="${url}">
-<link rel="icon" href="${SITE}/icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
 <meta property="og:site_name" content="ML Atlas">
 <meta property="og:type" content="${type || 'article'}">
 <meta property="og:title" content="${esc(title)}">

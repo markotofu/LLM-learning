@@ -155,14 +155,26 @@
     </div>`
   };
 
+  MLA.components['view-notfound'] = { template: `<empty-state icon="info" text="Page not found."><button class="btn primary mt" @click="MLA.router.navigate('/home')">Go to the dashboard</button></empty-state>` };
+
   MLA.app = {
+    Root,
     mount() {
+      // The published site precompiles every template (tools/precompile.js writes js/precompiled.js), so its
+      // Content-Security-Policy can forbid eval; in development Vue compiles the templates in the browser.
+      const R = global.MLA_RENDER;
+      if (R) {
+        for (const name of Object.keys(MLA.components)) {
+          const c = MLA.components[name];
+          if (R[name] && typeof c.template === 'string') { c.render = R[name]; delete c.template; }
+        }
+        if (R.root) { Root.render = R.root; delete Root.template; }
+      }
       const app = createApp(Root);
       app.config.globalProperties.MLA = MLA;
       app.config.warnHandler = function () {};
       app.config.errorHandler = function (err) { try { console.error(err); MLA.ui.toast('Something went wrong: ' + (err && err.message ? err.message : err), 'error', 6000); } catch (e) { /* ignore */ } };
       MLA.registerComponents(app);
-      app.component('view-notfound', { template: '<empty-state icon="info" text="Page not found."><button class="btn primary mt" onclick="location.hash=\'#/home\'">Go to the dashboard</button></empty-state>' });
       app.mount('#app');
       MLA.app._app = app;
     },
