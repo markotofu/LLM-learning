@@ -5,5 +5,6 @@
   try {
     var t = JSON.parse(localStorage.getItem('mla.state.v1') || '{}').profile;
     if (t && (t.theme === 'dark' || t.theme === 'darker')) document.documentElement.setAttribute('data-theme', t.theme);
+    if (t && t.style === 'classic') document.documentElement.setAttribute('data-style', 'classic');
   } catch (e) { /* storage unavailable or unreadable: keep the default theme */ }
 })();

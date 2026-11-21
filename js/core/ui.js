@@ -101,6 +101,7 @@
     eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
     settings: '<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.4.9a7 7 0 0 0-1.7-1L14.4 3h-4.8l-.4 2.5a7 7 0 0 0-1.7 1L5.1 6 3.1 9.4l2 1.6a7 7 0 0 0 0 2l-2 1.6 2 3.4 2.4-.9a7 7 0 0 0 1.7 1l.4 2.5h4.8l.4-2.5a7 7 0 0 0 1.7-1l2.4.9 2-3.4-2-1.6c.1-.3.1-.7.1-1z"/>',
     flask: '<path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2.2h12.4a1.5 1.5 0 0 0 1.3-2.2L14 9V3"/><path d="M7 15h10"/>',
+    palette: '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.9-.9 1.9-1.9 0-.5-.2-.9-.5-1.3-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.7 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>',
     dice: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h.01M15 9h.01M12 12h.01M9 15h.01M15 15h.01"/>'
   };
   function iconSvg(name, size) {
@@ -108,12 +109,16 @@
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="' + (size || 18) + '" height="' + (size || 18) + '" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
   }
 
-  function applyTheme(t) {
+  // t: 'light' | 'dark' | 'darker'; style: 'baroque' (default) | 'classic'. The colours match --bg in css/app.css.
+  const THEME_BG = { baroque: { light: '#f4ecdc', dark: '#16110b', darker: '#0a1124' }, classic: { light: '#f6f7f9', dark: '#0f1012', darker: '#000000' } };
+  function applyTheme(t, style) {
     if (!global.document) return;
     const root = document.documentElement;
-    if (t === 'dark' || t === 'darker') root.setAttribute('data-theme', t); else root.removeAttribute('data-theme');
+    const look = style === 'classic' ? 'classic' : 'baroque', mode = t === 'dark' || t === 'darker' ? t : 'light';
+    if (mode !== 'light') root.setAttribute('data-theme', mode); else root.removeAttribute('data-theme');
+    if (look === 'classic') root.setAttribute('data-style', 'classic'); else root.removeAttribute('data-style');
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta && meta.setAttribute) meta.setAttribute('content', t === 'dark' ? '#16110b' : t === 'darker' ? '#0a1124' : '#f4ecdc');
+    if (meta && meta.setAttribute) meta.setAttribute('content', THEME_BG[look][mode]);
   }
 
   MLA.ui = { toasts, toast, modal, openModal, closeModal, confirm, alert, icons, iconSvg, applyTheme };

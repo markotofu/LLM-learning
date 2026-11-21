@@ -17,10 +17,14 @@ function block(selector) {
   return out;
 }
 const base = block(':root');
+const classic = Object.assign({}, base, block(':root[data-style="classic"]'));
 const themes = {
   fresco: base,
   vault: Object.assign({}, base, block(':root[data-theme="dark"]')),
   lapis: Object.assign({}, base, block(':root[data-theme="darker"]')),
+  paper: classic,
+  graphite: Object.assign({}, classic, block(':root[data-style="classic"][data-theme="dark"]')),
+  midnight: Object.assign({}, classic, block(':root[data-style="classic"][data-theme="darker"]')),
 };
 
 function rgb(c) {

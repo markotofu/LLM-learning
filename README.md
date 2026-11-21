@@ -21,6 +21,7 @@ It is a static site: it runs on GitHub Pages, from any web server, or straight f
 | **Review** | Flashcards for 683 glossary terms, plus **mistakes to revisit**: every quiz question, quick check or prediction you get wrong, and every problem you could only solve with the solution, comes back after a day, then a week, then a few weeks (spaced repetition), until it sticks. |
 | **Playground** | A multi-file Python scratchpad with templates (NumPy, linear regression, matplotlib, softmax & attention, pandas, scikit-learn). |
 | **Progress** | XP, levels, streaks and achievements. Everything is stored in your browser (localStorage). |
+| **Looks and themes** | Two looks: **Baroque**, after baroque ceiling frescoes (gold, clouds and serif type), and **Classic**, the original clean design. Each has a light, a dark and a night theme. Switch looks with the palette button in the top bar, or pick both in **Progress & Sync → Settings**. |
 | **Sync across devices** | Export your progress and code as a file (or a copyable sync code) and import it on another device: imports *merge* by default, so nothing is lost. You can also download all your code as one `.py` file. |
 | **Works offline** | Installable as an app (PWA). After the first visit the site and the Python runtime are cached. |
 
@@ -72,8 +73,9 @@ No build step is involved: the site is plain HTML, CSS and JavaScript (Vue 3 is 
 
 ```text
 index.html               the single page; loads every script in order (no bundler)
-css/app.css              all styles: the Fresco (light, default), Vault (dark) and Lapis themes,
-                         and the fresco ornaments (light rays, clouds, gilding) in CSS and inline SVG
+css/app.css              all styles: two looks, Baroque (default; themes Fresco, Vault and Lapis, with
+                         light rays, clouds and gilding in CSS and inline SVG) and Classic (the original
+                         design; themes Paper, Graphite and Midnight)
 vendor/                  Vue 3 (global build)
 js/core/                 utilities & markdown renderer, syntax highlighter, store (localStorage,
                          export/import/merge), router, UI helpers, gamification, progress logic

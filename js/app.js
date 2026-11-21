@@ -61,10 +61,16 @@
       go(path) { MLA.router.navigate(path); this.sidebarOpen = false; },
       isActive(name) { return this.current.nav === name; },
       icon(n) { return MLA.ui.iconSvg(n, 18); },
+      lookLabel() { return this.state.profile.style === 'classic' ? 'Switch to the Baroque look' : 'Switch to the Classic look'; },
+      toggleLook() {
+        const s = this.state.profile.style === 'classic' ? 'baroque' : 'classic';
+        this.state.profile.style = s; MLA.ui.applyTheme(this.state.profile.theme, s);
+        MLA.ui.toast((s === 'classic' ? 'Classic' : 'Baroque') + ' look. Themes for each look are in Progress & Sync.', 'info', 3000);
+      },
       pyLabel() { const p = this.py; return p.ready ? (p.state === 'busy' ? 'Running…' : 'Python ready') : p.state === 'loading' ? 'Loading Python…' : p.state === 'error' ? 'Python failed to load' : 'Python (loads on first run)'; }
     },
     mounted() {
-      MLA.ui.applyTheme(this.state.profile.theme);
+      MLA.ui.applyTheme(this.state.profile.theme, this.state.profile.style);
       try { MLA.gamification.touchStreak(); MLA.gamification.checkAchievements(); } catch (e) { /* ignore */ }
       if (!this.state.profile.onboarded) setTimeout(() => MLA.app.onboard(), 350);
       else if (this.state.profile.preloadPython) setTimeout(() => MLA.python.warmup(), 1500);
@@ -74,7 +80,7 @@
       <a class="skip-link" href="#main">Skip to content</a>
       <aside class="sidebar" :class="{open: sidebarOpen}">
         <div class="brand" @click="go('/home')">
-          <span class="brand-logo" aria-hidden="true"><svg viewBox="0 0 32 32" width="36" height="36"><defs><radialGradient id="bm-sky" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="#fff4d6"/><stop offset=".42" stop-color="#a9cbe9"/><stop offset="1" stop-color="#3a669f"/></radialGradient><linearGradient id="bm-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6dc8c"/><stop offset=".5" stop-color="#c99a32"/><stop offset="1" stop-color="#8a6116"/></linearGradient></defs><circle cx="16" cy="16" r="15.3" fill="url(#bm-gold)"/><circle cx="16" cy="16" r="12.7" fill="url(#bm-sky)"/><g stroke="#fffaf0" stroke-width="1.35" stroke-opacity=".92" fill="none"><path d="M16 9.6 10.2 16M16 9.6l5.8 6.4M10.2 16l5.8 6.4M21.8 16 16 22.4M10.2 16h11.6"/></g><g fill="#fffaf0" stroke="#b8892b" stroke-width=".7"><circle cx="16" cy="9.6" r="2.3"/><circle cx="10.2" cy="16" r="2"/><circle cx="21.8" cy="16" r="2"/><circle cx="16" cy="22.4" r="2.3"/></g></svg></span>
+          <span class="brand-logo" aria-hidden="true"><svg class="logo-classic" viewBox="0 0 32 32" width="34" height="34"><rect width="32" height="32" rx="9" fill="url(#bg-g)"/><defs><linearGradient id="bg-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0ea5e9"/><stop offset="1" stop-color="#14b8a6"/></linearGradient></defs><g stroke="#fff" stroke-width="1.6" stroke-opacity=".9" fill="none"><path d="M16 9 9 16M16 9l7 7M9 16l7 7M23 16l-7 7M9 16h14"/></g><g fill="#fff"><circle cx="16" cy="9" r="2.6"/><circle cx="9" cy="16" r="2.3"/><circle cx="23" cy="16" r="2.3"/><circle cx="16" cy="23" r="2.6"/></g></svg><svg class="logo-baroque" viewBox="0 0 32 32" width="36" height="36"><defs><radialGradient id="bm-sky" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="#fff4d6"/><stop offset=".42" stop-color="#a9cbe9"/><stop offset="1" stop-color="#3a669f"/></radialGradient><linearGradient id="bm-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6dc8c"/><stop offset=".5" stop-color="#c99a32"/><stop offset="1" stop-color="#8a6116"/></linearGradient></defs><circle cx="16" cy="16" r="15.3" fill="url(#bm-gold)"/><circle cx="16" cy="16" r="12.7" fill="url(#bm-sky)"/><g stroke="#fffaf0" stroke-width="1.35" stroke-opacity=".92" fill="none"><path d="M16 9.6 10.2 16M16 9.6l5.8 6.4M10.2 16l5.8 6.4M21.8 16 16 22.4M10.2 16h11.6"/></g><g fill="#fffaf0" stroke="#b8892b" stroke-width=".7"><circle cx="16" cy="9.6" r="2.3"/><circle cx="10.2" cy="16" r="2"/><circle cx="21.8" cy="16" r="2"/><circle cx="16" cy="22.4" r="2.3"/></g></svg></span>
           <div><div class="brand-name">ML Atlas</div><div class="brand-sub">Machine learning → LLMs</div></div>
           <button class="icon-btn sidebar-close" aria-label="Close menu" @click.stop="sidebarOpen=false">&times;</button>
         </div>
@@ -94,6 +100,7 @@
           <button class="icon-btn menu-btn" aria-label="Open menu" @click="sidebarOpen=true" v-html="icon('menu')"></button>
           <h1 class="page-title">{{ title }}</h1>
           <div class="topbar-right">
+            <button class="icon-btn look-btn" :title="lookLabel()" :aria-label="lookLabel()" @click="toggleLook" v-html="icon('palette')"></button>
             <span class="chip py-chip" :title="py.message || pyLabel()" @click="go('/playground')"><span class="py-dot" :class="py.state"></span><span class="hide-sm">{{ pyLabel() }}</span></span>
             <span class="chip amber" title="Learning streak (days)" :aria-label="'Learning streak: ' + streak.current + ' days'"><span class="chip-ico" v-html="icon('flame')"></span>{{ streak.current }}</span>
             <span class="chip accent" title="Experience points"><mla-icon name="star" :size="13"/> {{ state.xp.toLocaleString() }}</span>

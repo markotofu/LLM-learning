@@ -17,7 +17,9 @@ Possible improvements, ranked by how much they help a learner per unit of effort
 
 **Impact** is the expected gain in learning, reach or safety.
 
-## Rebrand (branch `rebrand-baroque`, not yet merged)
+## Rebrand (merged into `main`; the pre-rebrand state is kept on the `pre-rebrand` branch)
+
+- **Two looks, switchable by learners:** Baroque (the default) and Classic (the original design), each with three themes, chosen in Progress & Sync → Settings or with the palette button in the top bar.
 
 - **A look taken from baroque ceiling frescoes**, made with CSS and inline SVG only (no images, no web fonts): golden light rays behind the top of every page, `feTurbulence` clouds, a gilded cornice of dentils under the top bar, a marble sidebar with a double gilt edge, gold hairlines on cards, lozenge rules under page titles, and a fresco-sky banner on the dashboard.
 - **Three themes**, still checked by `tests/theme.test.js`: **Fresco** (parchment, lapis and gold; now the default for new visitors), **Vault** (dark umber and gold; the saved choice of everyone who had the old dark theme) and **Lapis** (night blue and gold). The interactive accent stays blue in all three, because gold sits too close in hue to the amber status colour.

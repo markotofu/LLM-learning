@@ -30,7 +30,13 @@
       level() { return this.G.levelInfo(); }, streak() { return this.G.streakStatus(); },
       overall() { return this.P.overall(); },
       branches() { return this.P.branchStats().filter(b => b.branch.id !== 'start'); },
-      theme() { return this.state.profile.theme || 'dark'; },
+      theme() { return this.state.profile.theme || 'light'; },
+      look() { return this.state.profile.style === 'classic' ? 'classic' : 'baroque'; },
+      themeOptions() {
+        return this.look === 'classic'
+          ? [{ id: 'light', label: 'Paper', hint: 'Light' }, { id: 'dark', label: 'Graphite', hint: 'Dark' }, { id: 'darker', label: 'Midnight', hint: 'Near black' }]
+          : [{ id: 'light', label: 'Fresco', hint: 'Parchment, lapis and gold' }, { id: 'dark', label: 'Vault', hint: 'Dark umber and gold' }, { id: 'darker', label: 'Lapis', hint: 'Night blue and gold' }];
+      },
       storage() { this.state.xp; return MLA.store.storageInfo(); },
       py() { return MLA.python.status; },
       tracks() { return this.P.tracks().filter(t => !t.hidden); },
@@ -38,7 +44,8 @@
     },
     methods: {
       saveName() { this.state.profile.name = (this.nameEdit || 'Learner').trim().slice(0, 24) || 'Learner'; MLA.ui.toast('Name updated.', 'success'); },
-      setTheme(t) { this.state.profile.theme = t; MLA.ui.applyTheme(t); },
+      setTheme(t) { this.state.profile.theme = t; MLA.ui.applyTheme(t, this.state.profile.style); },
+      setLook(s) { this.state.profile.style = s; MLA.ui.applyTheme(this.state.profile.theme, s); },
       exportFile() {
         this.state.stats.exports = (this.state.stats.exports || 0) + 1; MLA.gamification.checkAchievements();
         const name = 'ml-atlas-progress-' + MLA.util.todayKey() + '.json';
@@ -47,7 +54,7 @@
       exportCode() { MLA.util.download('ml-atlas-code-' + MLA.util.todayKey() + '.py', codeBundle(), 'text/x-python'); },
       pickFile() { this.$refs.file.click(); },
       async confirmReplace() { if (this.mode !== 'replace') return true; return MLA.ui.confirm('**Replace** erases the progress currently in this browser and uses the imported data instead. Use **Merge** to combine both. Continue?', { okLabel: 'Replace', danger: true }); },
-      afterImport(label) { this.nameEdit = this.state.profile.name; MLA.ui.applyTheme(this.state.profile.theme); MLA.ui.toast(label + (this.mode === 'merge' ? ' and merged with this device.' : '.'), 'success', 4500); MLA.gamification.checkAchievements(); },
+      afterImport(label) { this.nameEdit = this.state.profile.name; MLA.ui.applyTheme(this.state.profile.theme, this.state.profile.style); MLA.ui.toast(label + (this.mode === 'merge' ? ' and merged with this device.' : '.'), 'success', 4500); MLA.gamification.checkAchievements(); },
       onFile(e) {
         const f = e.target.files[0]; e.target.value = ''; if (!f) return;
         const r = new FileReader();
@@ -118,7 +125,8 @@
       <div class="grid cols-2">
         <div class="card">
           <div class="card-title"><h3><mla-icon name="settings" :size="18"/> Settings</h3></div>
-          <div class="field"><label>Theme</label><div class="pills"><button :class="{active:theme==='light'}" @click="setTheme('light')" title="Parchment, lapis and gold">Fresco</button><button :class="{active:theme==='dark'}" @click="setTheme('dark')" title="Dark umber and gold">Vault</button><button :class="{active:theme==='darker'}" @click="setTheme('darker')" title="Night blue and gold">Lapis</button></div></div>
+          <div class="field"><label>Look</label><div class="pills"><button :class="{active:look==='baroque'}" @click="setLook('baroque')" title="After baroque ceiling frescoes: gold, clouds and serif type">Baroque</button><button :class="{active:look==='classic'}" @click="setLook('classic')" title="The original design: clean and minimal">Classic</button></div></div>
+          <div class="field"><label>Theme</label><div class="pills"><button v-for="o in themeOptions" :key="o.id" :class="{active:theme===o.id}" @click="setTheme(o.id)" :title="o.hint">{{ o.label }}</button></div></div>
           <div class="field"><label>Code editor font size: {{ state.profile.editorFontSize }}px</label><input type="range" min="11" max="22" step="1" v-model.number="state.profile.editorFontSize"></div>
           <div class="field"><label>Time limit per run: {{ state.profile.timeoutSec }} s (stops infinite loops)</label><input type="range" min="5" max="120" step="5" v-model.number="state.profile.timeoutSec"></div>
           <label class="checkbox"><input type="checkbox" v-model="state.profile.preloadPython"> Load Python in the background when the app opens</label>

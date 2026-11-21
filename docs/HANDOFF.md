@@ -1,5 +1,15 @@
 # ML Atlas: build handoff
 
+## STATUS UPDATE (session 9, end): two looks, Baroque and Classic
+
+The rebrand is on `main`; the state before it is the branch `pre-rebrand`. The user then asked for a theme setting that lets learners switch between both designs.
+
+- `profile.style` is `'baroque'` (default) or `'classic'`; `profile.theme` stays `'light' | 'dark' | 'darker'`. `MLA.ui.applyTheme(theme, style)` sets `data-theme` (dark, darker) and `data-style="classic"` on `<html>`; `js/core/boot-theme.js` does the same before the first paint.
+- `css/app.css`: the Baroque tokens are `:root`, `[data-theme="dark"]` and `[data-theme="darker"]`; the Classic tokens (the original palette) are `[data-style="classic"]`, `[data-style="classic"][data-theme="dark"]` and `[data-style="classic"][data-theme="darker"]`. `tests/theme.test.js` checks all six themes (686 checks).
+- **Every ornament rule is scoped** with `:where(:root:not([data-style="classic"]))`, which adds no specificity. New ornaments must use the same prefix, or they leak into the Classic look.
+- The gilt `border-color` rule on cards was removed: it overrode the coloured borders of the "when to use", "pitfalls" and "takeaways" cards and of the danger zone.
+- Both logos are in the sidebar markup (`.logo-classic`, `.logo-baroque`); CSS shows the one for the current look. The palette button in the top bar (`toggleLook` in `js/app.js`) switches looks; Progress & Sync → Settings has Look and Theme, with theme names per look (Fresco, Vault, Lapis or Paper, Graphite, Midnight).
+
 ## STATUS UPDATE (session 9, rebrand): branch `rebrand-baroque`
 
 The user asked for a rebrand "in another branch" after the content round, from four reference images of baroque ceiling frescoes (golden light, angels, clouds, gilded white architecture, sepia, gold and sky blue), and asked whether it could be done without generated images. It is done with CSS and inline SVG only.

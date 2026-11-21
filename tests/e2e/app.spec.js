@@ -84,6 +84,16 @@ test('switching themes recolours the app', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'darker');
   await page.getByRole('button', { name: 'Fresco', exact: true }).click();
   expect(await page.evaluate(() => document.documentElement.getAttribute('data-theme'))).toBeNull();
+  // the Classic look brings back the original palette, with its own theme names
+  await page.getByRole('button', { name: 'Classic', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-style', 'classic');
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(246, 247, 249)');
+  await page.getByRole('button', { name: 'Graphite', exact: true }).click();
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(15, 16, 18)');
+  // the palette button in the top bar switches back
+  await page.getByRole('button', { name: 'Switch to the Baroque look' }).click();
+  expect(await page.evaluate(() => document.documentElement.getAttribute('data-style'))).toBeNull();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 });
 
 test('legal pages show the owner, the year and the stored data', async ({ page }) => {

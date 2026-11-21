@@ -243,6 +243,7 @@ The text should read as if a careful teacher wrote it:
 - **No emojis** in lessons or in the interface; use the line icons in `js/core/ui.js` (`<mla-icon name="…">`).
 - **No exclamation marks, and no hype words** ("powerful", "beautiful", "superpower", "seamless"). State what something does and let the numbers show how much it matters.
 - **Show the data.** A sample that loads or builds a dataset prints a few rows of it (`df.head()`, a short loop over `X[:3]`, an 8 × 8 digit grid) before using it, so the learner can see what the model works with.
+- **Two looks.** Style new pages with the theme tokens so they work in both looks. Decorative rules that belong to the Baroque look (gold, rays, clouds, serif type) go in the "Fresco ornaments" section of `css/app.css` with the `:where(:root:not([data-style="classic"]))` prefix.
 - **Keyboard first.** A new demo that reacts to clicks needs a keyboard path too: the `kbCursor` mixin in `js/views/demos.js` gives a canvas an arrow-key cross-hair with Enter to act and a live region for screen readers.
 
 ## 7. Glossary, tracks and achievements

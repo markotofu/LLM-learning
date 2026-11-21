@@ -9,7 +9,7 @@
     return {
       app: APP_ID,
       version: VERSION,
-      profile: { name: 'Learner', createdAt: new Date().toISOString(), onboarded: false, goal: null, customGoal: null, theme: 'light', editorFontSize: 14, timeoutSec: 20, preloadPython: false, mapLayout: 'mindmap', experience: null },
+      profile: { name: 'Learner', createdAt: new Date().toISOString(), onboarded: false, goal: null, customGoal: null, theme: 'light', style: 'baroque', editorFontSize: 14, timeoutSec: 20, preloadPython: false, mapLayout: 'mindmap', experience: null },
       xp: 0,
       streak: { current: 0, best: 0, lastActive: null, days: {} },
       concepts: {},   // id -> { read:[], checks:{}, quizBest, quizAttempts, quizPassed, completedAt, masteredAt, visitedAt }
