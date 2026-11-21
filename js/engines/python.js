@@ -341,7 +341,7 @@ def _mla_exec(code):
           }
           for (var k = 0; k < mirrors.length && !base; k++) {
             var idx = (start + k) % mirrors.length;
-            post({ type: 'status', state: 'loading', text: k === 0 ? 'Downloading Python (first time only, ~15 MB)…' : 'Download stalled — trying another CDN (' + new URL(mirrors[idx]).host + ')…' });
+            post({ type: 'status', state: 'loading', text: k === 0 ? 'Downloading Python (first time only, ~15 MB)…' : 'Download stalled; trying another CDN (' + new URL(mirrors[idx]).host + ')…' });
             try { await prefetch(mirrors[idx]); base = mirrors[idx]; post({ type: 'mirror', index: idx }); }
             catch (e) { lastErr = e; }
           }
@@ -360,15 +360,17 @@ def _mla_exec(code):
       }
       return loading;
     }
+    var loadFailures = [];                             // packages that failed to download during this job (network, not "unknown package")
     async function loadImports(srcs) {
+      loadFailures = [];
       for (var i = 0; i < srcs.length; i++) {
         if (!srcs[i]) continue;
         try {
           await py.loadPackagesFromImports(srcs[i], {
             messageCallback: function (m) { if (/^Loading /.test(m)) post({ type: 'status', state: 'busy', text: m.length > 90 ? m.slice(0, 90) + '…' : m }); },
-            errorCallback: function () {}
+            errorCallback: function (m) { if (m) loadFailures.push(String(m).slice(0, 160)); }
           });
-        } catch (e) { /* unknown package: the import error surfaces when the code runs */ }
+        } catch (e) { loadFailures.push(String((e && e.message) || e).slice(0, 160)); }
       }
       var all = srcs.join('\n');
       if (/matplotlib/.test(all)) {
@@ -403,7 +405,14 @@ def _mla_exec(code):
           py.globals.set('_mla_payload', JSON.stringify(p));
           out = py.runPython('_mla_run_tests(_mla_code, _mla_payload)');
         }
-        post({ id: id, type: 'done', result: JSON.parse(out) });
+        var res = JSON.parse(out);
+        if (loadFailures.length) {                     // a missing module after a failed download is a network problem
+          var why = loadFailures.join('; ').slice(0, 200);
+          var mark = function (e) { if (e && /ModuleNotFoundError|No module named/.test((e.type || '') + ' ' + (e.message || ''))) e.loadFailed = why; };
+          mark(res.error);
+          (res.tests || []).forEach(function (t) { mark(t.error); });
+        }
+        post({ id: id, type: 'done', result: res });
       } catch (e) {
         post({ id: id, type: 'fail', error: String((e && e.message) || e) });
       }
@@ -515,7 +524,8 @@ def _mla_exec(code):
   function explain(err) {
     if (!err) return '';
     const m = (err.message || '') + ' ' + (err.type || '');
-    if (/No module named '(torch|tensorflow|transformers|jax|keras|torchvision)/.test(m)) return 'That library is not available in the in-browser Python runtime. These exercises use NumPy instead — the ideas are identical. Run PyTorch/TensorFlow code on your own machine or in Google Colab.';
+    if (err.loadFailed) return 'Python could not download a package this code needs (' + err.loadFailed + '). Check your internet connection and run the code again: each package downloads once, then stays cached in this browser.';
+    if (/No module named '(torch|tensorflow|transformers|jax|keras|torchvision)/.test(m)) return 'That library is not available in the in-browser Python runtime. These exercises use NumPy instead; the ideas are the same. Run PyTorch or TensorFlow code on your own machine or in Google Colab.';
     if (/No module named/.test(m)) return 'That package is not available in the browser runtime. NumPy, pandas, scikit-learn, SciPy and matplotlib are.';
     if (/IndentationError|TabError/.test(m)) return 'Python uses indentation to group code. Indent the body of every def / if / for / while consistently (4 spaces), and do not mix tabs and spaces.';
     if (/name 'np' is not defined/.test(m)) return 'Add `import numpy as np` at the top of your code.';

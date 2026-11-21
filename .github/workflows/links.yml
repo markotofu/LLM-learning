@@ -1,0 +1,23 @@
+name: Check external links
+
+# Lessons link to papers, documentation and articles that can move or disappear. This checks them every Monday
+# (and on demand from the Actions tab) without blocking deploys; a failed run lists the broken links.
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    name: Links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check every reference, case-study source and link in the lessons
+        run: node tools/check-links.js
