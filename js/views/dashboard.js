@@ -33,7 +33,7 @@
     },
     template: `
     <div class="stack">
-      <section-head :title="greeting()" :sub="'Level ' + level.level + ' · ' + G.title(level.level) + ' · ' + level.into + '/' + level.needed + ' XP to the next level'">
+      <section-head class="fresco-banner" :title="greeting()" :sub="'Level ' + level.level + ' · ' + G.title(level.level) + ' · ' + level.into + '/' + level.needed + ' XP to the next level'">
         <button class="btn" @click="go('/map')"><mla-icon name="map" :size="16"/> Concept map</button>
         <button class="btn primary" @click="cont"><mla-icon name="play" :size="16"/> {{ fresh ? 'Start learning' : 'Continue' }}</button>
       </section-head>

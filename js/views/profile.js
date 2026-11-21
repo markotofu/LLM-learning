@@ -118,7 +118,7 @@
       <div class="grid cols-2">
         <div class="card">
           <div class="card-title"><h3><mla-icon name="settings" :size="18"/> Settings</h3></div>
-          <div class="field"><label>Theme</label><div class="pills"><button :class="{active:theme==='dark'}" @click="setTheme('dark')">Dark</button><button :class="{active:theme==='darker'}" @click="setTheme('darker')">Midnight</button><button :class="{active:theme==='light'}" @click="setTheme('light')">Light</button></div></div>
+          <div class="field"><label>Theme</label><div class="pills"><button :class="{active:theme==='light'}" @click="setTheme('light')" title="Parchment, lapis and gold">Fresco</button><button :class="{active:theme==='dark'}" @click="setTheme('dark')" title="Dark umber and gold">Vault</button><button :class="{active:theme==='darker'}" @click="setTheme('darker')" title="Night blue and gold">Lapis</button></div></div>
           <div class="field"><label>Code editor font size: {{ state.profile.editorFontSize }}px</label><input type="range" min="11" max="22" step="1" v-model.number="state.profile.editorFontSize"></div>
           <div class="field"><label>Time limit per run: {{ state.profile.timeoutSec }} s (stops infinite loops)</label><input type="range" min="5" max="120" step="5" v-model.number="state.profile.timeoutSec"></div>
           <label class="checkbox"><input type="checkbox" v-model="state.profile.preloadPython"> Load Python in the background when the app opens</label>

@@ -18,9 +18,9 @@ function block(selector) {
 }
 const base = block(':root');
 const themes = {
-  dark: base,
-  darker: Object.assign({}, base, block(':root[data-theme="darker"]')),
-  light: Object.assign({}, base, block(':root[data-theme="light"]')),
+  fresco: base,
+  vault: Object.assign({}, base, block(':root[data-theme="dark"]')),
+  lapis: Object.assign({}, base, block(':root[data-theme="darker"]')),
 };
 
 function rgb(c) {

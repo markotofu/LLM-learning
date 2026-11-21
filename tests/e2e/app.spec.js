@@ -77,12 +77,12 @@ test('demos keep their proportions and diagram labels fit their boxes', async ({
 test('switching themes recolours the app', async ({ page }) => {
   await boot(page, '/profile');
   await go(page, '/profile', 'Progress');
-  await page.getByRole('button', { name: 'Light', exact: true }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(246, 247, 249)');
-  await page.getByRole('button', { name: 'Midnight', exact: true }).click();
+  await page.getByRole('button', { name: 'Vault', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(22, 17, 11)');
+  await page.getByRole('button', { name: 'Lapis', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'darker');
-  await page.getByRole('button', { name: 'Dark', exact: true }).click();
+  await page.getByRole('button', { name: 'Fresco', exact: true }).click();
   expect(await page.evaluate(() => document.documentElement.getAttribute('data-theme'))).toBeNull();
 });
 

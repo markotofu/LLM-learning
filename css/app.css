@@ -1,38 +1,68 @@
-/* ML Atlas – styles. Themes: "Graphite" (dark, default), "Midnight" (near-black) and "Paper" (light).
- * Every text colour is checked against WCAG AA (4.5:1) on every background by tests/theme.test.js. */
+/* ML Atlas – styles. Themes, after baroque ceiling frescoes: "Fresco" (light: parchment, lapis and gold; the default),
+ * "Vault" (dark: umber and gold) and "Lapis" (night blue and gold). The ornaments are CSS and inline SVG only.
+ * Every text colour is checked against WCAG AA (4.5:1) on every background by tests/theme.test.js. Gold (--gold*) is
+ * decoration: frames, rules and the logo, never body text. */
 :root {
-  --bg: #0f1012; --bg2: #131416; --panel: #17181b; --panel2: #1c1d21; --panel3: #25272c;
-  --border: #2a2c31; --border2: #373a41;
-  --text: #ececef; --muted: #a3a7b0; --dim: #8b8f99;
-  --accent: #38bdf8; --accent2: #7dd3fc; --accent-soft: rgba(56, 189, 248, 0.15);
-  --on-accent: #05202d; --on-status: #0b0c0e;
-  --green: #4ade80; --green-soft: rgba(74, 222, 128, 0.14);
-  --red: #f87171; --red-soft: rgba(248, 113, 113, 0.14);
-  --amber: #fbbf24; --amber-soft: rgba(251, 191, 36, 0.14);
-  --purple: #c084fc; --purple-soft: rgba(192, 132, 252, 0.14);
-  --cyan: #2dd4bf; --cyan-soft: rgba(45, 212, 191, 0.13);
-  --pink: #f472b6;
-  --editor-bg: #0c0d0f; --editor-gutter: #0a0b0c; --code-text: #dcdee3; --grid-dot: rgba(255, 255, 255, 0.05);
-  --tk-kw: #c792ea; --tk-str: #b5e48c; --tk-num: #f9a26c; --tk-com: #8a93a7; --tk-fn: #82aaff; --tk-cls: #ffcb6b; --tk-self: #f07178; --tk-bi: #89ddff; --tk-dec: #ffcb6b;
-  --radius: 12px; --radius-sm: 8px; --shadow: 0 12px 34px rgba(0, 0, 0, 0.42);
+  --bg: #f4ecdc; --bg2: #faf4e8; --panel: #fffaf1; --panel2: #f6eedf; --panel3: #ebdfc6;
+  --border: #e2d2b0; --border2: #cdb88c;
+  --text: #2a1d0f; --muted: #5c4730; --dim: #66523a;
+  --accent: #2f5d9a; --accent2: #2a5288; --accent-soft: rgba(47, 93, 154, 0.11);
+  --on-accent: #ffffff; --on-status: #ffffff;
+  --green: #2e6a2c; --green-soft: rgba(46, 106, 44, 0.1);
+  --red: #9e2a1c; --red-soft: rgba(158, 42, 28, 0.08);
+  --amber: #8a4a0a; --amber-soft: rgba(138, 74, 10, 0.1);
+  --purple: #6c3b93; --purple-soft: rgba(108, 59, 147, 0.09);
+  --cyan: #1b625e; --cyan-soft: rgba(27, 98, 94, 0.09);
+  --pink: #a1305a;
+  --gold: #b8892b; --gold-light: #ecd08a; --gold-deep: #8a6418; --sky: #a9cbe9; --sky-light: #e3eef7;
+  --glow: rgba(255, 210, 110, 0.42); --ray: rgba(205, 158, 52, 0.10); --cloud: rgba(255, 255, 255, 0.92); --banner-text: #2a1d0f;
+  --editor-bg: #fdf9f1; --editor-gutter: #f4ecdc; --code-text: #2a1d0f; --grid-dot: rgba(90, 60, 20, 0.08);
+  --tk-kw: #6d28d9; --tk-str: #15703a; --tk-num: #b23c0b; --tk-com: #5f5a50; --tk-fn: #1d4ed8; --tk-cls: #a1500a; --tk-self: #b5123b; --tk-bi: #0e6a85; --tk-dec: #a1500a;
+  --radius: 12px; --radius-sm: 8px; --shadow: 0 10px 30px rgba(70, 45, 10, 0.14);
   --font: system-ui, -apple-system, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
+  --font-display: "Cormorant Garamond", "EB Garamond", "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-read: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, Cambria, serif;
   --mono: ui-monospace, "Cascadia Code", "Cascadia Mono", "JetBrains Mono", Consolas, "SF Mono", Menlo, monospace;
   --sidebar-w: 244px; --topbar-h: 56px; --bottom-h: 0px;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #16110b; --bg2: #1b150e; --panel: #211910; --panel2: #281f15; --panel3: #33281b;
+  --border: #3c2f1f; --border2: #4e3e29;
+  --text: #f3e9d4; --muted: #cdbd9e; --dim: #b4a384;
+  --accent: #82b4e6; --accent2: #a8ccf0; --accent-soft: rgba(130, 180, 230, 0.15);
+  --on-accent: #0f1d2c; --on-status: #120c06;
+  --green: #93cf7c; --green-soft: rgba(147, 207, 124, 0.14);
+  --red: #f28b74; --red-soft: rgba(242, 139, 116, 0.14);
+  --amber: #f0b955; --amber-soft: rgba(240, 185, 85, 0.14);
+  --purple: #cba5ea; --purple-soft: rgba(203, 165, 234, 0.14);
+  --cyan: #70cfc1; --cyan-soft: rgba(112, 207, 193, 0.13);
+  --pink: #f29cbb;
+  --gold: #d6aa4c; --gold-light: #f1d68c; --gold-deep: #e6c470; --sky: #3c5a85; --sky-light: #22324f;
+  --glow: rgba(214, 170, 76, 0.16); --ray: rgba(214, 170, 76, 0.05); --cloud: rgba(255, 240, 210, 0.16); --banner-text: #f6ecd6;
+  --editor-bg: #110c07; --editor-gutter: #0d0905; --code-text: #efe5cf; --grid-dot: rgba(255, 236, 200, 0.05);
+  --tk-kw: #d0a2f0; --tk-str: #b9e38f; --tk-num: #f7a875; --tk-com: #a39a88; --tk-fn: #8fb6ff; --tk-cls: #f5c96f; --tk-self: #f27f86; --tk-bi: #8fdcf3; --tk-dec: #f5c96f;
+  --shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
   color-scheme: dark;
 }
-:root[data-theme="darker"] { --bg: #000000; --bg2: #050506; --panel: #0b0b0d; --panel2: #111114; --panel3: #19191d; --border: #1f2024; --border2: #2b2c31; --editor-bg: #050506; --editor-gutter: #030304; }
-:root[data-theme="light"] {
-  --bg: #f6f7f9; --bg2: #ffffff; --panel: #ffffff; --panel2: #f2f3f6; --panel3: #e6e8ed; --border: #e2e4e9; --border2: #cbcfd7;
-  --text: #16181d; --muted: #4f5560; --dim: #5d636e;
-  --accent: #0369a1; --accent2: #075985; --accent-soft: rgba(3, 105, 161, 0.1);
-  --on-accent: #ffffff; --on-status: #ffffff;
-  --green: #14733a; --green-soft: rgba(20, 115, 58, 0.1); --red: #b91c1c; --red-soft: rgba(185, 28, 28, 0.08);
-  --amber: #964a06; --amber-soft: rgba(150, 74, 6, 0.1); --purple: #7e22ce; --purple-soft: rgba(126, 34, 206, 0.09);
-  --cyan: #0d6b64; --cyan-soft: rgba(13, 107, 100, 0.09); --pink: #be185d;
-  --editor-bg: #fbfbfc; --editor-gutter: #f2f3f6; --code-text: #1f2328; --grid-dot: rgba(20, 24, 32, 0.07);
-  --tk-kw: #7c3aed; --tk-str: #15803d; --tk-num: #c2410c; --tk-com: #5f6877; --tk-fn: #1d4ed8; --tk-cls: #b45309; --tk-self: #be123c; --tk-bi: #0e7490; --tk-dec: #b45309;
-  --shadow: 0 10px 30px rgba(16, 20, 28, 0.12);
-  color-scheme: light;
+:root[data-theme="darker"] {
+  --bg: #0a1124; --bg2: #0d152b; --panel: #111a33; --panel2: #16203c; --panel3: #1e2947;
+  --border: #263257; --border2: #334068;
+  --text: #f2ebd9; --muted: #c9c3b0; --dim: #aea996;
+  --accent: #8cbdf0; --accent2: #b2d4f6; --accent-soft: rgba(140, 189, 240, 0.15);
+  --on-accent: #0a1730; --on-status: #0a0f1c;
+  --green: #93cf7c; --green-soft: rgba(147, 207, 124, 0.14);
+  --red: #f28b74; --red-soft: rgba(242, 139, 116, 0.14);
+  --amber: #f0b955; --amber-soft: rgba(240, 185, 85, 0.14);
+  --purple: #cba5ea; --purple-soft: rgba(203, 165, 234, 0.14);
+  --cyan: #70cfc1; --cyan-soft: rgba(112, 207, 193, 0.13);
+  --pink: #f29cbb;
+  --gold: #e0b65a; --gold-light: #f4da92; --gold-deep: #ecc977; --sky: #22365f; --sky-light: #182747;
+  --glow: rgba(224, 182, 90, 0.14); --ray: rgba(224, 182, 90, 0.05); --cloud: rgba(215, 228, 255, 0.13); --banner-text: #f4eddc;
+  --editor-bg: #070d1c; --editor-gutter: #050a16; --code-text: #ece6d4; --grid-dot: rgba(220, 230, 255, 0.05);
+  --tk-kw: #d0a2f0; --tk-str: #b9e38f; --tk-num: #f7a875; --tk-com: #a6a293; --tk-fn: #8fb6ff; --tk-cls: #f5c96f; --tk-self: #f27f86; --tk-bi: #8fdcf3; --tk-dec: #f5c96f;
+  --shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.6; -webkit-text-size-adjust: 100%; }
@@ -706,3 +736,67 @@ pre.hl { margin: 0; border: 0; border-radius: 0; background: transparent; paddin
   .boot-bar span { animation: none; left: 30%; }
   .boot-slow { animation: boot-fade 0.01s linear 12s forwards; }
 }
+
+/* ---------- Fresco ornaments (baroque rebrand): golden light, clouds and gilding, in CSS and inline SVG only ---------- */
+:root { --orn-rule: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 150 10'%3E%3Cpath d='M0 5h59M91 5h59' stroke='%23000' stroke-width='1.3'/%3E%3Cpath d='M75 0.5l4.5 4.5-4.5 4.5-4.5-4.5z'/%3E%3Ccircle cx='65' cy='5' r='1.7'/%3E%3Ccircle cx='85' cy='5' r='1.7'/%3E%3C/svg%3E"); --orn-clouds: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1000' height='320'%3E%3Cfilter id='c' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0042 0.0125' numOctaves='5' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 3.1 -1.32'/%3E%3CfeGaussianBlur stdDeviation='1.4'/%3E%3C/filter%3E%3Crect width='1000' height='320' filter='url%28%23c%29'/%3E%3C/svg%3E"); --orn-dentils: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='6'%3E%3Crect x='1' y='0' width='7' height='4.5' rx='0.6'/%3E%3C/svg%3E"); }
+h1, h2, h3, .brand-name, .page-title, .card-title h3, .lesson-section .sec-head h3, .boot-title { font-family: var(--font-display); font-weight: 650; letter-spacing: 0; }
+h2 { font-size: 1.6rem; } h3 { font-size: 1.2rem; } .page-title { font-size: 1.22rem; }
+.md-body { font-family: var(--font-read); font-size: 1.03rem; line-height: 1.7; }
+.md-body table, .md-body .formula-group { font-family: var(--font); }
+
+/* Light from above: a warm glow and faint rays behind the top of every page */
+.app { background: radial-gradient(ellipse 70% 42% at 58% -6%, var(--glow), transparent 70%), var(--bg); }
+.main { position: relative; isolation: isolate; }
+.main::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 620px; z-index: -1; pointer-events: none;
+  background: repeating-conic-gradient(from 150deg at 52% -35%, var(--ray) 0deg 2.4deg, transparent 2.4deg 7.5deg);
+  -webkit-mask-image: radial-gradient(ellipse 62% 88% at 52% 0%, #000 0%, transparent 78%); mask-image: radial-gradient(ellipse 62% 88% at 52% 0%, #000 0%, transparent 78%); }
+
+/* A gilded cornice under the top bar */
+.topbar { border-bottom: 1px solid color-mix(in srgb, var(--gold) 55%, var(--border)); }
+.topbar::after { content: ""; position: absolute; left: 0; right: 0; bottom: -7px; height: 6px; pointer-events: none; background: color-mix(in srgb, var(--gold) 55%, transparent);
+  -webkit-mask: var(--orn-dentils) 0 0 / 12px 6px repeat-x; mask: var(--orn-dentils) 0 0 / 12px 6px repeat-x; opacity: 0.55; }
+
+/* The sidebar as a marble pilaster with a double gilt edge */
+.sidebar { background: linear-gradient(180deg, color-mix(in srgb, var(--bg2) 90%, var(--gold-light)) 0%, var(--bg2) 34%); border-right: 1px solid color-mix(in srgb, var(--gold) 50%, var(--border));
+  box-shadow: inset -4px 0 0 var(--bg2), inset -5px 0 0 color-mix(in srgb, var(--gold) 24%, transparent); }
+.brand { border-bottom: 1px solid color-mix(in srgb, var(--gold) 38%, var(--border)); }
+.brand-logo { filter: drop-shadow(0 2px 6px color-mix(in srgb, var(--gold) 50%, transparent)); }
+.brand-name { font-size: 1.28rem; line-height: 1.1; }
+.brand-sub { font-variant: small-caps; letter-spacing: 0.04em; }
+.nav a.active { box-shadow: inset 3px 0 0 var(--gold); }
+
+/* Gilded hairlines on cards and lesson sections; primary buttons with a gold edge */
+.card, .lesson-section { border-color: color-mix(in srgb, var(--gold) 24%, var(--border)); }
+.btn.primary { border-color: color-mix(in srgb, var(--gold) 55%, var(--accent)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+hr { border-top-color: color-mix(in srgb, var(--gold) 35%, var(--border)); }
+
+/* Page headings end with a gilded rule and lozenge */
+.section-head h2::after { content: ""; display: block; width: 150px; height: 10px; margin-top: 8px; background: var(--gold);
+  -webkit-mask: var(--orn-rule) left center / 150px 10px no-repeat; mask: var(--orn-rule) left center / 150px 10px no-repeat; }
+
+/* The dashboard banner: a fresco sky with light breaking through clouds, inside a gilt frame */
+.section-head.fresco-banner { position: relative; isolation: isolate; overflow: hidden; padding: 34px 26px 32px; margin-bottom: 16px; border-radius: var(--radius); color: var(--banner-text);
+  background: radial-gradient(ellipse 34% 80% at 74% 0%, color-mix(in srgb, var(--gold-light) 70%, transparent), transparent 72%), linear-gradient(180deg, var(--sky-light) 0%, color-mix(in srgb, var(--sky) 62%, var(--sky-light)) 100%);
+  border: 1px solid color-mix(in srgb, var(--gold) 60%, var(--border));
+  box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--panel) 55%, transparent), inset 0 0 0 5px color-mix(in srgb, var(--gold) 50%, transparent), var(--shadow); }
+.section-head.fresco-banner::before { content: ""; position: absolute; inset: -30% -10% 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse 30% 40% at 74% 0%, color-mix(in srgb, var(--gold-light) 75%, transparent), transparent 70%), repeating-conic-gradient(from 165deg at 74% -2%, color-mix(in srgb, var(--gold-light) 55%, transparent) 0deg 3deg, transparent 3deg 8.5deg);
+  -webkit-mask-image: radial-gradient(ellipse 58% 90% at 74% 0%, #000 0%, transparent 82%); mask-image: radial-gradient(ellipse 58% 90% at 74% 0%, #000 0%, transparent 82%); }
+.section-head.fresco-banner::after { content: ""; position: absolute; left: -4%; right: -4%; bottom: -10%; height: 92%; z-index: -1; pointer-events: none;
+  background: linear-gradient(0deg, var(--cloud) 0%, var(--cloud) 45%, color-mix(in srgb, var(--cloud) 55%, transparent) 100%);
+  -webkit-mask: var(--orn-clouds) 18% 100% / 1000px 320px repeat-x; mask: var(--orn-clouds) 18% 100% / 1000px 320px repeat-x; }
+.section-head.fresco-banner h2 { color: var(--banner-text); font-size: 1.9rem; }
+.section-head.fresco-banner p { color: color-mix(in srgb, var(--banner-text) 82%, transparent); font-weight: 500; }
+
+/* The loading screen gets the same sky */
+.boot { position: relative; isolation: isolate; overflow: hidden; background: radial-gradient(ellipse 55% 40% at 50% 0%, var(--glow), transparent 72%), linear-gradient(180deg, var(--sky-light) 0%, var(--bg) 72%); }
+.boot::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: repeating-conic-gradient(from 150deg at 50% -12%, var(--ray) 0deg 2.4deg, transparent 2.4deg 7deg);
+  -webkit-mask-image: radial-gradient(ellipse 70% 80% at 50% 0%, #000 0%, transparent 80%); mask-image: radial-gradient(ellipse 70% 80% at 50% 0%, #000 0%, transparent 80%); }
+.boot::after { content: ""; position: absolute; left: -5%; right: -5%; bottom: 0; height: 38%; z-index: -1; pointer-events: none; background: linear-gradient(0deg, var(--cloud), transparent);
+  -webkit-mask: var(--orn-clouds) 0 100% / 1000px 320px repeat-x; mask: var(--orn-clouds) 0 100% / 1000px 320px repeat-x; }
+.boot-edges path { stroke: color-mix(in srgb, var(--gold) 70%, var(--border2)); }
+.boot-nodes circle { stroke: color-mix(in srgb, var(--gold) 80%, transparent); stroke-width: 2.5; }
+.boot-title { font-size: 2.2rem; }
+.boot-sub { font-family: var(--font-read); font-style: italic; }
+.boot-bar span { background: linear-gradient(90deg, transparent, var(--gold), transparent); }

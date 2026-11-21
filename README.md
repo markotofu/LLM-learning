@@ -72,7 +72,8 @@ No build step is involved: the site is plain HTML, CSS and JavaScript (Vue 3 is 
 
 ```text
 index.html               the single page; loads every script in order (no bundler)
-css/app.css              all styles, with dark / darker / light themes
+css/app.css              all styles: the Fresco (light, default), Vault (dark) and Lapis themes,
+                         and the fresco ornaments (light rays, clouds, gilding) in CSS and inline SVG
 vendor/                  Vue 3 (global build)
 js/core/                 utilities & markdown renderer, syntax highlighter, store (localStorage,
                          export/import/merge), router, UI helpers, gamification, progress logic

@@ -17,6 +17,13 @@ Possible improvements, ranked by how much they help a learner per unit of effort
 
 **Impact** is the expected gain in learning, reach or safety.
 
+## Rebrand (branch `rebrand-baroque`, not yet merged)
+
+- **A look taken from baroque ceiling frescoes**, made with CSS and inline SVG only (no images, no web fonts): golden light rays behind the top of every page, `feTurbulence` clouds, a gilded cornice of dentils under the top bar, a marble sidebar with a double gilt edge, gold hairlines on cards, lozenge rules under page titles, and a fresco-sky banner on the dashboard.
+- **Three themes**, still checked by `tests/theme.test.js`: **Fresco** (parchment, lapis and gold; now the default for new visitors), **Vault** (dark umber and gold; the saved choice of everyone who had the old dark theme) and **Lapis** (night blue and gold). The interactive accent stays blue in all three, because gold sits too close in hue to the amber status colour.
+- **Serif type** (Palatino or Iowan Old Style where installed, Georgia otherwise) for headings and lesson text; the interface stays in the system sans-serif.
+- **A gilded medallion** as the logo and app icon (`tools/make-icons.js`), and the loading screen in the same sky.
+
 ## Done in the sixth round (also 21 November 2026)
 
 - **Ten topic lessons** for the gaps in the "full mastery" review, each with runnable samples that ask for a prediction first, two practice problems, six quiz questions, glossary terms and a computed chart (except Geometric Deep Learning): Graphical Models & Hidden Markov Models; GLMs & Survival Analysis; 3D Vision & Neural Rendering; AI for Science; Audio & Music Generation; AI Governance & Regulation; Contextual Bandits & Online Experimentation; Geometric & Equivariant Deep Learning; Mechanistic Interpretability in Practice; AI Hardware & Systems. They are placed in the Theory, Data Science, Build an LLM, LLM Application Engineer and Frontier Deep Learning tracks.

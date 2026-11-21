@@ -111,9 +111,9 @@
   function applyTheme(t) {
     if (!global.document) return;
     const root = document.documentElement;
-    if (t === 'light' || t === 'darker') root.setAttribute('data-theme', t); else root.removeAttribute('data-theme');
+    if (t === 'dark' || t === 'darker') root.setAttribute('data-theme', t); else root.removeAttribute('data-theme');
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta && meta.setAttribute) meta.setAttribute('content', t === 'light' ? '#f6f7f9' : t === 'darker' ? '#000000' : '#0f1012');
+    if (meta && meta.setAttribute) meta.setAttribute('content', t === 'dark' ? '#16110b' : t === 'darker' ? '#0a1124' : '#f4ecdc');
   }
 
   MLA.ui = { toasts, toast, modal, openModal, closeModal, confirm, alert, icons, iconSvg, applyTheme };

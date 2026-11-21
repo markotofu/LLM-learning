@@ -1,5 +1,15 @@
 # ML Atlas: build handoff
 
+## STATUS UPDATE (session 9, rebrand): branch `rebrand-baroque`
+
+The user asked for a rebrand "in another branch" after the content round, from four reference images of baroque ceiling frescoes (golden light, angels, clouds, gilded white architecture, sepia, gold and sky blue), and asked whether it could be done without generated images. It is done with CSS and inline SVG only.
+
+- **Themes** (`css/app.css` top): `:root` is now **Fresco** (light); `[data-theme="dark"]` is **Vault** and `[data-theme="darker"]` is **Lapis**, each a complete token block. `MLA.ui.applyTheme` and `js/core/boot-theme.js` set the attribute for "dark" and "darker"; "light" needs none. New profiles default to "light"; saved profiles keep their theme ("dark" was the old default, so existing learners see Vault). `index.html` and the manifest use the Fresco background as theme colour. The tests were updated (`tests/theme.test.js` reads the three blocks; the e2e theme test clicks Vault, Lapis and Fresco).
+- **Decorative tokens:** `--gold`, `--gold-light`, `--gold-deep`, `--sky`, `--sky-light`, `--glow`, `--ray`, `--cloud`, `--banner-text`, plus `--font-display` and `--font-read`. Gold is never used for body text.
+- **Ornaments** (end of `css/app.css`, "Fresco ornaments"): rays (`repeating-conic-gradient` masked by a radial gradient), clouds (an `feTurbulence` SVG used as a CSS mask, so its colour follows `--cloud`), dentils under the top bar, the lozenge rule under `.section-head h2`, and `.section-head.fresco-banner` on the dashboard.
+- **Logo and icons:** the medallion SVG is inline in `js/app.js`; `node tools/make-icons.js` redraws `icons/`.
+- Also on `main` (commit `43fb46f`): long button labels wrap on narrow screens.
+
 ## STATUS UPDATE (session 9, 2026-11-21): ten topic lessons, keyboard access, row previews, style pass, loading screen
 
 The user asked for: the lessons missing from the "full mastery" review, keyboard access, practice problems ("sample problems"), short row previews of the data, no emojis and fewer other signs of machine-written text, and a real loading screen. Then, on a separate branch, a rebrand inspired by baroque ceiling frescoes (CSS and SVG only, no generated images).
