@@ -14,18 +14,19 @@ It is a static site: it runs on GitHub Pages, from any web server, or straight f
 | **Interactive demos** | 28 visual demos: gradient descent, activation functions, line fitting, overfitting, k-NN, k-means, classification thresholds, softmax/temperature/top-p, attention, BPE tokenization, convolution, a single neuron, positional encodings, quantization, embeddings, calibration and temperature scaling, the diffusion forward process, LLM batching on the roofline, PPO's clipped objective, eigenvectors and the SVD of a 2×2 matrix, gradient descent and momentum against the condition number, Bayesian updating (Beta–Binomial), Gaussian-process regression, PCA, learning-rate schedules, the bias–variance trade-off over many training sets, a decision-tree split explorer, and backpropagation step by step. The threshold demo also shows the precision–recall curve. Plots that take clicks also work from the keyboard: focus the plot with Tab, move the cross-hair with the arrow keys and press Enter. |
 | **Diagrams** | 26 theme-aware diagrams: rules versus learning, names and objects in Python, random and time-based splits, a PyTorch training step, documents as a matrix of word counts, the four families of generative models, a vision transformer, split-apply-combine, choosing a chart, an encoder-decoder with attention, bidirectional and causal attention masks, how joins duplicate or drop rows, MCP hosts and servers, equivariance, the transformer block, the RAG pipeline, the agent loop, diffusion training and sampling, the U-Net, the ML lifecycle, cross-validation folds, a LoRA adapter, the LLM training pipeline, an LSTM cell, mixture-of-experts routing, and data / tensor / pipeline parallelism. |
 | **Charts** | 155 charts in 109 lessons plot numbers computed by real experiments: loss curves and learning rates, decision boundaries, bias and variance, precision and recall, scaling laws, attention cost, quantization error, and many more. Each has a "Show the numbers" table with the underlying data, labels on the end of each line and on peaks and lows, and a "Describe this chart in words" summary that screen readers also announce. |
-| **Projects and case studies** | 27 sample projects to build on your own machine with real public data (house prices, a spam filter, churn, fraud, forecasting, a CNN, a BPE tokenizer, semantic search, a small GPT, an LLM evaluation suite, a CSV agent, a monitored model service and more), each with a goal, the data, steps, a finish line and stretch goals; and 31 documented case studies of machine learning in the real world (the Netflix Prize, Google Flu Trends, AlexNet, Chinchilla, InstructGPT, AlphaFold, Gender Shades, a chatbot ruling against an airline and others), each with what to take from it and its source. They appear at the end of the lessons they belong to, and all together on the **Projects & Cases** page. |
- Listen to a whole lesson, or to any single box, while you do something else. Formulas are read in words ("the sum over i of x sub i squared"), each symbol legend is read with its formula, tables are read row by row, quick checks pause before the answer, and charts are described: what each line does, where it peaks, where lines cross. A player at the bottom has back, pause, next, speed and stop, and keeps playing while you browse other pages. It uses the voices installed on your device (the Web Speech API): no lesson text leaves the browser and no AI service is involved. Pick a voice and speed in **Progress & Sync → Settings**. |
+| **Projects and case studies** | 27 sample projects to build on your own machine with real public data (house prices, a spam filter, churn, fraud, forecasting, a CNN, a BPE tokenizer, semantic search, a small GPT, an LLM evaluation suite, a CSV agent, a monitored model service and more), each with a goal, the data, steps you tick off, a finish line, stretch goals and your own notes (saved, exported and merged like the rest of your progress); three of them start in the browser on built-in practice datasets; and 31 documented case studies of machine learning in the real world (the Netflix Prize, Google Flu Trends, AlexNet, Chinchilla, InstructGPT, AlphaFold, Gender Shades, a chatbot ruling against an airline and others), each with what to take from it and its source. They appear at the end of the lessons they belong to, and all together on the **Projects & Cases** page. |
+| **Read aloud** | Listen to a whole lesson, or to any single box, while you do something else. Formulas are read in words ("the sum over i of x sub i squared"), each symbol legend is read with its formula, tables row by row, quick checks pause before the answer, and charts are described: what each line does, where it peaks, where lines cross. The player shows the sentence being read and the lesson highlights it; each lesson remembers where you stopped; when a lesson ends, the next one in your track is offered (or plays by itself). Lock-screen, notification and headphone buttons work where the browser supports media controls. It uses only the voices installed on your device (the Web Speech API): no lesson text leaves the browser and no AI service is involved. Pick a voice and speed in **Progress & Sync → Settings**. |
 | **Predict first** | 158 code samples ask you to predict their output before you run them; committing to a guess first is one of the most reliable ways to remember the result. |
-| **Practice problems** | 270 problems (easy / medium / hard) with a LeetCode-style editor: **Run** checks the visible examples, **Submit** runs hidden tests too. Hints, worked solutions and explanations. Drafts are saved automatically. |
+| **Practice problems** | 270 problems (easy / medium / hard) with a LeetCode-style editor: **Run** checks the visible examples, **Submit** runs hidden tests too. Hints, worked solutions and explanations. Drafts are saved automatically. The three capstones are split into checkpoints: one checked task per project step, with progress per step. |
 | **Quizzes** | 877 questions (multiple choice, multi-select, true/false, fill-in, ordering, matching) with explanations. Passing a quiz and solving a problem completes a concept. |
+| **Search** | Press Ctrl+K (Cmd+K on a Mac) or "/" anywhere, or use the search button: one box searches pages, lessons, sections, glossary terms, problems, projects, case studies and tracks, and the full text of the lessons, and opens results at the right section. |
 | **Learning tracks** | Guided paths: ML Foundations, Classical ML Practitioner, Data Science & Experiments, ML Theory & Probabilistic Methods, Deep Learning from Scratch, Build an LLM from Scratch, LLM Application Engineer, Fine-tuning, Alignment & Serving, Frontier Deep Learning, the Complete Atlas, or set any concept as a custom goal. |
 | **Review** | Flashcards for 683 glossary terms, plus **mistakes to revisit**: every quiz question, quick check or prediction you get wrong, and every problem you could only solve with the solution, comes back after a day, then a week, then a few weeks (spaced repetition), until it sticks. |
 | **Playground** | A multi-file Python scratchpad with templates (NumPy, linear regression, matplotlib, softmax & attention, pandas, scikit-learn). |
 | **Progress** | XP, levels, streaks and achievements. Everything is stored in your browser (localStorage). |
 | **Looks and themes** | Two looks: **Baroque**, after baroque ceiling frescoes (gold, clouds and serif type), and **Classic**, the original clean design. Each has a light, a dark and a night theme. Switch looks with the palette button in the top bar, or pick both in **Progress & Sync → Settings**. |
 | **Sync across devices** | Export your progress and code as a file (or a copyable sync code) and import it on another device: imports *merge* by default, so nothing is lost. You can also download all your code as one `.py` file. |
-| **Works offline** | Installable as an app (PWA). After the first visit the site and the Python runtime are cached. |
+| **Works offline** | Installable as an app (PWA). The first page loads a small lesson index (about 60 KB compressed) instead of every lesson; each lesson loads when you open it, and the rest download quietly in the background so that, after the first visit, the site and the Python runtime work offline. |
 
 ### The branches
 
@@ -61,7 +62,7 @@ The first time you run Python, the browser downloads the Python runtime (about 1
 2. In the repository, open **Settings → Pages → Build and deployment** and set **Source** to **GitHub Actions**.
 3. Every push to `main` now runs the full test suite and, if it passes, publishes the site (`.github/workflows/deploy.yml`).
 
-No build step is involved: the site is plain HTML, CSS and JavaScript (Vue 3 is vendored in `vendor/`), and it uses hash-based URLs, so it works under any sub-path.
+No build step is involved in development: the site is plain HTML, CSS and JavaScript (Vue 3 is vendored in `vendor/`), and it uses hash-based URLs, so it works under any sub-path. The deploy job adds two steps to its own copy: `tools/snapshots.js` writes a readable static page for every lesson (`lessons/<id>.html`), a sitemap and robots.txt, so lessons can be found by search engines and previewed in chats; `tools/precompile.js` compiles the Vue templates ahead of time, so the published page's Content-Security-Policy can forbid eval. A separate weekly workflow checks every external link (`tools/check-links.js`).
 
 ## Your progress and data
 
@@ -84,8 +85,11 @@ js/core/                 utilities & markdown renderer, syntax highlighter, stor
                          narration (lesson to spoken text) and the read-aloud player engine
 js/engines/              graph layout (DAG, mind map, lanes), Python runner (Pyodide in a Web
                          Worker + the test harness), quiz grading, spaced repetition (SM-2)
-js/data/                 content: branches, concepts-*.js (lessons, quizzes, problems),
-                         glossary, learning tracks, achievements
+js/data/                 content: branches (and the lesson loader), catalog.js (generated index,
+                         loaded with the page), concepts-*.js (lessons, quizzes, problems; loaded
+                         on demand), projects.js (case studies, sample projects), glossary,
+                         learning tracks, achievements
+data/                    small synthetic practice datasets for the in-browser Python
 js/views/                Vue components: map, lesson, problem editor, practice list,
                          playground, dashboard, tracks, glossary, flashcards, profile, self-test,
                          and the demos, diagrams and charts shown inside lessons
@@ -94,7 +98,9 @@ sw.js, manifest.webmanifest   offline support and installable app
 serve.js                 zero-dependency local web server
 tests/                   Node + CPython test suites (see below)
 tools/                   lesson-patch.js (adds lesson sections, charts and quiz questions from a
-                         plain-text patch), legacy-sections.js, visual-diff.js, make-icons.js
+                         plain-text patch), build-catalog.js, lesson-info.js, legacy-sections.js,
+                         make-datasets.py, snapshots.js and precompile.js (deploy time),
+                         check-links.js (weekly), visual-diff.js, make-icons.js
 docs/CONTENT_GUIDE.md    how to write and test new lessons and problems
 ```
 

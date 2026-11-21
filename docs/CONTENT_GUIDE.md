@@ -92,7 +92,7 @@ what the output shows
 
 Afterwards run `node --check` on the changed content files, `node tools/legacy-sections.js`, `node tests/content.test.js` and `MLA_SAMPLE_OUTPUT=out.json node tests/problems.test.js <concepts>`, and read the sample outputs against the text you wrote.
 
-**A new lesson.** Write its metadata (id, branch, title, summary, why, objectives, when, pitfalls, takeaways, refs), an empty `quiz: []`, its practice problems and a single text section titled `placeholder` in a content file, and add the file to `index.html`. Then write the sections in a patch that starts with `### REPLACE concept=<id> section="placeholder"`, and add quiz questions with `### INSERT concept=<id> at=end`. Every lesson also needs at least one glossary term in `js/data/glossary.js`, linked to it by its id. See `js/data/concepts-roadmap.js` for examples.
+**A new lesson.** Write its metadata (id, branch, title, summary, why, objectives, when, pitfalls, takeaways, refs), an empty `quiz: []`, its practice problems and a single text section titled `placeholder` in a content file, and add the file to `tools/content-files.json` (the page loads lessons on demand through `js/data/catalog.js`; `node tools/build-catalog.js` regenerates it). Then write the sections in a patch that starts with `### REPLACE concept=<id> section="placeholder"`, and add quiz questions with `### INSERT concept=<id> at=end`. Every lesson also needs at least one glossary term in `js/data/glossary.js`, linked to it by its id. See `js/data/concepts-roadmap.js` for examples.
 
 **Predict first.** A runnable Python code section can carry a `predict` question, shown above the code. The learner commits to an answer, reads the explanation, then runs the code to see it happen:
 
@@ -254,7 +254,9 @@ They live in `js/data/projects.js`, keyed by lesson id, and appear after a lesso
 
 - **Case study** `{ title, when, story, lesson, source: { title, url } }`: a real, documented event. Every number must come from the named source; leave out anything you cannot check. `story` says what happened (two short paragraphs), `lesson` says what a practitioner should take from it. Prefer Wikipedia, arXiv or the publisher for `url`, and omit `url` rather than guess one.
 - **Project** `{ title, level, hours, goal, data, steps, done, stretch, skills }`: something a learner builds on their own machine with real public data. Name the dataset exactly (size, source, how to load it), give 4 to 7 concrete steps that include a baseline and an honest evaluation, a measurable finish line in `done`, and one to three stretch goals.
+- A project can name a bundled practice dataset (`practice: 'bike_rentals_hourly.csv'`, see `js/core/datasets.js`); its card then opens a Playground file that loads it.
 - Both are read aloud and checked by `tests/content.test.js` (fields, levels, house style).
+- **Capstone checkpoints** `checkpoints: [{ step, problem, goal }]` on a capstone list one practice problem per project step; the lesson shows a tracker and each problem links to the next.
 
 ## 7. Glossary, tracks and achievements
 

@@ -17,6 +17,15 @@ Possible improvements, ranked by how much they help a learner per unit of effort
 
 **Impact** is the expected gain in learning, reach or safety.
 
+## Done in the eighth round (21 November 2026)
+
+- **Read aloud, round two:** media keys and lock-screen controls, captions, the sentence highlighted, resume where you stopped, the next lesson offered or played.
+- **Faster first load:** a 62 KB (gzipped) lesson catalog instead of 1.1 MB of lessons; lessons load on demand and the rest prefetch for offline use (item 16).
+- **Search everywhere** (Ctrl+K), a **More** menu on phones, **project checklists and notes**, **practice datasets** that Python reads in the browser.
+- **Capstone checkpoints** with their own tests and progress per step (item 9).
+- **Screen-reader support for demos** (item 12), **clearer package-download errors** (item 5), a **strict CSP without 'unsafe-eval'** on the published site (item 18), **static lesson pages and a sitemap**, and a **weekly link check**.
+- **14 new diagrams**, so every lesson has a picture, and a cleanup of dead code.
+
 ## Done in the seventh round (21 November 2026)
 
 - **Read aloud:** a lesson, or any single box, read by an on-device voice, with a player bar (back, pause, next, speed, stop). Formulas, legends, tables, quick checks and charts are turned into sentences (`js/core/narrate.js`, `js/core/speech.js`).
@@ -137,7 +146,7 @@ Items 1–4, 6, 7, 8 and part of 10–11 below are done:
 4. **Raise the contrast of `--dim` app-wide.** Use about `#7c88a8` in the dark theme and `#6b7590` in the light theme, then check every `.dim` use. Many labels and meta lines still use it.
    - *Pros:* readability, accessibility and compliance.
    - *Cons:* a slightly busier look; needs a visual review.
-5. **Clearer error when a Python package download fails.** The hint says the package is "not available" even when the network merely failed. Tell those two cases apart and offer a retry.
+5. *(Done in the eighth round.)* **Clearer error when a Python package download fails.** The hint says the package is "not available" even when the network merely failed. Tell those two cases apart and offer a retry.
 6. **Add matplotlib to CI** (`pip install matplotlib`), so the one skipped plotting sample is checked in CPython too.
 
 ## Priority 2: learning quality
@@ -156,7 +165,7 @@ Items 1–4, 6, 7, 8 and part of 10–11 below are done:
    - *Cons:* each prediction must be authored and kept in sync with the sample output. The CPython test can verify this automatically.
 8. **Spaced review of missed quiz questions and problems.** Flashcards already use SM-2 for the glossary. Extend the same queue to quiz questions answered wrongly and problems that needed hints.
    - *Cons:* a busier review queue; needs per-item caps.
-9. **Guided capstones.** Today each capstone is a long lesson plus problems (deepened in the fourth round, but still without per-step checks). Split each one into checkpoints that each have their own tests (for example "your leak detector must flag `refund_issued`"), with progress per step.
+9. *(Done in the eighth round.)* **Guided capstones.** Today each capstone is a long lesson plus problems (deepened in the fourth round, but still without per-step checks). Split each one into checkpoints that each have their own tests (for example "your leak detector must flag `refund_issued`"), with progress per step.
    - *Pros:* closest to real project work.
    - *Cons:* the largest authoring effort on this list.
 10. **More demos where a picture teaches best.** Candidates, in rough order of value:
@@ -176,7 +185,7 @@ Items 1–4, 6, 7, 8 and part of 10–11 below are done:
     - speculative decoding;
     - data, tensor and pipeline parallelism;
     - the CNN feature hierarchy.
-12. **Accessibility pass on the demos.** Most demos are slider-driven, and the click-only interactions now have keyboard alternatives (sixth round). Still to do:
+12. *(Done in the eighth round.)* **Accessibility pass on the demos.** Most demos are slider-driven, and the click-only interactions now have keyboard alternatives (sixth round). Still to do:
     - give the remaining canvases `role="img"` with an updating label;
     - respect `prefers-reduced-motion` in animated demos (the loading screen already does).
 
@@ -208,7 +217,7 @@ Items 1–4, 6, 7, 8 and part of 10–11 below are done:
     - mark *recommended* prerequisites separately from *required* ones;
     - add a "zoom to branch" view and a progress heat map;
     - let a learner hide finished branches.
-16. **Faster first load.** All content scripts (about 2 MB uncompressed) load up front.
+16. *(Done in the eighth round.)* **Faster first load.** All content scripts (about 2 MB uncompressed) load up front.
     - *Fix:* lazy-load lessons per branch, or ship a JSON content bundle. GitHub Pages serves gzip, so the real transfer is much smaller and this matters mainly on slow mobile connections.
     - *Cons:* the tests and the no-build design rely on loading everything at once.
 17. **Legal hardening:**
@@ -217,7 +226,7 @@ Items 1–4, 6, 7, 8 and part of 10–11 below are done:
     - offer an email contact as well as the GitHub profile;
     - confirm you hold the rights to the original "NetSec Academy" code this app was built from;
     - decide whether the lesson content stays "all rights reserved" or moves to a licence such as CC BY-NC-SA, which invites contributions.
-18. **A stricter Content-Security-Policy.** The policy still allows `'unsafe-eval'`, because the vendored Vue build compiles templates in the browser, and it loads Pyodide from jsDelivr without integrity hashes (`importScripts` in a worker cannot check them).
+18. *(Done in the eighth round.)* **A stricter Content-Security-Policy.** The policy still allows `'unsafe-eval'`, because the vendored Vue build compiles templates in the browser, and it loads Pyodide from jsDelivr without integrity hashes (`importScripts` in a worker cannot check them).
     - *Fix:* precompile the templates (or move to Vue's runtime-only build), and self-host a pinned copy of Pyodide.
     - *Pros:* removes the last ways a script could be injected or swapped.
     - *Cons:* adds a build step, which the project has avoided so far, and about 10 MB of Pyodide files to the repository. The current risk is small: no user text reaches a template, and the worker has no access to the page.
