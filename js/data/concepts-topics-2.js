@@ -422,6 +422,7 @@ An image classifier should be **invariant** to shifts (the label stays the same)
 - **graph neural networks**: permutations of the nodes, because messages are summed over neighbours (see [Graph Neural Networks](#/concept/gnn));
 - **transformers without position encodings**: permutations of the tokens, which is why positions have to be added explicitly (see [Positional Encoding](#/concept/positional-encoding));
 - **rotation-equivariant networks**: rotations and translations in 3D, for molecules, proteins and point clouds.` },
+      { type: 'demo', title: "Diagram: equivariance", demo: 'dg-equivariance' },
       { type: 'code', title: "Convolutions commute with shifts", code: `import numpy as np
 x = np.zeros(32); x[5:9] = [1, 2, 3, 1]              # a 1-D signal with a small pattern
 kernel = np.array([1.0, -2.0, 1.0])

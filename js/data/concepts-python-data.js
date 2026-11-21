@@ -181,6 +181,7 @@ def add_item(item, items=None):
     items.append(item)
     return items
 \`\`\`` },
+      { type: 'demo', title: "Diagram: names and objects", demo: 'dg-aliasing' },
       { type: 'code', title: "Exceptions, aliases and the mutable-default trap", code: `config = {"lr": 0.01, "epochs": 5}
 try:
     batch = config["batch_size"]
@@ -865,6 +866,7 @@ How to split:
 - **Stratify** for classification: keep the class proportions the same in every split (critical for rare classes).
 - **Split by time** for anything predicting the future: train on the past, test on later data. Shuffling time series leaks the future into training.
 - **Split by group** when examples are related (several photos of the same patient go in the same split).` },
+      { type: 'demo', title: "Diagram: random and time-based splits", demo: 'dg-data-splits' },
       { type: 'code', title: 'Splitting with NumPy', code: `
 import numpy as np
 

@@ -759,6 +759,7 @@ print("users with no orders:", con.execute("""
 - **Fan-out**: if the key is not unique on the right side, each left row is repeated once per match (sums and counts silently inflate). Joining orders to a table with two addresses per user doubles revenue. Always check row counts before and after a join, and aggregate the "many" side *before* joining when you need one row per entity.
 - **Filtering a LEFT JOIN in WHERE** (on a right-table column) quietly turns it into an inner join; put such conditions in the ON clause instead.
 - Pass values with **placeholders**: \`con.execute("SELECT * FROM users WHERE country = ?", (country,))\`: never by formatting strings into SQL, which invites SQL injection.` },
+      { type: 'demo', title: "Diagram: how a join can duplicate or drop rows", demo: 'dg-joins' },
       { type: 'check', question: { type: 'mcq', q: 'You join 1,000 orders to a table that has two rows for some users. What can happen to SUM(amount)?', options: ['Nothing, joins never change sums', 'It can be inflated, because matching orders are duplicated (fan-out)', 'It always halves', 'The query fails'], answer: 1, explain: 'Each order is repeated once per matching row on the other side.' } },
       { type: 'text', title: 'Window functions and CTEs', md: `**Window functions** compute values across related rows *without* collapsing them the way GROUP BY does, perfect for per-entity history features:
 

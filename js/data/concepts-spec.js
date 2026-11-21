@@ -396,6 +396,7 @@ def greedy_policy(Q):
 | Variational autoencoder (VAE) | decode a random latent vector | VAEs, the latent space of Stable Diffusion | fast, smooth latent space; blurrier samples |
 | GAN | a generator network maps noise to data in one shot | StyleGAN | sharp and fast; unstable training |
 | Diffusion | start from noise and denoise it step by step | Stable Diffusion, image and video models | top quality and diversity; many steps |` },
+      { type: 'demo', title: "Diagram: four families of generative models", demo: 'dg-gen-families' },
       { type: 'text', title: 'Autoencoders', md: `An **autoencoder** squeezes the input through a narrow bottleneck: an encoder maps x to a short **latent code** z, and a decoder tries to rebuild x from z. Training minimizes the reconstruction error:
 
 $$ L = ‖ x − decoder(encoder(x)) ‖² $$
@@ -745,6 +746,7 @@ N — the number of patches, which is the sequence length the transformer sees (
 :::
 
 A 224 × 224 RGB image with P = 16 gives 14 × 14 = 196 patches of 768 numbers each, plus the [CLS] token: a 197-token sequence.` },
+      { type: 'demo', title: "Diagram: an image as a sequence of patches", demo: 'dg-vit' },
       { type: 'code', title: 'Patchify and embed an image in NumPy', code: `
 import numpy as np
 rng = np.random.default_rng(0)

@@ -35,6 +35,7 @@ That works until the rules get too complicated to write down. Spammers change th
 :::analogy How you learned what a dog is
 Nobody gave you a rulebook ("four legs, fur, a tail...": cats have those too). You saw many dogs and many not-dogs, someone told you which was which, and your brain tuned itself until it could recognise dogs it had never seen. That is supervised machine learning.
 :::` },
+      { type: 'demo', title: "Diagram: rules versus learning", demo: 'dg-rules-vs-learning' },
       { type: 'text', title: 'The vocabulary you will use everywhere', md: `Suppose we want to predict house prices.
 
 | Term | Meaning | In the example |

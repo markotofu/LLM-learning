@@ -222,4 +222,187 @@
     label(680, 228, 'split the layers; micro-batches') + label(680, 244, 'flow through, with idle bubbles') +
     label(410, 286, 'Large runs combine all three, plus sharding of the optimizer state (ZeRO / FSDP).'),
     'Three ways to spread training over many GPUs. Data parallelism copies the model and splits the batch; tensor parallelism splits each weight matrix, so it needs very fast connections; pipeline parallelism places consecutive layers on different GPUs and keeps them busy by streaming micro-batches.');
+  // ---------- Pictures that replace a paragraph (session 10) ----------
+  const cell = (x, y, w, h, cls, text, tcls) => '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="5" class="' + cls + '"/>' + label(x + w / 2, y + h / 2 + 5, text, tcls || 'dg-t');
+
+  // 13. Rules versus learning
+  diagram('rules-vs-learning', '0 0 820 240', 'Diagram comparing traditional programming with machine learning',
+    label(410, 24, 'TRADITIONAL PROGRAMMING: PEOPLE WRITE THE RULES', 'dg-s dg-b') +
+    box(10, 36, 180, 56, 'dg-box', ['Rules'], 'written by people') + plus(214, 64) + box(238, 36, 120, 56, 'dg-box', ['Data']) +
+    arrow('M358 64 H386') + box(388, 36, 150, 56, 'dg-pur', ['Program']) + arrow('M538 64 H566') +
+    box(568, 36, 242, 56, 'dg-grn', ['Answers'], 'the program follows the rules') +
+    label(410, 128, 'MACHINE LEARNING: THE RULES ARE LEARNED FROM EXAMPLES', 'dg-s dg-b') +
+    box(10, 140, 180, 56, 'dg-box', ['Data'], 'many examples') + plus(214, 168) + box(238, 140, 120, 56, 'dg-box', ['Answers'], 'labels') +
+    arrow('M358 168 H386') + box(388, 140, 150, 56, 'dg-acc', ['Learning'], 'an algorithm') + arrow('M538 168 H566') +
+    box(568, 140, 242, 56, 'dg-grn', ['Rules: a model'], 'then used on new data') +
+    label(410, 228, 'Machine learning turns the arrow around: from examples of answers to the rules that produce them.'),
+    'In traditional programming people write the rules and the computer applies them to data. In machine learning you supply examples together with their answers, and a learning algorithm finds rules (a model) that reproduce them and, if all goes well, generalize to new data.');
+
+  // 14. Names and objects in Python
+  diagram('aliasing', '0 0 820 256', 'Diagram of two Python names bound to one list, and a third name bound to a copy',
+    label(60, 22, 'NAMES', 'dg-s dg-b') + label(375, 22, 'OBJECTS IN MEMORY', 'dg-s dg-b') + label(690, 22, 'CODE', 'dg-s dg-b') +
+    box(20, 40, 80, 44, 'dg-box', ['a']) + box(20, 110, 80, 44, 'dg-box', ['b']) + box(20, 180, 80, 44, 'dg-box', ['c']) +
+    box(250, 50, 250, 64, 'dg-acc', ['[1, 2, 3, 4]'], 'one list object') + box(250, 166, 250, 60, 'dg-grn', ['[1, 2, 3]'], 'a new list: the copy') +
+    arrow('M100 62 L247 76') + arrow('M100 132 L247 96') + arrow('M100 202 H247') +
+    box(570, 34, 240, 192, 'dg-box', ['a = [1, 2, 3]', 'b = a', 'c = a.copy()', 'b.append(4)', 'print(a)', 'print(c)'], 'a has 4; c does not') +
+    label(410, 248, 'Assignment never copies: b = a gives the same list a second name.'),
+    'Python names are labels attached to objects. b = a attaches a second label to the same list, so a change made through b shows up through a; a.copy() makes a new list, which later changes do not touch.');
+
+  // 15. Splitting data
+  diagram('data-splits', '0 0 820 228', 'Diagram of a random split and a time-based split into training, validation and test sets',
+    label(410, 22, 'RANDOM SPLIT: WHEN ROWS ARE INDEPENDENT OF EACH OTHER', 'dg-s dg-b') +
+    cell(10, 32, 560, 40, 'dg-acc', 'training set: fit the model (about 70%)') + cell(574, 32, 118, 40, 'dg-amb', 'validation') + cell(696, 32, 114, 40, 'dg-red', 'test') +
+    label(410, 100, 'TIME-BASED SPLIT: FORECASTING, OR ANYTHING THAT CHANGES OVER TIME', 'dg-s dg-b') +
+    cell(10, 110, 560, 40, 'dg-acc', 'training set: the past') + cell(574, 110, 118, 40, 'dg-amb', 'validation') + cell(696, 110, 114, 40, 'dg-red', 'test') +
+    arrow('M10 166 H806') + label(410, 186, 'time: the model only ever sees the past, as it will in production') +
+    label(410, 214, 'Fit every preprocessing step on the training set only, and use the test set once, at the end.'),
+    'Random splits suit rows that are independent of each other. When the data changes over time, split by time instead, so that validation and testing measure what production will see: a model trained on the past, judged on the future. Rows from one person or one patient also belong together, in a single split.');
+
+  // 16. One training step in PyTorch
+  diagram('train-step', '0 0 820 214', 'Diagram of one training step in PyTorch: zero the gradients, forward pass, loss, backward pass, optimizer step',
+    label(410, 40, 'clear old gradients first: backward() adds to .grad instead of replacing it') +
+    box(10, 70, 100, 60, 'dg-box', ['batch'], 'x and y') + arrow('M110 100 H128') +
+    box(130, 70, 125, 60, 'dg-box', ['zero_grad'], 'opt.zero_grad()') + arrow('M255 100 H273') +
+    box(275, 70, 125, 60, 'dg-acc', ['forward'], 'pred = model(x)') + arrow('M400 100 H418') +
+    box(420, 70, 125, 60, 'dg-amb', ['loss'], 'loss_fn(pred, y)') + arrow('M545 100 H563') +
+    box(565, 70, 115, 60, 'dg-pur', ['backward'], 'loss.backward()') + arrow('M680 100 H698') +
+    box(700, 70, 110, 60, 'dg-grn', ['step'], 'opt.step()') +
+    arrow('M755 130 V164 H60 V132', 'acc') + label(410, 192, 'repeat for every batch; one pass over all the batches is an epoch'),
+    'Every training loop in PyTorch repeats the same five moves for each batch: clear the old gradients, run the model forward, compute the loss, backpropagate, and let the optimizer update the weights. Switch the model to model.eval() and wrap evaluation in torch.no_grad() when you are not training.');
+
+  // 17. Bag of words
+  (function () {
+    const words = ['the', 'cat', 'dog', 'sat', 'ran'], docs = [['the cat sat', [1, 1, 0, 1, 0]], ['the dog sat', [1, 0, 1, 1, 0]], ['the cat ran', [1, 1, 0, 0, 1]]];
+    let grid = '';
+    words.forEach((w, j) => { grid += label(356 + j * 92, 40, w, 'dg-t'); });
+    docs.forEach(([text, counts], i) => {
+      const y = 50 + i * 50;
+      grid += cell(10, y, 210, 40, 'dg-box', 'd' + (i + 1) + ': ' + text);
+      counts.forEach((n, j) => { grid += cell(310 + j * 92, y, 88, 40, n ? 'dg-acc' : 'dg-box', String(n)); });
+    });
+    diagram('bow', '0 0 820 240', 'Diagram of three short documents turned into a document-term matrix of word counts',
+      grid + arrow('M224 120 H304') + label(410, 212, 'Each document becomes a row of word counts. Word order is lost, but rows can be compared,') +
+      label(410, 230, 'and TF-IDF reweights the columns so that words found in every document count for less.'),
+      'Bag-of-words turns each document into a vector with one entry per word of the vocabulary. The matrix is mostly zeros for real text, so libraries store it sparsely; any classifier can then learn from the rows.');
+  })();
+
+  // 18. Four families of generative models
+  diagram('gen-families', '0 0 820 290', 'Diagram comparing autoencoders, variational autoencoders, GANs and diffusion models',
+    box(10, 20, 120, 50, 'dg-pur', ['Autoencoder']) + box(150, 20, 150, 50, 'dg-box', ['encoder'], 'x to a short code z') + arrow('M300 45 H328') +
+    box(330, 20, 150, 50, 'dg-acc', ['decoder'], 'z back to x') + arrow('M480 45 H508') + box(510, 20, 300, 50, 'dg-grn', ['reconstruction'], 'learns to compress; not a generator') +
+    box(10, 90, 120, 50, 'dg-pur', ['VAE']) + box(150, 90, 150, 50, 'dg-box', ['encoder'], 'x to a mean and a spread') + arrow('M300 115 H328') +
+    box(330, 90, 150, 50, 'dg-acc', ['sample z'], 'a smooth latent space') + arrow('M480 115 H508') + box(510, 90, 300, 50, 'dg-grn', ['decoder: new samples'], 'from a random z') +
+    box(10, 160, 120, 50, 'dg-pur', ['GAN']) + box(150, 160, 150, 50, 'dg-box', ['generator'], 'noise to a fake x') + arrow('M300 185 H328') +
+    box(330, 160, 150, 50, 'dg-acc', ['discriminator'], 'real or fake?') + arrow('M480 185 H508') + box(510, 160, 300, 50, 'dg-grn', ['two networks compete'], 'sharp samples; unstable training') +
+    box(10, 230, 120, 50, 'dg-pur', ['Diffusion']) + box(150, 230, 150, 50, 'dg-box', ['add noise'], 'data to pure noise') + arrow('M300 255 H328') +
+    box(330, 230, 150, 50, 'dg-acc', ['learn to denoise'], 'predict the noise') + arrow('M480 255 H508') + box(510, 230, 300, 50, 'dg-grn', ['sample step by step'], 'from pure noise to data'),
+    'Four ways to learn to generate. An autoencoder compresses and rebuilds; a VAE makes its code space smooth enough to sample from; a GAN trains a generator against a critic; a diffusion model learns to undo noise one small step at a time, and generates by starting from pure noise.');
+
+  // 19. Vision transformer
+  diagram('vit', '0 0 820 214', 'Diagram of a vision transformer turning an image into patch tokens',
+    label(410, 40, 'An image becomes a sequence: each 16 × 16 patch is one token, like a word in a sentence.') +
+    box(10, 80, 120, 70, 'dg-box', ['image'], '224 × 224 pixels') + arrow('M130 115 H158') +
+    box(160, 80, 130, 70, 'dg-amb', ['196 patches'], '16 × 16 each') + arrow('M290 115 H318') +
+    box(320, 80, 145, 70, 'dg-acc', ['linear embedding'], '+ position') + arrow('M465 115 H488') +
+    box(490, 80, 155, 70, 'dg-pur', ['transformer', 'encoder'], 'CLS + 196 tokens') + arrow('M645 115 H668') +
+    box(670, 80, 140, 70, 'dg-grn', ['class'], 'from the CLS token') +
+    label(410, 196, 'Without convolution, ViTs learn locality from data, so they need more data or pretraining than CNNs.'),
+    'A vision transformer cuts the image into patches, flattens each one, projects it to a vector and adds a position embedding. A learned CLS token joins the sequence, and after the transformer encoder its vector feeds the classifier.');
+
+  // 20. Split, apply, combine
+  (function () {
+    const rows = [['A', 10], ['B', 5], ['A', 20], ['C', 7], ['B', 15], ['C', 3]];
+    let t = label(92, 26, 'the DataFrame', 'dg-s dg-b') + label(330, 26, 'split by city', 'dg-s dg-b') + label(520, 26, 'apply sum()', 'dg-s dg-b') + label(724, 26, 'combine', 'dg-s dg-b');
+    rows.forEach(([c, v], i) => { const y = 40 + i * 32; t += cell(20, y, 70, 28, 'dg-box', c) + cell(94, y, 80, 28, 'dg-box', String(v)); });
+    const groups = [['A: 10, 20', 30, 'dg-acc'], ['B: 5, 15', 20, 'dg-amb'], ['C: 7, 3', 10, 'dg-pur']];
+    groups.forEach(([g, s, cls], i) => {
+      const y = 40 + i * 70;
+      t += box(260, y, 140, 56, cls, [g]) + arrow('M178 136 L256 ' + (y + 28)) + box(460, y, 120, 56, cls, ['sum: ' + s]) + arrow('M400 ' + (y + 28) + ' H456');
+      t += cell(660, 80 + i * 34, 60, 28, 'dg-grn', g[0]) + cell(724, 80 + i * 34, 80, 28, 'dg-grn', String(s)) + arrow('M580 ' + (y + 28) + ' L656 ' + (94 + i * 34));
+    });
+    diagram('groupby', '0 0 820 262', 'Diagram of split-apply-combine: grouping rows by city and summing sales',
+      t + label(410, 254, 'df.groupby("city")["sales"].sum(): split the rows by key, apply a function to each group, combine the results.'),
+      'groupby splits the rows into groups by the key column, applies a function such as sum or mean to each group, and combines the answers into a new table with one row per key. agg applies several functions at once; transform returns a value for every original row.');
+  })();
+
+  // 21. Choosing a chart
+  diagram('chart-chooser', '0 0 820 256', 'Diagram mapping six questions to the charts that answer them',
+    box(10, 30, 260, 90, 'dg-acc', ['How is one variable', 'distributed?'], 'histogram, box plot') +
+    box(280, 30, 260, 90, 'dg-acc', ['How do two numbers', 'relate?'], 'scatter plot') +
+    box(550, 30, 260, 90, 'dg-acc', ['How does it change', 'over time?'], 'line chart') +
+    box(10, 140, 260, 90, 'dg-grn', ['How do categories', 'compare?'], 'bar chart, sorted') +
+    box(280, 140, 260, 90, 'dg-grn', ['What are the parts', 'of a whole?'], 'stacked bar (rarely a pie)') +
+    box(550, 140, 260, 90, 'dg-grn', ['How do groups differ', 'in distribution?'], 'side-by-side box plots, facets') +
+    label(410, 248, 'Start from the question the reader has, then pick the chart that answers it most directly.'),
+    'The chart follows from the question: distributions call for histograms and box plots, relationships for scatter plots, change over time for line charts, comparisons between categories for sorted bars, and parts of a whole for stacked bars.');
+
+  // 22. Sequence to sequence with attention
+  diagram('seq2seq', '0 0 820 300', 'Diagram of an encoder-decoder translating a sentence, with attention from a decoder step to every encoder state',
+    box(20, 230, 100, 40, 'dg-box', ['le']) + box(140, 230, 100, 40, 'dg-box', ['chat']) + box(260, 230, 100, 40, 'dg-box', ['noir']) +
+    arrow('M70 230 V202') + arrow('M190 230 V202') + arrow('M310 230 V202') +
+    box(20, 150, 100, 50, 'dg-acc', ['h1']) + arrow('M120 175 H138') + box(140, 150, 100, 50, 'dg-acc', ['h2']) + arrow('M240 175 H258') + box(260, 150, 100, 50, 'dg-acc', ['h3']) +
+    box(360, 50, 100, 50, 'dg-amb', ['context'], 'weighted sum') +
+    arrow('M70 150 L370 102') + arrow('M190 150 L392 102') + arrow('M310 150 L420 102') + label(214, 120, '0.1') + label(282, 128, '0.2') + label(352, 136, '0.7') +
+    arrow('M360 175 H478') + label(419, 168, 'start') +
+    box(480, 150, 90, 50, 'dg-pur', ['s1']) + arrow('M570 175 H598') + box(600, 150, 90, 50, 'dg-pur', ['s2']) + arrow('M690 175 H718') + box(720, 150, 90, 50, 'dg-pur', ['s3']) +
+    arrow('M460 82 L610 148') +
+    arrow('M525 150 V92') + arrow('M645 150 V92') + arrow('M765 150 V92') +
+    box(480, 40, 90, 50, 'dg-grn', ['the']) + box(600, 40, 90, 50, 'dg-grn', ['black']) + box(720, 40, 90, 50, 'dg-grn', ['cat']) +
+    label(190, 292, 'encoder: reads the whole input') + label(645, 226, 'decoder: writes one word per step'),
+    'Translating "le chat noir". The encoder turns the input into one state per word. At each output step the decoder scores every encoder state against its own state, and the softmax of those scores weights a context vector: here step 2 attends mostly to "noir" (0.7) to produce "black". Without attention, the whole sentence had to squeeze through the final state alone.');
+
+  // 23. Attention masks: bidirectional and causal
+  (function () {
+    const toks = ['the', 'cat', '[MASK]', 'on', 'mat'];
+    const grid = (x0, causal) => {
+      let s = '';
+      toks.forEach((t, j) => { s += label(x0 + 20 + j * 40, 44, t, 'dg-s'); });
+      toks.forEach((t, i) => {
+        s += label(x0 - 36, 50 + i * 30 + 20, t, 'dg-s');
+        for (let j = 0; j < 5; j++) s += '<rect x="' + (x0 + j * 40) + '" y="' + (50 + i * 30) + '" width="38" height="28" rx="4" class="' + (!causal || j <= i ? 'dg-acc' : 'dg-box') + '"/>';
+      });
+      return s;
+    };
+    diagram('attn-masks', '0 0 820 256', 'Diagram of a bidirectional attention mask next to a causal attention mask',
+      label(190, 22, 'BIDIRECTIONAL (BERT): EVERY TOKEN SEES EVERY TOKEN', 'dg-s dg-b') + label(620, 22, 'CAUSAL (GPT): EACH TOKEN SEES ONLY THE PAST', 'dg-s dg-b') +
+      grid(90, false) + grid(520, true) +
+      label(190, 224, 'BERT fills in [MASK] using both sides') + label(620, 224, 'GPT predicts the next token from the left') +
+      label(410, 246, 'rows: the token that is looking; filled squares: the tokens it may attend to'),
+      'Each row is a token, and its filled squares are the positions it may attend to. An encoder like BERT uses the full square, so a masked word is predicted from both sides. A decoder like GPT uses the lower triangle, so no token can see the future it is trained to predict.');
+  })();
+
+  // 24. Joins that duplicate or drop rows
+  (function () {
+    let t = label(72, 46, 'orders', 'dg-s dg-b') + label(337, 46, 'users', 'dg-s dg-b') + label(664, 46, 'orders LEFT JOIN users', 'dg-s dg-b');
+    [['o1', 'u1'], ['o2', 'u2'], ['o3', 'u3']].forEach(([o, u], i) => { t += cell(10, 60 + i * 32, 60, 28, 'dg-box', o) + cell(74, 60 + i * 32, 60, 28, 'dg-box', u); });
+    [['u1', 'basic'], ['u2', 'pro'], ['u2', 'pro trial']].forEach(([u, p], i) => { t += cell(250, 60 + i * 32, 60, 28, i === 2 ? 'dg-red' : 'dg-box', u) + cell(314, 60 + i * 32, 110, 28, i === 2 ? 'dg-red' : 'dg-box', p); });
+    [['o1', 'u1', 'basic', 'dg-acc'], ['o2', 'u2', 'pro', 'dg-acc'], ['o2', 'u2', 'pro trial', 'dg-red'], ['o3', 'u3', 'NULL', 'dg-amb']].forEach(([o, u, p, cls], i) => {
+      t += cell(520, 60 + i * 32, 60, 28, cls, o) + cell(584, 60 + i * 32, 60, 28, cls, u) + cell(648, 60 + i * 32, 160, 28, cls, p);
+    });
+    diagram('joins', '0 0 820 250', 'Diagram of a left join where a duplicated key repeats an order and a missing key gives NULL',
+      t + arrow('M428 108 H514') + label(472, 96, 'on user_id') +
+      label(410, 214, 'A duplicated key multiplies rows: order o2 now appears twice, so its revenue would be counted twice.') +
+      label(410, 236, 'A missing key gives NULL (LEFT JOIN) or drops the row (INNER JOIN). Count rows before and after every join.'),
+      'Joins go wrong in two quiet ways. If the right table repeats a key, every matching row on the left is repeated; if a key is missing, a left join fills in NULL while an inner join silently drops the row. Check the row count and the key uniqueness of both tables before you join.');
+  })();
+
+  // 25. The Model Context Protocol
+  diagram('mcp', '0 0 820 280', 'Diagram of an MCP host with two clients connected to two servers',
+    '<rect x="10" y="30" width="250" height="230" rx="10" class="dg-box"/>' + label(135, 56, 'Host application', 'dg-t') + label(135, 74, 'a chat app or an IDE') +
+    box(30, 92, 210, 44, 'dg-acc', ['MCP client 1']) + box(30, 150, 210, 44, 'dg-acc', ['MCP client 2']) + box(30, 208, 210, 40, 'dg-pur', ['the language model']) +
+    box(560, 40, 250, 90, 'dg-grn', ['MCP server: files'], 'tools · resources · prompts') +
+    box(560, 160, 250, 90, 'dg-grn', ['MCP server: a database'], 'tools · resources · prompts') +
+    arrow('M240 114 L556 86') + label(400, 86, 'stdio: a local process') +
+    arrow('M240 172 L556 204') + label(400, 206, 'Streamable HTTP: remote') +
+    label(410, 274, 'one client per server; the host decides what the model may call'),
+    'The host (a chat app or an IDE) runs one MCP client for each server it connects to. Servers offer tools the model can call, resources it can read and prompts the user can pick, over JSON-RPC: stdio for a local process, Streamable HTTP for a remote one. The host stays in charge and asks the user before risky actions.');
+
+  // 26. Equivariance
+  diagram('equivariance', '0 0 820 262', 'Diagram showing that an equivariant function commutes with rotation',
+    box(60, 30, 200, 60, 'dg-box', ['input x']) + box(545, 30, 230, 60, 'dg-box', ['rotated input'], 'g · x') +
+    box(60, 170, 200, 60, 'dg-acc', ['features f(x)']) + box(545, 170, 230, 60, 'dg-acc', ['f(g · x) = g · f(x)'], 'the features rotate too') +
+    arrow('M260 60 H541') + label(400, 50, 'rotate by g') + arrow('M260 200 H541') + label(400, 190, 'rotate by g') +
+    arrow('M160 90 V166') + label(208, 134, 'apply f') + arrow('M660 90 V166') + label(708, 134, 'apply f') +
+    label(410, 254, 'Invariant: f(g · x) = f(x), the output does not change. Equivariant: the output moves with the input.'),
+    'Going down then across or across then down gives the same result: that is what equivariance means. Convolutions are equivariant to shifts, and equivariant networks build in rotations or permutations the same way, so they need not learn each orientation from data.');
 })(typeof globalThis !== 'undefined' ? globalThis : window);

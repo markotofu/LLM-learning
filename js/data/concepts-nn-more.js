@@ -661,6 +661,7 @@ w.grad.zero_()                          # reset before the next backward
       { type: 'text', title: 'nn.Module: models as classes', md: `A model subclasses \`nn.Module\`: create layers in \`__init__\`, describe the computation in \`forward\`. Every parameter of every sub-layer is registered automatically, so \`model.parameters()\` hands them all to the optimizer.
 
 Building blocks you will use constantly: \`nn.Linear(in, out)\`, \`nn.ReLU()\`/\`nn.GELU()\`, \`nn.LayerNorm(d)\`, \`nn.Dropout(p)\`, \`nn.Embedding(vocab, d)\`, \`nn.Conv2d\`, \`nn.Sequential(...)\` to chain layers, and losses such as \`nn.CrossEntropyLoss\`, \`nn.MSELoss\`, \`nn.BCEWithLogitsLoss\`.` },
+      { type: 'demo', title: "Diagram: one training step", demo: 'dg-train-step' },
       { type: 'code', title: 'A model and the standard training loop', lang: 'pytorch', code: `
 import torch
 from torch import nn

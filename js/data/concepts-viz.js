@@ -201,6 +201,7 @@ sns.pairplot(tips, hue="time")                    # a scatter matrix, coloured b
 | How does something change over time? | line chart |
 | What are the parts of a whole? | stacked bar chart; a pie only for two or three slices |
 | How does a relationship differ between groups? | small multiples (facets) |` },
+      { type: 'demo', title: "Diagram: from the question to the chart", demo: 'dg-chart-chooser' },
       { type: 'code', title: "Plots that diagnose a model", md: `Three of the most useful diagnostic plots in machine learning: a **validation curve** (score against a complexity setting), a **confusion matrix** drawn as a heat map, and a **decision boundary**, obtained by asking the model for a prediction at every point of a fine grid.`, code: `import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_moons

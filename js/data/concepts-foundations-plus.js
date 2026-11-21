@@ -978,6 +978,7 @@ df.pivot_table(index="city", columns="month", values="revenue", aggfunc="sum")
 \`\`\`
 
 **Joins** combine tables on a key, like SQL: \`orders.merge(customers, on="customer_id", how="left")\` keeps every order and adds customer columns where a match exists (missing ones become NaN); \`how="inner"\` keeps only matches. Always check the row count after a join: duplicate keys multiply rows.` },
+      { type: 'demo', title: "Diagram: split, apply, combine", demo: 'dg-groupby' },
       { type: 'code', title: 'Summaries and joins', code: `
 import pandas as pd
 sales = pd.DataFrame({"city": ["Paris", "Rome", "Paris", "Berlin", "Rome", "Paris"],

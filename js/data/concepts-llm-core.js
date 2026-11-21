@@ -41,6 +41,7 @@ In the vocabulary of natural language processing, the whole dataset is a **corpu
 | "the dog sat on the log" | 2 | 0 | 1 | 1 | 1 | 0 | 1 |
 
 BoW forgets **word order**: "dog bites man" and "man bites dog" look identical. **n-grams** recover a little local order by also counting pairs (bigrams: "dog bites", "bites man") or triples. The vocabulary grows quickly, so n-grams are usually capped at 2 or 3.` },
+      { type: 'demo', title: "Diagram: from documents to a matrix of counts", demo: 'dg-bow' },
       { type: 'text', title: 'TF-IDF: weighting distinctive words', md: `Raw counts over-weight words like "the" that appear everywhere and say nothing about a document's topic. **TF-IDF** multiplies two factors:
 
 $$ tf(t, d) = count of t in d / number of tokens in d $$

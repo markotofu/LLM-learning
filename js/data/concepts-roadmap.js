@@ -453,6 +453,7 @@ Servers run in two ways:
 - **Remote servers** run as web services, typically operated by the company whose product they expose, and are reached over HTTP with authorization.
 
 Because each server is separate, a host can combine many of them, and each one sees only its own part of the work.` },
+      { type: 'demo', title: "Diagram: hosts, clients and servers", demo: 'dg-mcp' },
       { type: 'text', title: "The data layer: JSON-RPC messages and primitives", md: `All MCP messages are **JSON-RPC 2.0**: small JSON objects of three kinds.
 
 - **Requests** carry an \`id\`, a \`method\` and \`params\`, and expect a response.

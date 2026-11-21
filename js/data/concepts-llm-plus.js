@@ -46,6 +46,7 @@ c_t — the context vector for step t, a weighted average of the encoder states
 :::
 
 Luong et al. (2015) simplified the score to a **dot product**, e_tj = s · h_j, exactly the form transformers use. Plotting the weights shows learned **alignments**: when producing "chat" the decoder attends to "cat"; for "noir" it attends to "black", even though the word order differs.` },
+      { type: 'demo', title: "Diagram: an encoder, a decoder and attention", demo: 'dg-seq2seq' },
       { type: 'code', title: 'One decoder step of attention', code: `
 import numpy as np
 rng = np.random.default_rng(0)
@@ -301,6 +302,7 @@ def greedy_decode(step, state, bos, eos, max_len):
       { type: 'text', title: 'Bidirectional context', md: `A GPT predicts the next token, so each position may only see what came **before** it (the causal mask). But to understand "bank" in "I sat on the bank of the river", the words *after* it matter too.
 
 An **encoder** runs self-attention **without** a causal mask: every token attends to every other token, left and right. The catch: you can no longer train it to predict the next word (it would simply look at it). Encoders need a different pretraining objective.` },
+      { type: 'demo', title: "Diagram: bidirectional and causal attention", demo: 'dg-attn-masks' },
       { type: 'text', title: 'Masked language modeling', md: `BERT (2018) hides some tokens and asks the model to recover them from both sides. For each sequence, 15% of the token positions are selected; of those:
 
 - 80% are replaced by a special [MASK] token,
