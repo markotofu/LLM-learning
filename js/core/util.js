@@ -5,7 +5,6 @@
   function uid(prefix) {
     return (prefix || 'id') + '_' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
   }
-  function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
   function pad(n, w) { let s = String(n); while (s.length < (w || 2)) s = '0' + s; return s; }
 
   // Deterministic PRNG (mulberry32) – used for "problem of the day" and quiz shuffles
@@ -206,10 +205,7 @@
   }
 
   function debounce(fn, ms) { let t; return function () { clearTimeout(t); const a = arguments, c = this; t = setTimeout(() => fn.apply(c, a), ms); }; }
-  function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
-  function sum(arr, f) { return arr.reduce((a, x) => a + (f ? f(x) : x), 0); }
   function pct(a, b) { return b ? Math.round((a / b) * 100) : 0; }
-  function plural(n, s, p) { return n + ' ' + (n === 1 ? s : (p || s + 's')); }
   function slug(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'file'; }
   function formatBytes(n) { if (n < 1024) return n + ' B'; if (n < 1048576) return (n / 1024).toFixed(1) + ' KB'; return (n / 1048576).toFixed(1) + ' MB'; }
 
@@ -260,5 +256,5 @@
   }
 
   const projectKey = p => p.concept + ':' + slug(p.title);      // where a sample project's progress is stored (state.projects)
-  MLA.util = { uid, clamp, pad, seededRng, hashString, shuffle, todayKey, addDays, fmtDate, timeAgo, escapeHtml, dedent, md, inline, codeBlockHtml, debounce, deepClone, sum, pct, plural, slug, projectKey, formatBytes, download, copyText, packText, unpackText };
+  MLA.util = { uid, pad, seededRng, hashString, shuffle, todayKey, addDays, fmtDate, timeAgo, escapeHtml, dedent, md, inline, codeBlockHtml, debounce, pct, slug, projectKey, formatBytes, download, copyText, packText, unpackText };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

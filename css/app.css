@@ -280,12 +280,7 @@ textarea { min-height: 90px; resize: vertical; }
 .list { display: flex; flex-direction: column; gap: 8px; }
 .list-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; text-decoration: none; color: inherit; cursor: pointer; }
 .list-item:hover { border-color: var(--accent); }
-.list-item .li-icon { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: var(--panel3); color: var(--accent2); flex: none; }
-.list-item .li-icon.done { background: var(--green-soft); color: var(--green); }
 .list-item .li-body { flex: 1; min-width: 0; }
-.list-item .li-title { font-weight: 600; }
-.list-item .li-sub { font-size: 0.8rem; color: var(--muted); }
-.list-item .li-right { flex: none; display: flex; gap: 6px; align-items: center; }
 .empty { text-align: center; padding: 34px 16px; color: var(--muted); border: 1px dashed var(--border2); border-radius: var(--radius); }
 .scroll-x { overflow-x: auto; }
 .kbd { font-family: var(--mono); font-size: 0.72rem; background: var(--panel3); border: 1px solid var(--border2); border-bottom-width: 2px; padding: 0 5px; border-radius: 5px; color: var(--text); }

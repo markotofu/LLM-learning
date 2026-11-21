@@ -39,7 +39,6 @@
       { label: opts.okLabel || 'Confirm', kind: opts.danger ? 'danger' : 'primary', value: true }
     ] });
   }
-  function alert(message, title) { return openModal({ title: title || 'Notice', md: message, actions: [{ label: 'OK', kind: 'primary', value: true }] }); }
 
   // Inline SVG icons (24x24, stroke based)
   const icons = {
@@ -126,5 +125,5 @@
     if (meta && meta.setAttribute) meta.setAttribute('content', THEME_BG[look][mode]);
   }
 
-  MLA.ui = { toasts, toast, modal, openModal, closeModal, confirm, alert, icons, iconSvg, applyTheme };
+  MLA.ui = { toasts, toast, modal, openModal, closeModal, confirm, icons, iconSvg, applyTheme };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

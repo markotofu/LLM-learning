@@ -37,5 +37,5 @@
     return [...names].filter(n => find(n));
   }
 
-  MLA.datasets = { list: all, find, read, version, referenced, bundled: () => BUNDLED.slice() };
+  MLA.datasets = { list: all, find, read, version, referenced };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

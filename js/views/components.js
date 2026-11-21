@@ -59,6 +59,10 @@
     <div class="toasts" aria-live="polite"><div v-for="t in toasts" :key="t.id" class="toast" :class="t.kind">{{ t.msg }}</div></div>` };
 
   // The read-aloud player: shown while a lesson (or one part of it) is being read; it stays while you browse elsewhere.
+  // The speaker button on every lesson box: plays that box alone (the lesson page's listenOne).
+  C['listen-btn'] = { props: { label: String }, emits: ['play'], data() { return { s: MLA.speech.state }; },
+    template: `<button v-if="s.supported" class="icon-btn sec-listen" @click="$emit('play')" :aria-label="'Listen to: ' + label" title="Listen to this part"><mla-icon name="volume" :size="16"/></button>` };
+
   C['mla-player'] = {
     data() { return { s: MLA.speech.state, profile: MLA.store.state.profile, rates: [0.75, 1, 1.25, 1.5, 1.75, 2] }; },
     computed: {
@@ -239,15 +243,6 @@
         <a v-if="lesson" class="tiny case-link" tabindex="0" @click="go('/concept/' + lesson.id)" @keydown.enter="go('/concept/' + lesson.id)">From the lesson: {{ lesson.title }}</a>
       </div>
     </details>` };
-
-  C['list-tile'] = { props: { icon: String, title: String, sub: String, done: Boolean, to: String, badge: String, badgeKind: String, color: String },
-    methods: { go() { if (this.to) MLA.router.navigate(this.to); } },
-    template: `
-    <a class="list-item" @click="go" tabindex="0" @keydown.enter="go">
-      <div class="li-icon" :class="{done}" :style="color && !done ? {color: color} : null"><mla-icon :name="done?'check':icon" /></div>
-      <div class="li-body"><div class="li-title">{{ title }}</div><div class="li-sub"><span v-if="sub">{{ sub }}</span><slot name="sub"/></div></div>
-      <div class="li-right"><span v-if="badge" class="badge" :class="badgeKind">{{ badge }}</span><mla-icon name="chevron" :size="16" /></div>
-    </a>` };
 
   C['kbd-hint'] = { props: { keys: String }, computed: { mac() { try { return /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent); } catch (e) { return false; } }, parts() { return this.keys.split('+').map(k => k === 'Mod' ? (this.mac ? '⌘' : 'Ctrl') : k); } }, template: `<span class="kbd-group"><kbd v-for="(k,i) in parts" :key="i" class="kbd">{{ k }}</kbd></span>` };
 

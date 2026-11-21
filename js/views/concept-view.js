@@ -178,11 +178,11 @@
             <div v-else-if="prereqs.length" class="builds-on small"><span class="muted">Builds on:</span> <a v-for="m in prereqs" :key="m.id" class="chip clickable" @click="go('/concept/'+m.id)"><status-dot :status="P.status(m.id)" :size="15"/> {{ m.title }}</a></div>
 
             <div v-if="c.why" class="lesson-section why-card" data-narr="why" :class="{speaking: speaking('why')}">
-              <div class="sec-head"><mla-icon name="sparkles" :size="18"/><h3>Why this matters</h3><span class="spacer"></span><button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne('why')" aria-label="Listen to: Why this matters" title="Listen to this part"><mla-icon name="volume" :size="16"/></button></div>
+              <div class="sec-head"><mla-icon name="sparkles" :size="18"/><h3>Why this matters</h3><span class="spacer"></span><listen-btn label="Why this matters" @play="listenOne('why')"/></div>
               <mla-md :src="c.why" />
             </div>
             <div v-if="c.objectives.length" class="lesson-section" data-narr="objectives" :class="{speaking: speaking('objectives')}">
-              <div class="sec-head"><mla-icon name="target" :size="18"/><h3>By the end you will be able to</h3><span class="spacer"></span><button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne('objectives')" aria-label="Listen to: the objectives" title="Listen to this part"><mla-icon name="volume" :size="16"/></button></div>
+              <div class="sec-head"><mla-icon name="target" :size="18"/><h3>By the end you will be able to</h3><span class="spacer"></span><listen-btn label="the objectives" @play="listenOne('objectives')"/></div>
               <ul class="objectives"><li v-for="(o,i) in c.objectives" :key="i"><mla-md :src="o" inline /></li></ul>
             </div>
             <div v-if="c.checkpoints && c.checkpoints.length" class="lesson-section checkpoints-card">
@@ -203,7 +203,7 @@
                 <h3>{{ s.title || (s.type==='check' ? 'Quick check' : 'Section ' + (i+1)) }}</h3>
                 <span class="spacer"></span>
                 <span v-if="isRead(s.id)" class="chip green tiny"><mla-icon name="check" :size="11"/> read</span>
-                <button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne(s.id)" :aria-label="'Listen to: ' + (s.title || 'this quick check')" title="Listen to this part"><mla-icon name="volume" :size="16"/></button>
+                <listen-btn :label="s.title || 'this quick check'" @play="listenOne(s.id)"/>
               </div>
               <template v-if="s.type==='text'"><mla-md :src="s.md" /></template>
               <template v-else-if="s.type==='code'">
@@ -239,24 +239,24 @@
             </section>
 
             <div v-if="c.when" class="lesson-section when-card" data-narr="when" :class="{speaking: speaking('when')}">
-              <div class="sec-head"><mla-icon name="route" :size="18"/><h3>When to use it (and when not to)</h3><span class="spacer"></span><button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne('when')" aria-label="Listen to: When to use it" title="Listen to this part"><mla-icon name="volume" :size="16"/></button></div>
+              <div class="sec-head"><mla-icon name="route" :size="18"/><h3>When to use it (and when not to)</h3><span class="spacer"></span><listen-btn label="When to use it" @play="listenOne('when')"/></div>
               <mla-md :src="c.when" />
             </div>
             <div v-if="c.pitfalls" class="lesson-section pitfalls-card" data-narr="pitfalls" :class="{speaking: speaking('pitfalls')}">
-              <div class="sec-head"><mla-icon name="warning" :size="18"/><h3>Common pitfalls</h3><span class="spacer"></span><button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne('pitfalls')" aria-label="Listen to: Common pitfalls" title="Listen to this part"><mla-icon name="volume" :size="16"/></button></div>
+              <div class="sec-head"><mla-icon name="warning" :size="18"/><h3>Common pitfalls</h3><span class="spacer"></span><listen-btn label="Common pitfalls" @play="listenOne('pitfalls')"/></div>
               <mla-md :src="c.pitfalls" />
             </div>
             <div v-if="c.takeaways.length" class="lesson-section takeaways-card" data-narr="takeaways" :class="{speaking: speaking('takeaways')}">
-              <div class="sec-head"><mla-icon name="star" :size="18"/><h3>Key takeaways</h3><span class="spacer"></span><button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne('takeaways')" aria-label="Listen to: Key takeaways" title="Listen to this part"><mla-icon name="volume" :size="16"/></button></div>
+              <div class="sec-head"><mla-icon name="star" :size="18"/><h3>Key takeaways</h3><span class="spacer"></span><listen-btn label="Key takeaways" @play="listenOne('takeaways')"/></div>
               <ul class="takeaways"><li v-for="(t,i) in c.takeaways" :key="i"><mla-md :src="t" inline /></li></ul>
             </div>
             <div v-if="c.cases.length" class="lesson-section cases-card" data-narr="cases" :class="{speaking: speaking('cases')}">
-              <div class="sec-head"><mla-icon name="book" :size="18"/><h3>{{ c.cases.length > 1 ? 'Case studies' : 'Case study' }}</h3><span class="spacer"></span><button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne('cases')" aria-label="Listen to: Case studies" title="Listen to this part"><mla-icon name="volume" :size="16"/></button></div>
+              <div class="sec-head"><mla-icon name="book" :size="18"/><h3>{{ c.cases.length > 1 ? 'Case studies' : 'Case study' }}</h3><span class="spacer"></span><listen-btn label="Case studies" @play="listenOne('cases')"/></div>
               <p class="small muted">What happened when these ideas met the real world.</p>
               <case-study v-for="(k,i) in c.cases" :key="i" :k="k" />
             </div>
             <div v-if="c.projects.length" class="lesson-section projects-card" data-narr="projects" :class="{speaking: speaking('projects')}">
-              <div class="sec-head"><mla-icon name="flask" :size="18"/><h3>Build it: {{ c.projects.length > 1 ? 'sample projects' : 'a sample project' }}</h3><span class="spacer"></span><button v-if="speech.supported" class="icon-btn sec-listen" @click="listenOne('projects')" aria-label="Listen to: Sample projects" title="Listen to this part"><mla-icon name="volume" :size="16"/></button></div>
+              <div class="sec-head"><mla-icon name="flask" :size="18"/><h3>Build it: {{ c.projects.length > 1 ? 'sample projects' : 'a sample project' }}</h3><span class="spacer"></span><listen-btn label="Sample projects" @play="listenOne('projects')"/></div>
               <p class="small muted">A project to do on your own machine with real data, from a first version to stretch goals. <a tabindex="0" @click="go('/projects')" @keydown.enter="go('/projects')">See all projects</a>.</p>
               <project-card v-for="(p,i) in c.projects" :key="i" :p="p" :open="c.projects.length === 1" />
             </div>
