@@ -15,6 +15,7 @@
       concepts: {},   // id -> { read:[], checks:{}, quizBest, quizAttempts, quizPassed, completedAt, masteredAt, visitedAt }
       problems: {},   // id -> { draft, draftAt, solved, solvedAt, attempts, runs, assisted, solutionViewed, hintsShown, lastStatus, accepted:{code,at} }
       notes: {},      // conceptId -> text
+      projects: {},   // 'lessonId:project-slug' -> { steps: [step numbers done], notes, startedAt, updatedAt, completedAt } (js/views/components.js)
       playground: { files: [], active: null },
       flashcards: {}, // cardId -> SRS state
       mistakes: {},   // 'kind:concept:ref' -> { kind, concept, ref, why, added, misses, card, graduated } (see js/core/mistakes.js)
@@ -31,7 +32,7 @@
     if (!saved || typeof saved !== 'object') return base;
     const merged = Object.assign({}, base, saved);
     for (const k of ['profile', 'streak', 'stats', 'playground']) merged[k] = Object.assign({}, base[k], saved[k] || {});
-    for (const k of ['concepts', 'problems', 'notes', 'flashcards', 'mistakes', 'achievements', 'daily']) if (!merged[k] || typeof merged[k] !== 'object' || Array.isArray(merged[k])) merged[k] = {};
+    for (const k of ['concepts', 'problems', 'notes', 'projects', 'flashcards', 'mistakes', 'achievements', 'daily']) if (!merged[k] || typeof merged[k] !== 'object' || Array.isArray(merged[k])) merged[k] = {};
     for (const k of ['activity', 'quizHistory']) if (!Array.isArray(merged[k])) merged[k] = [];
     if (!Array.isArray(merged.playground.files)) merged.playground.files = [];
     merged.app = APP_ID; merged.version = VERSION;
@@ -124,6 +125,16 @@
     for (const id of Object.keys(inc.notes)) {
       const a = out.notes[id] || '', b = inc.notes[id] || '';
       if (!a) out.notes[id] = b; else if (b && a !== b && !a.includes(b)) out.notes[id] = a + '\n\n--- merged from another device ---\n' + b;
+    }
+    // sample projects: union of the steps done, both sets of notes, earliest start and finish
+    for (const id of Object.keys(inc.projects)) {
+      const a = out.projects[id], b = inc.projects[id];
+      if (!b || typeof b !== 'object') continue;
+      if (!a) { out.projects[id] = b; continue; }
+      a.steps = Array.from(new Set([].concat(a.steps || [], b.steps || []))).filter(n => Number.isInteger(n)).sort((x, y) => x - y);
+      const na = a.notes || '', nb = b.notes || '';
+      if (!na) a.notes = nb; else if (nb && na !== nb && !na.includes(nb)) a.notes = na + '\n\n--- merged from another device ---\n' + nb;
+      a.startedAt = minDate(a.startedAt, b.startedAt); a.completedAt = minDate(a.completedAt, b.completedAt); a.updatedAt = maxDate(a.updatedAt, b.updatedAt);
     }
     // playground files: union by id, newest wins
     const files = {};

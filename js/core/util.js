@@ -259,5 +259,6 @@
     throw new Error('That does not look like an ML Atlas sync code.');
   }
 
-  MLA.util = { uid, clamp, pad, seededRng, hashString, shuffle, todayKey, addDays, fmtDate, timeAgo, escapeHtml, dedent, md, inline, codeBlockHtml, debounce, deepClone, sum, pct, plural, slug, formatBytes, download, copyText, packText, unpackText };
+  const projectKey = p => p.concept + ':' + slug(p.title);      // where a sample project's progress is stored (state.projects)
+  MLA.util = { uid, clamp, pad, seededRng, hashString, shuffle, todayKey, addDays, fmtDate, timeAgo, escapeHtml, dedent, md, inline, codeBlockHtml, debounce, deepClone, sum, pct, plural, slug, projectKey, formatBytes, download, copyText, packText, unpackText };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

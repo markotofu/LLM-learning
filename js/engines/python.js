@@ -380,6 +380,11 @@ def _mla_exec(code):
       try {
         await init();
         if (msg.type === 'init') { post({ id: id, type: 'done', result: { ok: true } }); return; }
+        (msg.files || []).forEach(function (f) {         // datasets the code reads, as data/<name> under the working directory
+          var full = '/home/pyodide/' + f.path;
+          try { py.FS.mkdirTree(full.slice(0, full.lastIndexOf('/'))); } catch (e) { /* exists */ }
+          py.FS.writeFile(full, f.data);
+        });
         var out;
         if (msg.type === 'exec') {
           await loadImports([msg.code]);
@@ -418,6 +423,7 @@ def _mla_exec(code):
   function preferredMirror() { try { const v = localStorage.getItem(MIRROR_KEY); const i = Number(v); return v != null && i >= 0 && i < MIRRORS.length ? i : -1; } catch (e) { return -1; } }
   function clearLoadTimers() { clearInterval(watch); watch = null; }
   function spawn() {
+    sentFiles = new Set();
     const pref = preferredMirror();
     const src = 'self.MLA_MIRRORS=' + JSON.stringify(MIRRORS) + ';\nself.MLA_START=' + Math.max(0, pref) + ';\nself.MLA_HAS_PREF=' + (pref >= 0) + ';\nself.MLA_HARNESS=' + JSON.stringify(HARNESS) + ';\n(' + workerMain.toString() + ')();\n';
     const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
@@ -476,12 +482,32 @@ def _mla_exec(code):
   function timeoutMs() { try { return Math.max(3, Number(MLA.store.state.profile.timeoutSec) || 20) * 1000; } catch (e) { return 20000; } }
 
   function warmup() { return send('init', {}); }
-  function exec(code, opts) { opts = opts || {}; return send('exec', { code: String(code || '') }, { onStdout: opts.onStdout, timeoutMs: opts.timeoutMs || timeoutMs() }); }
+  // Datasets the code mentions as data/<name> (js/core/datasets.js) are written into Python's file system before it
+  // runs. Each worker gets each version of a file once; a restarted worker starts with an empty file system.
+  let sentFiles = new Set();
+  async function filesFor(codes) {
+    if (!MLA.datasets) return [];
+    const names = new Set();
+    for (const c of codes) for (const n of MLA.datasets.referenced(c)) names.add(n);
+    const out = [];
+    for (const n of names) {
+      const key = n + '|' + MLA.datasets.version(n);
+      if (sentFiles.has(key)) continue;
+      try { out.push({ path: 'data/' + n, data: await MLA.datasets.read(n) }); sentFiles.add(key); } catch (e) { /* Python reports the missing file */ }
+    }
+    return out;
+  }
+  async function exec(code, opts) {
+    opts = opts || {};
+    const files = await filesFor([code]);
+    return send('exec', { code: String(code || ''), files }, { onStdout: opts.onStdout, timeoutMs: opts.timeoutMs || timeoutMs() });
+  }
   // mode 'run' = visible examples only, 'submit' = every test (including hidden ones)
   function runTests(code, problem, mode, opts) {
     opts = opts || {};
     const tests = (problem.tests || []).filter(t => mode === 'submit' || !t.hidden).map(t => ({ name: t.name, setup: t.setup || '', call: t.call || '', expect: t.expect == null ? null : t.expect, code: t.code || '', tol: t.tol || null, hidden: !!t.hidden }));
-    return send('test', { code: String(code || ''), problem: { prelude: problem.prelude || '', solution: problem.solution || '', tests } }, { timeoutMs: opts.timeoutMs || timeoutMs() });
+    return filesFor([code, problem.prelude].concat(tests.map(t => t.setup + '\n' + t.code))).then(files =>
+      send('test', { code: String(code || ''), files, problem: { prelude: problem.prelude || '', solution: problem.solution || '', tests } }, { timeoutMs: opts.timeoutMs || timeoutMs() }));
   }
   function stop() { if (pending.size) failAll('stopped', 'Stopped. Python was restarted.'); else kill(); status.state = 'idle'; status.message = ''; }
 

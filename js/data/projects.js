@@ -1,6 +1,7 @@
 /* ML Atlas – case studies and sample projects, attached to lessons by id in MLA.content.init (js/data/branches.js).
  *   Case study: { title, when, story, lesson, source: { title, url? } }        story and lesson are markdown
- *   Project:    { title, level: 'starter' | 'intermediate' | 'advanced', hours, goal, data, steps: [md], done, stretch: [md], skills: [text] }
+ *   Project:    { title, level: 'starter' | 'intermediate' | 'advanced', hours, goal, data, steps: [md], done, stretch: [md], skills: [text],
+ *                 practice?: a bundled synthetic dataset (js/core/datasets.js) to start with in the browser }
  * Case studies are real, documented events: every number here comes from the cited source. Projects are meant for the
  * learner's own machine (most need pip packages or dataset downloads that the in-browser Python cannot reach).
  * Lessons list them after the key takeaways; the Projects page (#/projects) lists them all. */
@@ -292,7 +293,7 @@ Without being trained on any particular benchmark, Whisper was much more robust 
       stretch: [`Add permutation importance and partial dependence plots for the top features.`, `Choose a decision threshold from a stated cost of false positives and false negatives.`],
       skills: ['ColumnTransformer', 'pipelines without leakage', 'hyperparameter search', 'calibration', 'saving models'] })],
 
-    'ensembles': [P({ title: 'Predict which customers will leave', level: 'intermediate', hours: 6,
+    'ensembles': [P({ title: 'Predict which customers will leave', level: 'intermediate', hours: 6, practice: 'telco_churn_synthetic.csv',
       goal: `Predict churn for a telecom company with gradient-boosted trees, and turn the predictions into a retention plan with an expected value.`,
       data: `The IBM Telco Customer Churn sample (on Kaggle as "Telco Customer Churn"): 7,043 customers and 21 columns (contract type, tenure, monthly charges, services used); about 26% churned.`,
       steps: [
@@ -333,7 +334,7 @@ Without being trained on any particular benchmark, Whisper was much more robust 
       stretch: [`Replace the nearest-neighbour classifier with a linear SVM.`, `Compare PCA with random projections to the same number of dimensions.`],
       skills: ['PCA', 'explained variance', 'reconstruction', 'dimensionality reduction before classification'] })],
 
-    'anomaly-detection': [P({ title: 'Catch card fraud among normal payments', level: 'intermediate', hours: 6,
+    'anomaly-detection': [P({ title: 'Catch card fraud among normal payments', level: 'intermediate', hours: 6, practice: 'card_transactions_synthetic.csv',
       goal: `Flag fraudulent card transactions when fraud is 0.17% of the data, and evaluate the detector with metrics that suit rare events.`,
       data: `The Credit Card Fraud Detection dataset (on Kaggle, from the Machine Learning Group of the Université Libre de Bruxelles): 284,807 European card transactions over two days in September 2013, 492 of them fraudulent. Features V1 to V28 are PCA components; Time and Amount are raw.`,
       steps: [
@@ -347,7 +348,7 @@ Without being trained on any particular benchmark, Whisper was much more robust 
       stretch: [`Train an autoencoder on normal transactions only and use reconstruction error as the score.`, `Test on the last few hours only and see how stable the ranking is.`],
       skills: ['time-based splits', 'extreme imbalance', 'average precision', 'alert budgets', 'isolation forests'] })],
 
-    'time-series': [P({ title: 'Forecast bike rentals', level: 'intermediate', hours: 6,
+    'time-series': [P({ title: 'Forecast bike rentals', level: 'intermediate', hours: 6, practice: 'bike_rentals_hourly.csv',
       goal: `Forecast hourly bike rentals for the next week, beat the seasonal naive baseline, and give prediction intervals that hold up.`,
       data: `The Bike Sharing dataset (UCI): hourly counts of Capital Bikeshare rentals in Washington, D.C., in 2011 and 2012, with weather, holiday and working-day columns.`,
       steps: [

@@ -185,6 +185,18 @@ T.ok('rejects foreign JSON', threw);
     T.ok('items whose content is gone are ignored', (() => { S.state.mistakes['quiz:attention:nope'] = { kind: 'quiz', concept: 'attention', ref: 'nope', card: { due: '2026-01-01' } }; return !M.all().some(x => x.id === 'quiz:attention:nope'); })());
   } finally { U.todayKey = realToday; S.reset(); }
 }
+// Sample-project progress (steps ticked, notes) survives export and merges across devices
+{
+  const S = MLA.store;
+  const a = S.mergeDefaults({ xp: 0, concepts: {}, problems: {}, projects: { 'ensembles:x': { steps: [0, 1], notes: 'phone notes', startedAt: '2026-01-02', updatedAt: '2026-01-03', completedAt: null } } });
+  const b = S.mergeDefaults({ xp: 0, concepts: {}, problems: {}, projects: { 'ensembles:x': { steps: [1, 2], notes: 'laptop notes', startedAt: '2026-01-01', updatedAt: '2026-01-04', completedAt: null }, 'pca:y': { steps: [0] } } });
+  const m = S.mergeStates(a, b);
+  T.ok('projects merge: steps are the union', JSON.stringify(m.projects['ensembles:x'].steps) === '[0,1,2]');
+  T.ok('projects merge: both sets of notes are kept', m.projects['ensembles:x'].notes.includes('phone notes') && m.projects['ensembles:x'].notes.includes('laptop notes'));
+  T.ok('projects merge: earliest start, projects from both sides', m.projects['ensembles:x'].startedAt === '2026-01-01' && !!m.projects['pca:y']);
+  T.ok('projects are part of the export', 'projects' in JSON.parse(S.exportJSON()));
+}
+
 // Search: one box finds lessons, sections, terms, problems, projects and case studies
 {
   const res = q => MLA.search.query(q);

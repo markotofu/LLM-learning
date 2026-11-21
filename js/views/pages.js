@@ -97,7 +97,7 @@
   // ---------- Projects and case studies (js/data/projects.js) ----------
   MLA.components['view-projects'] = {
     props: { route: Object },
-    data() { const t = this.route && this.route.query && this.route.query.tab; return { tab: t === 'cases' ? 'cases' : 'projects', q: '', level: 'all', cat: 'all' }; },
+    data() { const t = this.route && this.route.query && this.route.query.tab; return { tab: t === 'cases' ? 'cases' : 'projects', q: '', level: 'all', cat: 'all', status: 'all', state: MLA.store.state }; },
     computed: {
       cats() { return MLA.data.branches.filter(b => MLA.data.concepts.some(c => c.branch === b.id && (c.projects.length || c.cases.length))); },
       all() {
@@ -112,7 +112,8 @@
         const q = this.q.trim().toLowerCase();
         const keep = (c, words) => (this.cat === 'all' || c.branch === this.cat) && (!q || words.toLowerCase().includes(q));
         if (this.tab === 'cases') return this.all.cases.filter(x => keep(x.c, [x.k.title, x.k.when, x.k.story, x.c.title].join(' ')));
-        return this.all.projects.filter(x => (this.level === 'all' || x.p.level === this.level) && keep(x.c, [x.p.title, x.p.goal, x.p.data, x.p.skills.join(' '), x.c.title].join(' ')));
+        const status = x => { const r = this.state.projects[MLA.util.projectKey(x.p)], n = r && r.steps ? r.steps.length : 0; return n >= x.p.steps.length ? 'done' : n ? 'started' : 'new'; };
+        return this.all.projects.filter(x => (this.level === 'all' || x.p.level === this.level) && (this.status === 'all' || status(x) === this.status) && keep(x.c, [x.p.title, x.p.goal, x.p.data, x.p.skills.join(' '), x.c.title].join(' ')));
       }
     },
     template: `
@@ -122,6 +123,7 @@
       <div class="filters">
         <div class="map-search grow"><mla-icon name="search" :size="15"/><input type="search" v-model="q" :placeholder="tab==='cases' ? 'Search case studies…' : 'Search projects, datasets, skills…'" aria-label="Search"></div>
         <select v-if="tab==='projects'" v-model="level" aria-label="Level"><option value="all">All levels</option><option value="starter">Starter</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select>
+        <select v-if="tab==='projects'" v-model="status" aria-label="Status"><option value="all">Any status</option><option value="new">Not started</option><option value="started">In progress</option><option value="done">Done</option></select>
         <select v-model="cat" aria-label="Branch"><option value="all">All branches</option><option v-for="b in cats" :key="b.id" :value="b.id">{{ b.name }}</option></select>
       </div>
       <div v-if="tab==='projects'" class="stack project-list">

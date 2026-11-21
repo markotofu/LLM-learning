@@ -178,24 +178,64 @@
 
   // A sample project: goal, data, steps, how to know it is done, and stretch goals. A <details> that shows its summary
   // line (title, level, hours) until it is opened.
+  // Progress lives in state.projects['lessonId:project-slug']: the steps ticked, the learner's notes and the dates;
+  // it is saved, exported and merged with the rest of the progress. Ticking the last step awards XP once.
   C['project-card'] = { props: { p: Object, lesson: Object, open: Boolean },
-    computed: { levelClass() { return { starter: 'green', intermediate: 'amber', advanced: 'red' }[this.p.level] || ''; } },
-    methods: { go(p) { MLA.router.navigate(p); } },
+    data() { return { state: MLA.store.state }; },
+    computed: {
+      levelClass() { return { starter: 'green', intermediate: 'amber', advanced: 'red' }[this.p.level] || ''; },
+      key() { return MLA.util.projectKey(this.p); },
+      rec() { return this.state.projects[this.key] || null; },
+      done() { return (this.rec && this.rec.steps) || []; },
+      complete() { return this.done.length >= this.p.steps.length; },
+      practice() { return this.p.practice && MLA.datasets ? MLA.datasets.find(this.p.practice) : null; },
+      notes: { get() { return (this.rec && this.rec.notes) || ''; }, set(v) { this.touch().notes = v; } }
+    },
+    methods: {
+      go(p) { MLA.router.navigate(p); },
+      tryIt() {                                 // a playground file that already loads the practice dataset
+        const d = this.practice;
+        MLA.playground.newFile(MLA.util.slug(this.p.title) + '.py', ['# ' + this.p.title + ': practice version, in your browser',
+          '# ' + d.title + ' is built into the site. The steps of the project work the same way on it.',
+          'import pandas as pd', '', 'df = pd.read_csv("data/' + d.name + '")', 'print(df.shape)', 'print(df.head())', ''].join(String.fromCharCode(10)));
+        MLA.router.navigate('/playground');
+      },
+      touch() {
+        const now = new Date().toISOString();
+        if (!this.state.projects[this.key]) this.state.projects[this.key] = { steps: [], notes: '', startedAt: now, updatedAt: now, completedAt: null };
+        const r = this.state.projects[this.key];
+        r.updatedAt = now;
+        return r;
+      },
+      toggle(i, on) {
+        const r = this.touch(), set = new Set(r.steps);
+        if (on) set.add(i); else set.delete(i);
+        r.steps = [...set].sort((a, b) => a - b);
+        if (r.steps.length >= this.p.steps.length && !r.completedAt) {
+          r.completedAt = new Date().toISOString();
+          MLA.gamification.addXP(60, 'Project built: ' + this.p.title, 'project');
+          MLA.ui.toast('Project complete: ' + this.p.title + '.', 'success', 5000);
+        }
+      }
+    },
     template: `
     <details class="project" :open="open">
       <summary>
         <span class="project-title">{{ p.title }}</span>
-        <span class="project-meta"><span class="chip tiny project-level" :class="levelClass">{{ p.level }}</span><span class="chip tiny"><mla-icon name="clock" :size="12"/> about {{ p.hours }} hours</span></span>
+        <span class="project-meta"><span class="chip tiny project-level" :class="levelClass">{{ p.level }}</span><span class="chip tiny"><mla-icon name="clock" :size="12"/> about {{ p.hours }} hours</span><span class="chip tiny" :class="complete ? 'green' : done.length ? 'accent' : ''">{{ complete ? 'Done' : done.length ? done.length + ' of ' + p.steps.length + ' steps' : 'Not started' }}</span></span>
       </summary>
       <div class="project-body">
         <div class="project-row"><strong>Goal.</strong> <mla-md :src="p.goal" inline /></div>
         <div class="project-row"><strong>Data and tools.</strong> <mla-md :src="p.data" inline /></div>
-        <div class="project-row"><strong>Steps</strong></div>
-        <ol class="project-steps"><li v-for="(s,i) in p.steps" :key="i"><mla-md :src="s" inline /></li></ol>
+        <div v-if="practice" class="project-row practice-row"><span><strong>Start in your browser.</strong> A synthetic practice version of this data ({{ practice.rows.toLocaleString() }} rows) is built in, so the first steps run in the Playground before you download the real dataset.</span> <button class="btn sm" @click="tryIt"><mla-icon name="terminal" :size="14"/> Open in the Playground</button></div>
+        <div class="project-row"><strong>Steps</strong> <span class="tiny dim">tick each one as you finish it</span></div>
+        <ol class="project-steps"><li v-for="(s,i) in p.steps" :key="i"><label class="step-check"><input type="checkbox" :checked="done.includes(i)" @change="toggle(i, $event.target.checked)" :aria-label="'Step ' + (i + 1) + ' done'"><span><mla-md :src="s" inline /></span></label></li></ol>
         <div class="project-row"><strong>Done when.</strong> <mla-md :src="p.done" inline /></div>
         <div class="project-row"><strong>Go further</strong></div>
         <ul class="project-steps"><li v-for="(s,i) in p.stretch" :key="i"><mla-md :src="s" inline /></li></ul>
         <div class="chips" aria-label="Skills you practise"><span v-for="s in p.skills" :key="s" class="chip tiny accent">{{ s }}</span></div>
+        <div class="project-row"><strong>Your notes</strong></div>
+        <textarea class="project-notes" v-model="notes" rows="3" placeholder="What you tried, what you found, where your code lives. Saved in this browser and included when you export your progress." aria-label="Your notes on this project"></textarea>
         <a v-if="lesson" class="tiny case-link" tabindex="0" @click="go('/concept/' + lesson.id)" @keydown.enter="go('/concept/' + lesson.id)">From the lesson: {{ lesson.title }}</a>
       </div>
     </details>` };
