@@ -601,6 +601,7 @@ W2 = np.array([1.0, -2.0]); b2 = -0.5
 print("hidden features (OR, AND):", H.tolist())
 print("XOR:", (H @ W2 + b2 > 0).astype(int).tolist())
 `, after: `Training finds weights like these automatically: that is what backpropagation is for (next lesson).` },
+      { type: 'demo', title: "Step through: a small network learns XOR", demo: 'walk-mlp-xor' },
       { type: 'text', title: 'Outputs, losses and sizes', md: `The last layer matches the task:
 - **Regression**: one linear output per target, MSE loss.
 - **Binary classification**: one output + sigmoid (or two + softmax), binary cross-entropy.

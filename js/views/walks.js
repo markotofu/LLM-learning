@@ -10,8 +10,9 @@
  *     def.edges: [{ from, to, label, why }]   to the next node: straight down; any other: a lane on the right
  *     def.run(params) -> [{ node, lines: [code line numbers], say, formula?, vars?: [[name, value]], ask?, state }]
  *     def.symbols: [[symbol, meaning]]   each step shows the ones found in its box label, formula or variable names
- *     a step may carry `voice`: the spoken version of `say`, when `say` uses notation that reads badly aloud
- *   Play moves at a chosen speed (Super slow to Fast) or "With the voice": each step is read aloud (MLA.speech) and
+ *     a step may carry `voice`: the spoken version of `say`, when `say` uses notation that reads badly aloud,
+ *     and `plain: true` when its formula box holds plain text (a prompt, say) rather than math
+ *   Play moves at a chosen speed (Sluggish to Fast) or "With the voice": each step is read aloud (MLA.speech) and
  *   the card follows the voice. MLA.walkListen(name) does the same for a lesson's "Listen to this part" button.
  *     def.draw(state, kit) -> shapes for the plot: { k: key, t: 'c' | 'l' | 'p' | 'r' | 't', ...coordinates, cls, f? }
  *       (the plot is 300 by 210; shapes are clipped to the box of kit.frame unless f: 1)
@@ -51,6 +52,7 @@
   const num = v => {
     if (!isFinite(v)) return String(v);
     const a = Math.abs(v);
+    if (a < 1e-12) return '0';                                     // rounding noise, such as the mean of rescaled data
     return a >= 1000 ? v.toFixed(0) : a >= 100 ? v.toFixed(1) : a >= 1 || a === 0 ? +v.toFixed(2) + '' : v.toPrecision(2);
   };
   function ticks(d0, d1, n) {
@@ -71,7 +73,14 @@
     if (labels && labels[1]) s.push({ k: 'yl', t: 't', x: P.l + 4, y: P.t + 2, s: labels[1], cls: 'wp-tick', a: 'start', f: 1 });
     return { sx, sy, shapes: s };
   }
-  const kit = { P, frame, num, ticks };
+  // A padded range around some values, for plots of data whose range is not known in advance.
+  function span(vals, pad) {
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (!(hi > lo)) { lo -= 1; hi += 1; }
+    const p = (hi - lo) * (pad == null ? 0.12 : pad);
+    return [lo - p, hi + p];
+  }
+  const kit = { P, frame, num, ticks, span };
   MLA.walkKit = kit;
 
   function describe(def) {
@@ -86,8 +95,8 @@
   // Timed speeds (milliseconds per step, and seconds for each move on screen), then pacing by the read-aloud voice:
   // each step is spoken with the learner's on-device voice and speed, and the card moves on when the voice finishes.
   const PACES = [
-    { key: 'super-slow', label: 'Super slow', ms: 9000, move: 1.6 },
-    { key: 'sluggish', label: 'Sluggish', ms: 5000, move: 1.1 },
+    { key: 'sluggish', label: 'Sluggish', ms: 9000, move: 1.6 },
+    { key: 'super-slow', label: 'Super slow', ms: 5000, move: 1.1 },
     { key: 'slow', label: 'Slow', ms: 2400, move: 0.7 },
     { key: 'normal', label: 'Normal', ms: 1400, move: 0.45 },
     { key: 'fast', label: 'Fast', ms: 700, move: 0.3 },
@@ -128,6 +137,129 @@
     return out.join(' ');
   }
 
+  // ---------------------------------------------------------------- your own data
+  // A walkthrough that declares def.data = { kind } can run on a CSV or TSV file: a bundled practice dataset or one the
+  // learner uploaded (js/core/datasets.js). Kinds: 'xy' (a numeric input and a numeric target), 'class2' (two numeric
+  // features and a label with exactly two values) and 'points2' (two numeric features). A seeded sample of at most 30
+  // rows keeps the plot readable (for 'class2', up to 15 of each class), and every column is rescaled to mean 0 and
+  // standard deviation 1, so the walkthrough's learning rates behave the same on any data. run(params, data) and
+  // draw(state, kit, data) get the prepared data, or null for the built-in example.
+  const LIMIT = 30;
+  function parseTable(text) {
+    text = String(text || '');
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    const first = text.split(/\r?\n/, 1)[0] || '', count = ch => first.split(ch).length - 1;
+    const delim = count('\t') > count(',') ? '\t' : count(';') > count(',') ? ';' : ',';
+    const rows = [];
+    let row = [], cell = '', quoted = false;
+    const endRow = () => { row.push(cell); cell = ''; if (row.some(c => c.trim() !== '')) rows.push(row); row = []; };
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (quoted) { if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else quoted = false; } else cell += ch; }
+      else if (ch === '"' && cell === '') quoted = true;
+      else if (ch === delim) { row.push(cell); cell = ''; }
+      else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; endRow(); }
+      else cell += ch;
+    }
+    if (cell !== '' || row.length) endRow();
+    const header = (rows.shift() || []).map((h, j) => h.trim() || 'column ' + (j + 1));
+    return { header, rows };
+  }
+  function columnsOf(table) {
+    return table.header.map((name, j) => {
+      const vals = table.rows.map(r => String(r[j] == null ? '' : r[j]).trim()).filter(v => v !== '');
+      const nums = vals.filter(v => isFinite(Number(v)));
+      return { name, j, numeric: vals.length > 0 && nums.length >= 0.9 * vals.length, two: new Set(vals).size === 2,
+        id: /(^|[_\s])id$|^id([_\s]|$)/i.test(name) || /_id$/i.test(name) };
+    });
+  }
+  const SLOTS = {
+    xy: [{ label: 'x', numeric: true }, { label: 'y', numeric: true }],
+    class2: [{ label: 'feature 1', numeric: true }, { label: 'feature 2', numeric: true }, { label: 'label', two: true }],
+    points2: [{ label: 'feature 1', numeric: true }, { label: 'feature 2', numeric: true }]
+  };
+  // Sensible first choices, chosen from the data: for 'xy' the feature most correlated with the last numeric column; for
+  // 'class2' the two features whose means differ most between the classes; for 'points2' the most correlated pair.
+  function defaultColumns(kind, cols, table) {
+    const raw = (r, c) => String(r[c.j] == null ? '' : r[c.j]).trim(), val = (r, c) => (raw(r, c) === '' ? NaN : Number(raw(r, c)));
+    const feats = cols.filter(c => c.numeric && !c.id && !c.two), numeric = cols.filter(c => c.numeric && !c.id);
+    const corr = (a, b) => {
+      const P = table.rows.map(r => [val(r, a), val(r, b)]).filter(q => isFinite(q[0]) && isFinite(q[1]));
+      if (P.length < 3) return 0;
+      const ma = P.reduce((s, q) => s + q[0], 0) / P.length, mb = P.reduce((s, q) => s + q[1], 0) / P.length;
+      let sab = 0, saa = 0, sbb = 0;
+      P.forEach(q => { sab += (q[0] - ma) * (q[1] - mb); saa += (q[0] - ma) ** 2; sbb += (q[1] - mb) ** 2; });
+      return saa > 0 && sbb > 0 ? sab / Math.sqrt(saa * sbb) : 0;
+    };
+    const best = (list, score) => list.slice().sort((a, b) => score(b) - score(a));
+    const name = c => (c ? c.name : '');
+    if (kind === 'xy') {
+      const y = feats[feats.length - 1] || numeric[numeric.length - 1];
+      const x = best((feats.length > 1 ? feats : numeric).filter(c => c !== y), c => Math.abs(corr(c, y)))[0];
+      return [name(x), name(y)];
+    }
+    if (kind === 'class2') {
+      const twos = cols.filter(c => c.two), label = twos.find(c => /churn|fraud|label|target|class|default|survived|^y$/i.test(c.name)) || twos[twos.length - 1];
+      if (!label) return [name(feats[0]), name(feats[1]), ''];
+      const groups = [...new Set(table.rows.map(r => raw(r, label)).filter(v => v !== ''))];
+      const effect = c => {                                       // difference of the class means, in pooled standard deviations
+        const g = groups.map(v => table.rows.filter(r => raw(r, label) === v).map(r => val(r, c)).filter(isFinite));
+        if (g.length !== 2 || g.some(a => a.length < 2)) return 0;
+        const m = g.map(a => a.reduce((s, x) => s + x, 0) / a.length), v = g.map((a, k) => a.reduce((s, x) => s + (x - m[k]) ** 2, 0) / (a.length - 1));
+        const sd = Math.sqrt((v[0] + v[1]) / 2);
+        return sd > 0 ? Math.abs(m[0] - m[1]) / sd : 0;
+      };
+      const fs = best(feats.filter(c => c !== label), effect);
+      return [name(fs[0]), name(fs[1]), name(label)];
+    }
+    let pair = [feats[0], feats[1]], top = -1;
+    feats.forEach((a, i) => feats.slice(i + 1).forEach(b => { const r = Math.abs(corr(a, b)); if (r > top) { top = r; pair = [a, b]; } }));
+    return pair.map(name);
+  }
+  function hashSeed(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0; return h || 1; }
+  function shuffle(a, rnd) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
+  function standardize(vals) {
+    const m = vals.reduce((s, v) => s + v, 0) / vals.length, sd = Math.sqrt(vals.reduce((s, v) => s + (v - m) ** 2, 0) / Math.max(1, vals.length - 1));
+    return sd > 1e-12 ? vals.map(v => (v - m) / sd) : null;
+  }
+  // -> { kind, name, cols, note, X, Y } | { ..., P: [[x1, x2, class]] } | { ..., P: [[x1, x2]] }, or { error }
+  function prepareData(kind, table, names, source) {
+    const slots = SLOTS[kind], cols = columnsOf(table), pick = names.slice(0, slots.length).map(n => cols.find(c => c.name === n));
+    if (pick.some(c => !c)) return { error: 'Pick a column for every box.' };
+    if (new Set(pick).size < pick.length) return { error: 'Pick a different column for each box.' };
+    const bad = pick.find((c, k) => slots[k].numeric && !c.numeric);
+    if (bad) return { error: 'The column "' + bad.name + '" does not hold numbers.' };
+    const nf = 2, value = (r, c) => String(r[c.j] == null ? '' : r[c.j]).trim();       // every kind has two numeric columns
+    let rows = table.rows.filter(r => pick.slice(0, nf).every(c => value(r, c) !== '' && isFinite(Number(value(r, c)))) && (kind !== 'class2' || value(r, pick[2]) !== ''));
+    const total = rows.length, rnd = MLA.util.seededRng(hashSeed(source + '|' + names.join('|')));
+    let classes = null;
+    if (kind === 'class2') {
+      classes = [...new Set(rows.map(r => value(r, pick[2])))].sort((a, b) => (isFinite(Number(a)) && isFinite(Number(b)) ? Number(a) - Number(b) : a.localeCompare(b)));
+      if (classes.length !== 2) return { error: 'The label "' + pick[2].name + '" needs exactly two different values in the usable rows.' };
+      const per = classes.map(v => shuffle(rows.filter(r => value(r, pick[2]) === v), rnd).slice(0, LIMIT / 2));
+      if (per.some(g => g.length < 3)) return { error: 'Each class needs at least 3 usable rows.' };
+      rows = per[0].concat(per[1]);
+    } else {
+      if (rows.length < 5) return { error: 'At least 5 rows need numbers in the chosen columns.' };
+      rows = shuffle(rows, rnd).slice(0, LIMIT);
+    }
+    const z = pick.slice(0, nf).map(c => standardize(rows.map(r => Number(value(r, c)))));
+    const flat = z.findIndex(v => !v);
+    if (flat >= 0) return { error: 'The column "' + pick[flat].name + '" has the same value in every sampled row.' };
+    const file = String(source).split('/').pop();
+    let note = 'Your data: ' + rows.length + ' of ' + total + ' usable rows of ' + file + (kind === 'class2' ? ' (up to 15 of each class)' : '') + ', each column rescaled to mean 0 and standard deviation 1.';
+    const out = { kind, name: file, cols: pick.map(c => c.name), n: rows.length, total };
+    if (kind === 'xy') Object.assign(out, { X: z[0], Y: z[1] });
+    else if (kind === 'class2') {
+      out.classes = classes;
+      out.P = rows.map((r, i) => [z[0][i], z[1][i], value(r, pick[2]) === classes[1] ? 1 : 0]);
+      note += ' Blue is ' + pick[2].name + ' = ' + classes[0] + ', orange is ' + pick[2].name + ' = ' + classes[1] + '.';
+    } else out.P = rows.map((r, i) => [z[0][i], z[1][i]]);
+    out.note = note;
+    return out;
+  }
+  MLA.walkData = { parseTable, columnsOf, defaultColumns, prepareData, SLOTS, LIMIT };
+
   // Mounted cards by name, so a lesson's "Listen to this part" button can have a walkthrough read its steps.
   const cards = {};
   MLA.walkListen = name => { const c = cards[name]; if (!c) return false; c.listen(); return true; };
@@ -136,7 +268,7 @@
   // A walkthrough lists its symbols once (def.symbols: [[symbol, meaning]]). Each step shows the ones that appear in
   // its box, formula or variables, so every formula on screen has its symbols defined right under it.
   const SUB = /[₀-ₜᵢ-ᵪⱼ]/g;               // subscript digits and letters, as in x₁ and wⱼ
-  const isLetter = ch => !!ch && /[\p{L}\p{M}]/u.test(ch);
+  const isLetter = ch => !!ch && /[\p{Lu}\p{Ll}\p{Lt}\p{Lo}\p{M}]/u.test(ch);   // not modifier letters such as ᵀ
   function has(text, sym) {                    // a letter at either end of the symbol must not touch another letter
     const lead = isLetter(sym[0]), tail = isLetter(sym[sym.length - 1]);
     for (const t of [text, text.replace(SUB, '')]) {
@@ -147,7 +279,7 @@
   }
   function symbolsFor(def, step) {
     const node = def.nodes.find(n => n.id === step.node);
-    const text = [node ? node.label.join(' ') : '', step.formula || '', (step.vars || []).map(v => v[0]).join('  ')].join('  ');
+    const text = [node ? node.label.join(' ') : '', step.plain ? '' : step.formula || '', (step.vars || []).map(v => v[0]).join('  ')].join('  ');
     return (def.symbols || []).filter(s => has(text, s[0]));
   }
 
@@ -169,6 +301,7 @@
       (def.params || []).forEach(p => { params[p.key] = p.value; });
       const saved = MLA.store && MLA.store.state && MLA.store.state.profile && MLA.store.state.profile.walkSpeed;
       return { params, i: 0, playing: false, voiceOn: false, said: '', id: ++uid,
+        dataset: null, source: 'builtin', table: null, cols: [], dataErr: '', loading: false, codeAll: false,
         speedKey: PACES.some(p => p.key === saved) && (saved !== 'voice' || canSpeak()) ? saved : 'normal',
         speech: MLA.speech ? MLA.speech.state : {},
         reduced: !!(global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches) };
@@ -176,16 +309,31 @@
     computed: {
       def() { return MLA.walks[this.name]; },
       lay() { return layout(this.def); },
-      steps() { return this.def.run(Object.assign({}, this.params)); },
+      steps() { return this.def.run(Object.assign({}, this.params), this.dataset); },
       step() { return this.steps[Math.min(this.i, this.steps.length - 1)] || {}; },
       node() { return this.def.nodes.find(n => n.id === this.step.node) || {}; },
       edge() { return arrowOf(this.def, this.steps, Math.min(this.i, this.steps.length - 1)); },   // the arrow taken to reach this step
       pace() { return paceOf(this.speedKey); },
       paces() { return PACES.filter(p => p.key !== 'voice' || canSpeak()); },
       prefix() { return 'walk' + this.id + ':'; },                 // keys of this card's parts in the read-aloud player
+      near() {                                     // the running lines and their neighbours: all of the code a phone shows
+        const on = this.step.lines && this.step.lines.length ? this.step.lines : [1, 2], s = new Set();
+        on.forEach(l => { s.add(l - 1); s.add(l); s.add(l + 1); });
+        return s;
+      },
+      dataKind() { return this.def.data ? this.def.data.kind : null; },
+      sources() {                                                  // the CSV and TSV files Python can also open
+        if (!this.dataKind || !MLA.datasets) return [];
+        return MLA.datasets.list().filter(d => /^(csv|tsv)$/i.test(d.type || '') || /\.(csv|tsv)$/i.test(d.name));
+      },
+      slots() {
+        if (!this.table) return [];
+        const cols = columnsOf(this.table);
+        return SLOTS[this.dataKind].map(s => ({ label: s.label, options: cols.filter(c => (!s.numeric || c.numeric) && (!s.two || c.two)).map(c => c.name) }));
+      },
       seen() { const s = new Set(); for (let k = 0; k <= this.i && k < this.steps.length; k++) s.add(this.steps[k].node); return s; },
       shapes() {
-        const out = this.def.draw ? this.def.draw(this.step.state || {}, kit) : [];
+        const out = this.def.draw ? this.def.draw(this.step.state || {}, kit, this.dataset) : [];
         // Frame shapes (f: 1) are drawn first and unclipped; data shapes on top, clipped to the plot box.
         return [{ k: 'frame', clip: false, shapes: out.filter(s => s.f) }, { k: 'data', clip: true, shapes: out.filter(s => !s.f) }];
       },
@@ -244,6 +392,28 @@
         this.speedKey = 'voice';
         this.i = 0;
         this.play();
+      },
+      optionLabel(o) { return this.dataset ? String(o[1]).replace(/\s*\(.*\)$/, '') : o[1]; },   // notes such as "(too big)" describe the built-in example
+      async pickSource() {                         // load a dataset, choose sensible columns, and run on it
+        this.stop(); this.i = 0; this.dataErr = '';
+        if (this.source === 'builtin') { this.table = null; this.dataset = null; return; }
+        this.loading = true;
+        try {
+          const bytes = await MLA.datasets.read(this.source);
+          this.table = parseTable(new TextDecoder('utf-8').decode(bytes));
+          this.cols = defaultColumns(this.dataKind, columnsOf(this.table), this.table);
+          this.applyData();
+        } catch (e) {
+          this.table = null; this.dataset = null;
+          this.dataErr = 'This file could not be read (' + ((e && e.message) || e) + '). The built-in example is shown instead.';
+        }
+        this.loading = false;
+      },
+      applyData() {
+        this.stop(); this.i = 0;
+        const r = prepareData(this.dataKind, this.table, this.cols, this.source);
+        if (r.error) { this.dataset = null; this.dataErr = r.error + ' The built-in example is shown until then.'; }
+        else { this.dataErr = ''; this.dataset = r; }
       },
       changeSpeed() {                              // remember the choice, and carry on at the new pace
         if (MLA.store && MLA.store.state && MLA.store.state.profile) MLA.store.state.profile.walkSpeed = this.speedKey;
@@ -327,9 +497,10 @@
         <p v-if="node.why"><b>Why this step:</b> {{ node.why }}</p>
         <p v-if="edge && edge.why"><b>Why this arrow ({{ edge.label }}):</b> {{ edge.why }}</p>
       </div>
-      <ol class="walk-code" :aria-label="'Code, with the line for this step marked'">
-        <li v-for="(l, k) in def.code" :key="k" :class="{ on: step.lines && step.lines.includes(k + 1) }"><code>{{ l || ' ' }}</code></li>
+      <ol class="walk-code" :class="{ all: codeAll }" :aria-label="'Code, with the line for this step marked'">
+        <li v-for="(l, k) in def.code" :key="k" :class="{ on: step.lines && step.lines.includes(k + 1), near: near.has(k + 1) }"><code>{{ l || ' ' }}</code></li>
       </ol>
+      <button class="btn sm ghost walk-code-more" @click="codeAll = !codeAll">{{ codeAll ? 'Show only the lines of this step' : 'Show all ' + def.code.length + ' lines of code' }}</button>
       <div class="walk-controls">
         <button class="icon-btn" @click="restart" aria-label="Back to the first step" title="Back to the first step"><mla-icon name="refresh" :size="16"/></button>
         <button class="icon-btn" @click="back" :disabled="i === 0" aria-label="Previous step" title="Previous step (left arrow)"><mla-icon name="skipBack" :size="16"/></button>
@@ -337,8 +508,17 @@
         <button class="icon-btn" @click="next" :disabled="i >= steps.length - 1" aria-label="Next step" title="Next step (right arrow)"><mla-icon name="skipForward" :size="16"/></button>
         <select v-model="speedKey" @change="changeSpeed" aria-label="Speed" title="How fast Play moves through the steps"><option v-for="p in paces" :key="p.key" :value="p.key">{{ p.label }}</option></select>
         <label v-for="p in def.params || []" :key="p.key" class="walk-param">{{ p.label }}
-          <select v-model="params[p.key]" :aria-label="p.label"><option v-for="o in p.options" :key="String(o[0])" :value="o[0]">{{ o[1] }}</option></select>
+          <select v-model="params[p.key]" :aria-label="p.label"><option v-for="o in p.options" :key="String(o[0])" :value="o[0]">{{ optionLabel(o) }}</option></select>
         </label>
+      </div>
+      <div v-if="dataKind" class="walk-data">
+        <label class="walk-param">Data
+          <select v-model="source" @change="pickSource" aria-label="Data"><option value="builtin">Built-in example</option><option v-for="d in sources" :key="d.name" :value="d.name">{{ d.name }}{{ d.bundled ? ' (practice)' : '' }}</option></select>
+        </label>
+        <label v-for="(s, k) in slots" :key="s.label" class="walk-param">{{ s.label }}
+          <select v-model="cols[k]" @change="applyData" :aria-label="s.label"><option v-for="n in s.options" :key="n" :value="n">{{ n }}</option></select>
+        </label>
+        <p class="tiny" :class="dataErr ? 'walk-data-err' : 'muted'">{{ loading ? 'Reading the file.' : dataErr || (dataset ? dataset.note : 'Run this walkthrough on a practice dataset, or on a CSV file you uploaded in the Python Playground.') }}</p>
       </div>
       <p class="sr-only" aria-live="polite">{{ said }}</p>
     </div>`

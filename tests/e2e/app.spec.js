@@ -186,6 +186,23 @@ test('read aloud: the lesson plays part by part with an on-device voice, and the
   expect(errors).toEqual([]);
 });
 
+test('a walkthrough runs on a practice dataset, and on a phone shows only the code of the current step', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  const errors = await boot(page, '/home');
+  await go(page, '/concept/svm', 'Support Vector');
+  const walk = page.locator('.walk').first();
+  await walk.locator('select[aria-label="Data"]').selectOption('card_transactions_synthetic.csv');
+  await expect(walk.locator('.walk-data p')).toContainText('Blue is fraud = 0, orange is fraud = 1');
+  await expect(walk.locator('select[aria-label="feature 1"]')).toHaveValue('amount');
+  for (let i = 0; i < 4; i++) await walk.getByRole('button', { name: 'Next step' }).click();
+  await expect(walk.locator('.walk-count')).toHaveText(/step 5 of \d+/);
+  const shown = await walk.locator('.walk-code li').evaluateAll(els => els.filter(e => getComputedStyle(e).display !== 'none').length);
+  expect(shown).toBeLessThan(8);
+  await walk.getByRole('button', { name: /Show all 8 lines/ }).click();
+  await expect(walk.locator('.walk-code li:visible')).toHaveCount(8);
+  expect(errors).toEqual([]);
+});
+
 test('a walkthrough read aloud: its speaker button reads the steps and the card follows the voice', async ({ page }) => {
   await page.addInitScript(() => {                // the same silent stand-in: every utterance "ends" after 150 ms
     const voice = { voiceURI: 'test-local', name: 'Test voice', lang: 'en-US', localService: true, default: true };
@@ -200,7 +217,7 @@ test('a walkthrough read aloud: its speaker button reads the steps and the card 
   const errors = await boot(page, '/home');
   await go(page, '/concept/knn', 'k-Nearest');
   const walk = page.locator('.walk').first();
-  await expect(walk.locator('select[aria-label="Speed"] option')).toHaveText(['Super slow', 'Sluggish', 'Slow', 'Normal', 'Fast', 'With the voice']);
+  await expect(walk.locator('select[aria-label="Speed"] option')).toHaveText(['Sluggish', 'Super slow', 'Slow', 'Normal', 'Fast', 'With the voice']);
   await page.locator('[data-narr="step-through-how-k-nn-labels-a-new-point"] .sec-listen').click();
   await expect(walk.locator('select[aria-label="Speed"]')).toHaveValue('voice');
   await expect(walk.locator('.walk-count')).toHaveText('step 3 of 10', { timeout: 15000 });     // moved on with the voice

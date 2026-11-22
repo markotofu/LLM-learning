@@ -4,16 +4,19 @@
   const MLA = global.MLA, W = MLA.walk;
   const f = v => MLA.walkKit.num(v);
   const mean = a => a.reduce((s, v) => s + v, 0) / a.length;
-  const list = a => '[' + a.map(f).join(', ') + ']';
+  const list = a => '[' + a.slice(0, 10).map(f).join(', ') + (a.length > 10 ? ', …' : '') + ']';   // long lists show their start
 
   // ---------------------------------------------------------------- linear regression by gradient descent
   (function () {
-    const X = [1, 2, 3, 4, 5, 6], Y = [2.2, 3.8, 6.1, 8.2, 9.7, 12.1];
-    const mx = mean(X), my = mean(Y);
-    const wOpt = X.reduce((s, x, i) => s + (x - mx) * (Y[i] - my), 0) / X.reduce((s, x) => s + (x - mx) ** 2, 0), bOpt = my - wOpt * mx;
-    const loss = (w, b) => mean(X.map((x, i) => (w * x + b - Y[i]) ** 2));
+    const BX = [1, 2, 3, 4, 5, 6], BY = [2.2, 3.8, 6.1, 8.2, 9.7, 12.1];
+    function setup(data) {                    // the points of this run, and the exact least-squares line for comparison
+      const X = data ? data.X : BX, Y = data ? data.Y : BY, mx = mean(X), my = mean(Y);
+      const wOpt = X.reduce((s, x, i) => s + (x - mx) * (Y[i] - my), 0) / X.reduce((s, x) => s + (x - mx) ** 2, 0), bOpt = my - wOpt * mx;
+      return { X, Y, wOpt, bOpt, loss: (w, b) => mean(X.map((x, i) => (w * x + b - Y[i]) ** 2)) };
+    }
     W('linreg-gd', {
       title: 'Training a line by gradient descent, one step at a time',
+      data: { kind: 'xy' },
       symbols: [['x', 'the input of each point (its horizontal position)'], ['y', 'the true value of each point'],
         ['ŷ', 'the prediction of the current line for each point'], ['w', 'the slope of the line'], ['b', 'the intercept: where the line crosses x = 0'],
         ['e', 'the error of each prediction, ŷ − y'], ['L', 'the loss: the mean of the squared errors'],
@@ -50,19 +53,19 @@
         { from: 'check', to: 'predict', label: 'yes: again', why: 'The loss is still dropping, so the line can improve further: run the loop again with the new w and b.' },
         { from: 'check', to: 'done', label: 'no: stop', why: 'Progress has stalled (converged), or the loss rose (the learning rate is too big). Either way, stop.' }
       ],
-      run(p) {
-        const lr = +p.lr, steps = [], hist = [];
+      run(p, data) {
+        const { X, Y, wOpt, bOpt, loss } = setup(data), lr = +p.lr, steps = [], hist = [];
         let w = 0, b = 0, since = 1;
         const vars = (it, L) => [['iteration', it], ['w', f(w)], ['b', f(b)], ['loss', f(L)]];
-        steps.push({ node: 'init', lines: [1], say: 'The model starts knowing nothing: slope w = 0 and intercept b = 0, a flat line along the bottom of the plot.', vars: vars(0, loss(0, 0)), state: { w, b } });
+        steps.push({ node: 'init', lines: [1], say: data ? data.note + ' The model starts knowing nothing: slope w = 0 and intercept b = 0, a flat line at height 0, through the middle of the data.' : 'The model starts knowing nothing: slope w = 0 and intercept b = 0, a flat line along the bottom of the plot.', vars: vars(0, loss(0, 0)), state: { w, b } });
         for (let it = 1; it <= 600; it++) {
           const yh = X.map(x => w * x + b), e = yh.map((v, i) => v - Y[i]), L = mean(e.map(v => v * v));
           const dw = 2 * mean(e.map((v, i) => v * X[i])), db = 2 * mean(e);
           const w2 = w - lr * dw, b2 = b - lr * db, L2 = loss(w2, b2);
           if (it <= 2) {
-            steps.push({ node: 'predict', lines: [3], say: 'Iteration ' + it + ': the line ŷ = ' + f(w) + '·x + ' + f(b) + ' makes a prediction for each of the six points.', formula: 'ŷ = w·x + b = ' + list(yh), vars: vars(it, L), state: { w, b } });
+            steps.push({ node: 'predict', lines: [3], say: 'Iteration ' + it + ': the line ŷ = ' + f(w) + '·x + ' + f(b) + ' makes a prediction for each of the ' + (data ? X.length : 'six') + ' points.', formula: 'ŷ = w·x + b = ' + list(yh), vars: vars(it, L), state: { w, b } });
             steps.push({ node: 'error', lines: [4], say: 'The errors (red) show how far each prediction falls from its point. Their mean square, the loss, is ' + f(L) + '.', formula: 'e = ŷ − y = ' + list(e) + '\nL = mean(e²) = ' + f(L), vars: vars(it, L), state: { w, b, res: true },
-              ask: it === 1 ? 'Every prediction is below its point. To lower the loss, should w go up or down?' : null });
+              ask: it === 1 ? (data ? 'Look at the red errors. To lower the loss, should w go up or down?' : 'Every prediction is below its point. To lower the loss, should w go up or down?') : null });
             steps.push({ node: 'grad', lines: [5, 6], say: 'The gradients turn the errors into directions. ∂L/∂w = ' + f(dw) + ' is ' + (dw < 0 ? 'negative: raising w lowers the loss.' : 'positive: lowering w lowers the loss.'), formula: '∂L/∂w = 2·mean(e·x) = ' + f(dw) + '\n∂L/∂b = 2·mean(e) = ' + f(db), vars: vars(it, L), state: { w, b, res: true } });
             steps.push({ node: 'update', lines: [7, 8], say: 'Each parameter steps against its gradient, scaled by η = ' + lr + ': w goes from ' + f(w) + ' to ' + f(w2) + ', and b from ' + f(b) + ' to ' + f(b2) + '. The dashed line is where it was.', formula: 'w ← w − η·∂L/∂w = ' + f(w) + ' − ' + lr + ' × (' + f(dw) + ') = ' + f(w2) + '\nb ← b − η·∂L/∂b = ' + f(b) + ' − ' + lr + ' × (' + f(db) + ') = ' + f(b2), vars: [['iteration', it], ['w', f(w2)], ['b', f(b2)], ['loss', f(L2)]], state: { w: w2, b: b2, ghost: [w, b] } });
           }
@@ -81,16 +84,17 @@
             steps.push({ node: 'done', lines: [], say: rising ? 'Stopped because the loss was rising. With η = ' + lr + ' the updates grow instead of settling: the learning rate has to stay below a limit set by how steep the loss bowl is.'
               : w.toFixed(2) === wOpt.toFixed(2) && b.toFixed(2) === bOpt.toFixed(2)
                 ? 'The fitted line is ŷ = ' + w.toFixed(2) + '·x + ' + b.toFixed(2) + ', the same, to two decimals, as the exact least-squares answer from this lesson\'s formula. Gradient descent got there by small steps instead of solving an equation.'
-                : 'After ' + it + ' iterations the line is ŷ = ' + f(w) + '·x + ' + f(b) + ', while the exact least-squares answer is ŷ = ' + f(wOpt) + '·x + ' + f(bOpt) + '. The slope settled quickly, but the intercept is still creeping: x runs from 1 to 6 and is not centred, which stretches the loss bowl into a long, narrow valley. A larger learning rate, or centring x, gets there much faster.',
+                : 'After ' + it + ' iterations the line is ŷ = ' + f(w) + '·x + ' + f(b) + ', while the exact least-squares answer is ŷ = ' + f(wOpt) + '·x + ' + f(bOpt) + '. ' + (data ? 'More iterations, or a larger learning rate, would close the gap.' : 'The slope settled quickly, but the intercept is still creeping: x runs from 1 to 6 and is not centred, which stretches the loss bowl into a long, narrow valley. A larger learning rate, or centring x, gets there much faster.'),
             vars: [['w', f(w)], ['b', f(b)], ['loss', f(loss(w, b))]], state: { w, b, hist: hist.concat([loss(w, b)]) } });
             break;
           }
         }
         return steps;
       },
-      draw(s, kit) {
-        const fr = kit.frame([0, 7], [0, 14], ['x', 'y']), out = fr.shapes, sx = fr.sx, sy = fr.sy;
-        const line = (w, b) => 'M' + sx(0) + ' ' + sy(b) + ' L' + sx(7) + ' ' + sy(w * 7 + b);
+      draw(s, kit, data) {
+        const { X, Y } = setup(data), xd = data ? kit.span(X) : [0, 7], yd = data ? kit.span(Y.concat([0])) : [0, 14];
+        const fr = kit.frame(xd, yd, data ? data.cols : ['x', 'y']), out = fr.shapes, sx = fr.sx, sy = fr.sy;
+        const line = (w, b) => 'M' + sx(xd[0]) + ' ' + sy(w * xd[0] + b) + ' L' + sx(xd[1]) + ' ' + sy(w * xd[1] + b);
         if (s.ghost) out.push({ k: 'ghost', t: 'p', d: line(s.ghost[0], s.ghost[1]), cls: 'wp-line2' });
         out.push({ k: 'fit', t: 'p', d: line(s.w || 0, s.b || 0), cls: 'wp-line' });
         X.forEach((x, i) => {
@@ -110,11 +114,12 @@
 
   // ---------------------------------------------------------------- k-nearest neighbours, at prediction time
   (function () {
-    const PTS = [[1, 1, 0], [1.5, 2, 0], [1.4, 1, 0], [2.5, 3.2, 0], [3, 2.2, 1], [3.6, 3.1, 1], [3.2, 1, 1], [4.2, 2.8, 1]];
-    const Q = [2.6, 2.3], NAME = ['blue', 'orange'];
-    const d = p => Math.hypot(p[0] - Q[0], p[1] - Q[1]);
+    const BP = [[1, 1, 0], [1.5, 2, 0], [1.4, 1, 0], [2.5, 3.2, 0], [3, 2.2, 1], [3.6, 3.1, 1], [3.2, 1, 1], [4.2, 2.8, 1]];
+    const NAME = ['blue', 'orange'];
+    const setup = data => (data ? { PTS: data.P, Q: [0, 0] } : { PTS: BP, Q: [2.6, 2.3] });   // with your data, the new point is the centre
     W('knn', {
       title: 'How k-NN decides the class of a new point',
+      data: { kind: 'class2' },
       symbols: [['d', 'the straight-line distance between the new point and a training point'], ['x', 'a training point, with coordinates x₁ and x₂'],
         ['q', 'the new point, with coordinates q₁ and q₂'], ['√', 'the square root'], ['k', 'how many of the nearest points get a vote (set below)']],
       params: [{ key: 'k', label: 'k', value: 3, options: [[1, '1'], [3, '3'], [5, '5']] }],
@@ -146,17 +151,17 @@
         { from: 'keep', to: 'vote', label: 'count labels', why: 'The neighbours\' labels decide the answer.' },
         { from: 'vote', to: 'predict', label: 'majority', why: 'The class with the most votes wins.' }
       ],
-      run(p) {
-        const k = +p.k, steps = [], done = [];
-        steps.push({ node: 'arrive', lines: [1], say: 'The red point at (' + Q[0] + ', ' + Q[1] + ') has no label. k-NN will label it by looking at the ' + k + ' stored example' + (k > 1 ? 's' : '') + ' closest to it.', state: { lines: [] } });
+      run(p, data) {
+        const { PTS, Q } = setup(data), d = pt => Math.hypot(pt[0] - Q[0], pt[1] - Q[1]), k = +p.k, steps = [], done = [];
+        steps.push({ node: 'arrive', lines: [1], say: (data ? data.note + ' The red point at (0, 0), the centre of the data,' : 'The red point at (' + Q[0] + ', ' + Q[1] + ')') + ' has no label. k-NN will label it by looking at the ' + k + ' stored example' + (k > 1 ? 's' : '') + ' closest to it.', state: { lines: [] } });
         PTS.forEach((pt, i) => {
           done.push(i);
-          if (i < 3) steps.push({ node: 'dist', lines: [3, 4], say: 'Example ' + (i + 1) + ' at (' + pt[0] + ', ' + pt[1] + ') is ' + NAME[pt[2]] + '. Its straight-line distance to the new point is ' + f(d(pt)) + '.', formula: 'd = √((x₁ − q₁)² + (x₂ − q₂)²)\n  = √((' + pt[0] + ' − ' + Q[0] + ')² + (' + pt[1] + ' − ' + Q[1] + ')²) = ' + f(d(pt)), state: { lines: done.slice(), cur: i } });
+          if (i < 3) steps.push({ node: 'dist', lines: [3, 4], say: 'Example ' + (i + 1) + ' at (' + f(pt[0]) + ', ' + f(pt[1]) + ') is ' + NAME[pt[2]] + '. Its straight-line distance to the new point is ' + f(d(pt)) + '.', formula: 'd = √((x₁ − q₁)² + (x₂ − q₂)²)\n  = √((' + f(pt[0]) + ' − ' + f(Q[0]) + ')² + (' + f(pt[1]) + ' − ' + f(Q[1]) + ')²) = ' + f(d(pt)), state: { lines: done.slice(), cur: i } });
         });
-        steps.push({ node: 'dist', lines: [3, 4], say: 'The same calculation for the other ' + (PTS.length - 3) + ' examples gives every distance.', formula: PTS.map((pt, i) => 'd' + (i + 1) + ' = ' + f(d(pt))).join(',  '), state: { lines: done.slice() } });
+        steps.push({ node: 'dist', lines: [3, 4], say: 'The same calculation for the other ' + (PTS.length - 3) + ' examples gives every distance.', formula: PTS.slice(0, 12).map((pt, i) => 'd' + (i + 1) + ' = ' + f(d(pt))).join(',  ') + (PTS.length > 12 ? ',  …' : ''), state: { lines: done.slice() } });
         steps.push({ node: 'more', lines: [3], say: 'All ' + PTS.length + ' examples have been measured, so the loop ends.', state: { lines: done.slice() } });
         const order = PTS.map((pt, i) => ({ i, d: d(pt), c: pt[2] })).sort((a, b) => a.d - b.d);
-        steps.push({ node: 'sort', lines: [5], say: 'Sorted from nearest to farthest: ' + order.map(o => NAME[o.c] + ' ' + f(o.d)).join(', ') + '.', state: { lines: done.slice(), order: order.map(o => o.i) } });
+        steps.push({ node: 'sort', lines: [5], say: 'Sorted from nearest to farthest: ' + order.slice(0, 8).map(o => NAME[o.c] + ' ' + f(o.d)).join(', ') + (order.length > 8 ? ', and so on' : '') + '.', state: { lines: done.slice(), order: order.map(o => o.i) } });
         const near = order.slice(0, k);
         steps.push({ node: 'keep', lines: [6], say: 'The ' + k + ' nearest lie inside the circle of radius ' + f(near[k - 1].d) + '. Everything outside it is ignored.', state: { lines: near.map(o => o.i), ring: near.map(o => o.i), radius: near[k - 1].d } });
         const votes = [0, 0];
@@ -168,8 +173,10 @@
         steps.push({ node: 'predict', lines: [8], say: 'The new point is labelled ' + NAME[win] + ' (' + votes[win] + ' of ' + k + ' votes). For comparison, k = 1 gives ' + byK[0] + ', k = 3 gives ' + byK[1] + ' and k = 5 gives ' + byK[2] + (agree ? ': here every k agrees.' : ': this point sits near the boundary between the classes, where the choice of k decides the answer.'), state: { lines: near.map(o => o.i), ring: near.map(o => o.i), radius: near[k - 1].d, label: win } });
         return steps;
       },
-      draw(s, kit) {
-        const fr = kit.frame([0.5, 4.7], [0.5, 3.7], ['x₁', 'x₂']), out = fr.shapes, sx = fr.sx, sy = fr.sy;
+      draw(s, kit, data) {
+        const { PTS, Q } = setup(data);
+        const xd = data ? kit.span(PTS.map(q => q[0]).concat([Q[0]])) : [0.5, 4.7], yd = data ? kit.span(PTS.map(q => q[1]).concat([Q[1]])) : [0.5, 3.7];
+        const fr = kit.frame(xd, yd, data ? data.cols.slice(0, 2) : ['x₁', 'x₂']), out = fr.shapes, sx = fr.sx, sy = fr.sy;
         if (s.radius) {
           const rx = s.radius * (sx(1) - sx(0)), ry = s.radius * (sy(0) - sy(1));
           out.push({ k: 'ring', t: 'p', d: 'M' + (sx(Q[0]) - rx) + ' ' + sy(Q[1]) + ' a' + rx + ' ' + ry + ' 0 1 0 ' + (2 * rx) + ' 0 a' + rx + ' ' + ry + ' 0 1 0 ' + (-2 * rx) + ' 0', cls: 'wp-faint' });
@@ -187,10 +194,15 @@
   })();
   // ---------------------------------------------------------------- logistic regression by gradient descent
   (function () {
-    const D = [[1, 1, 0], [1.5, 2, 0], [2, 1, 0], [2.5, 2.5, 0], [3, 3.5, 1], [3.5, 2.5, 1], [4, 4, 1], [4.5, 3, 1]];
-    const H = 3, h = D[H], sig = z => 1 / (1 + Math.exp(-z));
+    const BD = [[1, 1, 0], [1.5, 2, 0], [2, 1, 0], [2.5, 2.5, 0], [3, 3.5, 1], [3.5, 2.5, 1], [4, 4, 1], [4.5, 3, 1]];
+    const sig = z => 1 / (1 + Math.exp(-z));
+    const setup = data => {                   // the points, and the blue point followed in detail
+      const D = data ? data.P : BD, H = data ? Math.max(0, D.findIndex(d => d[2] === 0)) : 3;
+      return { D, H, h: D[H] };
+    };
     W('logreg-gd', {
       title: 'Training logistic regression, one step at a time',
+      data: { kind: 'class2' },
       symbols: [['x', 'the two features of a point, (x₁, x₂)'], ['y', 'the true class of a point: 1 for orange, 0 for blue'],
         ['w', 'the weights, one per feature'], ['b', 'the bias'], ['z', 'the score of a point: positive on the orange side of the boundary, negative on the blue side'],
         ['σ', 'the sigmoid, which squashes any score into a probability between 0 and 1'], ['e', 'Euler\'s number, about 2.718'],
@@ -230,8 +242,8 @@
         { from: 'check', to: 'score', label: 'yes: again', why: 'The gradient is not yet flat, so the boundary can still improve.' },
         { from: 'check', to: 'done', label: 'no: stop', why: 'The gradient is nearly zero, or the budget is used up.' }
       ],
-      run(p) {
-        const lr = +p.lr, steps = [];
+      run(p, data) {
+        const { D, H, h } = setup(data), n = D.length, lr = +p.lr, steps = [];
         let w = [0, 0], b = 0, since = 1;
         const ev = () => {
           const z = D.map(d => w[0] * d[0] + w[1] * d[1] + b), pr = z.map(sig);
@@ -241,14 +253,14 @@
         const vec = v => '(' + f(v[0]) + ', ' + f(v[1]) + ')';
         const vars = (it, L) => [['iteration', it], ['w', vec(w)], ['b', f(b)], ['loss', f(L)]];
         const st = extra => Object.assign({ w: w.slice(), b }, extra || {});
-        steps.push({ node: 'init', lines: [1], say: 'All weights start at zero. Every point scores 0, so every probability is 0.5 and there is no boundary yet.', vars: vars(0, Math.log(2)), state: st() });
+        steps.push({ node: 'init', lines: [1], say: (data ? data.note + ' ' : '') + 'All weights start at zero. Every point scores 0, so every probability is 0.5 and there is no boundary yet.', vars: vars(0, Math.log(2)), state: st() });
         for (let it = 1; it <= 500; it++) {
           const e = ev();
           if (it <= 2) {
-            steps.push({ node: 'score', lines: [3], say: 'Iteration ' + it + '. The ringed point at (' + h[0] + ', ' + h[1] + ') is blue, class 0. With the current weights its score is ' + f(e.z[H]) + '.', formula: 'z = w·x + b = ' + f(w[0]) + '·' + h[0] + ' + ' + f(w[1]) + '·' + h[1] + ' + ' + f(b) + ' = ' + f(e.z[H]), vars: vars(it, e.L), state: st({ hl: true }) });
+            steps.push({ node: 'score', lines: [3], say: 'Iteration ' + it + '. The ringed point at (' + f(h[0]) + ', ' + f(h[1]) + ') is blue, class 0. With the current weights its score is ' + f(e.z[H]) + '.', formula: 'z = w·x + b = ' + f(w[0]) + '·' + f(h[0]) + ' + ' + f(w[1]) + '·' + f(h[1]) + ' + ' + f(b) + ' = ' + f(e.z[H]), vars: vars(it, e.L), state: st({ hl: true }) });
             steps.push({ node: 'prob', lines: [4], say: 'The sigmoid turns that score into p = ' + f(e.pr[H]) + ': a ' + Math.round(e.pr[H] * 100) + '% chance of orange for a point that is really blue.', formula: 'p = σ(z) = 1 / (1 + e^(−z))\n  = 1 / (1 + e^(' + f(-e.z[H]) + ')) = ' + f(e.pr[H]), vars: vars(it, e.L), state: st({ hl: true }) });
-            steps.push({ node: 'loss', lines: [5], say: 'Averaged over all eight points, the log loss is ' + f(e.L) + (it === 1 ? '. That is ln 2, the cost of answering 0.5 for everything.' : '.'), formula: 'loss = −mean(y·log p + (1 − y)·log(1 − p)) = ' + f(e.L), vars: vars(it, e.L), state: st({ hl: true }),
-              ask: it === 1 ? 'The orange points sit up and to the right. Should the two weights grow or shrink?' : null });
+            steps.push({ node: 'loss', lines: [5], say: 'Averaged over all ' + (data ? n : 'eight') + ' points, the log loss is ' + f(e.L) + (it === 1 ? '. That is ln 2, the cost of answering 0.5 for everything.' : '.'), formula: 'loss = −mean(y·log p + (1 − y)·log(1 − p)) = ' + f(e.L), vars: vars(it, e.L), state: st({ hl: true }),
+              ask: it === 1 ? (data ? 'Where do the orange points sit compared with the blue ones? Should each weight grow or shrink?' : 'The orange points sit up and to the right. Should the two weights grow or shrink?') : null });
             steps.push({ node: 'grad', lines: [6, 7], say: 'The gradient is ∇w = ' + vec(e.gw) + '. ' + (e.gw[0] < 0 && e.gw[1] < 0 ? 'Both parts are negative, so growing both weights lowers the loss: the orange points need higher scores.' : 'Its signs say which way each weight should move to lower the loss.'), formula: '∇w = mean((p − y)·x) = ' + vec(e.gw) + '\n∂L/∂b = mean(p − y) = ' + f(e.gb), vars: vars(it, e.L), state: st() });
             const w2 = [w[0] - lr * e.gw[0], w[1] - lr * e.gw[1]], b2 = b - lr * e.gb;
             steps.push({ node: 'update', lines: [8, 9], say: 'The weights move against the gradient, scaled by η = ' + lr + '. ' + (it === 1 ? 'Now a boundary appears: the line where z = 0. The dashed lines are where p = 0.2 and p = 0.8.' : 'The boundary turns and shifts.'), formula: 'w ← w − η·∇w = ' + vec(w) + ' − ' + lr + ' × ' + vec(e.gw) + ' = ' + vec(w2) + '\nb ← b − η·∂L/∂b = ' + f(b) + ' − ' + lr + ' × (' + f(e.gb) + ') = ' + f(b2), vars: [['iteration', it], ['w', vec(w2)], ['b', f(b2)]], state: { w: w2, b: b2 } });
@@ -261,17 +273,18 @@
           }
           if (done) {
             const right = D.filter((d, i) => (e2.pr[i] > 0.5 ? 1 : 0) === d[2]).length;
-            steps.push({ node: 'done', lines: [], say: 'The boundary classifies ' + right + ' of 8 points correctly' + (flat ? '.' : ', and the loss is still creeping down: these classes can be separated perfectly, so the weights could grow forever to make the probabilities ever more extreme. Regularization (the C setting in scikit-learn) is what stops that in practice.'), vars: vars(it, e2.L), state: st({ final: true }) });
+            steps.push({ node: 'done', lines: [], say: 'The boundary classifies ' + right + ' of ' + n + ' points correctly' + (flat ? '.' : right === n ? ', and the loss is still creeping down: these classes can be separated perfectly, so the weights could grow forever to make the probabilities ever more extreme. Regularization (the C setting in scikit-learn) is what stops that in practice.' : ', and after 500 iterations the loss is still creeping down.'), vars: vars(it, e2.L), state: st({ final: true }) });
             break;
           }
         }
         return steps;
       },
-      draw(s, kit) {
-        const fr = kit.frame([0.5, 5], [0.5, 4.5], ['x₁', 'x₂']), out = fr.shapes, sx = fr.sx, sy = fr.sy, w = s.w || [0, 0], b = s.b || 0;
-        const at = z => {                                   // the line where w·x + b = z
-          if (Math.abs(w[1]) > 1e-9) return 'M' + sx(0) + ' ' + sy((z - b - w[0] * 0) / w[1]) + ' L' + sx(5.5) + ' ' + sy((z - b - w[0] * 5.5) / w[1]);
-          if (Math.abs(w[0]) > 1e-9) return 'M' + sx((z - b) / w[0]) + ' ' + sy(0) + ' L' + sx((z - b) / w[0]) + ' ' + sy(5);
+      draw(s, kit, data) {
+        const { D, h } = setup(data), xd = data ? kit.span(D.map(d => d[0])) : [0.5, 5], yd = data ? kit.span(D.map(d => d[1])) : [0.5, 4.5];
+        const fr = kit.frame(xd, yd, data ? data.cols.slice(0, 2) : ['x₁', 'x₂']), out = fr.shapes, sx = fr.sx, sy = fr.sy, w = s.w || [0, 0], b = s.b || 0;
+        const at = z => {                                   // the line where w·x + b = z, across the plot
+          if (Math.abs(w[1]) > Math.abs(w[0])) return 'M' + sx(xd[0]) + ' ' + sy((z - b - w[0] * xd[0]) / w[1]) + ' L' + sx(xd[1]) + ' ' + sy((z - b - w[0] * xd[1]) / w[1]);
+          if (Math.abs(w[0]) > 1e-9) return 'M' + sx((z - b - w[1] * yd[0]) / w[0]) + ' ' + sy(yd[0]) + ' L' + sx((z - b - w[1] * yd[1]) / w[0]) + ' ' + sy(yd[1]);
           return null;
         };
         const lo = at(-1.386), mid = at(0), hi = at(1.386);

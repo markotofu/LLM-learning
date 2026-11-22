@@ -38,6 +38,37 @@ const tokens = s => s.replace(SUB, '').match(/[\p{L}\p{M}]+/gu) || [];
 const single = t => t.replace(/\p{M}/gu, '').length === 1;   // a one-letter symbol, accents allowed (ŷ, m̂)
 const STYLE = / — |!|[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
 
+// Your own data: generated CSV files for each kind of data a walkthrough can take, including awkward ones.
+const WD = MLA.walkData, rnd = MLA.util.seededRng(42);
+const gauss = () => { const u = Math.max(1e-12, rnd()), v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+const csv = (header, rows) => header.join(',') + String.fromCharCode(10) + rows.map(r => r.join(',')).join(String.fromCharCode(10));
+const many = (n, fn) => Array.from({ length: n }, (_, i) => fn(i));
+const DATA = {
+  xy: [['line', csv(['id', 'size_m2', 'price'], many(80, i => { const x = 50 + 30 * gauss(); return [i + 1, x.toFixed(1), (1000 + 12 * x + 90 * gauss()).toFixed(0)]; }))],
+    ['noise', csv(['a', 'b'], many(12, () => [gauss().toFixed(2), gauss().toFixed(2)]))]],
+  class2: [['blobs', csv(['f1', 'f2', 'label'], many(60, i => { const c = i % 2; return [(c * 3 + gauss()).toFixed(2), (c * 2 + gauss()).toFixed(2), c ? 'yes' : 'no']; }))],
+    ['overlap', csv(['f1', 'f2', 'churned'], many(60, i => [gauss().toFixed(2), gauss().toFixed(2), i % 3 ? 0 : 1]))],
+    ['rare', csv(['amount', 'distance', 'fraud'], many(200, i => [(40 + 30 * gauss() + (i % 40 ? 0 : 150)).toFixed(2), (5 + 3 * gauss()).toFixed(1), i % 40 ? 0 : 1]))]],
+  points2: [['correlated', csv(['height', 'weight'], many(50, () => { const t = gauss(); return [(170 + 9 * t).toFixed(1), (70 + 8 * t + 4 * gauss()).toFixed(1)]; }))],
+    ['round', csv(['u', 'v'], many(40, () => [gauss().toFixed(3), gauss().toFixed(3)]))]]
+};
+{
+  const t = WD.parseTable('a,b,"c, d"' + String.fromCharCode(10) + '1,2,"x ""y"""' + String.fromCharCode(13, 10) + '3,4,z' + String.fromCharCode(10));
+  T.ok('CSV: quoted fields, doubled quotes and Windows line ends', JSON.stringify(t) === JSON.stringify({ header: ['a', 'b', 'c, d'], rows: [['1', '2', 'x "y"'], ['3', '4', 'z']] }), JSON.stringify(t));
+  T.ok('TSV: tabs are detected', WD.parseTable('a\tb' + String.fromCharCode(10) + '1\t2').header.join('|') === 'a|b');
+  const bad = WD.parseTable(csv(['x', 'same', 'word', 'three'], many(20, i => [i, 5, 'w' + i, ['a', 'b', 'c'][i % 3]])));
+  const err = (kind, cols) => WD.prepareData(kind, bad, cols, 'bad.csv').error || '';
+  T.ok('own data: a column of words is refused', /does not hold numbers/.test(err('xy', ['x', 'word'])), err('xy', ['x', 'word']));
+  T.ok('own data: a constant column is refused', /same value/.test(err('xy', ['x', 'same'])), err('xy', ['x', 'same']));
+  T.ok('own data: a label with three values is refused', /exactly two/.test(err('class2', ['x', 'same', 'three'])), err('class2', ['x', 'same', 'three']));
+  T.ok('own data: the same column twice is refused', /different column/.test(err('points2', ['x', 'x'])), err('points2', ['x', 'x']));
+  T.ok('own data: too few rows are refused', /At least 5 rows/.test(WD.prepareData('xy', WD.parseTable(csv(['a', 'b'], many(3, i => [i, i * 2]))), ['a', 'b'], 'tiny.csv').error || ''));
+  const ok = WD.prepareData('class2', WD.parseTable(DATA.class2[2][1]), ['amount', 'distance', 'fraud'], 'rare.csv');
+  T.ok('own data: a rare class gets a balanced sample, rescaled', !ok.error && ok.P.filter(q => q[2]).length === 5 && ok.P.length === 20 && Math.abs(ok.P.reduce((s, q) => s + q[0], 0)) < 1e-9, JSON.stringify(ok).slice(0, 200));
+  const line = WD.parseTable(DATA.xy[0][1]);
+  T.ok('own data: id columns are not picked by default', WD.defaultColumns('xy', WD.columnsOf(line), line).join('|') === 'size_m2|price');
+}
+
 for (const name of names) {
   const def = MLA.walks[name];
   const ids = new Set(def.nodes.map(n => n.id));
@@ -48,8 +79,13 @@ for (const name of names) {
   const badProse = prose.filter(s => STYLE.test(s));
   T.ok(name + ': boxes, arrows and legend follow the writing rules', !badProse.length, badProse[0]);
   const visited = new Set(), usedSymbols = new Set(), issues = [];
-  for (const c of combos(def)) {
-    const steps = def.run(c), tag = JSON.stringify(c);
+  const datasets = [[null, 'built-in']].concat(def.data ? (DATA[def.data.kind] || []).map(([label, text]) => {
+    const t = WD.parseTable(text), d = WD.prepareData(def.data.kind, t, WD.defaultColumns(def.data.kind, WD.columnsOf(t), t), label + '.csv');
+    if (d.error) issues.push(label + ': ' + d.error);
+    return [d.error ? null : d, label];
+  }) : []);
+  for (const [data, dname] of datasets) for (const c of combos(def)) {
+    const steps = def.run(c, data), tag = dname + ' ' + JSON.stringify(c);
     if (!steps.length) issues.push(tag + ' has no steps');
     steps.forEach((s, i) => {
       const at = tag + ' step ' + (i + 1) + ': ';
@@ -65,7 +101,7 @@ for (const name of names) {
       if (/NaN|undefined|Infinity|null/.test(words)) issues.push(at + 'bad value in "' + words.slice(0, 80) + '"');
       if (STYLE.test([s.say, s.ask].join(' '))) issues.push(at + 'writing rules: ' + s.say.slice(0, 60));
       // The plot
-      const shapes = def.draw(s.state || {}, MLA.walkKit);
+      const shapes = def.draw(s.state || {}, MLA.walkKit, data);
       const keys = new Set();
       for (const sh of shapes) {
         if (!'clprt'.includes(sh.t)) issues.push(at + 'unknown shape type ' + sh.t);
@@ -85,7 +121,7 @@ for (const name of names) {
       }
       // Symbols: every one-letter symbol and Greek letter on screen has a legend entry; record which entries show.
       const node = def.nodes.find(n => n.id === s.node);
-      const math = [node ? node.label.join(' ') : '', s.formula || '', (s.vars || []).map(v => v[0]).join(' ')].join('  ');
+      const math = [node ? node.label.join(' ') : '', s.plain ? '' : s.formula || '', (s.vars || []).map(v => v[0]).join(' ')].join('  ');
       const entries = def.symbols || [];
       for (const t of tokens(math)) {
         if (!single(t) || t === 'a' && !entries.some(e => e[0] === 'a') || t === 'A') continue;   // "a" is usually the article

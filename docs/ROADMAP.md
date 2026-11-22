@@ -5,7 +5,7 @@ Possible improvements, ranked by how much they help a learner per unit of effort
 - 123 concepts, including 3 capstones; a typical (median) lesson has about 1,200 words;
 - 270 practice problems and 877 quiz questions;
 - 683 glossary terms;
-- 28 interactive demos, 26 diagrams, 12 step-through walkthroughs and 155 charts of computed data;
+- 28 interactive demos, 26 diagrams, 18 step-through walkthroughs and 155 charts of computed data;
 - 356 code samples that run in the browser, 158 of them with a "predict first" question, and a spaced-repetition queue of mistakes to revisit;
 - Terms of Use and Privacy Policy pages, a Content-Security-Policy and a hardened local server.
 
@@ -21,6 +21,7 @@ Possible improvements, ranked by how much they help a learner per unit of effort
 
 - **Your own data in Python:** upload CSV, TSV, Excel, JSON, Parquet or text files, read them as `data/<name>`; they stay in the browser and travel in the export file.
 - **12 step-through walkthroughs** (gradient descent, k-NN, logistic regression, the perceptron, tree splits, boosting, naive Bayes, EM, Adam, attention, decoding, Q-learning): an animated flowchart with the reason for every box and arrow, the running code line, the formula with real numbers, a legend for every symbol and a plot, all computed live under each setting. `tests/walks.test.js` checks them.
+- **Walkthroughs, round two:** speeds from Sluggish to Fast and a pace set by the read-aloud voice; six more (a network learning XOR, a linear SVM, PCA by power iteration, an RNN's memory, retrieval for RAG, the KV cache), 18 in all; five run on the learner's own data; a shorter card on phones.
 
 ## Done in the eighth round (21 November 2026)
 

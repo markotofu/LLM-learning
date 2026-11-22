@@ -397,6 +397,7 @@ prompt = ("Answer using only the documents below and cite them like [1]. "
 print()
 print(prompt)
 `, after: `The question shares the words "return", "opened" and "electronics" with the right chunk, so it ranks first. Notice how fixed-size chunks cut sentences in half ("… Opened electronics have"): that is why real splitters prefer sentence and paragraph boundaries. A real embedding model would also match paraphrases such as "send back my laptop", which word counts cannot.` },
+      { type: 'demo', title: "Step through: retrieving the chunks for a question", demo: 'walk-rag-retrieve' },
       { type: 'check', question: { type: 'mcq', q: 'Why are documents split into chunks before embedding?', options: ['Embedding models cannot read words', 'One vector for a huge document blurs many topics together, and you only want to retrieve the relevant part', 'To reduce the vocabulary size', 'Because LLMs cannot read long text'], answer: 1, explain: 'Smaller, focused chunks give sharper embeddings and fit in the prompt.' } },
       { type: 'text', title: 'Better retrieval: hybrid search, reranking, query rewriting', md: `- **Hybrid search** combines embedding similarity with keyword search (BM25). Embeddings catch paraphrases ("refund" ≈ "money back"); keywords nail exact terms such as error codes, product names and people. A simple way to merge the two ranked lists is **reciprocal rank fusion**:
 

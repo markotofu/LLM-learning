@@ -1307,6 +1307,7 @@ b — the bytes per number (2 for 16-bit formats)
 :::
 
 Multiply by the batch size for several sequences at once. Because the cache grows with every token and every concurrent user, it, rather than the weights, often decides how many requests a GPU can serve; serving systems manage it in pages, like virtual memory (see [LLM Inference & Serving](#/concept/llm-serving)).` },
+      { type: 'demo', title: "Step through: the KV cache while generating", demo: 'walk-kv-cache' },
       { type: 'code', title: "Sizing the KV cache", code: `def kv_cache_gb(layers, kv_heads, d_head, tokens, batch=1, bytes_per_number=2):
     return 2 * layers * kv_heads * d_head * tokens * batch * bytes_per_number / 1e9
 

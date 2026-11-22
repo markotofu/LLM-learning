@@ -1397,6 +1397,7 @@ for t in range(T):
     h = np.tanh(X[t] @ Wx + h @ Wh + b)        # new memory = f(current input, old memory)
     print(f"t={t}: h = {h.round(3)}")
 ` },
+      { type: 'demo', title: "Step through: an RNN's memory over time", demo: 'walk-rnn-memory' },
       { type: 'text', title: 'Backpropagation through time and vanishing gradients', md: `Training unrolls the network over the sequence and runs ordinary backpropagation: **backpropagation through time (BPTT)**. The gradient from step T back to step 1 passes through the recurrence T times, multiplying by W_h (and by tanh′ ≤ 1) at every step.
 
 - If those factors are mostly **smaller than 1**, the gradient shrinks exponentially: the network can't learn dependencies more than ~10–20 steps apart (**vanishing gradients**). In "The cat, which already ate a whole fish this morning, *was* full", connecting *was* to *cat* is hard.

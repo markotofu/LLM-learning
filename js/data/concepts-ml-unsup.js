@@ -63,6 +63,7 @@ print("training accuracy:", np.mean(np.sign(X @ w + b) == y))
 print("margin width 2/||w|| =", round(2 / np.linalg.norm(w), 3))
 print("points on or inside the margin (support vectors):", int(np.sum(margins <= 1.0001)))
 ` },
+      { type: 'demo', title: "Step through: the SVM finds its street", demo: 'walk-svm-hinge' },
       { type: 'check', question: { type: 'mcq', q: 'For a correctly classified point with y·s = 2.5, what is its hinge loss?', options: ['2.5', '1', '0', '−1.5'], answer: 2, explain: 'max(0, 1 − 2.5) = 0. Points beyond the margin contribute nothing.' } },
       { type: 'text', title: 'The kernel trick', md: `What if no straight line separates the classes, say, one class forms a ring around the other? Mapping the data into a higher-dimensional space (add x₁², x₂², x₁x₂…) can make it linearly separable there. But explicit feature maps get huge.
 
@@ -999,6 +1000,7 @@ X_c V_kᵀ — the projected data (the "scores"), an (n, k) matrix
 **Reconstruction**: map back with X̂ = scores · V_k + mean. The reconstruction error measures what was thrown away.
 
 Note: each component's sign is arbitrary (v and −v describe the same direction).` },
+      { type: 'demo', title: "Step through: power iteration finds the first component", demo: 'walk-pca-power' },
       { type: 'code', title: 'PCA with NumPy\'s SVD', code: `
 import numpy as np
 rng = np.random.default_rng(0)
