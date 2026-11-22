@@ -115,9 +115,11 @@ Available demos (28):
 - In `js/views/demos.js`: `gradient-descent`, `activations`, `linear-fit`, `overfit-poly`, `knn`, `kmeans`, `threshold`, `softmax`, `attention`, `bpe`, `convolution`, `neuron`, `positional`, `quantization`, `embeddings`, `calibration`, `diffusion`, `roofline` and `ppo-clip`.
 - In `js/views/demos-more.js`: `eigen`, `conditioning`, `beta`, `gp`, `pca`, `lr-schedule`, `backprop`, `bias-variance` and `tree-split`. This file uses the canvas helpers that `demos.js` exports as `MLA.demoKit`.
 
-Available diagrams (12), defined in `js/views/diagrams.js`: `dg-transformer`, `dg-rag`, `dg-agent`, `dg-diffusion`, `dg-unet`, `dg-lifecycle`, `dg-cv`, `dg-lora`, `dg-pipeline`, `dg-lstm`, `dg-moe` and `dg-parallel`. Use them like demos, for example `{ type: 'demo', title: 'Diagram: the agent loop', demo: 'dg-agent' }`. A section can also show only a diagram followed by text, using `after` (see the `rag` and `mlops` lessons).
+Available diagrams (26), defined in `js/views/diagrams.js`: `dg-transformer`, `dg-rag`, `dg-agent`, `dg-diffusion`, `dg-unet`, `dg-lifecycle`, `dg-cv`, `dg-lora`, `dg-pipeline`, `dg-lstm`, `dg-moe`, `dg-parallel`, `dg-rules-vs-learning`, `dg-aliasing`, `dg-data-splits`, `dg-train-step`, `dg-bow`, `dg-gen-families`, `dg-vit`, `dg-groupby`, `dg-chart-chooser`, `dg-seq2seq`, `dg-attn-masks`, `dg-joins`, `dg-mcp` and `dg-equivariance`. Use them like demos, for example `{ type: 'demo', title: 'Diagram: the agent loop', demo: 'dg-agent' }`. A section can also show only a diagram followed by text, using `after` (see the `rag` and `mlops` lessons).
 
-Use a **demo** when the learner should move a slider and watch something change, a **diagram** for the structure of a system, and a **chart** for numbers: a curve, a comparison or a scaling law.
+Available step-through walkthroughs (12), defined in `js/views/walks-ml.js` and `js/views/walks-dl.js`: `walk-linreg-gd`, `walk-knn`, `walk-logreg-gd`, `walk-perceptron`, `walk-tree-split`, `walk-boosting`, `walk-naive-bayes`, `walk-em-gmm`, `walk-adam`, `walk-attention`, `walk-decoding` and `walk-q-learning`. Each sits right after the section that explains its algorithm, as `{ type: 'demo', title: 'Step through: …', demo: 'walk-<name>' }`.
+
+Use a **demo** when the learner should move a slider and watch something change, a **diagram** for the structure of a system, a **walkthrough** when the idea is a loop or a decision procedure the learner should follow one step at a time, and a **chart** for numbers: a curve, a comparison or a scaling law.
 
 ### Adding a demo
 
@@ -134,6 +136,19 @@ Call `diagram(name, viewBox, ariaLabel, body, caption)` in `diagrams.js`:
 - Build `body` from the `box()`, `arrow()`, `label()` and `plus()` helpers, inside the fixed 820-wide coordinate system.
 - Use the theme classes (`dg-box`, `dg-acc`, `dg-grn`, `dg-amb`, `dg-pur`, `dg-red`, `dg-cyn`), never fixed colours.
 - Keep every label inside its box. Diagram text is 14 px bold for box titles and 12 px for small lines, so allow about 8 px per character for titles.
+
+### Adding a step-through walkthrough
+
+A walkthrough is an animated flowchart of an algorithm, kept in step with its code, the formula with the current numbers, the variables, a small plot and a symbol legend. Add one only where the idea is a loop or a decision procedure, and not where a demo already shows the same thing (k-means, backpropagation and BPE have demos). Call `MLA.walk(name, def)`; the header of `js/views/walks.js` documents the format.
+
+- `nodes` are the boxes, drawn top to bottom, and `edges` the arrows: an arrow to the next box goes straight down, any other runs in a lane on the right. Every box and every arrow has a `why`: what the step is for, and why the algorithm goes there next.
+- `code` is the Python that the steps highlight, line by line.
+- `run(params)` runs the algorithm on a small fixed dataset and returns the steps, `{ node, lines, say, formula, vars, ask, state, edge }`. Every number comes from this run, never typed by hand, and each `say` must stay true under every setting in `params`. When one step stands for several boxes (a later pass of a loop), name the arrow it arrives by with `edge: 'from>to'`.
+- `draw(state, kit)` returns the plot as shapes in a 300 by 210 box (`kit.frame` draws the axes). Give shapes stable keys so that moves animate. Shapes are clipped to the axes box unless they carry `f: 1`.
+- `symbols` lists `[symbol, meaning]` pairs. Each step shows the ones that appear in its box, its formula or its variable names, which is how walkthrough formulas meet the legend rule. Write the symbolic form before the numbers, as in `w ← w − η·∂L/∂w = 0.50 − 0.03 × (−24.1) = 1.22`.
+- Ask a "Think first" question (`ask`) at one or two moments where a prediction is worth making.
+
+`node tests/walks.test.js` runs every walkthrough under every setting. It fails on unknown boxes or code lines, a jump between boxes with no arrow, numbers that are not finite, plot labels that leave the plot or overlap, symbols without a legend entry, legend entries that never appear, and breaches of the writing rules. Then look at it in the browser, in a dark and a light theme and at a 375 px phone width.
 
 ## 3. Markdown features
 

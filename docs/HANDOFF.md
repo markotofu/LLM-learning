@@ -1,5 +1,15 @@
 # ML Atlas: build handoff
 
+## STATUS UPDATE (session 10, end): step-through walkthroughs
+
+The user asked for animated flowcharts of how algorithms work, following the code and the formula, with a reason on every box and arrow, in as many lessons as reasonable. When they asked whether it would bloat the pages, the answer was to keep it to lessons whose idea is a loop or a decision procedure, skip ideas a demo already covers (k-means, backprop, BPE, 1-D gradient descent), step on demand with no autoplay, and keep one compact card per lesson.
+
+- **Framework** (`js/views/walks.js`, header documents `MLA.walk`): auto-laid-out flowchart (next box straight down, other arrows in lanes on the right), active box pulse, dashed flow on the arrow just taken and a dot that travels it (requestAnimationFrame; none under reduced motion), a 300×210 plot from shape objects with stable keys (CSS transitions animate them; `f: 1` shapes are unclipped), the running code line highlighted, formula with the step's numbers, variable chips, "Think first" prompts, settings that recompute the run, left/right keys, an aria-live line. `def.symbols` feeds a legend under the plot with only the symbols in the current box, formula and variable names, so every formula on screen has its symbols defined.
+- **Walkthroughs** (`walks-ml.js`: linreg-gd, knn, logreg-gd, perceptron, tree-split, boosting, naive-bayes, em-gmm; `walks-dl.js`: adam, attention, decoding, q-learning), each a "Step through: …" demo section placed after the section that explains the algorithm. All numbers come from running the algorithm in JS; texts that depend on the numbers are computed (convergence, overshoot, votes, which side a line is on).
+- **Read aloud:** `narrate.js` reads a walkthrough as "Step-by-step walkthrough:" plus `MLA.walks[name].describe()` (every box with its reason, and the lane arrows).
+- **Tests:** `tests/walks.test.js` (in `npm test`) runs every walkthrough under every setting: known boxes and code lines, steps follow arrows (or name one with `edge`), finite numbers, plot bounds, no overlapping labels, symbol coverage both ways, writing rules, every walkthrough used by a lesson. The e2e suite steps the k-NN walkthrough, checks the code highlight, the legend and a restart on a setting change, and its label-fit test covers walkthrough flowcharts.
+- **Bugs found while checking in the browser and fixed:** shapes marked `f: 1` other than lines and text were never drawn (attention, decoding, Q-learning and naive Bayes plots had no bars or cells); Q-learning showed Q after the update on the "choose" step; perceptron texts referred to a line outside the plot (the sides are now shaded); several plot labels overlapped or left the plot.
+
 ## STATUS UPDATE (session 10, later): the improvement list, visuals, cleanup
 
 The user asked for every item of an improvement list, then visuals where pictures beat text, a cleanup, and pushes. All done and tested (Node suites and 11 browser tests):

@@ -684,6 +684,7 @@ Common distances:
 - **Euclidean** √Σ(aᵢ − bᵢ)²: the default.
 - **Manhattan** Σ|aᵢ − bᵢ|: city blocks; more robust to single large differences.
 - **Cosine distance** 1 − cos_sim, for text and embedding vectors where direction matters.` },
+      { type: 'demo', title: "Step through: how k-NN labels a new point", demo: 'walk-knn' },
       { type: 'demo', title: 'Interactive: choosing k', md: `Move the slider: small k gives jagged boundaries that chase individual noisy points (low bias, high variance); large k gives smooth boundaries (higher bias, lower variance). Click to add points.`, demo: 'knn' },
       { type: 'text', title: 'Scaling is not optional', md: `Distances add up differences across features. If one feature is "income in euros" (differences of thousands) and another is "number of children" (differences of 1–3), the income completely dominates: the model effectively ignores the children feature.
 
@@ -992,6 +993,7 @@ It then repeats the search inside each child, and stops when it reaches \`max_de
 CART is **greedy**: each split is the best one *now*, without looking ahead at whether a worse split now would allow much better splits later. Finding the truly optimal tree is computationally intractable (the problem is NP-complete), so every practical library uses a greedy search, which works well enough.
 
 **Cost.** A prediction walks one path from the root to a leaf. A reasonably balanced tree on m examples has a depth of about log₂(m), so predictions are very fast: about 20 comparisons for a million training examples. Training compares every feature on every example at each level, roughly n · m · log₂(m) work for n features: fine for hundreds of thousands of rows.` },
+      { type: 'demo', title: "Step through: how a tree chooses its splits", demo: 'walk-tree-split' },
       { type: 'text', title: "Gini impurity or entropy?", md: `Both measure how mixed a node is, and most of the time they lead to very similar trees. Gini is a little faster to compute, which is why it is scikit-learn's default. When they differ, Gini tends to isolate the most frequent class in its own branch, while entropy tends to produce slightly more balanced trees. Choose with cross-validation if you care, but it rarely matters much.` },
       { type: 'text', title: "Regularization hyperparameters", md: `An unrestricted tree keeps splitting until every leaf is pure, which means memorizing the training data: it is a **non-parametric** model, whose structure grows with the data instead of being fixed in advance. To stop it overfitting, restrict its growth (pre-pruning) or cut it back afterwards (post-pruning):
 
@@ -1275,6 +1277,7 @@ print("error of the bagged average:   ", round(float(np.mean((bagged - truth) **
 Why "gradient"? The residuals are exactly the negative gradient of the squared-error loss with respect to the predictions. Gradient boosting is **gradient descent in function space**: each tree is a step downhill, and other losses (log loss for classification, quantile loss, ranking losses) simply use their own gradients as targets.
 
 Key hyperparameters: number of trees M, learning rate η (smaller needs more trees but generalizes better), tree depth, subsampling of rows/columns, and **early stopping** on validation loss. Modern libraries (XGBoost, LightGBM, CatBoost) add regularization, clever split finding and native categorical handling.` },
+      { type: 'demo', title: "Step through: gradient boosting, tree by tree", demo: 'walk-boosting' },
       { type: 'check', question: { type: 'mcq', q: 'In gradient boosting with squared-error loss, what does each new tree try to predict?', options: ['The original targets y', 'The residuals of the current ensemble', 'A random subset of labels', 'The feature importances'], answer: 1, explain: 'Each tree fits what the ensemble still gets wrong: the residuals, i.e. the negative gradient.' } },
       { type: 'code', title: 'Random forest vs gradient boosting in scikit-learn', timeoutSec: 90, code: `
 from sklearn.datasets import load_breast_cancer

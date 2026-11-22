@@ -1293,6 +1293,7 @@ n — the total number of points
 :::
 
 Each iteration never decreases the likelihood, so EM converges, but to a **local** maximum that depends on the starting point. Use several restarts (or initialize from k-means). k-means is the special case of EM with hard assignments and identical round clusters.` },
+      { type: 'demo', title: "Step through: EM, round by round", demo: 'walk-em-gmm' },
       { type: 'code', title: 'EM for a one-dimensional mixture', code: `
 import numpy as np
 rng = np.random.default_rng(0)

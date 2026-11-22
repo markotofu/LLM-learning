@@ -109,6 +109,7 @@ r + γ · max_a′ Q(s′, a′) — the target: the reward plus the discounted 
 :::
 
 Q-learning is **off-policy**: it learns the values of the greedy policy while behaving ε-greedily to keep exploring. **Deep Q-Networks** (DQN, 2015) replaced the table with a neural network and learned to play dozens of Atari games from raw pixels.` },
+      { type: 'demo', title: "Step through: Q-learning in a corridor", demo: 'walk-q-learning' },
       { type: 'code', title: 'Q-learning in a gridworld', code: `
 import numpy as np
 rng = np.random.default_rng(0)

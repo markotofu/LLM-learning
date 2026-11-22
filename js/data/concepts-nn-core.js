@@ -50,6 +50,7 @@ y − ŷ — the error: 0 when the prediction is right, +1 or −1 when it is wr
 - If it said 1 but the answer is 0, subtract it.
 
 **Perceptron convergence theorem:** if the classes are **linearly separable** (a straight line/hyperplane can split them perfectly), this rule finds a separating boundary in a finite number of steps. If they are not, it never settles.` },
+      { type: 'demo', title: "Step through: the perceptron learning rule", demo: 'walk-perceptron' },
       { type: 'code', title: 'Training a perceptron on AND, OR and XOR', code: `
 import numpy as np
 

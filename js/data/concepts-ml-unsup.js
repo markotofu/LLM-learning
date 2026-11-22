@@ -416,6 +416,7 @@ Predict the class with the highest log score. Words not in the training vocabula
 :::real Variants
 **Bernoulli NB** models presence/absence of words (good for short texts); **Gaussian NB** models continuous features with a normal distribution per class; **Complement NB** is more robust on imbalanced text data.
 :::` },
+      { type: 'demo', title: "Step through: how naive Bayes weighs each word", demo: 'walk-naive-bayes' },
       { type: 'code', title: 'A tiny spam filter from scratch', code: `
 import math
 from collections import Counter

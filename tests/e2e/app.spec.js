@@ -53,7 +53,7 @@ test('demos keep their proportions and diagram labels fit their boxes', async ({
         if (!cv.width || !cv.height || Math.abs(cv.width / cv.height - shown) > 0.03) out.push('canvas ' + cv.width + 'x' + cv.height + ' shown ' + Math.round(r.width) + 'x' + Math.round(r.height));
       }
       // Static diagrams: every label inside its box, no overlapping labels.
-      for (const svg of document.querySelectorAll('.demo svg.diagram')) {
+      for (const svg of document.querySelectorAll('.demo svg.diagram, .demo svg.walk-flow')) {
         const texts = [...svg.querySelectorAll('text')].filter(t => t.textContent.trim().length > 1).map(t => ({ t: t.textContent, b: t.getBBox() }));
         const boxes = [...svg.querySelectorAll('rect')].map(r => r.getBBox());
         for (const { t, b } of texts) for (const r of boxes) {
@@ -71,6 +71,24 @@ test('demos keep their proportions and diagram labels fit their boxes', async ({
     for (const i of issues) bad.push(c.id + ': ' + i);
   }
   expect(bad).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test('a step-through walkthrough steps, highlights its code and restarts when a setting changes', async ({ page }) => {
+  const errors = await boot(page, '/home');
+  await go(page, '/concept/knn', 'k-Nearest');
+  const walk = page.locator('.walk').first();
+  await expect(walk.locator('.walk-count')).toHaveText('step 1 of 10');
+  for (let i = 0; i < 3; i++) await walk.getByRole('button', { name: 'Next step' }).click();
+  await expect(walk.locator('.walk-count')).toHaveText('step 4 of 10');
+  await expect(walk.locator('.walk-node.on')).toHaveCount(1);
+  await expect(walk.locator('.walk-code li.on', { hasText: 'np.linalg.norm' })).toHaveCount(1);
+  await expect(walk.locator('.walk-formula')).toContainText('d = √(');
+  await expect(walk.locator('.walk-where')).toContainText('the straight-line distance');   // the symbols of this step
+  await walk.locator('select[aria-label="k"]').selectOption('1');
+  await expect(walk.locator('.walk-count')).toHaveText('step 1 of 10');
+  for (let i = 0; i < 9; i++) await walk.getByRole('button', { name: 'Next step' }).click();
+  await expect(walk.locator('.walk-say')).toContainText('labelled orange (1 of 1 votes)');
   expect(errors).toEqual([]);
 });
 

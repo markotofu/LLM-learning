@@ -306,6 +306,7 @@ repeat until a stop token, a stop string, or max_new_tokens:
 \`\`\`
 
 Generation is **autoregressive**: each new token becomes input for the next step. That's why generation is slow (one forward pass per token), why the KV cache matters, and why an early mistake can snowball.` },
+      { type: 'demo', title: "Step through: writing one token at a time", demo: 'walk-decoding' },
       { type: 'text', title: 'Greedy, sampling and beam search', md: `- **Greedy**: always take the most probable token. Deterministic and fine for short factual answers, but it produces bland text and easily falls into loops ("I think that I think that…").
 - **Sampling**: draw the next token at random according to the probabilities. Diverse and human-like, but occasionally picks a low-probability token that derails the text.
 - **Beam search**: keep the b most probable partial sequences, extend each, keep the best b again. Good when there is one "right" output (translation, speech recognition); rarely used for open-ended chat because it favours generic, repetitive text.` },

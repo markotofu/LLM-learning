@@ -446,8 +446,9 @@
       parts.push(md(s.after));
     } else if (s.type === 'demo') {
       const dg = String(s.demo || '').startsWith('dg-');
-      parts.push(sentence((dg ? 'Diagram: ' : 'Interactive demo: ') + text(title)), md(s.md));
-      parts.push(dg ? diagramText(s.demo) : 'On the page, you can try it yourself.');
+      const walk = String(s.demo || '').startsWith('walk-') && MLA.walks && MLA.walks[s.demo.slice(5)];
+      parts.push(sentence((dg ? 'Diagram: ' : walk ? 'Step-by-step walkthrough: ' : 'Interactive demo: ') + text(title)), md(s.md));
+      parts.push(dg ? diagramText(s.demo) : walk ? text(walk.describe()) + ' On the page, you can step through it, with the numbers of every step.' : 'On the page, you can try it yourself.');
       parts.push(md(s.after));
     } else if (s.type === 'chart') parts.push(sentence('Chart: ' + text(title)), md(s.md), text(chart(s.chart)), md(s.after));
     else if (s.type === 'check') parts.push(question(s.question, 'Quick check.'));

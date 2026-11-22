@@ -1,11 +1,11 @@
 # ML Atlas roadmap
 
-Possible improvements, ranked by how much they help a learner per unit of effort. Status as of 21 November 2026:
+Possible improvements, ranked by how much they help a learner per unit of effort. Status as of 22 November 2026:
 
 - 123 concepts, including 3 capstones; a typical (median) lesson has about 1,200 words;
-- 266 practice problems and 877 quiz questions;
+- 270 practice problems and 877 quiz questions;
 - 683 glossary terms;
-- 28 interactive demos, 12 diagrams and 155 charts of computed data;
+- 28 interactive demos, 26 diagrams, 12 step-through walkthroughs and 155 charts of computed data;
 - 356 code samples that run in the browser, 158 of them with a "predict first" question, and a spaced-repetition queue of mistakes to revisit;
 - Terms of Use and Privacy Policy pages, a Content-Security-Policy and a hardened local server.
 
@@ -16,6 +16,11 @@ Possible improvements, ranked by how much they help a learner per unit of effort
 - **L**: a week or more.
 
 **Impact** is the expected gain in learning, reach or safety.
+
+## Done in the ninth round (22 November 2026)
+
+- **Your own data in Python:** upload CSV, TSV, Excel, JSON, Parquet or text files, read them as `data/<name>`; they stay in the browser and travel in the export file.
+- **12 step-through walkthroughs** (gradient descent, k-NN, logistic regression, the perceptron, tree splits, boosting, naive Bayes, EM, Adam, attention, decoding, Q-learning): an animated flowchart with the reason for every box and arrow, the running code line, the formula with real numbers, a legend for every symbol and a plot, all computed live under each setting. `tests/walks.test.js` checks them.
 
 ## Done in the eighth round (21 November 2026)
 

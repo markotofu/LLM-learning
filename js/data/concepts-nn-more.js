@@ -67,6 +67,7 @@ m̂, v̂ — "m hat, v hat": bias-corrected moments; dividing by (1 − βᵗ) r
 Defaults: β₁ = 0.9, β₂ = 0.999, ε = 1e-8, and a learning rate around 1e-3 (3e-4 is a popular "safe" value for transformers). Adam's step size is roughly η per parameter regardless of the gradient's scale, which makes it robust and the default choice in deep learning.
 
 **AdamW** applies weight decay *directly* to the weights (θ ← θ − η·λ·θ) instead of adding λθ to the gradient, where Adam's adaptive scaling would distort it. AdamW is the standard optimizer for training transformers and LLMs.` },
+      { type: 'demo', title: "Step through: one Adam update at a time", demo: 'walk-adam' },
       { type: 'code', title: 'SGD vs momentum vs Adam on a ravine', code: `
 import numpy as np
 

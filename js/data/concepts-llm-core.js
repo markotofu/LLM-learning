@@ -1111,6 +1111,7 @@ sat   [  ✓    ✓    ✓ ]
 \`\`\`
 
 GPT-style **decoder** models use causal self-attention. **Encoder** models like BERT use bidirectional (unmasked) attention because they encode a complete input rather than generate.` },
+      { type: 'demo', title: "Step through: attention for one token", demo: 'walk-attention' },
       { type: 'text', title: 'Cost: attention is quadratic', md: `The score matrix has T × T entries: doubling the context length quadruples attention's compute and memory. This is why context windows were long limited (512–4,096 tokens) and why a lot of research targets efficient attention: **FlashAttention** (exact attention computed in GPU-friendly blocks without materialising the full matrix), sparse and sliding-window attention, and linear-attention or state-space alternatives. During generation, the keys and values of previous tokens are cached (the **KV cache**) so each new token only computes its own query against them.` },
       { type: 'check', question: { type: 'tf', q: 'Without a causal mask, a model trained to predict the next token could cheat by attending to the very token it is supposed to predict.', answer: true, explain: 'The mask removes access to future positions during parallel training.' } }
     ],
