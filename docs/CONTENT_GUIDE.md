@@ -147,8 +147,9 @@ A walkthrough is an animated flowchart of an algorithm, kept in step with its co
 - `draw(state, kit)` returns the plot as shapes in a 300 by 210 box (`kit.frame` draws the axes). Give shapes stable keys so that moves animate. Shapes are clipped to the axes box unless they carry `f: 1`.
 - `symbols` lists `[symbol, meaning]` pairs. Each step shows the ones that appear in its box, its formula or its variable names, which is how walkthrough formulas meet the legend rule. Write the symbolic form before the numbers, as in `w ← w − η·∂L/∂w = 0.50 − 0.03 × (−24.1) = 1.22`.
 - Ask a "Think first" question (`ask`) at one or two moments where a prediction is worth making.
+- Walkthroughs can be read aloud step by step (the speed "With the voice", or the box's speaker button): each step speaks the reason for a loop arrow the first time it is taken, the box and its purpose the first time it is reached, then `say`. If `say` uses notation that only works on screen, such as a row of arrows, give the step a `voice` text to speak instead.
 
-`node tests/walks.test.js` runs every walkthrough under every setting. It fails on unknown boxes or code lines, a jump between boxes with no arrow, numbers that are not finite, plot labels that leave the plot or overlap, symbols without a legend entry, legend entries that never appear, and breaches of the writing rules. Then look at it in the browser, in a dark and a light theme and at a 375 px phone width.
+`node tests/walks.test.js` runs every walkthrough under every setting. It fails on unknown boxes or code lines, a jump between boxes with no arrow, numbers that are not finite, plot labels that leave the plot or overlap, symbols without a legend entry, legend entries that never appear, spoken text with raw symbols left in, and breaches of the writing rules. Then look at it in the browser, in a dark and a light theme and at a 375 px phone width.
 
 ## 3. Markdown features
 

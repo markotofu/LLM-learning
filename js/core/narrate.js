@@ -93,7 +93,7 @@
       .replace(/½/g, ' one half ').replace(/¼/g, ' one quarter ').replace(/¾/g, ' three quarters ').replace(/⅛/g, ' one eighth ')
       .replace(/°/g, ' degrees ').replace(/ℓ/g, ' ell ').replace(/ℒ/g, ' L ')
       .replace(/[─►•✓✗]/g, ' ');
-    s = s.replace(/[Ͱ-Ͽ]/g, ch => GREEK[ch] ? ' ' + GREEK[ch] + ' ' : ch);
+    s = s.replace(/[Ͱ-Ͽ]/g, (ch, at, all) => GREEK[ch] ? ' ' + GREEK[ch] + (all[at + 1] === '-' ? '' : ' ') : ch);   // ε-greedy: epsilon-greedy
     // underscores still left belong to names such as _backward or __init__: read the name alone
     s = s.replace(/(^|[\s(,;:])_+(?=[A-Za-z0-9])/g, '$1').replace(/(?<=[A-Za-z0-9])_+(?=$|[\s),.;:])/g, '');
     return s;
@@ -448,7 +448,7 @@
       const dg = String(s.demo || '').startsWith('dg-');
       const walk = String(s.demo || '').startsWith('walk-') && MLA.walks && MLA.walks[s.demo.slice(5)];
       parts.push(sentence((dg ? 'Diagram: ' : walk ? 'Step-by-step walkthrough: ' : 'Interactive demo: ') + text(title)), md(s.md));
-      parts.push(dg ? diagramText(s.demo) : walk ? text(walk.describe()) + ' On the page, you can step through it, with the numbers of every step.' : 'On the page, you can try it yourself.');
+      parts.push(dg ? diagramText(s.demo) : walk ? text(walk.describe()) + ' On the page, you can step through it with the numbers of every step, and its speaker button reads each step aloud as the card moves along.' : 'On the page, you can try it yourself.');
       parts.push(md(s.after));
     } else if (s.type === 'chart') parts.push(sentence('Chart: ' + text(title)), md(s.md), text(chart(s.chart)), md(s.after));
     else if (s.type === 'check') parts.push(question(s.question, 'Quick check.'));

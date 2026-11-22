@@ -832,25 +832,25 @@ pre.hl { margin: 0; border: 0; border-radius: 0; background: transparent; paddin
 @media (max-width: 760px) { .walk-grid { grid-template-columns: minmax(0, 1fr); } }
 .walk-flow-wrap { overflow-x: auto; }
 .walk-flow { display: block; max-width: 100%; height: auto; }
-.walk-node rect { fill: var(--panel); stroke: var(--border2); stroke-width: 1.2; transition: fill 0.3s, stroke 0.3s; }
+.walk-node rect { fill: var(--panel); stroke: var(--border2); stroke-width: 1.2; transition: fill var(--walk-move, 0.3s), stroke var(--walk-move, 0.3s); }
 .walk-node text { font-size: 12px; font-weight: 600; fill: var(--text); }
 .walk-node { cursor: pointer; }
 .walk-node.dec rect { stroke-dasharray: 5 3; }
 .walk-node.end rect { fill: var(--green-soft); }
 .walk-node.seen rect { stroke: color-mix(in srgb, var(--accent) 45%, var(--border2)); }
-.walk-node.on rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2.2; animation: walk-pulse 0.6s ease-out; }
+.walk-node.on rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2.2; animation: walk-pulse calc(var(--walk-move, 0.45s) * 1.4) ease-out; }
 @keyframes walk-pulse { 0% { stroke-width: 5; } 100% { stroke-width: 2.2; } }
 .walk-edge { fill: none; stroke: var(--muted); stroke-width: 1.3; opacity: 0.75; }
-.walk-edge.on { stroke: var(--accent); stroke-width: 2.4; opacity: 1; stroke-dasharray: 7 4; animation: walk-flow 0.9s linear infinite; }
+.walk-edge.on { stroke: var(--accent); stroke-width: 2.4; opacity: 1; stroke-dasharray: 7 4; animation: walk-flow calc(var(--walk-move, 0.45s) * 2) linear infinite; }
 @keyframes walk-flow { to { stroke-dashoffset: -22; } }
 .walk-head-off { fill: var(--muted); } .walk-head-on { fill: var(--accent); }
 .walk-elabel { font-size: 10.5px; fill: var(--muted); }
 .walk-elabel.on { fill: var(--accent2); font-weight: 650; }
 .walk-dot { fill: var(--accent); stroke: var(--panel); stroke-width: 1.5; }
 .walk-plot { display: block; width: 100%; max-width: 420px; height: auto; background: var(--editor-bg); border: 1px solid var(--border); border-radius: 8px; }
-.walk-plot circle { transition: transform 0.45s ease, fill 0.3s; }
-.walk-plot rect { transition: y 0.45s ease, height 0.45s ease, width 0.45s ease, x 0.45s ease; }
-.walk-plot path { transition: d 0.45s ease; }
+.walk-plot circle { transition: transform var(--walk-move, 0.45s) ease, fill 0.3s; }
+.walk-plot rect { transition: y var(--walk-move, 0.45s) ease, height var(--walk-move, 0.45s) ease, width var(--walk-move, 0.45s) ease, x var(--walk-move, 0.45s) ease; }
+.walk-plot path { transition: d var(--walk-move, 0.45s) ease; }
 .wp-axis { stroke: var(--border2); stroke-width: 1; }
 .wp-tick { font-size: 9.5px; fill: var(--muted); }
 .wp-txt { font-size: 10.5px; fill: var(--text); }

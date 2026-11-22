@@ -9,7 +9,7 @@
     return {
       app: APP_ID,
       version: VERSION,
-      profile: { name: 'Learner', createdAt: new Date().toISOString(), onboarded: false, goal: null, customGoal: null, theme: 'light', style: 'baroque', editorFontSize: 14, timeoutSec: 20, preloadPython: false, mapLayout: 'mindmap', experience: null, voice: '', speechRate: 1, speechFollow: true, speechCaptions: true, speechContinue: false, listenAt: {} },
+      profile: { name: 'Learner', createdAt: new Date().toISOString(), onboarded: false, goal: null, customGoal: null, theme: 'light', style: 'baroque', editorFontSize: 14, timeoutSec: 20, preloadPython: false, mapLayout: 'mindmap', experience: null, voice: '', speechRate: 1, speechFollow: true, speechCaptions: true, speechContinue: false, listenAt: {}, walkSpeed: 'normal' },
       xp: 0,
       streak: { current: 0, best: 0, lastActive: null, days: {} },
       concepts: {},   // id -> { read:[], checks:{}, quizBest, quizAttempts, quizPassed, completedAt, masteredAt, visitedAt }

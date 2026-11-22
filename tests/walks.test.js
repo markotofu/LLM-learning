@@ -94,6 +94,13 @@ for (const name of names) {
       for (const ch of math.match(/[Α-ω]/g) || [])
         if (!entries.some(e => e[0].includes(ch))) issues.push(at + 'Greek letter ' + ch + ' has no legend entry');
       for (const e of def.symbolsFor(s)) usedSymbols.add(e[0]);
+      // Read aloud: every step has speakable text, with no raw symbols left, and notation that only works on screen
+      // (arrows or dots standing alone, as in "· → → ·") has a spoken version.
+      const spoken = def.narrateStep(steps, i).split(MLA.narrate.PAUSE).join(' ');
+      if (!spoken.trim()) issues.push(at + 'nothing to read aloud');
+      const raw = spoken.match(/[Σ∑√∂∇‖ᵀ²³⁻ⁿ₀-₉ᵢⱼₙ←→≈≤≥×·−∞θσμλαβγδεηπφωτρκ_{}<>]|\s\+\s|times\)/);
+      if (raw) issues.push(at + 'read aloud with "' + raw[0] + '" left in: ' + spoken.slice(0, 80));
+      if (/(^|\s)[·→←?](\s|$)/.test(s.say) && !s.voice) issues.push(at + 'say uses arrows or dots as notation but has no voice text');
     });
   }
   T.ok(name + ': runs cleanly under every setting', !issues.length, issues.slice(0, 4).join(' | ') + (issues.length > 4 ? ' (+' + (issues.length - 4) + ' more)' : ''));

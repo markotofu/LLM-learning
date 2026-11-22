@@ -7,7 +7,8 @@
  * (play, pause, next, previous) reach the player in browsers that support the Media Session API.
  * The part a lesson was left at is remembered (profile.listenAt, by part key), and when a lesson ends the next one
  * in the learner's track is offered (profile.speechContinue plays it automatically).
- *   MLA.speech.play(items, start, { single, source, lessonTitle })   items: [{ key, title, text }]
+ *   MLA.speech.play(items, start, { single, source, lessonTitle, gap })   items: [{ key, title, text }]
+ *                                            gap: milliseconds of silence between parts (default 500)
  *   MLA.speech.toggle() / pause() / resume() / stop() / next() / prev() / jump(i) / setRate(r) / sample()
  *   MLA.speech.playNext() / dismiss()       act on the "up next" offer after a lesson ends
  *   MLA.speech.resumeKey(lessonId)          the part key a lesson was left at, or null
@@ -22,7 +23,7 @@
   const state = reactive({ supported: !!(synth && Utter), voices: [], playing: false, paused: false, index: -1, total: 0, key: null, title: '',
     source: null, lessonTitle: '', single: false, caption: '', upNext: null });
 
-  let items = [], lists = [], chunk = 0, token = 0, gapTimer = null, watchdog = null, nextTimer = null, current = null, keep = null;
+  let items = [], lists = [], chunk = 0, token = 0, gapTimer = null, watchdog = null, nextTimer = null, current = null, keep = null, gap = 500;
   const profile = () => (MLA.store && MLA.store.state && MLA.store.state.profile) || {};
   const rate = () => { const r = Number(profile().speechRate); return r >= 0.5 && r <= 2 ? r : 1; };
   const english = lang => /^en/i.test(lang || '');
@@ -108,7 +109,7 @@
       if (state.single) return stop();
       if (state.index + 1 >= items.length) return finish();
       state.index++; chunk = 0; setCurrent();
-      gapTimer = setTimeout(speakNext, 500);                     // a breath between parts
+      gapTimer = setTimeout(speakNext, gap);                     // a breath between parts
       return;
     }
     const text = list[chunk];
@@ -141,6 +142,7 @@
     state.index = Math.min(Math.max(0, start || 0), list.length - 1); chunk = 0;
     state.total = list.length; state.single = !!opts.single;
     state.source = opts.source || null; state.lessonTitle = opts.lessonTitle || '';
+    gap = opts.gap > 0 ? opts.gap : 500;
     state.playing = true; state.paused = false;
     setCurrent();
     keepAlive(true);

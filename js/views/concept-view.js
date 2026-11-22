@@ -133,6 +133,8 @@
         if (range) H.set('mla-reading', new Highlight(range));
       },
       listenOne(key) {
+        const s = this.c.sections.find(x => x.id === key);       // a walkthrough reads its steps aloud, and its card follows
+        if (s && s.type === 'demo' && /^walk-/.test(s.demo || '') && MLA.walkListen && MLA.walkListen(s.demo.slice(5))) return;
         const i = this.narration.findIndex(it => it.key === key);
         if (i >= 0) MLA.speech.play(this.narration, i, { single: true, source: this.c.id, lessonTitle: this.c.title });
       },

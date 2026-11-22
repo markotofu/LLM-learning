@@ -186,6 +186,33 @@ test('read aloud: the lesson plays part by part with an on-device voice, and the
   expect(errors).toEqual([]);
 });
 
+test('a walkthrough read aloud: its speaker button reads the steps and the card follows the voice', async ({ page }) => {
+  await page.addInitScript(() => {                // the same silent stand-in: every utterance "ends" after 150 ms
+    const voice = { voiceURI: 'test-local', name: 'Test voice', lang: 'en-US', localService: true, default: true };
+    window.__spoken = [];
+    window.SpeechSynthesisUtterance = function (text) { this.text = text; };
+    Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: {
+      speaking: false, paused: false, pending: false, getVoices: () => [voice], addEventListener() {}, removeEventListener() {},
+      cancel() {}, pause() {}, resume() {},
+      speak(u) { window.__spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 150); }
+    } });
+  });
+  const errors = await boot(page, '/home');
+  await go(page, '/concept/knn', 'k-Nearest');
+  const walk = page.locator('.walk').first();
+  await expect(walk.locator('select[aria-label="Speed"] option')).toHaveText(['Super slow', 'Sluggish', 'Slow', 'Normal', 'Fast', 'With the voice']);
+  await page.locator('[data-narr="step-through-how-k-nn-labels-a-new-point"] .sec-listen').click();
+  await expect(walk.locator('select[aria-label="Speed"]')).toHaveValue('voice');
+  await expect(walk.locator('.walk-count')).toHaveText('step 3 of 10', { timeout: 15000 });     // moved on with the voice
+  expect(await page.evaluate(() => window.__spoken.some(t => t.includes('A new point arrives')))).toBe(true);
+  await walk.getByRole('button', { name: 'Pause' }).click();
+  expect(await page.evaluate(() => MLA.speech.state.playing)).toBe(false);
+  // a timed speed is remembered for the next walkthrough
+  await walk.locator('select[aria-label="Speed"]').selectOption('sluggish');
+  expect(await page.evaluate(() => MLA.store.state.profile.walkSpeed)).toBe('sluggish');
+  expect(errors).toEqual([]);
+});
+
 test.describe('in-browser Python (downloads Pyodide from the CDN)', () => {
   test('a lesson code sample runs and prints its output', async ({ page }) => {
     await boot(page, '/home');

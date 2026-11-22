@@ -10,6 +10,9 @@
  *     def.edges: [{ from, to, label, why }]   to the next node: straight down; any other: a lane on the right
  *     def.run(params) -> [{ node, lines: [code line numbers], say, formula?, vars?: [[name, value]], ask?, state }]
  *     def.symbols: [[symbol, meaning]]   each step shows the ones found in its box label, formula or variable names
+ *     a step may carry `voice`: the spoken version of `say`, when `say` uses notation that reads badly aloud
+ *   Play moves at a chosen speed (Super slow to Fast) or "With the voice": each step is read aloud (MLA.speech) and
+ *   the card follows the voice. MLA.walkListen(name) does the same for a lesson's "Listen to this part" button.
  *     def.draw(state, kit) -> shapes for the plot: { k: key, t: 'c' | 'l' | 'p' | 'r' | 't', ...coordinates, cls, f? }
  *       (the plot is 300 by 210; shapes are clipped to the box of kit.frame unless f: 1)
  *   MLA.walks[name].describe() -> the flowchart in words (read aloud and used as the text alternative) */
@@ -79,6 +82,56 @@
       lay.edges.filter(e => e.lane).map(e => 'From "' + lab(e.from) + '", the arrow marked "' + e.label + '" goes to "' + lab(e.to) + '": ' + e.why).join(' ');
   }
 
+  // ---------------------------------------------------------------- pace
+  // Timed speeds (milliseconds per step, and seconds for each move on screen), then pacing by the read-aloud voice:
+  // each step is spoken with the learner's on-device voice and speed, and the card moves on when the voice finishes.
+  const PACES = [
+    { key: 'super-slow', label: 'Super slow', ms: 9000, move: 1.6 },
+    { key: 'sluggish', label: 'Sluggish', ms: 5000, move: 1.1 },
+    { key: 'slow', label: 'Slow', ms: 2400, move: 0.7 },
+    { key: 'normal', label: 'Normal', ms: 1400, move: 0.45 },
+    { key: 'fast', label: 'Fast', ms: 700, move: 0.3 },
+    { key: 'voice', label: 'With the voice', ms: 0, move: 0.8 }
+  ];
+  const paceOf = key => PACES.find(p => p.key === key) || PACES[3];
+  const canSpeak = () => !!(MLA.speech && MLA.speech.state && MLA.speech.state.supported);
+
+  // The arrow taken to reach step k: the one the step names, else the one from the previous step's box.
+  function arrowOf(def, steps, k) {
+    const s = steps[k], lay = layout(def);
+    if (!s) return null;
+    if (s.edge) return lay.edges.find(e => e.id === s.edge) || null;
+    const prev = k > 0 ? steps[k - 1].node : null;
+    return prev && prev !== s.node ? lay.edges.find(e => e.from === prev && e.to === s.node) || null : null;
+  }
+
+  // ---------------------------------------------------------------- narration
+  // What the voice says at step k: the reason for a loop arrow the first time it is taken, the box and its purpose the
+  // first time the box is reached, then the step (its `voice` text if it has one, else `say`). A "Think first"
+  // question is followed by a few seconds of silence before the walkthrough moves on.
+  function narrateStep(def, steps, k) {
+    const N = MLA.narrate, s = steps[k], node = def.nodes.find(n => n.id === s.node);
+    const say = t => {                                             // spaced comparisons and sums as words, then the usual reading
+      t = String(t || '').replace(/ \+ /g, ' plus ').replace(/ < /g, ' is less than ').replace(/ > /g, ' is greater than ')
+        .replace(/,\s*·\s*\)/g, ', any action)')                                   // Q(s′, ·): the best over any action
+        .replace(/([A-Za-zͰ-Ͽ)̂])\/(?=[A-Za-z(])/g, '$1 over ');               // m/(1 − β₁ᵗ), but not 50/50
+      t = N.text(t).trim();
+      return !t || /[.!?:;]$/.test(t) ? t : t + '.';
+    };
+    // Box labels are written in lines: a pause before a line that is a formula, otherwise the phrase simply goes on.
+    const label = n => n.label.reduce((a, l) => (!a ? l : a + (!/[:;,.]$/.test(a) && /[=←∂∇]/.test(l) ? ', ' : ' ') + l), '');
+    const out = [], e = arrowOf(def, steps, k);
+    if (e && e.lane && !steps.slice(0, k).some((x, j) => { const a = arrowOf(def, steps, j); return a && a.id === e.id; })) out.push(say(e.why));
+    if (node && steps.findIndex(x => x.node === s.node) === k) out.push(say(label(node)), say(node.why));
+    out.push(say(s.voice || s.say));
+    if (s.ask) out.push('Think first. ' + say(s.ask) + ' ' + N.PAUSE + ' ' + N.PAUSE);
+    return out.join(' ');
+  }
+
+  // Mounted cards by name, so a lesson's "Listen to this part" button can have a walkthrough read its steps.
+  const cards = {};
+  MLA.walkListen = name => { const c = cards[name]; if (!c) return false; c.listen(); return true; };
+
   // ---------------------------------------------------------------- symbol legends
   // A walkthrough lists its symbols once (def.symbols: [[symbol, meaning]]). Each step shows the ones that appear in
   // its box, formula or variables, so every formula on screen has its symbols defined right under it.
@@ -102,6 +155,7 @@
     def.name = name;
     def.describe = () => describe(def);
     def.symbolsFor = step => symbolsFor(def, step);
+    def.narrateStep = (steps, k) => narrateStep(def, steps, k);
     MLA.walks[name] = def;
     C['demo-walk-' + name] = { template: '<mla-walk name="' + name + '" />' };
   };
@@ -113,7 +167,10 @@
       const def = MLA.walks[this.name];
       const params = {};
       (def.params || []).forEach(p => { params[p.key] = p.value; });
-      return { params, i: 0, playing: false, speed: 1400, said: '', id: ++uid,
+      const saved = MLA.store && MLA.store.state && MLA.store.state.profile && MLA.store.state.profile.walkSpeed;
+      return { params, i: 0, playing: false, voiceOn: false, said: '', id: ++uid,
+        speedKey: PACES.some(p => p.key === saved) && (saved !== 'voice' || canSpeak()) ? saved : 'normal',
+        speech: MLA.speech ? MLA.speech.state : {},
         reduced: !!(global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches) };
     },
     computed: {
@@ -122,11 +179,10 @@
       steps() { return this.def.run(Object.assign({}, this.params)); },
       step() { return this.steps[Math.min(this.i, this.steps.length - 1)] || {}; },
       node() { return this.def.nodes.find(n => n.id === this.step.node) || {}; },
-      edge() {                                   // the arrow taken to reach this step
-        if (this.step.edge) return this.lay.edges.find(e => e.id === this.step.edge) || null;
-        const prev = this.i > 0 ? this.steps[this.i - 1].node : null;
-        return prev && prev !== this.step.node ? this.lay.edges.find(e => e.from === prev && e.to === this.step.node) || null : null;
-      },
+      edge() { return arrowOf(this.def, this.steps, Math.min(this.i, this.steps.length - 1)); },   // the arrow taken to reach this step
+      pace() { return paceOf(this.speedKey); },
+      paces() { return PACES.filter(p => p.key !== 'voice' || canSpeak()); },
+      prefix() { return 'walk' + this.id + ':'; },                 // keys of this card's parts in the read-aloud player
       seen() { const s = new Set(); for (let k = 0; k <= this.i && k < this.steps.length; k++) s.add(this.steps[k].node); return s; },
       shapes() {
         const out = this.def.draw ? this.def.draw(this.step.state || {}, kit) : [];
@@ -139,13 +195,23 @@
     },
     watch: {
       i() { this.$nextTick(this.animate); },
-      params: { deep: true, handler() { this.stop(); this.i = 0; } }
+      params: { deep: true, handler() { this.stop(); this.i = 0; } },
+      'speech.key'(key) {                          // the voice moved to another step: follow it
+        if (!this.voiceOn || !key) return;
+        if (key.indexOf(this.prefix) !== 0) { this.voiceOn = false; this.playing = false; return; }   // other narration took over
+        const k = Number(key.slice(this.prefix.length));
+        if (k >= 0 && k < this.steps.length && k !== this.i) this.i = k;
+      },
+      'speech.playing'(on) { if (!on && this.voiceOn) { this.voiceOn = false; this.playing = false; } }
     },
-    beforeUnmount() { this.stop(); cancelAnimationFrame(this._raf); },
+    mounted() { cards[this.name] = this; },
+    beforeUnmount() { this.stop(); cancelAnimationFrame(this._raf); if (cards[this.name] === this) delete cards[this.name]; },
     methods: {
       go(k, manual) {
         this.i = Math.max(0, Math.min(this.steps.length - 1, k));
-        if (manual) { this.stop(); this.said = 'Step ' + (this.i + 1) + ': ' + (this.step.say || ''); }
+        if (!manual) return;
+        if (this.voiceOn) MLA.speech.jump(this.i);                // keep listening, from the chosen step
+        else { this.stop(); this.said = 'Step ' + (this.i + 1) + ': ' + (this.step.say || ''); }
       },
       next() { this.go(this.i + 1, true); },
       back() { this.go(this.i - 1, true); },
@@ -154,16 +220,42 @@
       toggle() { if (this.playing) this.stop(); else this.play(); },
       play() {
         if (this.i >= this.steps.length - 1) this.i = 0;
+        if (this.pace.key === 'voice' && !canSpeak()) this.speedKey = 'normal';
         this.playing = true;
+        if (this.pace.key === 'voice') {                           // the read-aloud player sets the pace
+          this.voiceOn = true;
+          MLA.speech.play(this.voiceItems(), this.i, { lessonTitle: this.def.title, gap: 900 });
+          return;
+        }
         const tick = () => {
           if (!this.playing) return;
           if (this.i >= this.steps.length - 1) { this.stop(); return; }
           this.i++;
-          this._timer = setTimeout(tick, this.speed);
+          this._timer = setTimeout(tick, this.pace.ms);
         };
-        this._timer = setTimeout(tick, Math.min(600, this.speed));
+        this._timer = setTimeout(tick, Math.min(600, this.pace.ms));
       },
-      stop() { this.playing = false; clearTimeout(this._timer); },
+      stop() {
+        this.playing = false; clearTimeout(this._timer);
+        if (this.voiceOn) { this.voiceOn = false; MLA.speech.stop(); }
+      },
+      listen() {                                   // the lesson's "Listen to this part": read every step, from the first
+        this.stop();
+        this.speedKey = 'voice';
+        this.i = 0;
+        this.play();
+      },
+      changeSpeed() {                              // remember the choice, and carry on at the new pace
+        if (MLA.store && MLA.store.state && MLA.store.state.profile) MLA.store.state.profile.walkSpeed = this.speedKey;
+        if (this.playing) { this.stop(); this.play(); }
+      },
+      voiceItems() {
+        const n = this.steps.length;
+        return this.steps.map((s, k) => {
+          const node = this.def.nodes.find(x => x.id === s.node);
+          return { key: this.prefix + k, title: 'Step ' + (k + 1) + ' of ' + n + (node ? ': ' + node.label.join(' ') : ''), text: narrateStep(this.def, this.steps, k) };
+        });
+      },
       // A dot travels along the arrow just taken (skipped when the reader prefers reduced motion).
       animate() {
         const dot = this.$refs.dot, flow = this.$refs.flow;
@@ -171,7 +263,7 @@
         cancelAnimationFrame(this._raf);
         const path = flow.querySelector('path.walk-edge.on');
         if (!path || this.reduced || !path.getTotalLength) { dot.setAttribute('opacity', '0'); return; }
-        const len = path.getTotalLength(), t0 = performance.now(), dur = Math.min(520, this.speed * 0.45);
+        const len = path.getTotalLength(), t0 = performance.now(), dur = this.pace.move * 1200;
         const frameFn = now => {
           const f = Math.min(1, (now - t0) / dur), p = path.getPointAtLength(len * (1 - Math.pow(1 - f, 2)));
           dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y); dot.setAttribute('opacity', f < 1 ? '1' : '0');
@@ -186,7 +278,7 @@
       }
     },
     template: `
-    <div class="walk card" role="group" :aria-label="def.title" @keydown="key">
+    <div class="walk card" role="group" :aria-label="def.title" @keydown="key" :style="{ '--walk-move': pace.move + 's' }">
       <div class="walk-head">
         <strong>{{ def.title }}</strong>
         <span class="walk-count" aria-hidden="true">step {{ i + 1 }} of {{ steps.length }}</span>
@@ -241,9 +333,9 @@
       <div class="walk-controls">
         <button class="icon-btn" @click="restart" aria-label="Back to the first step" title="Back to the first step"><mla-icon name="refresh" :size="16"/></button>
         <button class="icon-btn" @click="back" :disabled="i === 0" aria-label="Previous step" title="Previous step (left arrow)"><mla-icon name="skipBack" :size="16"/></button>
-        <button class="btn sm primary" @click="toggle" :aria-label="playing ? 'Pause' : 'Play the steps'"><mla-icon :name="playing ? 'pause' : 'play'" :size="14"/> {{ playing ? 'Pause' : 'Play' }}</button>
+        <button class="btn sm primary" @click="toggle" :aria-label="playing ? 'Pause' : pace.key === 'voice' ? 'Read the steps aloud' : 'Play the steps'"><mla-icon :name="playing ? 'pause' : pace.key === 'voice' ? 'volume' : 'play'" :size="14"/> {{ playing ? 'Pause' : pace.key === 'voice' ? 'Listen' : 'Play' }}</button>
         <button class="icon-btn" @click="next" :disabled="i >= steps.length - 1" aria-label="Next step" title="Next step (right arrow)"><mla-icon name="skipForward" :size="16"/></button>
-        <select v-model.number="speed" aria-label="Speed"><option :value="2400">Slow</option><option :value="1400">Normal</option><option :value="700">Fast</option></select>
+        <select v-model="speedKey" @change="changeSpeed" aria-label="Speed" title="How fast Play moves through the steps"><option v-for="p in paces" :key="p.key" :value="p.key">{{ p.label }}</option></select>
         <label v-for="p in def.params || []" :key="p.key" class="walk-param">{{ p.label }}
           <select v-model="params[p.key]" :aria-label="p.label"><option v-for="o in p.options" :key="String(o[0])" :value="o[0]">{{ o[1] }}</option></select>
         </label>

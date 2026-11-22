@@ -347,6 +347,7 @@
         const steps = [], Q = Array.from({ length: NS }, () => [0, 0]), rnd = MLA.util.seededRng(3);
         const copy = () => Q.map(q => q.slice());
         const pol = () => Q.map((q, s) => (terminal(s) ? '·' : q[1] > q[0] ? '→' : q[0] > q[1] ? '←' : '?')).join(' ');
+        const polWords = () => [1, 2, 3].map(c => 'cell ' + c + ' ' + (Q[c][1] > Q[c][0] ? 'right' : Q[c][0] > Q[c][1] ? 'left' : 'undecided')).join(', ');   // the same, read aloud
         steps.push({ node: 'init', lines: [1], say: 'Five cells: a pit (−1) on the far left, the goal (+1) on the far right. The agent starts in the middle and knows nothing: every Q value is 0.', state: { Q: copy(), s: START } });
         for (let ep = 1; ep <= 30; ep++) {
           let s = START, n = 0;
@@ -367,9 +368,13 @@
             }
             s = s2;
           }
-          if (ep === 1 || [2, 5, 10, 30].includes(ep)) steps.push({ node: 'more', lines: [2, 3], say: ep === 1 ? 'Episode 1 is over. Only the cell next to where it ended learned anything: reward has to spread backward one step per visit.' : 'After episode ' + ep + ', the greedy choice per cell is ' + pol() + (pol().includes('?') ? '. A ? marks a cell with no preference yet: no reward has reached it.' : '. Q(right) in cells 1 to 3: ' + [1, 2, 3].map(c => f(Q[c][1])).join(', ') + '.'), state: { Q: copy(), s: START } });
+          if (ep === 1 || [2, 5, 10, 30].includes(ep)) steps.push({ node: 'more', lines: [2, 3], say: ep === 1 ? 'Episode 1 is over. Only the cell next to where it ended learned anything: reward has to spread backward one step per visit.' : 'After episode ' + ep + ', the greedy choice per cell is ' + pol() + (pol().includes('?') ? '. A ? marks a cell with no preference yet: no reward has reached it.' : '. Q(right) in cells 1 to 3: ' + [1, 2, 3].map(c => f(Q[c][1])).join(', ') + '.'),
+            voice: ep === 1 ? null : 'After episode ' + ep + ', the best move in each middle cell: ' + polWords() + '.' + (pol().includes('?') ? ' An undecided cell has no preference yet: no reward has reached it.' : ' The value of moving right in cells 1 to 3: ' + [1, 2, 3].map(c => f(Q[c][1])).join(', ') + '.'),
+            state: { Q: copy(), s: START } });
         }
-        steps.push({ node: 'done', lines: [], say: 'After 30 episodes, the best action in every middle cell is to go right, toward the goal: ' + pol() + '. The values shrink with distance from the goal (by γ = 0.9 per step): the agent prefers rewards that come sooner.', state: { Q: copy(), s: START, final: true } });
+        const tail = ' The values shrink with distance from the goal (by γ = 0.9 per step): the agent prefers rewards that come sooner.';
+        steps.push({ node: 'done', lines: [], say: 'After 30 episodes, the best action in every middle cell is to go right, toward the goal: ' + pol() + '.' + tail,
+          voice: 'After 30 episodes, the best move in each middle cell: ' + polWords() + '.' + tail, state: { Q: copy(), s: START, final: true } });
         return steps;
       },
       draw(s, kit) {
