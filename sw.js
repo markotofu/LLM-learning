@@ -5,14 +5,17 @@
  * piping its 10 MB WebAssembly file through cache.put(response.clone()) can stall the stream and
  * deadlock the cache. jsDelivr serves those versioned files as immutable for a year, so the browser's
  * own HTTP cache keeps Python available offline after the first load. */
-const APP_CACHE = 'ml-atlas-app-v2';
+// Old versions of this cache are deleted on update, but only this app's own: other sites on the same domain (for
+// example another course at you.github.io/other-course) share the browser's cache storage and keep theirs.
+const CACHE_PREFIX = 'ml-atlas-app-';
+const APP_CACHE = CACHE_PREFIX + 'v2';
 const CORE = ['./', './index.html', './css/app.css', './vendor/vue.global.prod.js', './manifest.webmanifest', './icons/icon.svg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(APP_CACHE).then(c => c.addAll(CORE)).catch(() => {}).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== APP_CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== APP_CACHE && k.startsWith(CACHE_PREFIX)).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', e => {
   const req = e.request;
