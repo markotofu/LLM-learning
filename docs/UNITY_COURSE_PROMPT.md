@@ -24,6 +24,9 @@ content, done to the same standard as the template's sample lessons.
    Open that folder as the working directory. Run `npm test` once; it must pass before you change anything.
 2. Read `CLAUDE.md`, `docs/MAKING_A_COURSE.md` and `docs/CONTENT_GUIDE.md` (especially "Writing style" and the
    section types). Look at `js/data/concepts-sample.js`: its three lessons are the model for every lesson you write.
+   Then look at ML Atlas itself, the full course this template came from, to see every feature at full scale (section
+   4): its 123 lessons are on the `main` branch of `C:\Users\Mark\Desktop\LLM-learning`, and the site is live at
+   https://markotofu.github.io/LLM-learning/.
 3. Ask me for the course name (suggestion: "Unity Atlas"), then set `js/course.js` (`id: 'unity-atlas'`, name,
    tagline, `subject: 'game development with Unity'`, owner, contact, `siteUrl`), the title, description and loading
    screen in `index.html`, and `manifest.webmanifest`.
@@ -48,12 +51,13 @@ levels and one-line summaries. A starting point, about 40 to 60 lessons:
 - **Shipping**: debugging and profiling, performance, builds for each platform, version control for Unity projects,
   tests with the Unity Test Framework.
 
-Keep the three sample lessons (game loop, vectors, collisions) if they fit the plan, rewritten into the course. Wait
-for my approval before writing lessons.
+For each lesson, also name the formats it will use from section 4 (a demo, a diagram, a walkthrough, a chart, editor
+screenshots, a case study, a project, a capstone checkpoint). Keep the three sample lessons (game loop, vectors,
+collisions) if they fit the plan, rewritten into the course. Wait for my approval before writing lessons.
 
 ## 3. Write lessons in batches
 
-Write 3 to 5 lessons per batch, then run the checks in section 6 and show me the batch in the preview before the
+Write 3 to 5 lessons per batch, then run the checks in section 7 and show me the batch in the preview before the
 next one. Each lesson follows the template's rules (`docs/MAKING_A_COURSE.md`, section 4) and this recipe:
 
 1. The idea in plain words, for a beginner, with a concrete game example.
@@ -64,19 +68,64 @@ next one. Each lesson follows the template's rules (`docs/MAKING_A_COURSE.md`, s
    correct for the chosen Unity version. Check API names in the Unity Manual and Scripting API for that version (for
    example, Unity 6 renamed `Rigidbody.velocity` to `Rigidbody.linearVelocity`, and `FindObjectOfType` gave way to
    `FindFirstObjectByType`). Say which input system a script needs (the Input System package or the old Input Manager).
-4. **Editor screenshots** wherever the lesson uses the editor (section 4), as image sections with a precise alt text
+4. **Editor screenshots** wherever the lesson uses the editor (section 5), as image sections with a precise alt text
    and an `after` line that says what to notice.
 5. A quick check, a quiz of 4 or more questions, a **Python practice problem** on game logic (health and damage,
    cooldown timers, an inventory, grid movement, pathfinding, wave spawning) with visible and hidden tests, glossary
    terms, 3 or more questions in the branch's question bank, and references to the Unity documentation (check that
    every link opens).
 6. Charts only from real computations, with the script kept in `tools/charts/`.
+7. Whatever else from section 4 teaches the idea best: a demo the learner can play with, a diagram of the structure,
+   a step-through walkthrough of a procedure. A lesson that is only text and code is the exception, not the rule.
 
 Also add tracks (for example "Your first 2D game", "Your first 3D game", "C# for Unity") and sample projects (small
 complete games to build in Unity, each with steps, a finish line and stretch goals), and keep the placement test's
 `BRANCHES` and `POOL` in step with the beginner and intermediate lessons.
 
-## 4. Screenshots of the Unity Editor
+## 4. Use every feature from ML Atlas
+
+The template is ML Atlas's engine, and the course should use all of it, not only text and code. ML Atlas shows each
+feature at full scale: read its lessons for examples (`git -C "C:\Users\Mark\Desktop\LLM-learning" show
+main:js/data/concepts-ml-core.js`, or run `node tools/lesson-info.js --find <text>` in that folder), and try them on
+the live site. For each lesson, use the formats that teach it best:
+
+- **Interactive demos** (`js/views/demos.js`, `demos-more.js`, built with `MLA.demoKit`): canvases with sliders that
+  the learner plays with. Write Unity ones: frame rate against delta time, easing curves, vector addition and the dot
+  product, raycasts against colliders, steering and arriving, smoothed camera follow, a particle emitter. Keep them
+  usable from the keyboard and described for screen readers, like the existing demos.
+- **Diagrams** (`js/views/diagrams.js`, named `dg-<name>` in a demo section): SVG drawings of structure, such as the
+  MonoBehaviour lifecycle and execution order, GameObjects and components, the scene hierarchy and transforms, the
+  physics step, the render pipeline, an Animator state machine.
+- **Step-through walkthroughs** (`js/views/walks.js` documents `MLA.walk`; `walks-ml.js` has full examples): an
+  animated flowchart with the running code line, real numbers, a symbol legend and a plot, at the learner's pace or
+  the read-aloud voice's. Use them for loops and decision procedures: the fixed-step game loop, A* on a grid, a state
+  machine for enemy AI, collision detection and response, a raycast, a coroutine across frames. Some can run on the
+  learner's own data (`MLA.walkData`). List new walkthrough files in `WALK_FILES` (`js/data/branches.js`);
+  `tests/walks.test.js` checks layout, arrows and labels.
+- **Charts** from real computations: frame times, easing values, damage and XP curves, profiler numbers.
+- **"Predict first" questions** on code samples, **quick checks** between sections, **callouts** (`:::tip`, `warn`,
+  `danger`, `real`, `note`, `key`, `analogy`, `math`), tables, and formulas with `:::where` legends.
+- **All six quiz types** (multiple choice, select all, true or false, fill in, put in order, match), extra **bank
+  questions** for custom quizzes, and the **placement test** pool.
+- **Practice problems** with hidden tests, and **capstones** whose `checkpoints` (`{ step, problem, goal }`) each have
+  their own problem, for example a complete 2D platformer split into movement, collisions, enemies, UI and saving.
+- **Recommended prerequisites** (`softPrereqs`) for links that help without being required; the map draws them dotted.
+- **Case studies** (`js/data/projects.js`): real, documented game-development events with a named source (published
+  postmortems, conference talks, official documentation), never invented. **Sample projects**: small Unity games to
+  build, with steps, a finish line and stretch goals.
+- **Bundled datasets** (`data/` and `BUNDLED` in `js/core/datasets.js`) for lessons that analyse numbers in Python:
+  playtest telemetry, level times, drop rates, balance tables. Walkthroughs and the playground can read them too.
+- **Playground templates** (`js/views/playground.js`): Python starting points for game maths and simulations.
+- **Glossary terms**, which become flashcards, **tracks**, and the **review of mistakes**, which works on its own once
+  quizzes and checks exist.
+- **Read aloud** reads every section; when you add notation it cannot say, teach `js/core/narrate.js`
+  (`tests/narrate.test.js` fails on symbols it cannot read). Search, achievements, themes, offline use and the static
+  lesson pages work without extra effort.
+
+Write and find content with `tools/lesson-patch.js` (patch files with `### INSERT` and `### REPLACE` blocks) and
+`tools/lesson-info.js` rather than editing large files by hand.
+
+## 5. Screenshots of the Unity Editor
 
 Take the screenshots yourself:
 
@@ -106,7 +155,7 @@ Take the screenshots yourself:
 
 Close the screenshot project when you finish a batch.
 
-## 5. Rules
+## 6. Rules
 
 - The template's house style: no em dashes in prose, no exclamation marks, no emoji, no hype words; every formula
   has a `:::where` legend that defines every symbol; full understanding for beginners comes first.
@@ -114,7 +163,7 @@ Close the screenshot project when you finish a batch.
 - Ask me before downloading or installing anything (Unity versions, packages, Asset Store content, tools).
 - Commit or push only when I ask.
 
-## 6. Checks after every batch
+## 7. Checks after every batch
 
 - `node tools/build-catalog.js`, then `npm test`: every lesson, quiz, problem, image, bank question and the placement
   pool are checked, and the problems run in CPython.
