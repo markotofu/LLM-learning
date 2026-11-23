@@ -326,6 +326,7 @@
           <div class="row between mb"><h3 style="margin:0">Mastery quiz: {{ c.title }}</h3><span class="muted small">Pass: {{ P.PASS }}% · best {{ pr.quizBest }}%</span></div>
           <quiz-runner v-if="quizQs && quizQs.length" :key="(quizQs[0] && quizQs[0].q) + pr.quizAttempts" :questions="quizQs" :pass="P.PASS" @complete="onQuiz" @retry="retryQuiz" @close="tab='learn'" />
           <empty-state v-else icon="clipboard" text="No quiz for this concept." />
+          <p class="small muted mt"><mla-icon name="clipboard" :size="13"/> More practice: <a :href="'#/quiz?ids=' + c.id + '&deps=1'" @click.prevent="go('/quiz?ids=' + c.id + '&deps=1')">a custom quiz on this lesson and the ones it builds on</a>, with extra questions you will not see here.</p>
         </div>
       </template>
 

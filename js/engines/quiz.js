@@ -51,9 +51,11 @@
     const score = questions.length ? Math.round((points / questions.length) * 100) : 0;
     return { score, correct: results.filter(r => r.correct).length, total: questions.length, results };
   }
-  // Copy with shuffled options (answer indices remapped). "order" questions get a shuffled start order.
+  // Copy with shuffled options (answer indices remapped). "order" questions get a shuffled start order, and "match"
+  // questions a shuffled order for the right-hand choices (rightOrder; answers still name pairs by index).
   function shuffled(q, rng) {
     if (q.type === 'order') return Object.assign({}, q, { start: MLA.util.shuffle(q.items.map((x, i) => i), rng) });
+    if (q.type === 'match') return Object.assign({}, q, { rightOrder: MLA.util.shuffle(q.pairs.map((p, i) => i), rng) });
     if (!q.options || q.noShuffle) return q;
     const idx = MLA.util.shuffle(q.options.map((o, i) => i), rng);
     const copy = Object.assign({}, q, { options: idx.map(i => q.options[i]) });

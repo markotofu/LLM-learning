@@ -14,6 +14,7 @@
     { name: 'tracks', pattern: '/tracks', title: 'Learning Tracks' },
     { name: 'track', pattern: '/track/:id', title: 'Learning Track' },
     { name: 'review', pattern: '/review', title: 'Review' },
+    { name: 'quiz', pattern: '/quiz', title: 'Custom Quiz' },
     { name: 'glossary', pattern: '/glossary', title: 'Glossary' },
     { name: 'achievements', pattern: '/achievements', title: 'Achievements' },
     { name: 'profile', pattern: '/profile', title: 'Progress & Sync' },

@@ -57,8 +57,10 @@ function load(opts) {
     try { require(file); } catch (e) { errors.push(s + ': ' + (e && e.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : e)); }
     if (lessonFiles.includes(s)) for (const c of global.MLA.data.concepts.slice(before)) c.file = path.basename(s);
   }
-  // The page loads the step-through walkthroughs with the first lesson that needs them; Node loads them up front.
-  for (const s of (global.MLA && global.MLA.content && global.MLA.content.WALK_FILES) || []) {
+  // The page loads the step-through walkthroughs with the first lesson that needs them, and the custom-quiz question
+  // bank when a quiz needs it; Node loads both up front.
+  const late = global.MLA && global.MLA.content ? (global.MLA.content.WALK_FILES || []).concat((global.MLA.content.BANK_FILES || []).filter(f => fs.existsSync(path.join(root, f)))) : [];
+  for (const s of late) {
     scripts.push(s);
     try { require(path.join(root, s)); } catch (e) { errors.push(s + ': ' + (e && e.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : e)); }
   }

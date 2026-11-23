@@ -471,6 +471,15 @@ pre.hl { margin: 0; border: 0; border-radius: 0; background: transparent; paddin
 
 /* ---------- Quiz ---------- */
 .quiz-q { background: var(--panel2); border: 1px solid var(--border); border-radius: var(--radius); padding: 15px 17px; margin-bottom: 12px; }
+.qb-title { margin-top: 0; }
+.qb-start { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 12px; }
+.qb-count { display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--muted); }
+.qb-branch { border-left: 4px solid var(--bc, var(--accent)); }
+.qb-branch-head { font-size: 1rem; margin-bottom: 8px; }
+.qb-lessons { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 4px 16px; }
+.qb-lesson { font-size: 0.92rem; align-items: center; }
+.qb-head { align-items: center; flex-wrap: wrap; gap: 8px; }
+.qb-break { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px solid var(--border); }
 .quiz-q .q-num { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
 .q-text { font-weight: 600; margin-bottom: 10px; }
 .q-text .md-body p { margin-bottom: 0.4em; }

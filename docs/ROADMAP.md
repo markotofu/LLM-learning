@@ -17,6 +17,10 @@ Possible improvements, ranked by how much they help a learner per unit of effort
 
 **Impact** is the expected gain in learning, reach or safety.
 
+## Done in the eleventh round (23 November 2026)
+
+- **Custom quizzes** (`#/quiz`): a quiz on any set of lessons, whole branches, the learner's track or everything completed, optionally with the lessons they build on, with results by lesson. 513 extra questions (4 to 6 per lesson) appear only in these quizzes, never in a lesson's quiz or Review. Matching questions now shuffle their choices and label their answer menus.
+
 ## Done in the tenth round (23 November 2026)
 
 - **Map at scale** (item 15): every view of the concept map can zoom to one branch (its lessons plus the lessons it builds on from other branches, with the branch's hub in the middle of the mind map), hide finished branches, and colour lessons by progress in a heat map. Lessons can name *recommended* prerequisites (`softPrereqs`, seven so far), which the map draws as dotted links and lists apart from the required ones; they never lock a lesson.

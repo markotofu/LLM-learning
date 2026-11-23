@@ -195,4 +195,37 @@ console.log(concepts.length + ' concepts, ' + problems.length + ' problems, ' + 
   T.ok('every lesson file is listed in tools/content-files.json', onDisk.every(f => listed.includes(f)) && listed.every(f => onDisk.includes(f)), onDisk.filter(f => !listed.includes(f)).join(', '));
 }
 
+// Extra custom-quiz questions (js/data/bank-<branch>.js), seen only in custom quizzes (#/quiz): every file listed in
+// MLA.content.BANK_FILES, keyed by real lessons, 3+ per lesson, valid and explained, not a copy of the lesson's own quiz,
+// and in the house style.
+{
+  const fs3 = require('fs'), path3 = require('path');
+  const files = MLA.content.BANK_FILES || [];
+  const onDisk = fs3.readdirSync(path3.join(__dirname, '../js/data')).filter(f => /^bank-.*[.]js$/.test(f)).map(f => 'js/data/' + f);
+  T.ok('every bank file is in BANK_FILES and every BANK_FILES entry exists', onDisk.every(f => files.includes(f)) && files.every(f => onDisk.includes(f)), files.concat(onDisk).filter(f => !files.includes(f) || !onDisk.includes(f)).join(', '));
+  const bank = MLA.data.quizBank || {};
+  const nrm = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  for (const id of Object.keys(bank)) T.ok('quiz bank: lesson ' + id + ' exists', !!MLA.content.byId[id]);
+  let n = 0;
+  for (const c of concepts) {
+    const qs = bank[c.id] || [], own = new Set(c.quiz.map(q => nrm(q.q)));
+    T.ok('quiz bank ' + c.id + ': 3+ extra questions', qs.length >= 3, String(qs.length));
+    T.ok('quiz bank ' + c.id + ': questions in the file of its branch', !qs.length || (MLA.content.BANK_FILES || []).includes('js/data/bank-' + c.branch + '.js'));
+    qs.forEach((q, i) => {
+      n++;
+      const w = 'quiz bank ' + c.id + ' q' + (i + 1), t = JSON.stringify(q);
+      T.ok(w + ': valid + explained', MLA.quiz.validQuestion(q) && !!q.explain, t.slice(0, 120));
+      T.ok(w + ': not a copy of the lesson quiz', !own.has(nrm(q.q)), q.q);
+      if (q.options) T.ok(w + ': options are distinct', new Set(q.options).size === q.options.length);
+      if (q.type === 'fill') T.ok(w + ': has a plain accepted answer to show', !!q.display || [].concat(q.answer).some(a => !/^[/].*[/][a-z]*$/.test(String(a))));
+      T.ok(w + ': no em dash', !t.includes('—'));
+      T.ok(w + ': no exclamation mark', !/!(?!=)/.test(t.replace(/`[^`]*`/g, '')));
+      T.ok(w + ': no emoji', !/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(t));
+    });
+  }
+  const stems = Object.values(bank).flat().map(q => nrm(q.q));
+  T.ok('quiz bank: no question asked twice', new Set(stems).size === stems.length, stems.filter((s, i) => stems.indexOf(s) !== i).join(' | '));
+  T.ok('quiz bank: 400+ questions', n >= 400, String(n));
+}
+
 T.done();

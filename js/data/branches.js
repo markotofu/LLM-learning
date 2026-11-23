@@ -123,6 +123,8 @@
   // the first such lesson instead of with the page. Their components then get their precompiled templates, as the
   // others do at start-up (MLA.app.mount), and join the running app.
   const WALK_FILES = ['js/views/walks.js', 'js/views/walks-ml.js', 'js/views/walks-dl.js', 'js/views/walks-more.js'];
+  // Each branch's extra custom-quiz questions live in js/data/bank-<branch>.js (a new branch needs its file and an entry here).
+  const BANK_BRANCHES = ['start', 'math', 'code', 'ml', 'dl', 'llm', 'apps', 'spec'];
   const usesWalk = c => !!c && (c.sections || []).some(s => s.type === 'demo' && /^walk-/.test(s.demo || ''));
   let walksLoading = null;
   function adoptComponents() {
@@ -158,12 +160,20 @@
     },
     WALK_FILES,
     ensureAll() { return MLA.content.ensure(MLA.data.concepts.filter(c => c._stub).map(c => c.id)); },
+    // Extra questions for custom quizzes (#/quiz): one file per branch, js/data/bank-<branch>.js, loaded for the
+    // branches of the lessons a quiz uses. They fill MLA.data.quizBank[lesson id] and appear nowhere else.
+    ensureBank(ids) {
+      const need = new Set([].concat(ids || []).map(id => MLA.content.byId[id]).filter(Boolean).map(c => c.branch));
+      return Promise.all([...need].filter(b => BANK_BRANCHES.includes(b)).map(b => loadScript('js/data/bank-' + b + '.js', 'The quiz questions could not be loaded. Check your connection and try again.')));
+    },
+    BANK_FILES: BANK_BRANCHES.map(b => 'js/data/bank-' + b + '.js'),
     // Fetch (without running) every lesson file in the background, so the service worker can serve them offline later.
     prefetchAll() {
       const cat = MLA.data.catalog, nav = global.navigator;
       if (!cat || !global.fetch || (nav && nav.connection && nav.connection.saveData)) return;
       cat.files.forEach(f => { if (!loading['js/data/' + f]) global.fetch('js/data/' + f).catch(() => { /* offline: try again next visit */ }); });
       if (!MLA.walks) WALK_FILES.forEach(f => global.fetch(f).catch(() => { /* offline: try again next visit */ }));
+      BANK_BRANCHES.forEach(b => { const f = 'js/data/bank-' + b + '.js'; if (!loading[f]) global.fetch(f).catch(() => { /* offline: try again next visit */ }); });
     },
     sectionIds,
     ready: false,

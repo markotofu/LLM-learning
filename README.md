@@ -20,6 +20,7 @@ It is a static site: it runs on GitHub Pages, from any web server, or straight f
 | **Predict first** | 158 code samples ask you to predict their output before you run them; committing to a guess first is one of the most reliable ways to remember the result. |
 | **Practice problems** | 270 problems (easy / medium / hard) with a LeetCode-style editor: **Run** checks the visible examples, **Submit** runs hidden tests too. Hints, worked solutions and explanations. Drafts are saved automatically. The three capstones are split into checkpoints: one checked task per project step, with progress per step. |
 | **Quizzes** | 877 questions (multiple choice, multi-select, true/false, fill-in, ordering, matching) with explanations. Passing a quiz and solving a problem completes a concept. |
+| **Custom quizzes** | Build your own quiz (`#/quiz`) from any lessons: one by one, whole branches, your track or everything you have completed, optionally with the lessons they build on, and 10 to 50 questions or all of them. Each quiz mixes the lessons' own questions with 513 extra questions that appear only here, takes the lessons in turns, and shows your results by lesson, weakest first. Each lesson's quiz tab links to a custom quiz on that lesson and the ones before it. |
 | **Search** | Press Ctrl+K (Cmd+K on a Mac) or "/" anywhere, or use the search button: one box searches pages, lessons, sections, glossary terms, problems, projects, case studies and tracks, and the full text of the lessons, and opens results at the right section. |
 | **Learning tracks** | Guided paths: ML Foundations, Classical ML Practitioner, Data Science & Experiments, ML Theory & Probabilistic Methods, Deep Learning from Scratch, Build an LLM from Scratch, LLM Application Engineer, Fine-tuning, Alignment & Serving, Frontier Deep Learning, the Complete Atlas, or set any concept as a custom goal. |
 | **Placement test** | Optional, from the welcome dialog or the dashboard: about 12 to 15 questions from the lessons' own quizzes, chosen one at a time along the prerequisite graph. Lessons you already know are marked as known (no XP, not completed), so tracks and recommendations start at the first gap; each mark says why, and every mark can be undone. |
@@ -90,11 +91,13 @@ js/engines/              graph layout (DAG, mind map, lanes), Python runner (Pyo
                          Worker + the test harness), quiz grading, spaced repetition (SM-2)
 js/data/                 content: branches (and the lesson loader), catalog.js (generated index,
                          loaded with the page), concepts-*.js (lessons, quizzes, problems; loaded
-                         on demand), projects.js (case studies, sample projects), glossary,
+                         on demand), bank-*.js (extra questions for custom quizzes, one file per
+                         branch, loaded on demand), projects.js (case studies, sample projects), glossary,
                          learning tracks, achievements
 data/                    small synthetic practice datasets for the in-browser Python
 js/views/                Vue components: map, lesson, problem editor, practice list,
                          playground, dashboard, tracks, glossary, flashcards, profile, self-test,
+                         placement test, custom quiz builder,
                          and the demos, diagrams, step-through walkthroughs and charts shown
                          inside lessons
 js/app.js                app shell: navigation, onboarding, Python status
@@ -119,7 +122,7 @@ npm test
 | Suite | Checks |
 | --- | --- |
 | `tests/graph.test.js` | the prerequisite graph: cycles, depths, ancestors, both map layouts, recommended prerequisites, sub-graphs and zoom to a branch |
-| `tests/content.test.js` | every concept, quiz question, problem, demo, chart, glossary term and track is well-formed; prerequisites exist; **every formula has a symbol legend**; every concept has glossary terms |
+| `tests/content.test.js` | every concept, quiz question (and extra custom-quiz question), problem, demo, chart, glossary term and track is well-formed; prerequisites exist; **every formula has a symbol legend**; every concept has glossary terms |
 | `tests/views.test.js` | every Vue template compiles; all markdown renders, and hostile markdown (scripts, event handlers, `javascript:` links) comes out inert; store export/import/merge round-trips, and malformed, oversized or prototype-polluting imports are rejected |
 | `tests/theme.test.js` | every text colour of every theme meets WCAG AA contrast (4.5:1) on every background |
 | `tests/narrate.test.js` | every lesson can be read aloud: no markdown or raw math symbols are left in the spoken text, quick checks pause before the answer, every chart has a description, and the player engine plays, skips, pauses and stops with on-device voices only |

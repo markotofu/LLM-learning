@@ -29,7 +29,7 @@ test('every lesson renders, without errors, fits a phone screen and passes the a
 test('the other pages render, fit a phone screen and pass the accessibility check', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   const errors = await boot(page, '/home');
-  const routes = [['/home', 'Dashboard'], ['/map', 'Concept Map'], ['/problems', 'Practice Problems'], ['/problem/dot-product', 'Dot Product'], ['/playground', 'Python Playground'], ['/tracks', 'Learning Tracks'], ['/track/build-llm', ''], ['/review', 'Review'], ['/glossary', 'Glossary'], ['/projects', 'Projects'], ['/achievements', 'Achievements'], ['/profile', 'Progress'], ['/selftest', 'Self-test'], ['/terms', 'Terms'], ['/privacy', 'Privacy']];
+  const routes = [['/home', 'Dashboard'], ['/map', 'Concept Map'], ['/problems', 'Practice Problems'], ['/problem/dot-product', 'Dot Product'], ['/playground', 'Python Playground'], ['/tracks', 'Learning Tracks'], ['/track/build-llm', ''], ['/review', 'Review'], ['/quiz', 'Custom Quiz'], ['/glossary', 'Glossary'], ['/projects', 'Projects'], ['/achievements', 'Achievements'], ['/profile', 'Progress'], ['/selftest', 'Self-test'], ['/terms', 'Terms'], ['/privacy', 'Privacy']];
   const bad = [];
   for (const [r, t] of routes) {
     await go(page, r, t || undefined);
@@ -446,5 +446,74 @@ test('the placement test marks the lessons a learner knows, explains each mark, 
   expect(await page.evaluate(() => MLA.progress.knownList().length)).toBe(0);
   await go(page, '/map', 'Concept Map');
   await expect(page.locator('.mnode.known')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+// Custom quiz (#/quiz): lessons chosen by link, the lessons they build on, every question of two lessons (their own quiz
+// plus the extra question bank), one wrong answer of each kind, results by lesson, and Review receiving only the missed
+// question from a lesson's own quiz.
+test('a custom quiz mixes lesson and bank questions, reports by lesson, and sends only lesson questions to review', async ({ page }) => {
+  const errors = await boot(page, '/quiz?ids=knn,svm&deps=0');
+  await page.waitForFunction(() => document.title.startsWith('Custom Quiz'));
+  await expect(page.locator('.qb-lesson input:checked')).toHaveCount(2);
+  const start = page.locator('.qb-start .btn.primary');
+  await expect(start).toContainText('Start: 2 lessons');
+  await page.getByLabel('Also ask about the lessons these build on').check();
+  expect(Number((await start.textContent()).match(/Start: (\d+)/)[1])).toBeGreaterThan(5);
+  await page.getByLabel('Also ask about the lessons these build on').uncheck();
+  await page.getByLabel('Number of questions').selectOption({ label: 'All of them' });
+  expect(await page.evaluate(audit)).toEqual([]);
+  await start.click();
+  await expect(page.locator('.qb-head')).toBeVisible();
+  const want = await page.evaluate(() => {
+    const own = ['knn', 'svm'].reduce((s, id) => s + MLA.content.byId[id].quiz.length, 0);
+    const bank = ['knn', 'svm'].reduce((s, id) => s + MLA.data.quizBank[id].length, 0);
+    return { total: own + bank, bank };
+  });
+  expect(want.bank).toBeGreaterThanOrEqual(6);
+  await expect(page.locator('.quiz-q')).toHaveCount(want.total);
+  await expect(page.locator('.qb-head')).toContainText(want.total + ' questions from 2 lessons, ' + want.bank + ' of them from the extra question bank');
+  expect(await page.evaluate(audit)).toEqual([]);
+  // answer every question from the data (options are shuffled): all right, except the first true-or-false question of
+  // each source, a lesson's own quiz and the bank
+  const plan = await page.evaluate(() => {
+    const text = s => { const d = document.createElement('div'); d.innerHTML = MLA.util.inline(String(s)); return d.textContent.replace(/\s+/g, ' ').trim(); };
+    const byTitle = {}; MLA.data.concepts.forEach(c => { byTitle[c.title] = c; });
+    const missed = {};
+    return [...document.querySelectorAll('.quiz-q')].map(el => {
+      const c = byTitle[el.querySelector('.q-num .dim').textContent.replace(/^\s*·\s*/, '').trim()];
+      const stem = el.querySelector('.q-text').textContent.replace(/\s+/g, ' ').trim();
+      const own = c.quiz.find(x => text(x.q) === stem), q = own || MLA.data.quizBank[c.id].find(x => text(x.q) === stem);
+      const src = own ? 'lesson' : 'bank';
+      if (q.type === 'fill') return { fill: String([].concat(q.answer).find(a => !/^\/.*\/[a-z]*$/.test(String(a)))) };
+      let want, miss = null;
+      if (q.type === 'tf') { if (!missed[src]) { missed[src] = true; miss = src; } want = [(q.answer !== !!miss) ? 'True' : 'False']; }
+      else want = (q.type === 'mcq' ? [q.answer] : q.answer).map(i => text(q.options[i]));
+      // option indices on screen, matched on the whole option text (after its letter key)
+      const pick = [...el.querySelectorAll('.option')].map((b, i) => want.includes(b.textContent.replace(/\s+/g, ' ').trim().slice(1).trim()) ? i : -1).filter(i => i >= 0);
+      return { pick, miss };
+    });
+  });
+  const cards = page.locator('.quiz-q');
+  for (let i = 0; i < plan.length; i++) {
+    const p = plan[i], card = cards.nth(i);
+    if (p.fill) { await card.getByRole('textbox', { name: 'Your answer' }).fill(p.fill); continue; }
+    expect(p.pick.length).toBeGreaterThan(0);
+    for (const k of p.pick) await card.locator('.option').nth(k).click();
+  }
+  expect(plan.filter(p => p.miss).map(p => p.miss).sort()).toEqual(['bank', 'lesson']);
+  await page.getByRole('button', { name: 'Submit answers' }).click();
+  await expect(page.locator('.result-card')).toContainText((want.total - 2) + ' of ' + want.total + ' correct');
+  const rows = page.locator('.qb-break');
+  await expect(rows).toHaveCount(2);
+  const right = await rows.locator('.small').allTextContents();
+  const rate = s => { const m = s.match(/(\d+) of (\d+)/); return m[1] / m[2]; };
+  expect(rate(right[0])).toBeLessThanOrEqual(rate(right[1]));                 // weakest lesson first
+  expect(await page.evaluate(() => MLA.mistakes.stats().total)).toBe(1);      // only the lesson question is queued
+  // a new draw of the same lessons, and the builder again
+  await page.getByRole('button', { name: 'New questions, same lessons' }).click();
+  await expect(page.locator('.result-card')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Change the lessons' }).click();
+  await expect(page.locator('.qb-branch')).toHaveCount(8);
   expect(errors).toEqual([]);
 });

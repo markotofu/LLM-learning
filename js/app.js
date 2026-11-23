@@ -12,6 +12,7 @@
     { name: 'projects', label: 'Projects & Cases', icon: 'flask', path: '/projects' },
     { name: 'playground', label: 'Python Playground', icon: 'terminal', path: '/playground' },
     { name: 'review', label: 'Review', icon: 'cards', path: '/review' },
+    { name: 'quiz', label: 'Custom Quiz', icon: 'clipboard', path: '/quiz' },
     { name: 'glossary', label: 'Glossary', icon: 'book', path: '/glossary' },
     { name: 'achievements', label: 'Achievements', icon: 'trophy', path: '/achievements' },
     { name: 'profile', label: 'Progress & Sync', icon: 'sync', path: '/profile' }
@@ -29,6 +30,7 @@
     tracks: { comp: 'view-tracks', nav: 'tracks' },
     track: { comp: 'view-track', nav: 'tracks' },
     review: { comp: 'view-review', nav: 'review' },
+    quiz: { comp: 'view-quiz', nav: 'quiz' },
     glossary: { comp: 'view-glossary', nav: 'glossary' },
     achievements: { comp: 'view-achievements', nav: 'achievements' },
     profile: { comp: 'view-profile', nav: 'profile' },

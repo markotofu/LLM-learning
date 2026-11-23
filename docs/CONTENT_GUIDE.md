@@ -207,6 +207,8 @@ $$ θ ← θ − η · ∇L(θ) $$
 
 Every question needs an `explain`. Options and items are shuffled when shown. `fill` answers are compared after normalization (case, extra spaces, a trailing full stop), numbers are compared as numbers, and an accepted answer written as `'/pattern/i'` is treated as a regular expression; still, list the common spellings.
 
+**Extra questions for custom quizzes.** Every lesson also has at least 3 extra questions in `js/data/bank-<branch>.js`, keyed by lesson id (`'knn': [ ... ]`), in the same format as above. They appear only in custom quizzes (`#/quiz`), mixed with the lesson's own questions: never in the lesson's quiz, never in Review (a missed bank question is not queued). Write them to stand alone, test the lesson's objectives from another angle (a new number, a scenario, the reverse question), and never repeat one of the lesson's own questions or another bank question; `tests/content.test.js` checks all of this, plus the house style. The bank files use double-quoted strings, so apostrophes need no escaping; avoid double quotes and backslashes inside them. A new lesson needs its bank questions too, and a new branch needs a `bank-<branch>.js` file and an entry in `BANK_BRANCHES` (`js/data/branches.js`).
+
 **The placement test** (`#/placement`) reuses quiz questions. `POOL` in `js/engines/placement.js` lists, for every beginner and intermediate lesson in Start Here, Math Foundations, Python & Data and Classical ML, one or two of its questions by their opening words. They are asked outside the lesson, so they must stand alone (no "in this lesson" or "the code above"), test the lesson's core idea and be quick: multiple choice or a short number, never true or false. If you reword or remove one, update its opening; a new beginner or intermediate lesson in those branches needs an entry. `tests/placement.test.js` fails until both are done.
 
 ## 5. Practice problems
@@ -289,7 +291,7 @@ They live in `js/data/projects.js`, keyed by lesson id, and appear after a lesso
 
 ```bash
 node --check js/data/concepts-<file>.js     # JavaScript syntax
-node tests/content.test.js                   # structure, links, formula legends, glossary coverage
+node tests/content.test.js                   # structure, links, formula legends, glossary coverage, quiz bank
 node tests/views.test.js                     # templates and markdown render
 node tests/problems.test.js <concept ids>    # solutions pass, starters fail, samples run (CPython)
 npm test                                     # everything

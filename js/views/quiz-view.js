@@ -4,7 +4,7 @@
   MLA.components = MLA.components || {};
 
   MLA.components['quiz-runner'] = {
-    props: { questions: Array, pass: { default: 70 } },
+    props: { questions: Array, pass: { default: 70 }, backLabel: { type: String, default: 'Back to the lesson' } },
     emits: ['complete', 'close', 'retry'],
     data() { return { answers: {}, submitted: false, result: null }; },
     computed: {
@@ -18,6 +18,8 @@
       toggleMulti(i, opt) { if (this.submitted) return; const a = this.answers[i] = (this.answers[i] || []).slice(); const k = a.indexOf(opt); if (k >= 0) a.splice(k, 1); else a.push(opt); this.answers[i] = a; },
       setFill(i, e) { this.answers[i] = e.target.value; },
       setMatch(i, li, e) { const o = Object.assign({}, this.answers[i] || {}); o[li] = Number(e.target.value); this.answers[i] = o; },
+      rightOrder(q) { return q.rightOrder || q.pairs.map((p, k) => k); },      // set by MLA.quiz.prepare, so answers do not sit in row order
+      matchLabel(p) { return 'Match for: ' + String(p[0]).replace(/[*_\x60]/g, ''); },
       orderList(i) { const q = this.questions[i]; return (this.answers[i] && this.answers[i].slice()) || (q.start || q.items.map((x, k) => k)).slice(); },
       moveOrder(i, from, dir) { const cur = this.orderList(i); const to = from + dir; if (to < 0 || to >= cur.length) return; [cur[from], cur[to]] = [cur[to], cur[from]]; this.answers[i] = cur; },
       optClass(i, opt) {
@@ -48,7 +50,7 @@
             <div>
               <h2 style="margin:0">{{ result.score >= pass ? 'Passed' : 'Not yet. Keep going.' }}</h2>
               <p class="muted" style="margin:4px 0 10px">{{ result.correct }} of {{ result.total }} correct ({{ result.score }}%). Passing is {{ pass }}%. Read the explanations below: they are the fastest way to fix a misconception.</p>
-              <div class="btn-row"><button class="btn" @click="retry"><mla-icon name="refresh" :size="16"/> Try again</button><button class="btn ghost" @click="$emit('close')">Back to the lesson</button></div>
+              <div class="btn-row"><button class="btn" @click="retry"><mla-icon name="refresh" :size="16"/> Try again</button><button class="btn ghost" @click="$emit('close')">{{ backLabel }}</button></div>
             </div>
           </div>
         </div>
@@ -59,7 +61,7 @@
       </div>
 
       <div v-for="(q,i) in questions" :key="i" class="quiz-q">
-        <div class="q-num">Question {{ i+1 }} · {{ typeName(q.type) }}<span v-if="submitted" :class="res(i).correct?'ok-text':'bad-text'"> · {{ res(i).correct ? 'Correct' : (res(i).partial>0 ? 'Partly correct' : 'Incorrect') }}</span></div>
+        <div class="q-num">Question {{ i+1 }} · {{ typeName(q.type) }}<span v-if="q._lesson" class="dim"> · {{ q._lesson }}</span><span v-if="submitted" :class="res(i).correct?'ok-text':'bad-text'"> · {{ res(i).correct ? 'Correct' : (res(i).partial>0 ? 'Partly correct' : 'Incorrect') }}</span></div>
         <div class="q-text"><mla-md :src="q.q" /></div>
         <div v-if="q.type==='mcq'||q.type==='multi'" class="options">
           <div v-for="(o,oi) in q.options" :key="oi" class="option" :class="optClass(i,oi)" role="button" @click="q.type==='multi'?toggleMulti(i,oi):setMcq(i,oi)" tabindex="0" @keydown.enter.prevent="q.type==='multi'?toggleMulti(i,oi):setMcq(i,oi)" @keydown.space.prevent="q.type==='multi'?toggleMulti(i,oi):setMcq(i,oi)">
@@ -85,9 +87,9 @@
         <div v-else-if="q.type==='match'" class="list">
           <div v-for="(p,pi) in q.pairs" :key="pi" class="match-row">
             <div class="match-left"><mla-md :src="p[0]" inline /></div><span class="dim">→</span>
-            <select @change="setMatch(i,pi,$event)" :disabled="submitted">
+            <select @change="setMatch(i,pi,$event)" :disabled="submitted" :aria-label="matchLabel(p)">
               <option value="" disabled :selected="(answers[i]||{})[pi]==null">choose…</option>
-              <option v-for="(p2,pj) in q.pairs" :key="pj" :value="pj" :selected="(answers[i]||{})[pi]===pj">{{ p2[1] }}</option>
+              <option v-for="pj in rightOrder(q)" :key="pj" :value="pj" :selected="(answers[i]||{})[pi]===pj">{{ q.pairs[pj][1] }}</option>
             </select>
           </div>
           <div v-if="submitted && !res(i).correct" class="small mt">{{ res(i).expected }}</div>
