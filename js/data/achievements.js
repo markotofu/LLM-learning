@@ -1,4 +1,4 @@
-/* ML Atlas – achievements. test(ctx) and progress(ctx) receive the counters from gamification.context() */
+/* Achievements. test(ctx) and progress(ctx) receive the counters from gamification.context() */
 (function (global) {
   const MLA = (global.MLA = global.MLA || {});
   MLA.data = MLA.data || {};
@@ -22,14 +22,7 @@
     A('mastered-5', 'star', 'Mastery', 'Master 5 concepts (all problems + 90% quiz).', 120, c => c.mastered >= 5, c => [c.mastered, 5]),
     A('perfect-quiz', 'check', 'Perfect Score', 'Score 100% on a mastery quiz.', 40, c => c.perfectQuizzes >= 1, c => [c.perfectQuizzes, 1]),
     A('quizzes-10', 'hint', 'Quiz Whiz', 'Pass 10 mastery quizzes.', 80, c => c.quizzesPassed >= 10, c => [c.quizzesPassed, 10]),
-    branch('math', 'graph', 'Math Wizard', 'Math Foundations'),
-    branch('code', 'code', 'Data Wrangler', 'Python & Data'),
-    branch('ml', 'tree', 'Classical Scholar', 'Classical Machine Learning'),
-    branch('dl', 'brain', 'Neural Architect', 'Neural Networks & Deep Learning'),
-    branch('llm', 'layers', 'Transformer Tamer', 'Transformers & LLMs'),
-    branch('apps', 'send', 'LLM Engineer', 'Building with LLMs'),
-    branch('spec', 'flask', 'Explorer', 'Specializations'),
-    A('capstone', 'cpu', 'I Built a GPT', 'Complete the capstone: A Tiny GPT in NumPy.', 250, c => !!(MLA.progress && MLA.progress.isCompleted('mini-gpt')), c => [MLA.progress && MLA.progress.isCompleted('mini-gpt') ? 1 : 0, 1]),
+    ...MLA.data.branches.filter(b => b.id !== 'start').map(b => branch(b.id, b.icon, b.short + ' Complete', b.name)),
     A('streak-3', 'clock', 'Habit Forming', 'Learn 3 days in a row.', 30, c => c.bestStreak >= 3, c => [c.bestStreak, 3]),
     A('streak-7', 'refresh', 'One Week Strong', 'Learn 7 days in a row.', 75, c => c.bestStreak >= 7, c => [c.bestStreak, 7]),
     A('streak-30', 'flame', 'Unstoppable', 'Learn 30 days in a row.', 300, c => c.bestStreak >= 30, c => [c.bestStreak, 30]),

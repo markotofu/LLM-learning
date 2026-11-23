@@ -1,4 +1,4 @@
-/* ML Atlas – interactive demos embedded in lessons. <mla-demo name="..."> dispatches to demo-<name>. */
+/* Interactive demos embedded in lessons. <mla-demo name="..."> dispatches to demo-<name>. */
 (function (global) {
   const MLA = global.MLA;
   MLA.components = MLA.components || {};

@@ -1,4 +1,4 @@
-/* ML Atlas – the placement test page (#/placement): an introduction, one question at a time, and the results: a
+/* The placement test page (#/placement): an introduction, one question at a time, and the results: a
  * suggested track starting at the first gap, the reason each lesson was marked as known, and undo (per lesson or all
  * at once). The questions and what the answers imply come from js/engines/placement.js; the marks live in
  * state.known (MLA.progress.setKnown), and the attempt itself in state.placement: the test in progress is rebuilt

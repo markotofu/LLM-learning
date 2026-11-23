@@ -1,6 +1,6 @@
-# Third-party software used by ML Atlas
+# Third-party software used by this course
 
-ML Atlas includes or loads the open-source software below. Each component remains under its own license; the ML Atlas license (see [LICENSE](LICENSE)) does not change that.
+This course includes or loads the open-source software below. Each component remains under its own license; the course's own license (see [LICENSE](LICENSE)) does not change that.
 
 ## Included in this repository
 

@@ -1,4 +1,4 @@
-// Browser tests for ML Atlas (Playwright + Chromium).
+// Browser tests for the course (Playwright + Chromium).
 //   npm run test:e2e      functional and layout tests (also run in CI before every deploy)
 //   npm run test:visual   screenshot comparison of every demo and diagram against a git ref (tools/visual-diff.js)
 // One-time setup: npm install && npx playwright install chromium

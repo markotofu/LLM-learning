@@ -1,4 +1,4 @@
-"""Runs ML Atlas practice problems under CPython with the same harness the browser uses.
+"""Runs the course's practice problems under CPython with the same harness the browser uses.
 
 Called by tests/problems.test.js with a JSON payload: {harness, problems, samples}.
 Prints a JSON report to stdout.

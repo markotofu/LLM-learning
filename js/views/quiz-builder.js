@@ -1,4 +1,4 @@
-/* ML Atlas – custom quizzes (#/quiz). Pick any lessons (one by one, a whole branch, your track or everything you have
+/* Custom quizzes (#/quiz). Pick any lessons (one by one, a whole branch, your track or everything you have
  * completed), optionally with the lessons they build on, and get a quiz drawn from them. Each lesson contributes its own
  * quiz questions and the extra questions of the question bank (js/data/bank-<branch>.js), which appear nowhere else.
  * Questions are drawn in turns, one lesson at a time, so every chosen lesson is asked about. Missed questions from a

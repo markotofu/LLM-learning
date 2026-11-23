@@ -1,4 +1,4 @@
-/* ML Atlas – step-through walkthroughs for classical machine learning (drawn by js/views/walks.js).
+/* Step-through walkthroughs for classical machine learning (drawn by js/views/walks.js).
  * Every number on screen comes from running the algorithm below on its small fixed dataset. */
 (function (global) {
   const MLA = global.MLA, W = MLA.walk;

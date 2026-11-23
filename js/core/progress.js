@@ -1,4 +1,4 @@
-/* ML Atlas – progression rules: concept & problem state, completion, recommendations, tracks */
+/* Progression rules: concept & problem state, completion, recommendations, tracks */
 (function (global) {
   const MLA = global.MLA;
   const st = () => MLA.store.state;

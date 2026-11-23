@@ -1,23 +1,24 @@
-/* ML Atlas – legal texts (terms of use, privacy policy) and the copyright notice.
- * To change the owner, contact link or dates, edit the fields below; the texts use {owner}, {year}, {contact} and {updated}. */
+/* Legal texts (terms of use, privacy policy) and the copyright notice. The owner, contact link, dates and course name
+ * come from js/course.js; the texts use {name}, {subject}, {owner}, {year}, {contact}, {updated}, {key} and {db}.
+ * They are a plain-language starting point, not legal advice: adapt them to your course and have them reviewed. */
 (function (global) {
   const MLA = (global.MLA = global.MLA || {});
   MLA.data = MLA.data || {};
 
   const legal = {
-    owner: 'markotofu',                          // copyright holder shown in the app and in the legal texts
-    year: '2026',
-    updated: '23 November 2026',
-    contact: 'https://github.com/markotofu',     // where people can reach the owner
+    owner: MLA.course.owner,                     // copyright holder shown in the app and in the legal texts
+    year: MLA.course.year,
+    updated: MLA.course.updated,
+    contact: MLA.course.contact,                 // where people can reach the owner
     codeLicense: 'MIT License',
     terms: `
 *Last updated: {updated}*
 
-These terms apply to ML Atlas ("ML Atlas", "the app"), a free educational web app made by {owner} ("we", "us"). By using the app you agree to them. If you do not agree, please do not use the app.
+These terms apply to {name} ("{name}", "the app"), a free educational web app made by {owner} ("we", "us"). By using the app you agree to them. If you do not agree, please do not use the app.
 
-### 1. What ML Atlas is
+### 1. What {name} is
 
-ML Atlas is a free learning resource about machine learning, neural networks and large language models: lessons, runnable code samples, quizzes, flashcards and practice problems. It has no accounts and no paid features. It runs entirely in your web browser.
+{name} is a free learning resource about {subject}: lessons, runnable code samples, quizzes, flashcards and practice problems. It has no accounts and no paid features. It runs entirely in your web browser.
 
 ### 2. Educational use only: no professional advice
 
@@ -37,7 +38,7 @@ Do not misuse the app: do not try to disrupt or overload it or its hosting, do n
 
 ### 6. Copyright and licences
 
-The lessons, quizzes, practice problems, explanations, glossary, flashcards and other educational content of ML Atlas are © {year} {owner}. All rights reserved. You may use them for your own personal, non-commercial learning, and you may quote short passages with attribution. Do not republish, sell or redistribute the content, or use it to build a competing product, without written permission.
+The lessons, quizzes, practice problems, explanations, glossary, flashcards and other educational content of {name} are © {year} {owner}. All rights reserved. You may use them for your own personal, non-commercial learning, and you may quote short passages with attribution. Do not republish, sell or redistribute the content, or use it to build a competing product, without written permission.
 
 The app's source code (its JavaScript, HTML and CSS) is released under the {codeLicense}; see the LICENSE file that accompanies it. Third-party software included in or loaded by the app (such as Vue and Pyodide with its Python packages) remains under its own licence; the [third-party notices](THIRD_PARTY_NOTICES.md) list each component and its licence. Names and trademarks of products, companies and projects mentioned in the lessons belong to their owners and are used only to identify them. Referenced papers, books and websites remain the work of their authors; the lessons explain ideas in their own words and point to these sources for further reading.
 
@@ -59,7 +60,7 @@ We may update these terms. The date at the top shows the latest version; continu
 
 ### 11. Reporting errors and copyright concerns
 
-If you find a mistake in the content, or believe something in ML Atlas infringes your copyright or other rights, please tell us through the contact below, with enough detail to identify the material. We will review reports promptly and correct or remove material where appropriate.
+If you find a mistake in the content, or believe something in {name} infringes your copyright or other rights, please tell us through the contact below, with enough detail to identify the material. We will review reports promptly and correct or remove material where appropriate.
 
 ### 12. Contact
 
@@ -68,21 +69,21 @@ Questions about these terms: [{contact}]({contact}).
     privacy: `
 *Last updated: {updated}*
 
-This policy explains what happens to your information when you use ML Atlas, a free educational web app made by {owner} ("we", "us").
+This policy explains what happens to your information when you use {name}, a free educational web app made by {owner} ("we", "us").
 
 ### In short
 
 - **No accounts, no sign-up.** We never ask for your name, email address or password.
 - **Your data stays on your device.** Progress, code, notes and settings are saved in your browser's local storage. We do not have a server that receives them.
-- **No cookies, analytics, ads or tracking** are used by ML Atlas.
+- **No cookies, analytics, ads or tracking** are used by {name}.
 - Like every website, the services that **deliver the app's files** (the web host and the content delivery network for the Python runtime) receive standard technical information such as your IP address.
 
 ### 1. Information stored on your device
 
-ML Atlas saves the following in your browser so that it works across visits. It never leaves your device unless you export it yourself.
+{name} saves the following in your browser so that it works across visits. It never leaves your device unless you export it yourself.
 
-- **Your learning data** (local storage key \`mla.state.v1\`): concepts read, quiz and problem results, your placement test answers and the lessons it marked as known, the code you write in problems and the playground, notes, flashcard schedules, the review queue of questions and problems you answered incorrectly, a short log of recent activity (what you did and when), XP, streaks, achievements, settings (theme, editor size, learning goal) and an optional display name (default "Learner").
-- **Datasets you upload** (the browser's IndexedDB storage, database \`ml-atlas-datasets\`): the files you add in the Playground so that your Python code can read them. Their names and sizes are listed with your learning data.
+- **Your learning data** (local storage key \`{key}\`): concepts read, quiz and problem results, your placement test answers and the lessons it marked as known, the code you write in problems and the playground, notes, flashcard schedules, the review queue of questions and problems you answered incorrectly, a short log of recent activity (what you did and when), XP, streaks, achievements, settings (theme, editor size, learning goal) and an optional display name (default "Learner").
+- **Datasets you upload** (the browser's IndexedDB storage, database \`{db}\`): the files you add in the Playground so that your Python code can read them. Their names and sizes are listed with your learning data.
 - **A technical preference** (local storage key \`mla.pyMirror\`): which download server for the Python runtime responded fastest.
 - **Cached app files**: the app's own files are kept in your browser's cache storage so it works offline, and the Python runtime is kept in the browser's normal download cache.
 
@@ -98,26 +99,26 @@ The app tells your browser, through a content security policy, to run scripts on
 
 ### 3. Services that deliver the app
 
-- **Hosting.** The app's files are served by its web host (for example GitHub Pages). When your browser requests them, the host receives standard request information such as your IP address, browser type and the time of the request, and may keep logs for security and operation. See the [GitHub General Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). If you run ML Atlas from your own computer or another server, that server's policies apply instead.
+- **Hosting.** The app's files are served by its web host (for example GitHub Pages). When your browser requests them, the host receives standard request information such as your IP address, browser type and the time of the request, and may keep logs for security and operation. See the [GitHub General Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). If you run {name} from your own computer or another server, that server's policies apply instead.
 - **Python runtime.** The first time you run code, your browser downloads the Pyodide Python runtime and Python packages from the jsDelivr content delivery network (cdn.jsdelivr.net or one of its alternative hosts). jsDelivr receives the same kind of request information. See the [jsDelivr privacy policy](https://www.jsdelivr.com/terms/privacy-policy-jsdelivr-net).
 - **Excel files.** Reading an uploaded Excel workbook (.xlsx) in Python needs a package (openpyxl) that the Python runtime does not include, so your browser downloads it from the Python Package Index (pypi.org and files.pythonhosted.org), which receives the same kind of request information. Your file itself is not sent anywhere. See the [Python Software Foundation privacy notice](https://policies.python.org/python.org/Privacy-Notice/).
 - **Links.** If you follow a link from a lesson to another website, that website's own privacy policy applies.
 
 ### 4. Cookies and tracking
 
-ML Atlas does not set cookies and does not use analytics, advertising, fingerprinting or other tracking technologies.
+{name} does not set cookies and does not use analytics, advertising, fingerprinting or other tracking technologies.
 
 ### 5. Code you run and API keys
 
-Code runs inside your browser. If code you write makes network requests, those requests go from your browser to the address you chose. ML Atlas never asks for API keys or passwords; examples that call external APIs (such as LLM APIs) are meant to be run on your own computer, with your own keys, under that provider's terms.
+Code runs inside your browser. If code you write makes network requests, those requests go from your browser to the address you chose. {name} never asks for API keys or passwords; examples that call external APIs (such as LLM APIs) are meant to be run on your own computer, with your own keys, under that provider's terms.
 
 ### 6. Children
 
-ML Atlas does not knowingly collect personal information from anyone, including children, because it does not collect personal information at all.
+{name} does not knowingly collect personal information from anyone, including children, because it does not collect personal information at all.
 
 ### 7. Your rights
 
-Because we do not receive or store your personal data, there is nothing for us to access, correct or delete on our side: you control everything stored by ML Atlas through your browser. For data held by the hosting or delivery services, use the contact options in their policies.
+Because we do not receive or store your personal data, there is nothing for us to access, correct or delete on our side: you control everything stored by {name} through your browser. For data held by the hosting or delivery services, use the contact options in their policies.
 
 ### 8. Changes
 
@@ -131,6 +132,10 @@ Questions about privacy: [{contact}]({contact}).
 
   legal.render = function (text) {
     return String(text)
+      .replace(/\{name\}/g, MLA.course.name)
+      .replace(/\{subject\}/g, MLA.course.subject)
+      .replace(/\{key\}/g, MLA.course.storageKey)
+      .replace(/\{db\}/g, MLA.course.datasetsDb)
       .replace(/\{owner\}/g, legal.owner)
       .replace(/\{year\}/g, legal.year)
       .replace(/\{updated\}/g, legal.updated)

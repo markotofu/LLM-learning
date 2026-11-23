@@ -1,4 +1,4 @@
-/* ML Atlas – shared utilities (framework independent; also loaded by the Node tests) */
+/* Shared utilities (framework independent; also loaded by the Node tests) */
 (function (global) {
   const MLA = (global.MLA = global.MLA || {});
 
@@ -80,7 +80,7 @@
     out = out.replace(/\u0000(\d+)\u0000/g, (m, i) => '<code>' + codes[Number(i)] + '</code>');
     return out;
   }
-  const LANG_LABEL = { python: 'Python', py: 'Python', bash: 'Terminal', sh: 'Terminal', shell: 'Terminal', text: 'Text', json: 'JSON', js: 'JavaScript', javascript: 'JavaScript', output: 'Output', pytorch: 'Python · PyTorch' };
+  const LANG_LABEL = { python: 'Python', py: 'Python', bash: 'Terminal', sh: 'Terminal', shell: 'Terminal', text: 'Text', json: 'JSON', js: 'JavaScript', javascript: 'JavaScript', output: 'Output', pytorch: 'Python · PyTorch', csharp: 'C#', cs: 'C#' };
   function codeBlockHtml(code, lang) {
     const l = (lang || '').toLowerCase();
     const hl = MLA.highlight ? MLA.highlight.code(code, l) : escapeHtml(code);
@@ -252,7 +252,7 @@
     }
     if (s.startsWith('MLA1B.')) return new TextDecoder().decode(b64ToBytes(s.slice(6)));
     if (s.startsWith('{')) return s;
-    throw new Error('That does not look like an ML Atlas sync code.');
+    throw new Error('That does not look like a sync code from ' + MLA.course.name + '.');
   }
 
   const projectKey = p => p.concept + ':' + slug(p.title);      // where a sample project's progress is stored (state.projects)

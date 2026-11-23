@@ -1,4 +1,4 @@
-/* ML Atlas – practice problem list (filter, search, stats) */
+/* Practice problem list (filter, search, stats) */
 (function (global) {
   const MLA = global.MLA;
   MLA.components = MLA.components || {};

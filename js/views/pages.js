@@ -1,4 +1,4 @@
-/* ML Atlas – learning tracks, glossary, flashcards (spaced repetition), achievements */
+/* Learning tracks, glossary, flashcards (spaced repetition), achievements */
 (function (global) {
   const MLA = global.MLA;
   MLA.components = MLA.components || {};
@@ -16,7 +16,7 @@
     },
     template: `
     <div class="stack">
-      <section-head title="Learning Tracks" sub="Pick a destination. ML Atlas works out every prerequisite and lines the concepts up in a sensible order. You can switch at any time; progress is shared." />
+      <section-head title="Learning Tracks" sub="Pick a destination. The map works out every prerequisite and lines the concepts up in a sensible order. You can switch at any time; progress is shared." />
       <div class="grid cols-2">
         <div v-for="it in list" :key="it.t.id" class="card track-card" :class="{current: state.profile.goal===it.t.id}">
           <div class="card-title"><h3><mla-icon :name="it.t.icon" :size="18"/> {{ it.t.title }}</h3><span v-if="state.profile.goal===it.t.id" class="chip accent tiny">your goal</span></div>

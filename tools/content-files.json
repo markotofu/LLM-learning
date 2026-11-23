@@ -1,26 +1,3 @@
 [
-  "concepts-start-math.js",
-  "concepts-python-data.js",
-  "concepts-ml-core.js",
-  "concepts-ml-more.js",
-  "concepts-ml-unsup.js",
-  "concepts-nn-core.js",
-  "concepts-nn-more.js",
-  "concepts-llm-core.js",
-  "concepts-llm-more.js",
-  "concepts-apps.js",
-  "concepts-spec.js",
-  "concepts-foundations-plus.js",
-  "concepts-viz.js",
-  "concepts-llm-plus.js",
-  "concepts-spec-plus.js",
-  "concepts-theory-plus.js",
-  "concepts-practice-plus.js",
-  "concepts-deep-plus.js",
-  "concepts-frontier-plus.js",
-  "concepts-frontier-more.js",
-  "concepts-roadmap.js",
-  "concepts-topics-1.js",
-  "concepts-topics-2.js",
-  "concepts-capstones.js"
+  "concepts-sample.js"
 ]

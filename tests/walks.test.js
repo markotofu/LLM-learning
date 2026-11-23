@@ -153,5 +153,7 @@ for (const c of Object.values(MLA.content.byId)) for (const s of c.sections || [
     T.ok(c.id + ': walkthrough ' + s.demo + ' exists', !!MLA.walks[s.demo.slice(5)]);
   }
 }
-T.ok('every walkthrough is used in a lesson', names.every(n => embedded.has(n)), names.filter(n => !embedded.has(n)).join(', '));
+// The course template keeps ML Atlas's walkthroughs as examples; lessons decide which ones the learner sees.
+const unused = names.filter(n => !embedded.has(n));
+if (unused.length) console.log(unused.length + ' walkthroughs are not used by any lesson (examples to adapt or delete): ' + unused.join(', '));
 T.done();

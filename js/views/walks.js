@@ -1,4 +1,4 @@
-/* ML Atlas – step-through walkthroughs of algorithms. Each one is an animated flowchart of the algorithm, kept in sync
+/* Step-through walkthroughs of algorithms. Each one is an animated flowchart of the algorithm, kept in sync
  * with its code (the running line is highlighted), the formula with the numbers of the current step, the values of the
  * variables, and a small plot of what the model "sees". Every arrow and box carries its reasoning: what the step is
  * for, and why the algorithm goes there next. Some steps ask the reader to predict what happens before it is shown.

@@ -1,4 +1,4 @@
-/* ML Atlas – quiz runner (concept mastery quizzes) and inline knowledge checks */
+/* Quiz runner (concept mastery quizzes) and inline knowledge checks */
 (function (global) {
   const MLA = global.MLA;
   MLA.components = MLA.components || {};

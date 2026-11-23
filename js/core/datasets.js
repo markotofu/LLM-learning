@@ -1,4 +1,4 @@
-/* ML Atlas – datasets that code in the in-browser Python can open as data/<name>, for example
+/* Datasets that code in the in-browser Python can open as data/<name>, for example
  * pd.read_csv("data/bike_rentals_hourly.csv") or pd.read_excel("data/sales.xlsx"). Before code runs,
  * js/engines/python.js writes every dataset the code mentions into Python's file system.
  * Two kinds:
@@ -13,13 +13,9 @@
  *   MLA.datasets.readCode(name) -> a line of pandas that loads it */
 (function (global) {
   const MLA = (global.MLA = global.MLA || {});
+  // Small datasets shipped with the course in data/, for lessons and projects: { name: 'file.csv', title, rows, lesson, desc }.
+  // The sample course has none; learners can still upload their own.
   const BUNDLED = [
-    { name: 'bike_rentals_hourly.csv', title: 'Bike rentals, hourly (synthetic)', rows: 2184, lesson: 'time-series',
-      desc: 'Thirteen weeks of hourly bike rentals with daily and weekly cycles, weather effects, rainy days, two holidays and a slow upward trend. Columns: datetime, hour, weekday (0 is Monday), holiday, temp_c, humidity, rentals.' },
-    { name: 'telco_churn_synthetic.csv', title: 'Telecom customer churn (synthetic)', rows: 2000, lesson: 'ensembles',
-      desc: 'Two thousand customers of a phone and internet company and whether they left. Columns: customer_id, tenure_months, contract, monthly_charges, total_charges (blank for brand-new customers), internet, support_calls, paperless_billing, churned.' },
-    { name: 'card_transactions_synthetic.csv', title: 'Card payments with rare fraud (synthetic)', rows: 5000, lesson: 'anomaly-detection',
-      desc: 'Five thousand card payments over 14 days, about 0.9% of them fraudulent. Columns: transaction_id, day, hour, merchant_category, amount, distance_from_home_km, online, new_merchant, fraud.' }
   ].map(d => Object.assign(d, { bundled: true, type: 'csv' }));
 
   const MAX_FILE = 20 * 1024 * 1024, MAX_TOTAL = 60 * 1024 * 1024;
@@ -38,7 +34,7 @@
     if (!dbp) {
       dbp = new Promise(resolve => {
         try {
-          const r = global.indexedDB.open('ml-atlas-datasets', 1);
+          const r = global.indexedDB.open(MLA.course.datasetsDb, 1);
           r.onupgradeneeded = () => r.result.createObjectStore('files', { keyPath: 'name' });
           r.onsuccess = () => resolve(r.result);
           r.onerror = () => resolve(null);

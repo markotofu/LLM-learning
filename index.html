@@ -9,12 +9,15 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f4ecdc">
-  <meta name="description" content="ML Atlas: an interactive mind map of machine learning, neural networks and large language models, with lessons, runnable Python, quizzes and coding problems that run in your browser.">
-  <title>ML Atlas</title>
+  <meta name="description" content="Course Atlas: an interactive map of game development, with lessons, runnable code, quizzes and coding problems that run in your browser.">
+  <title>Course Atlas</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="css/app.css">
+  <!-- js/course.js holds the course name, id and owner; it loads first. The title, description and loading screen
+       below repeat the name because they show before any script runs: edit them together with js/course.js. -->
+  <script src="js/course.js"></script>
   <script src="js/core/boot-theme.js"></script>
 </head>
 <body>
@@ -34,11 +37,11 @@
             <circle cx="30" cy="122" r="6.5"/><circle cx="85" cy="122" r="6.5"/><circle cx="145" cy="122" r="6.5"/><circle cx="205" cy="122" r="6.5"/>
           </g>
         </svg>
-        <div class="boot-title">ML Atlas</div>
-        <p class="boot-sub">Laying out the map of machine learning<span class="sr-only">. Loading.</span></p>
+        <div class="boot-title">Course Atlas</div>
+        <p class="boot-sub">Laying out the map<span class="sr-only">. Loading.</span></p>
         <div class="boot-bar" aria-hidden="true"><span></span></div>
         <p class="boot-slow">This is taking longer than usual. Check your connection, then reload the page.</p>
-        <noscript><p class="boot-noscript">ML Atlas needs JavaScript. Turn it on in your browser and reload the page.</p><style>.boot-bar, .boot-sub, .boot-slow { display: none; }</style></noscript>
+        <noscript><p class="boot-noscript">This course needs JavaScript. Turn it on in your browser and reload the page.</p><style>.boot-bar, .boot-sub, .boot-slow { display: none; }</style></noscript>
       </div>
     </div>
   </div>

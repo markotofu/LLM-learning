@@ -1,4 +1,4 @@
-/* ML Atlas – static, theme-aware SVG diagrams embedded in lessons as { type: 'demo', demo: 'dg-<name>' } sections.
+/* Static, theme-aware SVG diagrams embedded in lessons as { type: 'demo', demo: 'dg-<name>' } sections.
  * Colours come from CSS classes (.diagram .dg-*) so they follow the dark, darker and light themes.
  * Layout is in a fixed viewBox (820 wide); on narrow screens the diagram scrolls sideways instead of shrinking. */
 (function (global) {

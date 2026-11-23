@@ -1,4 +1,4 @@
-/* ML Atlas – read aloud. Plays narration (js/core/narrate.js) with the browser's built-in speech synthesis
+/* Read aloud. Plays narration (js/core/narrate.js) with the browser's built-in speech synthesis
  * (the Web Speech API). Only on-device voices are used (SpeechSynthesisVoice.localService): no lesson text is sent
  * to an online or AI voice service, and it works on a static site with no server.
  * Text is spoken a sentence or two at a time. Short utterances avoid browsers cutting long ones off, and they make
@@ -57,7 +57,7 @@
   function session() {
     if (!media) return;
     try {
-      media.metadata = state.playing && global.MediaMetadata ? new global.MediaMetadata({ title: state.title || 'ML Atlas', artist: state.lessonTitle || 'ML Atlas', album: 'ML Atlas',
+      media.metadata = state.playing && global.MediaMetadata ? new global.MediaMetadata({ title: state.title || MLA.course.name, artist: state.lessonTitle || MLA.course.name, album: MLA.course.name,
         artwork: [{ src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' }, { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' }] }) : null;
       media.playbackState = !state.playing ? 'none' : state.paused ? 'paused' : 'playing';
     } catch (e) { /* not supported */ }

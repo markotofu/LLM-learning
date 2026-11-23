@@ -1,6 +1,6 @@
 # Content guide
 
-How to add or edit lessons, quizzes and practice problems in ML Atlas. All content lives in plain JavaScript files in `js/data/`; there is no build step. After any change, run `npm test` (see the end of this guide).
+How to add or edit lessons, quizzes and practice problems in this course. To start a new course from the template, read [MAKING_A_COURSE.md](MAKING_A_COURSE.md) first. All content lives in plain JavaScript files in `js/data/`; there is no build step. After any change, run `npm test` (see the end of this guide).
 
 ## 1. Where content lives
 
@@ -20,7 +20,7 @@ A **new content file** must be added to `index.html` with the other `concepts-*.
 ```js
 {
   id: 'attention',                 // kebab-case, unique; used in URLs (#/concept/attention)
-  branch: 'llm',                   // start | math | code | ml | dl | llm | apps | spec
+  branch: 'math',                  // a branch id from js/data/branches.js
   title: 'Attention & Self-Attention',
   short: 'Attention',              // optional shorter label for the map
   level: 2,                        // 1 beginner, 2 intermediate, 3 advanced
@@ -48,10 +48,16 @@ A **new content file** must be added to `index.html` with the other `concepts-*.
 { type: 'code', title: 'Example', md: `optional intro`, code: `python…`, after: `optional note shown after the output` }
 { type: 'code', title: 'Run locally', lang: 'pytorch', code: `…` }   // shown, not run (PyTorch is not in the browser)
 { type: 'code', title: 'Real API call', run: false, md: `…`, code: `…` }   // plain Python, shown but not runnable
+{ type: 'code', title: 'The same in Unity', lang: 'csharp', run: false, code: `…` }   // C#: highlighted and shown, not run
+{ type: 'image', title: 'The Inspector', src: 'assets/images/unity/inspector.png', alt: 'What the picture shows', md: `optional intro`, after: `optional caption`, width: 480 }
 { type: 'demo', title: 'Interactive: attention', md: `optional intro`, demo: 'attention' }
 { type: 'check', question: { /* a quiz question, any type except match */ } }
 { type: 'chart', title: 'Loss per step for different learning rates', md: `optional intro`, chart: { /* spec */ }, after: `what to notice` }
 ```
+
+**Images** show screenshots and figures: a PNG, JPEG, WebP, GIF or SVG file under `assets/images/` (one folder per topic, such as `assets/images/unity/`), under 600 KB. `alt` (20 characters or more) says what the picture shows: screen readers and the read-aloud player use it, so describe what matters ("the Inspector with the Rigidbody component expanded"), not the file. `width` (optional, in pixels) caps the displayed width; the picture always fits a phone screen and opens full size when clicked. On Windows, `tools/capture-window.ps1` saves a window or a region of it (the Unity Editor, for example) as a PNG; crop away anything personal (user names, account menus, file paths with your name) before committing. `tests/content.test.js` checks the path, the file, the size and the alt text.
+
+**C# and other languages.** Only Python runs in the browser. Code in another language is shown with `run: false` and a `lang`: `csharp` is highlighted for Unity scripts (keywords, types, attributes such as `[SerializeField]`, `5f` numbers, `$"…"` strings and `#region` lines) and labelled "C# · runs in Unity, not in the browser". A good pattern for a Unity course: a runnable Python sample that shows the idea with real numbers, then the Unity C# script that does the same.
 
 **Charts** are static, theme-aware SVG plots drawn by `js/views/charts.js` from numbers stored in the lesson. Compute the numbers with a real experiment or formula (keep the script that generated them in `tools/charts/`), never invent them, and say in `after` what the reader should notice. The spec:
 
@@ -91,9 +97,9 @@ what the output shows
 ### REPLACE concept=knn section="Old title"                  (the blocks below replace that section)
 ```
 
-Afterwards run `node --check` on the changed content files, `node tools/legacy-sections.js`, `node tests/content.test.js` and `MLA_SAMPLE_OUTPUT=out.json node tests/problems.test.js <concepts>`, and read the sample outputs against the text you wrote.
+Afterwards run `node --check` on the changed content files, `node tests/content.test.js` and `MLA_SAMPLE_OUTPUT=out.json node tests/problems.test.js <concepts>`, and read the sample outputs against the text you wrote.
 
-**A new lesson.** Write its metadata (id, branch, title, summary, why, objectives, when, pitfalls, takeaways, refs), an empty `quiz: []`, its practice problems and a single text section titled `placeholder` in a content file, and add the file to `tools/content-files.json` (the page loads lessons on demand through `js/data/catalog.js`; `node tools/build-catalog.js` regenerates it). Then write the sections in a patch that starts with `### REPLACE concept=<id> section="placeholder"`, and add quiz questions with `### INSERT concept=<id> at=end`. Every lesson also needs at least one glossary term in `js/data/glossary.js`, linked to it by its id. See `js/data/concepts-roadmap.js` for examples.
+**A new lesson.** Write its metadata (id, branch, title, summary, why, objectives, when, pitfalls, takeaways, refs), an empty `quiz: []`, its practice problems and a single text section titled `placeholder` in a content file, and add the file to `tools/content-files.json` (the page loads lessons on demand through `js/data/catalog.js`; `node tools/build-catalog.js` regenerates it). Then write the sections in a patch that starts with `### REPLACE concept=<id> section="placeholder"`, and add quiz questions with `### INSERT concept=<id> at=end`. Every lesson also needs at least one glossary term in `js/data/glossary.js`, linked to it by its id. See `js/data/concepts-sample.js` for examples.
 
 **Predict first.** A runnable Python code section can carry a `predict` question, shown above the code. The learner commits to an answer, reads the explanation, then runs the code to see it happen:
 
@@ -107,7 +113,7 @@ Afterwards run `node --check` on the changed content files, `node tools/legacy-s
 
 `expect` is checked by `tests/problems.test.js` (CPython) and by the in-app self-test (Pyodide), so a prediction cannot silently drift away from what the code prints. Keep each expected string short and robust: avoid digits that depend on a library version.
 
-**Section ids and saved progress.** Every section gets an id from its title (quick checks: from a hash of the question). Progress (sections read, answered checks and predictions, the mistakes queue) is stored by these ids, so you can insert or reorder sections freely. Keep section titles unique within a lesson, and do not rename a section without a reason: a renamed section starts again as unread. Old saved data that used positions is migrated through `js/data/legacy-sections.js`; if `tests/content.test.js` reports that a lesson's legacy layout no longer matches (because you changed its first sections), run `node tools/legacy-sections.js` and commit the result.
+**Section ids and saved progress.** Every section gets an id from its title (quick checks: from a hash of the question). Progress (sections read, answered checks and predictions, the mistakes queue) is stored by these ids, so you can insert or reorder sections freely. Keep section titles unique within a lesson, and do not rename a section without a reason: a renamed section starts again as unread. (`js/data/legacy-sections.js` translated ML Atlas's oldest saved progress, which stored positions; a new course leaves it empty.)
 
 Runnable code samples execute in the in-browser Python (Pyodide 0.27, Python 3.12, NumPy; pandas, scikit-learn and matplotlib load automatically when imported). Keep them fast (a few seconds at most in the browser) and print something meaningful. A run stops after the learner's time limit (20 s by default, set under Progress & Sync). A sample that genuinely needs longer, such as the LoRA capstone's training runs, can declare `timeoutSec: 120` (20 to 300; in a patch file, `%% timeout 120`), and the in-app self-test allows it twice that. Say in the text that the sample is slow, and expect the browser to be about three times slower than desktop Python.
 
@@ -116,9 +122,9 @@ Available demos (28):
 - In `js/views/demos.js`: `gradient-descent`, `activations`, `linear-fit`, `overfit-poly`, `knn`, `kmeans`, `threshold`, `softmax`, `attention`, `bpe`, `convolution`, `neuron`, `positional`, `quantization`, `embeddings`, `calibration`, `diffusion`, `roofline` and `ppo-clip`.
 - In `js/views/demos-more.js`: `eigen`, `conditioning`, `beta`, `gp`, `pca`, `lr-schedule`, `backprop`, `bias-variance` and `tree-split`. This file uses the canvas helpers that `demos.js` exports as `MLA.demoKit`.
 
-Available diagrams (26), defined in `js/views/diagrams.js`: `dg-transformer`, `dg-rag`, `dg-agent`, `dg-diffusion`, `dg-unet`, `dg-lifecycle`, `dg-cv`, `dg-lora`, `dg-pipeline`, `dg-lstm`, `dg-moe`, `dg-parallel`, `dg-rules-vs-learning`, `dg-aliasing`, `dg-data-splits`, `dg-train-step`, `dg-bow`, `dg-gen-families`, `dg-vit`, `dg-groupby`, `dg-chart-chooser`, `dg-seq2seq`, `dg-attn-masks`, `dg-joins`, `dg-mcp` and `dg-equivariance`. Use them like demos, for example `{ type: 'demo', title: 'Diagram: the agent loop', demo: 'dg-agent' }`. A section can also show only a diagram followed by text, using `after` (see the `rag` and `mlops` lessons).
+Diagrams are SVG drawings defined in `js/views/diagrams.js` and named `dg-<name>` in a demo section.
 
-Available step-through walkthroughs (18), defined in `js/views/walks-ml.js`, `js/views/walks-dl.js` and `js/views/walks-more.js`: `walk-linreg-gd`, `walk-knn`, `walk-logreg-gd`, `walk-perceptron`, `walk-tree-split`, `walk-boosting`, `walk-naive-bayes`, `walk-em-gmm`, `walk-adam`, `walk-attention`, `walk-decoding`, `walk-q-learning`, `walk-mlp-xor`, `walk-svm-hinge`, `walk-pca-power`, `walk-rnn-memory`, `walk-rag-retrieve` and `walk-kv-cache`. Each sits right after the section that explains its algorithm, as `{ type: 'demo', title: 'Step through: …', demo: 'walk-<name>' }`.
+Available step-through walkthroughs: the template keeps ML Atlas's 18 (`js/views/walks-ml.js`, `walks-dl.js` and `walks-more.js`: linear regression, k-NN, attention, Q-learning and others) as working examples of the format in `js/views/walks.js`. No sample lesson uses them, so learners never load them; write your own walkthroughs in a new `js/views/walks-<topic>.js` (listed in `WALK_FILES` in `js/data/branches.js`), and delete the examples and their checks in `tests/walks.test.js` when you no longer need them. The demos (`js/views/demos.js`, `demos-more.js`) and diagrams (`js/views/diagrams.js`) are ML Atlas examples in the same way.
 
 Use a **demo** when the learner should move a slider and watch something change, a **diagram** for the structure of a system, a **walkthrough** when the idea is a loop or a decision procedure the learner should follow one step at a time, and a **chart** for numbers: a curve, a comparison or a scaling law.
 
@@ -209,7 +215,7 @@ Every question needs an `explain`. Options and items are shuffled when shown. `f
 
 **Extra questions for custom quizzes.** Every lesson also has at least 3 extra questions in `js/data/bank-<branch>.js`, keyed by lesson id (`'knn': [ ... ]`), in the same format as above. They appear only in custom quizzes (`#/quiz`), mixed with the lesson's own questions: never in the lesson's quiz, never in Review (a missed bank question is not queued). Write them to stand alone, test the lesson's objectives from another angle (a new number, a scenario, the reverse question), and never repeat one of the lesson's own questions or another bank question; `tests/content.test.js` checks all of this, plus the house style. The bank files use double-quoted strings, so apostrophes need no escaping; avoid double quotes and backslashes inside them. A new lesson needs its bank questions too, and a new branch needs a `bank-<branch>.js` file and an entry in `BANK_BRANCHES` (`js/data/branches.js`).
 
-**The placement test** (`#/placement`) reuses quiz questions. `POOL` in `js/engines/placement.js` lists, for every beginner and intermediate lesson in Start Here, Math Foundations, Python & Data and Classical ML, one or two of its questions by their opening words. They are asked outside the lesson, so they must stand alone (no "in this lesson" or "the code above"), test the lesson's core idea and be quick: multiple choice or a short number, never true or false. If you reword or remove one, update its opening; a new beginner or intermediate lesson in those branches needs an entry. `tests/placement.test.js` fails until both are done.
+**The placement test** (`#/placement`) reuses quiz questions. `POOL` in `js/engines/placement.js` lists, for every beginner and intermediate lesson in the branches named in `BRANCHES` (same file), one or two of its questions by their opening words. They are asked outside the lesson, so they must stand alone (no "in this lesson" or "the code above"), test the lesson's core idea and be quick: multiple choice or a short number, never true or false. If you reword or remove one, update its opening; a new beginner or intermediate lesson in those branches needs an entry. `tests/placement.test.js` fails until both are done.
 
 ## 5. Practice problems
 

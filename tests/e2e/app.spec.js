@@ -9,7 +9,7 @@ test('every lesson renders, without errors, fits a phone screen and passes the a
   await page.setViewportSize({ width: 375, height: 812 });
   const errors = await boot(page, '/home');
   const list = await lessons(page);
-  expect(list.length).toBeGreaterThan(100);
+  expect(list.length).toBeGreaterThan(0);
   const bad = [];
   for (const c of list) {
     await go(page, '/concept/' + c.id, c.title);
@@ -29,7 +29,7 @@ test('every lesson renders, without errors, fits a phone screen and passes the a
 test('the other pages render, fit a phone screen and pass the accessibility check', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   const errors = await boot(page, '/home');
-  const routes = [['/home', 'Dashboard'], ['/map', 'Concept Map'], ['/problems', 'Practice Problems'], ['/problem/dot-product', 'Dot Product'], ['/playground', 'Python Playground'], ['/tracks', 'Learning Tracks'], ['/track/build-llm', ''], ['/review', 'Review'], ['/quiz', 'Custom Quiz'], ['/glossary', 'Glossary'], ['/projects', 'Projects'], ['/achievements', 'Achievements'], ['/profile', 'Progress'], ['/selftest', 'Self-test'], ['/terms', 'Terms'], ['/privacy', 'Privacy']];
+  const routes = [['/home', 'Dashboard'], ['/map', 'Concept Map'], ['/problems', 'Practice Problems'], ['/problem/fixed-time-steps', 'Fixed Time Steps'], ['/playground', 'Python Playground'], ['/tracks', 'Learning Tracks'], ['/track/basics', ''], ['/review', 'Review'], ['/quiz', 'Custom Quiz'], ['/glossary', 'Glossary'], ['/projects', 'Projects'], ['/achievements', 'Achievements'], ['/profile', 'Progress'], ['/selftest', 'Self-test'], ['/terms', 'Terms'], ['/privacy', 'Privacy']];
   const bad = [];
   for (const [r, t] of routes) {
     await go(page, r, t || undefined);
@@ -79,24 +79,6 @@ test('demos keep their proportions and diagram labels fit their boxes', async ({
   expect(errors).toEqual([]);
 });
 
-test('a step-through walkthrough steps, highlights its code and restarts when a setting changes', async ({ page }) => {
-  const errors = await boot(page, '/home');
-  await go(page, '/concept/knn', 'k-Nearest');
-  const walk = page.locator('.walk').first();
-  await expect(walk.locator('.walk-count')).toHaveText('step 1 of 10');
-  for (let i = 0; i < 3; i++) await walk.getByRole('button', { name: 'Next step' }).click();
-  await expect(walk.locator('.walk-count')).toHaveText('step 4 of 10');
-  await expect(walk.locator('.walk-node.on')).toHaveCount(1);
-  await expect(walk.locator('.walk-code li.on', { hasText: 'np.linalg.norm' })).toHaveCount(1);
-  await expect(walk.locator('.walk-formula')).toContainText('d = √(');
-  await expect(walk.locator('.walk-where')).toContainText('the straight-line distance');   // the symbols of this step
-  await walk.locator('select[aria-label="k"]').selectOption('1');
-  await expect(walk.locator('.walk-count')).toHaveText('step 1 of 10');
-  for (let i = 0; i < 9; i++) await walk.getByRole('button', { name: 'Next step' }).click();
-  await expect(walk.locator('.walk-say')).toContainText('labelled orange (1 of 1 votes)');
-  expect(errors).toEqual([]);
-});
-
 test('switching themes recolours the app', async ({ page }) => {
   await boot(page, '/profile');
   await go(page, '/profile', 'Progress');
@@ -122,35 +104,25 @@ test('switching themes recolours the app', async ({ page }) => {
 test('legal pages show the owner, the year and the stored data', async ({ page }) => {
   await boot(page, '/terms');
   await go(page, '/terms', 'Terms');
-  await expect(page.locator('main')).toContainText('markotofu');
+  const course = await page.evaluate(() => MLA.course);
+  await expect(page.locator('main')).toContainText(course.owner);
   await go(page, '/privacy', 'Privacy');
-  await expect(page.locator('main')).toContainText('mla.state.v1');
-});
-
-test('progress saved by older versions (section positions) is migrated to section ids', async ({ page }) => {
-  await boot(page, '/home', { version: 1, concepts: { 'transformer-block': { read: [0, 1], checks: { 3: true }, quizBest: 0, quizAttempts: 0, quizPassed: false } } });
-  const cs = await page.evaluate(() => JSON.parse(JSON.stringify(MLA.store.state.concepts['transformer-block'])));
-  expect(cs.read).toEqual(['one-block', 'the-residual-stream']);
-  expect(Object.keys(cs.checks)).toHaveLength(1);
-  expect(Object.keys(cs.checks)[0]).toMatch(/^check-/);
-  await go(page, '/concept/transformer-block', 'The Transformer Block');
-  await expect(page.locator('.lesson-section.read')).toHaveCount(2);
+  await expect(page.locator('main')).toContainText(course.storageKey);
 });
 
 test('a wrong "predict first" answer is explained and queued for review', async ({ page }) => {
   await boot(page, '/home');
-  await go(page, '/concept/probability', 'Probability');
-  // the lesson has several predictions; pick the Bayes one by its section heading
-  const section = page.locator('.lesson-section').filter({ has: page.getByRole('heading', { name: 'Bayes by counting', exact: true }) });
+  await go(page, '/concept/game-loop', 'The Game Loop');
+  const section = page.locator('.lesson-section').filter({ has: page.getByRole('heading', { name: 'Moving with and without delta time', exact: true }) });
   const box = section.locator('.predict-box');
-  await box.getByText('About 50%', { exact: true }).click();
+  await box.getByText('5.00 units', { exact: true }).click();
   await expect(box.locator('.feedback')).toContainText('Not what happens');
   await go(page, '/review?tab=mistakes', 'Review');
   await expect(page.locator('.stat', { hasText: 'Coming back later' })).toContainText('1');
 });
 
 test('sync code: export, then merge it back without losing anything', async ({ page }) => {
-  await boot(page, '/home', { xp: 120, problems: { 'dot-product': { solved: true, solvedAt: '2026-01-01T00:00:00Z', attempts: 1 } } });
+  await boot(page, '/home', { xp: 120, problems: { 'fixed-time-steps': { solved: true, solvedAt: '2026-01-01T00:00:00Z', attempts: 1 } } });
   await go(page, '/profile', 'Progress');
   await page.getByRole('button', { name: 'Create & copy sync code' }).click();
   const code = await page.locator('textarea.sync-box[readonly]').inputValue();
@@ -158,7 +130,7 @@ test('sync code: export, then merge it back without losing anything', async ({ p
   await page.getByPlaceholder('Paste a sync code').fill(code);
   await page.getByRole('button', { name: 'Apply sync code' }).click();
   await expect(page.locator('.toast', { hasText: 'Sync code applied' })).toBeVisible();
-  expect(await page.evaluate(() => MLA.store.state.problems['dot-product'].solved)).toBe(true);
+  expect(await page.evaluate(() => MLA.store.state.problems['fixed-time-steps'].solved)).toBe(true);
 });
 
 test('read aloud: the lesson plays part by part with an on-device voice, and the player stops', async ({ page }) => {
@@ -174,7 +146,7 @@ test('read aloud: the lesson plays part by part with an on-device voice, and the
     } });
   });
   const errors = await boot(page, '/home');
-  await go(page, '/concept/linear-regression', 'Linear');
+  await go(page, '/concept/game-loop', 'The Game Loop');
   await page.getByRole('button', { name: 'Listen to the lesson' }).click();
   const player = page.getByRole('region', { name: 'Read aloud' });
   await expect(player).toContainText('part 1 of');
@@ -191,57 +163,13 @@ test('read aloud: the lesson plays part by part with an on-device voice, and the
   expect(errors).toEqual([]);
 });
 
-test('a walkthrough runs on a practice dataset, and on a phone shows only the code of the current step', async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 812 });
-  const errors = await boot(page, '/home');
-  await go(page, '/concept/svm', 'Support Vector');
-  const walk = page.locator('.walk').first();
-  await walk.locator('select[aria-label="Data"]').selectOption('card_transactions_synthetic.csv');
-  await expect(walk.locator('.walk-data p')).toContainText('Blue is fraud = 0, orange is fraud = 1');
-  await expect(walk.locator('select[aria-label="feature 1"]')).toHaveValue('amount');
-  for (let i = 0; i < 4; i++) await walk.getByRole('button', { name: 'Next step' }).click();
-  await expect(walk.locator('.walk-count')).toHaveText(/step 5 of \d+/);
-  const shown = await walk.locator('.walk-code li').evaluateAll(els => els.filter(e => getComputedStyle(e).display !== 'none').length);
-  expect(shown).toBeLessThan(8);
-  await walk.getByRole('button', { name: /Show all 8 lines/ }).click();
-  await expect(walk.locator('.walk-code li:visible')).toHaveCount(8);
-  expect(errors).toEqual([]);
-});
-
-test('a walkthrough read aloud: its speaker button reads the steps and the card follows the voice', async ({ page }) => {
-  await page.addInitScript(() => {                // the same silent stand-in: every utterance "ends" after 150 ms
-    const voice = { voiceURI: 'test-local', name: 'Test voice', lang: 'en-US', localService: true, default: true };
-    window.__spoken = [];
-    window.SpeechSynthesisUtterance = function (text) { this.text = text; };
-    Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: {
-      speaking: false, paused: false, pending: false, getVoices: () => [voice], addEventListener() {}, removeEventListener() {},
-      cancel() {}, pause() {}, resume() {},
-      speak(u) { window.__spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 150); }
-    } });
-  });
-  const errors = await boot(page, '/home');
-  await go(page, '/concept/knn', 'k-Nearest');
-  const walk = page.locator('.walk').first();
-  await expect(walk.locator('select[aria-label="Speed"] option')).toHaveText(['Sluggish', 'Super slow', 'Slow', 'Normal', 'Fast', 'With the voice']);
-  await page.locator('[data-narr="step-through-how-k-nn-labels-a-new-point"] .sec-listen').click();
-  await expect(walk.locator('select[aria-label="Speed"]')).toHaveValue('voice');
-  await expect(walk.locator('.walk-count')).toHaveText('step 3 of 10', { timeout: 15000 });     // moved on with the voice
-  expect(await page.evaluate(() => window.__spoken.some(t => t.includes('A new point arrives')))).toBe(true);
-  await walk.getByRole('button', { name: 'Pause' }).click();
-  expect(await page.evaluate(() => MLA.speech.state.playing)).toBe(false);
-  // a timed speed is remembered for the next walkthrough
-  await walk.locator('select[aria-label="Speed"]').selectOption('sluggish');
-  expect(await page.evaluate(() => MLA.store.state.profile.walkSpeed)).toBe('sluggish');
-  expect(errors).toEqual([]);
-});
-
 test.describe('in-browser Python (downloads Pyodide from the CDN)', () => {
   test('a lesson code sample runs and prints its output', async ({ page }) => {
     await boot(page, '/home');
-    await go(page, '/concept/probability', 'Probability');
-    const sample = page.locator('.lesson-section', { hasText: 'Bayes by counting' });
+    await go(page, '/concept/game-loop', 'The Game Loop');
+    const sample = page.locator('.lesson-section', { hasText: 'Moving with and without delta time' });
     await sample.getByRole('button', { name: /Run/ }).first().click();
-    await expect(sample.locator('.ro-stdout')).toContainText('P(condition | positive) ~ 0.167', { timeout: 150 * 1000 });
+    await expect(sample.locator('.ro-stdout')).toContainText('144 fps: fixed step per frame 14.40 units', { timeout: 150 * 1000 });
   });
 
   test('an uploaded dataset is readable from Python and travels in the progress export', async ({ page }) => {
@@ -261,7 +189,7 @@ test.describe('in-browser Python (downloads Pyodide from the CDN)', () => {
 
   test('a practice problem: the starter fails, the reference solution is accepted', async ({ page }) => {
     await boot(page, '/home');
-    await go(page, '/problem/dot-product', 'Dot Product');
+    await go(page, '/problem/fixed-time-steps', 'Fixed Time Steps');
     await page.getByRole('button', { name: 'Run', exact: true }).click();
     await expect(page.getByText(/tests passed/).first()).toBeVisible({ timeout: 150 * 1000 });
     await expect(page.getByText('Wrong Answer').first()).toBeVisible();
@@ -275,32 +203,18 @@ test.describe('in-browser Python (downloads Pyodide from the CDN)', () => {
   });
 });
 
-// Map at scale: zoom to a branch, hide finished branches and the progress heat map, in all three views.
+// The concept map: heat map, zoom to a branch, hide finished branches, in all three views (sample course branches).
 test('the concept map zooms to a branch, hides finished branches and shows a heat map, in all three views', async ({ page }) => {
   const errors = await boot(page, '/home');
-  // progress: Start and the whole Python & Data branch finished, one Math lesson mastered, one in progress
+  // progress: Start Here finished, vectors mastered, collisions in progress
   await page.evaluate(() => {
     const at = '2026-01-01T00:00:00Z', S = MLA.store.state.concepts;
     const done = extra => Object.assign({ read: [], checks: {}, quizBest: 90, quizAttempts: 1, quizPassed: true, completedAt: at, masteredAt: null, visitedAt: at }, extra);
-    for (const c of MLA.data.concepts) if (c.branch === 'start' || c.branch === 'code') S[c.id] = done();
-    S['vectors-matrices'] = done({ masteredAt: at });
-    S.probability = { read: [], checks: {}, quizBest: 0, quizAttempts: 0, quizPassed: false, completedAt: null, masteredAt: null, visitedAt: at };
+    for (const c of MLA.data.concepts) if (c.branch === 'start') S[c.id] = done();
+    S.vectors = done({ masteredAt: at });
+    S.collisions = { read: [], checks: {}, quizBest: 0, quizAttempts: 0, quizPassed: false, completedAt: null, masteredAt: null, visitedAt: at };
   });
   await go(page, '/map', 'Concept Map');
-  // what the engine says a zoom to Math shows: everything, and without the finished branches
-  const math = await page.evaluate(() => {
-    const f = MLA.graph.branchFocus(MLA.content.graph, 'math'), finished = ['start', 'code'];
-    return { all: f.ids.size, unfinished: [...f.ids].filter(id => f.inside.has(id) || !finished.includes(MLA.content.byId[id].branch)).length };
-  });
-
-  // Mind map: the zoomed branch's hub in the middle, the lessons it builds on from other branches on the left
-  await page.getByLabel('Zoom to a branch').selectOption('math');
-  await page.waitForFunction(() => location.hash === '#/map?branch=math');
-  await expect(page.locator('.focus-banner')).toContainText('Zoomed to Math Foundations');
-  await expect(page.locator('.hub.hcenter')).toHaveAttribute('aria-label', /^Math, /);
-  await expect(page.locator('.mnode')).toHaveCount(math.all);
-  await expect(page.locator('.mnode.ctx').first()).toContainText('needed for');
-
   // Heat map: one level per status, filled from the theme's --heat tokens
   await page.getByLabel('Heat map').check();
   await expect(page.locator('.mnode.h3')).toHaveCount(1);       // mastered
@@ -311,40 +225,43 @@ test('the concept map zooms to a branch, hides finished branches and shows a hea
     return { want, got: getComputedStyle(document.querySelector('.mnode.h3 .mnode-bg')).fill };
   });
   expect(fill.got).toBe(fill.want);
-
-  // Hide finished branches: Start and Python & Data leave the map; the zoomed branch always stays
+  // what the engine says a zoom to Gameplay shows: everything, and without the finished branches
+  const play = await page.evaluate(() => {
+    const f = MLA.graph.branchFocus(MLA.content.graph, 'play'), finished = MLA.progress.branchStats().filter(x => x.done >= x.concepts).map(x => x.branch.id);
+    return { all: f.ids.size, unfinished: [...f.ids].filter(id => f.inside.has(id) || !finished.includes(MLA.content.byId[id].branch)).length };
+  });
+  // Mind map: the zoomed branch's hub in the middle, the lessons it builds on from other branches around it
+  await page.getByLabel('Zoom to a branch').selectOption('play');
+  await page.waitForFunction(() => location.hash === '#/map?branch=play');
+  await expect(page.locator('.focus-banner')).toContainText('Zoomed to Gameplay Systems');
+  await expect(page.locator('.hub.hcenter')).toHaveAttribute('aria-label', /^Gameplay, /);
+  await expect(page.locator('.mnode')).toHaveCount(play.all);
+  await expect(page.locator('.mnode.ctx').first()).toContainText('needed for');
+  // Hide finished branches: Start Here and Game Math leave the map; the zoomed branch always stays
   await page.getByLabel('Hide finished branches').check();
-  await expect(page.locator('.mnode')).toHaveCount(math.unfinished);
-  await expect(page.locator('.focus-banner')).toContainText('from finished branches');
-
+  await expect(page.locator('.mnode')).toHaveCount(play.unfinished);
+  await expect(page.locator('.focus-banner')).toContainText('in a finished branch, which is hidden');
   // Prerequisite tree: the zoomed lane stands out, and a lane name zooms to its branch from the keyboard
   await page.getByRole('button', { name: 'Prerequisite tree' }).click();
-  await expect(page.locator('.lane.focus .lane-label')).toContainText('Math Foundations');
-  await expect(page.locator('.mnode')).toHaveCount(math.unfinished);
-  await page.getByRole('button', { name: 'Zoom to Classical Machine Learning' }).focus();
+  await expect(page.locator('.lane.focus .lane-label')).toContainText('Gameplay Systems');
+  await page.getByLabel('Hide finished branches').uncheck();          // Game Math is finished: show its lane again
+  await page.getByRole('button', { name: 'Zoom to Game Math' }).focus();
   await page.keyboard.press('Enter');
-  await page.waitForFunction(() => location.hash === '#/map?branch=ml');
-  await expect(page.locator('.focus-banner')).toContainText('Zoomed to Classical Machine Learning');
-  // a recommended prerequisite (Optimization Theory, for support vector machines) is dotted; required links are solid
-  expect(await page.locator('path.edge.soft').count()).toBeGreaterThan(0);
-  expect(await page.locator('path.edge.soft').first().evaluate(e => getComputedStyle(e).strokeDasharray)).not.toBe('none');
-  expect(await page.locator('path.edge.tree').first().evaluate(e => getComputedStyle(e).strokeDasharray)).toBe('none');
-
-  // Outline: the zoomed branch first, then what it builds on (finished branches hidden), rows coloured by progress
+  await page.waitForFunction(() => location.hash === '#/map?branch=math');
+  await expect(page.locator('.focus-banner')).toContainText('Zoomed to Game Math');
+  await page.getByLabel('Hide finished branches').check();
+  // Outline: the zoomed branch first; back to every branch, finished ones still hidden
   await page.getByRole('button', { name: 'Outline' }).click();
-  await expect(page.locator('.outline-branch h3').first()).toHaveText('Classical Machine Learning');
-  await expect(page.locator('.outline-branch.ctx h3')).toHaveText(['Math Foundations']);
-  await expect(page.locator('.outline-item.h3')).toHaveCount(1);
+  await expect(page.locator('.outline-branch h3').first()).toHaveText('Game Math');
   await page.locator('.focus-banner').getByRole('button', { name: 'Show every branch' }).click();
   await page.waitForFunction(() => location.hash === '#/map');
   const open = await page.evaluate(() => MLA.progress.branchStats().filter(x => x.done < x.concepts).length);
   await expect(page.locator('.outline-branch')).toHaveCount(open);
   expect(await page.evaluate(() => [MLA.store.state.profile.mapHideDone, MLA.store.state.profile.mapHeat])).toEqual([true, true]);
-
   // a phone: every view, zoomed and with the options on, fits without scrolling sideways
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.getByLabel('Zoom to a branch').selectOption('llm');
-  await page.waitForFunction(() => location.hash === '#/map?branch=llm');
+  await page.getByLabel('Zoom to a branch').selectOption('play');
+  await page.waitForFunction(() => location.hash === '#/map?branch=play');
   for (const view of ['Mind map', 'Prerequisite tree', 'Outline']) {
     await page.getByRole('button', { name: view }).click();
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
@@ -352,28 +269,25 @@ test('the concept map zooms to a branch, hides finished branches and shows a hea
   expect(errors).toEqual([]);
 });
 
-test('the map lists recommended prerequisites apart from required ones, and its side panel works from the keyboard', async ({ page }) => {
+test('the map side panel lists prerequisites and what a lesson unlocks, and works from the keyboard', async ({ page }) => {
   const errors = await boot(page, '/home');
-  await go(page, '/map?focus=svm', 'Concept Map');
+  await go(page, '/map?focus=collisions', 'Concept Map');
   const panel = page.locator('.map-drawer');
-  await expect(panel.locator('h3')).toHaveText('Support Vector Machines');
-  const soft = panel.locator('.drawer-sec', { hasText: 'Recommended, not required' });
-  await expect(soft.locator('.chip')).toHaveCount(1);
-  await expect(soft.locator('.chip')).toContainText('Optimization Theory');
-  await expect(panel.locator('.drawer-sec', { hasText: 'Prerequisites' }).locator('.chip', { hasText: 'Optimization Theory' })).toHaveCount(0);
-  await expect(page.locator('path.edge.soft.hl-soft')).toHaveCount(1);     // the dotted link into the selected lesson
+  await expect(panel.locator('h3')).toHaveText('Collision Detection Basics');
+  const pre = panel.locator('.drawer-sec', { hasText: 'Prerequisites' });
+  await expect(pre.locator('.chip')).toContainText('Vectors');
   // a chip opens its lesson's panel from the keyboard, which links back the other way
-  await soft.locator('.chip').focus();
+  await pre.locator('.chip').first().focus();
   await page.keyboard.press('Enter');
-  await expect(panel.locator('h3')).toContainText('Optimization Theory');
-  await expect(panel.locator('.drawer-sec', { hasText: 'Also helps with' })).toContainText('Support Vector Machines');
+  await expect(panel.locator('h3')).toHaveText('Vectors for Movement');
+  await expect(panel.locator('.drawer-sec', { hasText: 'Unlocks' })).toContainText('Collision');
   // a lesson on the map opens with Space, and its panel zooms to its branch, keeping the selection
-  await page.locator('.mnode[aria-label="Support Vector Machines"]').focus();
+  await page.locator('.mnode[aria-label="Collision Detection Basics"]').focus();
   await page.keyboard.press('Space');
-  await expect(panel.locator('h3')).toHaveText('Support Vector Machines');
-  await panel.getByRole('button', { name: 'Zoom to Classical ML' }).click();
-  await page.waitForFunction(() => location.hash === '#/map?branch=ml');
-  await expect(panel.locator('h3')).toHaveText('Support Vector Machines');
+  await expect(panel.locator('h3')).toHaveText('Collision Detection Basics');
+  await panel.getByRole('button', { name: 'Zoom to Gameplay' }).click();
+  await page.waitForFunction(() => location.hash === '#/map?branch=play');
+  await expect(panel.locator('h3')).toHaveText('Collision Detection Basics');
   expect(errors).toEqual([]);
 });
 
@@ -404,17 +318,17 @@ test('the placement test marks the lessons a learner knows, explains each mark, 
     asked++;
     await page.waitForFunction(n => { const c = document.querySelector('.placement-card'); return !c || +c.dataset.n === n; }, asked + 1);
   }
-  expect(asked).toBeGreaterThanOrEqual(10);
-  expect(asked).toBeLessThanOrEqual(15);
+  expect(asked).toBeGreaterThanOrEqual(1);
+  expect(asked).toBeLessThanOrEqual(await page.evaluate(() => MLA.placement.MAX));
   await expect(page.getByRole('heading', { name: 'Your results' })).toBeVisible();
   await expect(page.locator('main')).toContainText('You answered ' + asked + ' questions, ' + asked + ' of them right.');
   const known = await page.evaluate(() => MLA.progress.knownList().map(k => k.id));
-  expect(known.length).toBeGreaterThanOrEqual(20);
+  expect(known.length).toBeGreaterThanOrEqual(1);
   expect(await page.evaluate(() => MLA.store.state.xp)).toBe(0);                // known is not completed: no XP
   const rows = page.locator('.placement-list').first().locator('li');
   await expect(rows).toHaveCount(known.length);
   await expect(rows.first()).toContainText('You answered');
-  await expect(page.locator('.placement-next')).toContainText('Suggested next');
+  if (known.length < await page.evaluate(() => MLA.data.concepts.length)) await expect(page.locator('.placement-next')).toContainText('Suggested next');
   expect(await page.evaluate(audit)).toEqual([]);
   // undo one lesson, then mark it again
   const first = await rows.first().locator('a').textContent();
@@ -427,13 +341,13 @@ test('the placement test marks the lessons a learner knows, explains each mark, 
   await go(page, '/map', 'Concept Map');
   await expect(page.locator('.mnode.known')).toHaveCount(known.length);
   await expect(page.locator('.map-legend')).toContainText('known');
-  await go(page, '/track/foundations', 'Machine Learning Foundations');
-  expect(await page.locator('.track-step.known').count()).toBeGreaterThan(5);
+  await go(page, '/track/basics', 'Game Development Basics');
+  expect(await page.locator('.track-step.known').count()).toBeGreaterThanOrEqual(1);
   await expect(page.locator('main')).toContainText('known, so the path skips');
   await go(page, '/home', 'Dashboard');
   await expect(page.locator('main')).toContainText('marked as known');
   // a lesson page says why it is marked, and unmarks it
-  const lesson = known.includes('numpy') ? 'numpy' : known[known.length - 1];
+  const lesson = known[known.length - 1];
   await go(page, '/concept/' + lesson, await page.evaluate(id => MLA.progress.concept(id).title, lesson));
   await expect(page.locator('.callout.known-note')).toContainText('It counts as done');
   await page.getByRole('button', { name: 'Not known after all: unmark it' }).click();
@@ -453,21 +367,21 @@ test('the placement test marks the lessons a learner knows, explains each mark, 
 // plus the extra question bank), one wrong answer of each kind, results by lesson, and Review receiving only the missed
 // question from a lesson's own quiz.
 test('a custom quiz mixes lesson and bank questions, reports by lesson, and sends only lesson questions to review', async ({ page }) => {
-  const errors = await boot(page, '/quiz?ids=knn,svm&deps=0');
+  const errors = await boot(page, '/quiz?ids=vectors,collisions&deps=0');
   await page.waitForFunction(() => document.title.startsWith('Custom Quiz'));
   await expect(page.locator('.qb-lesson input:checked')).toHaveCount(2);
   const start = page.locator('.qb-start .btn.primary');
   await expect(start).toContainText('Start: 2 lessons');
   await page.getByLabel('Also ask about the lessons these build on').check();
-  expect(Number((await start.textContent()).match(/Start: (\d+)/)[1])).toBeGreaterThan(5);
+  expect(Number((await start.textContent()).match(/Start: (\d+)/)[1])).toBeGreaterThan(2);
   await page.getByLabel('Also ask about the lessons these build on').uncheck();
   await page.getByLabel('Number of questions').selectOption({ label: 'All of them' });
   expect(await page.evaluate(audit)).toEqual([]);
   await start.click();
   await expect(page.locator('.qb-head')).toBeVisible();
   const want = await page.evaluate(() => {
-    const own = ['knn', 'svm'].reduce((s, id) => s + MLA.content.byId[id].quiz.length, 0);
-    const bank = ['knn', 'svm'].reduce((s, id) => s + MLA.data.quizBank[id].length, 0);
+    const own = ['vectors', 'collisions'].reduce((s, id) => s + MLA.content.byId[id].quiz.length, 0);
+    const bank = ['vectors', 'collisions'].reduce((s, id) => s + MLA.data.quizBank[id].length, 0);
     return { total: own + bank, bank };
   });
   expect(want.bank).toBeGreaterThanOrEqual(6);
@@ -514,6 +428,6 @@ test('a custom quiz mixes lesson and bank questions, reports by lesson, and send
   await page.getByRole('button', { name: 'New questions, same lessons' }).click();
   await expect(page.locator('.result-card')).toHaveCount(0);
   await page.getByRole('button', { name: 'Change the lessons' }).click();
-  await expect(page.locator('.qb-branch')).toHaveCount(8);
+  await expect(page.locator('.qb-branch')).toHaveCount(await page.evaluate(() => MLA.data.branches.length));
   expect(errors).toEqual([]);
 });

@@ -1,4 +1,4 @@
-/* ML Atlas – placement test engine (framework independent, unit tested in Node: tests/placement.test.js).
+/* Placement test engine (framework independent, unit tested in Node: tests/placement.test.js).
  * An optional adaptive test of about 12 to 15 questions, so newcomers with some background can skip what they know.
  * Every question is one of a lesson's own quiz questions, from the beginner and intermediate lessons of Start Here,
  * Math Foundations, Python & Data and Classical Machine Learning (POOL). An answer says something about a group of
@@ -24,48 +24,17 @@
   // preference (a retake asks the other one when it can). Chosen to test the core idea of the lesson, to make sense
   // outside it, and to be quick to answer: multiple choice or a short number. tests/placement.test.js checks that
   // every opening still finds exactly one question of an allowed type, so rewording a quiz question means updating it.
+  // The branches the test covers: tests/placement.test.js checks that every beginner and intermediate lesson in them
+  // (capstones aside) has an entry here.
+  const BRANCHES = ['start', 'math', 'play'];
   const POOL = [
-    ['what-is-ml', ['In machine learning, what does', 'Which of these tasks is **unsupervised**?']],
-    ['vectors-matrices', ['Compute the dot product [2, −1,', 'Which shapes can be multiplied']],
-    ['derivatives', ['If ∂L/∂w = −3 at the current', 'At a point where f′(x) = 0 and']],
-    ['probability', ['For a Gaussian with mean 100', 'What is the probability of rolling']],
-    ['python-essentials', ['After a = [1, 2]; b = a; b.append(3),', 'A function has no `return` statement.']],
-    ['statistics', ['What does a z-score of −2 mean?', 'What is the median of [7, 1,']],
-    ['information-theory', ['Which distribution over 4 outcomes', 'What is the entropy, in bits,']],
-    ['eigen-svd', ['For A = [[3, 0], [0, 1]], which', 'What does the number of non-zero']],
-    ['matrix-calculus', ['W is a 3 × 5 matrix and L is', 'Why does deep learning use reverse-mode']],
-    ['discrete-math', ['By De Morgan\'s laws,', 'Which algorithm finds the shortest']],
-    ['numpy', ['X has shape (64, 10). What is', 'Which shapes broadcast together?']],
-    ['supervised-learning', ['What is a decision boundary?', 'Which is a multi-class classification']],
-    ['stat-inference', ['You test 20 independent metrics', 'How does the bootstrap build']],
-    ['pandas-eda', ['Which expression selects the', 'What is the difference between']],
-    ['loss-functions', ['Targets [2, 4] and predictions', 'If you must predict one constant']],
-    ['knn', ['kNN with k = 1 achieves 100%', 'What is the main problem with']],
-    ['decision-trees', ['What is the Gini impurity of', 'How does a classification tree']],
-    ['naive-bayes', ['In Naive Bayes, what does the', 'Class "spam" has 8 words in total,']],
-    ['kmeans', ['What does k-means minimise?', 'Which data would k-means handle']],
-    ['pca', ['The first principal component', 'Why standardize before PCA when']],
-    ['data-preparation', ['A model scores 99.8% accuracy', 'A sensor writes −999 when a reading']],
-    ['data-visualization', ['You need to compare the distribution', 'After `fig, axes = plt.subplots(2,']],
-    ['sql-data-engineering', ['Which clause filters groups after', 'How do you find users with no']],
-    ['gradient-descent', ['w = 2, the gradient is 4 and', 'On L(w) = w², gradient descent']],
-    ['mle-map', ['What is the likelihood L(θ)?', 'Which prior on the weights corresponds']],
-    ['feature-engineering', ['One-hot encoding a "country"', 'A feature has training mean 50']],
-    ['linear-regression', ['Why add a column of ones to X', 'Residual sum of squares is 20']],
-    ['logistic-regression', ['Why is log loss preferred over', 'A logistic model has a weight']],
-    ['overfitting', ['A degree-15 polynomial fits 16', 'Which error component can no']],
-    ['regularization', ['In ridge regression, what happens', 'Which regularizer tends to produce']],
-    ['evaluation-metrics', ['Raising the decision threshold', 'TP = 40, FN = 10. What is the']],
-    ['cross-validation', ['You are forecasting electricity', 'You tried 50 hyperparameter combinations']],
-    ['ensembles', ['Bagging mainly reduces', 'What is a bootstrap sample?']],
-    ['glm-survival', ['Which link function does a Poisson', 'What is a censored observation']],
-    ['svm', ['What are support vectors?', 'What does the kernel trick allow?']],
-    ['sklearn-workflow', ['What should you save to deploy', 'What does a ColumnTransformer']],
-    ['data-centric', ['How do you find likely mislabelled', 'A fraud model has 99% accuracy']]
+    ['game-loop', ['What are the three steps of one pass', 'A character moves at 6 units per second.']],
+    ['vectors', ['What is the length of the vector (6, 8)?', 'The player is at (1, 2) and a coin']],
+    ['collisions', ['Two circles have radii 2 and 3,', 'Why do collision tests often compare']]
   ];
-  // Prerequisites that set a reading order rather than knowledge: the maths and Python lessons do not depend on the
-  // introduction to machine learning, and discrete maths does not depend on Python. The test ignores these links.
-  const SOFT = [['what-is-ml', 'vectors-matrices'], ['what-is-ml', 'derivatives'], ['what-is-ml', 'probability'], ['what-is-ml', 'python-essentials'], ['python-essentials', 'discrete-math']];
+  // Prerequisites that set a reading order rather than knowledge, as [prerequisite, lesson] pairs: the test does not
+  // treat knowing the lesson as evidence of knowing that prerequisite. The sample course has none.
+  const SOFT = [];
   const TYPES = ['mcq', 'fill', 'multi'];
   const MAX = 15, MIN = 5, PARTICLES = 4000, MARK = 0.9, STOP_GAIN = 0.1;
   // The answer model: how likely each answer is when the learner knows the lesson, and when they do not yet.
@@ -246,5 +215,5 @@
     return { ids, seed, answers, record, next, marginals, result, ancestors: id => [...anc[index[id]]].map(i => ids[i]), descendants: id => [...desc[index[id]]].map(i => ids[i]) };
   }
 
-  MLA.placement = { POOL, SOFT, MAX, MIN, MARK, scope, questions, create, guessRate, likelihood, qkey };
+  MLA.placement = { BRANCHES, POOL, SOFT, MAX, MIN, MARK, scope, questions, create, guessRate, likelihood, qkey };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -1,18 +1,16 @@
-/* ML Atlas – branches of the concept map + the content registry every concept file plugs into.
+/* Branches of the concept map + the content registry every concept file plugs into.
  * See docs/CONTENT_GUIDE.md for the concept / problem format. */
 (function (global) {
   const MLA = (global.MLA = global.MLA || {});
   MLA.data = MLA.data || {};
 
+  // The branches of the concept map: one per area of the course. The ids are used by lessons (branch: 'math'), the
+  // glossary, the question banks (js/data/bank-<id>.js) and the placement test; colors were checked for contrast in
+  // every theme (tests/theme.test.js); icons come from js/core/ui.js.
   MLA.data.branches = [
-    { id: 'start', name: 'Start Here', short: 'Start', color: '#cbd5e1', icon: 'flag', desc: 'What machine learning is, and how this map is organised.' },
-    { id: 'math', name: 'Math Foundations', short: 'Math', color: '#818cf8', icon: 'graph', desc: 'Vectors, derivatives, probability, statistics and information theory: the language machine learning is written in. Only the parts you actually need, explained from scratch.' },
-    { id: 'code', name: 'Python & Data', short: 'Python & Data', color: '#22d3ee', icon: 'code', desc: 'Python, NumPy and the craft of turning messy real-world data into something a model can learn from.' },
-    { id: 'ml', name: 'Classical Machine Learning', short: 'Classical ML', color: '#4ade80', icon: 'target', desc: 'Regression, classification, trees, clustering and dimensionality reduction, plus how to train, tune and evaluate models honestly.' },
-    { id: 'dl', name: 'Neural Networks & Deep Learning', short: 'Neural Networks', color: '#fbbf24', icon: 'brain', desc: 'From a single neuron to deep networks: backpropagation, training, optimizers, CNNs, RNNs and embeddings.' },
-    { id: 'llm', name: 'Transformers & LLMs', short: 'Transformers & LLMs', color: '#a78bfa', icon: 'sparkles', desc: 'Tokenization, attention, the transformer, GPT, pretraining, fine-tuning, alignment and efficient inference: how large language models are built.' },
-    { id: 'apps', name: 'Building with LLMs', short: 'LLM Apps', color: '#f472b6', icon: 'bolt', desc: 'Using LLMs in real software: prompting, retrieval-augmented generation (RAG), agents with tools, and evaluation.' },
-    { id: 'spec', name: 'Specializations', short: 'Specializations', color: '#fb923c', icon: 'layers', desc: 'Branch-out areas that build on the core: reinforcement learning, generative models, vision transformers, recommender systems, MLOps and responsible AI.' }
+    { id: 'start', name: 'Start Here', short: 'Start', color: '#cbd5e1', icon: 'flag', desc: 'How a game runs, frame by frame, and how this map is organised.' },
+    { id: 'math', name: 'Game Math', short: 'Math', color: '#818cf8', icon: 'graph', desc: 'Vectors and the geometry behind movement, aiming and cameras.' },
+    { id: 'play', name: 'Gameplay Systems', short: 'Gameplay', color: '#4ade80', icon: 'target', desc: 'Collisions and the other systems that turn rules into play.' }
   ];
 
   MLA.data.concepts = MLA.data.concepts || [];
@@ -123,8 +121,8 @@
   // the first such lesson instead of with the page. Their components then get their precompiled templates, as the
   // others do at start-up (MLA.app.mount), and join the running app.
   const WALK_FILES = ['js/views/walks.js', 'js/views/walks-ml.js', 'js/views/walks-dl.js', 'js/views/walks-more.js'];
-  // Each branch's extra custom-quiz questions live in js/data/bank-<branch>.js (a new branch needs its file and an entry here).
-  const BANK_BRANCHES = ['start', 'math', 'code', 'ml', 'dl', 'llm', 'apps', 'spec'];
+  // Each branch's extra custom-quiz questions live in js/data/bank-<branch id>.js: every branch needs that file.
+  const BANK_BRANCHES = MLA.data.branches.map(b => b.id);
   const usesWalk = c => !!c && (c.sections || []).some(s => s.type === 'demo' && /^walk-/.test(s.demo || ''));
   let walksLoading = null;
   function adoptComponents() {

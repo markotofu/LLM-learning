@@ -1,4 +1,4 @@
-/* ML Atlas – lightweight code editor (textarea + highlighted overlay), run output panel, runnable code samples */
+/* Lightweight code editor (textarea + highlighted overlay), run output panel, runnable code samples */
 (function (global) {
   const MLA = global.MLA;
   MLA.components = MLA.components || {};
@@ -149,7 +149,7 @@
     computed: {
       src() { return this.edited != null ? this.edited : this.code; },
       html() { return MLA.highlight.code(this.src, this.lang); },
-      label() { return this.lang === 'pytorch' ? 'Python · PyTorch (run locally)' : this.lang === 'bash' ? 'Terminal' : this.lang === 'output' ? 'Output' : (this.runnable ? 'Python · runs in your browser' : 'Python'); },
+      label() { return this.lang === 'pytorch' ? 'Python · PyTorch (run locally)' : this.lang === 'csharp' || this.lang === 'cs' ? 'C# · runs in Unity, not in the browser' : this.lang === 'bash' ? 'Terminal' : this.lang === 'output' ? 'Output' : (this.runnable ? 'Python · runs in your browser' : 'Python'); },
       changed() { return this.edited != null && this.edited !== this.code; }
     },
     methods: {

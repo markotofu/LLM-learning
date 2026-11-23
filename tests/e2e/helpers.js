@@ -1,19 +1,21 @@
 /* Shared helpers for the browser tests. */
 'use strict';
+require('../../js/course.js');                      // MLA.course: the storage key and id of this course
+const COURSE = globalThis.MLA.course;
 
 // Seed localStorage before the app starts (once per page), so tests skip onboarding and start from a known state.
 async function seed(page, extra) {
-  await page.addInitScript(extra => {
+  await page.addInitScript(([extra, key, app]) => {
     if (sessionStorage.getItem('mla-seeded')) return;
     sessionStorage.setItem('mla-seeded', '1');
-    const base = { app: 'ml-atlas', version: 2, xp: 0, concepts: {}, problems: {}, profile: { name: 'Tester', onboarded: true, theme: 'dark' } };
+    const base = { app, version: 2, xp: 0, concepts: {}, problems: {}, profile: { name: 'Tester', onboarded: true, theme: 'dark' } };
     const s = Object.assign({}, base, extra || {});
     s.profile = Object.assign({}, base.profile, (extra && extra.profile) || {});
-    localStorage.setItem('mla.state.v1', JSON.stringify(s));
+    localStorage.setItem(key, JSON.stringify(s));
     // Deterministic randomness, so demos look the same on every run.
     let a = 42;
     Math.random = () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-  }, extra || null);
+  }, [extra || null, COURSE.storageKey, COURSE.id]);
 }
 
 // Open the app at a route and wait until the content registry is ready. Returns the list of uncaught page errors.

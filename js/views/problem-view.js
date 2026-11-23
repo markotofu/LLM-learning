@@ -1,4 +1,4 @@
-/* ML Atlas – LeetCode-style problem page: description / hints / solution on the left,
+/* LeetCode-style problem page: description / hints / solution on the left,
  * editor + console (test cases, results, output) on the right. Run = visible examples, Submit = all tests. */
 (function (global) {
   const MLA = global.MLA;
@@ -73,7 +73,7 @@
       },
       stop() { MLA.python.stop(); this.running = false; },
       reset() { MLA.ui.confirm('Replace your code with the original starter code? Your current code will be lost (download it first if you want to keep it).', { okLabel: 'Reset code', danger: true }).then(ok => { if (ok) { this.code = this.p.starter; this.P.saveDraft(this.p.id, this.p.starter); } }); },
-      download() { const head = '# ML Atlas: ' + this.p.title + ' (' + this.p.difficulty + ')\n# Concept: ' + this.c.title + '\n\n'; MLA.util.download(this.p.id + '.py', head + this.code, 'text/x-python'); },
+      download() { const head = '# ' + MLA.course.name + ': ' + this.p.title + ' (' + this.p.difficulty + ')\n# Concept: ' + this.c.title + '\n\n'; MLA.util.download(this.p.id + '.py', head + this.code, 'text/x-python'); },
       copyCode() { MLA.util.copyText(this.code).then(ok => MLA.ui.toast(ok ? 'Code copied.' : 'Could not copy.', ok ? 'success' : 'error')); },
       showHint() { const n = this.hintsShown + 1; this.P.showHint(this.p.id, n); },
       revealSolution() {

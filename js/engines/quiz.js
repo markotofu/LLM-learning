@@ -1,4 +1,4 @@
-/* ML Atlas – quiz engine: grading, scoring, shuffling (framework independent) */
+/* Quiz engine: grading, scoring, shuffling (framework independent) */
 (function (global) {
   const MLA = (global.MLA = global.MLA || {});
 

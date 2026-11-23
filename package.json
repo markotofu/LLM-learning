@@ -1,8 +1,8 @@
 {
-  "name": "ml-atlas",
+  "name": "course-atlas",
   "version": "1.0.0",
   "private": true,
-  "description": "Interactive mind map of machine learning, neural networks and LLMs: lessons, runnable in-browser Python, quizzes and LeetCode-style problems. Static site for GitHub Pages.",
+  "description": "A course template: an interactive concept map with lessons, runnable in-browser Python, quizzes, placement test, custom quizzes and coding problems. Static site for GitHub Pages.",
   "scripts": {
     "start": "node serve.js",
     "test": "node tests/graph.test.js && node tests/content.test.js && node tests/theme.test.js && node tests/views.test.js && node tests/serve.test.js && node tests/narrate.test.js && node tests/walks.test.js && node tests/placement.test.js && node tests/problems.test.js",

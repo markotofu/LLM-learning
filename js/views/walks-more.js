@@ -1,4 +1,4 @@
-/* ML Atlas – more step-through walkthroughs (drawn by js/views/walks.js): a small network learning XOR, a linear SVM,
+/* More step-through walkthroughs (drawn by js/views/walks.js): a small network learning XOR, a linear SVM,
  * PCA by power iteration, an RNN's memory, retrieval for RAG, and the KV cache. Every number on screen comes from
  * running the algorithm below. The SVM and PCA walkthroughs can also run on the learner's own data (def.data). */
 (function (global) {

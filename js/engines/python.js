@@ -1,4 +1,4 @@
-/* ML Atlas – in-browser Python (Pyodide in a Web Worker) + LeetCode-style test harness.
+/* In-browser Python (Pyodide in a Web Worker) + LeetCode-style test harness.
  *
  * - The runtime loads lazily from the jsDelivr CDN the first time code is run (~15 MB, then cached
  *   by the browser and the service worker so it also works offline afterwards).

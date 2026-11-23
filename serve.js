@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* ML Atlas – tiny zero-dependency static server for local use.
+/* Tiny zero-dependency static server for local use.
  * Usage: node serve.js [port]   then open http://localhost:<port>
  * (GitHub Pages serves the same files in production; opening index.html directly also works,
  * but a server enables the offline service worker and the install-as-app option.) */
@@ -43,7 +43,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(port, () => {
-  console.log('\n  ML Atlas is running.\n');
+  console.log('\n  The course is running.\n');
   console.log('  On this computer:   http://localhost:' + port);
   try {
     const nets = require('os').networkInterfaces();

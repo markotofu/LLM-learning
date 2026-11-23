@@ -17,10 +17,10 @@ const L = MLA.data.legal;
 T.ok('legal data loaded', !!(L && L.terms && L.privacy && L.owner));
 for (const key of ['terms', 'privacy']) {
   const text = L.render(L[key]);
-  T.ok('legal ' + key + ': no unfilled placeholders', !/\{(owner|year|updated|contact|codeLicense)\}/.test(text));
+  T.ok('legal ' + key + ': no unfilled placeholders', !/\{(name|subject|key|db|owner|year|updated|contact|codeLicense)\}/.test(text));
   T.ok('legal ' + key + ': renders', /<h[1-6]>/.test(MLA.util.md(text)));
 }
-T.ok('privacy policy names every localStorage key the app uses', ['mla.state.v1', 'mla.pyMirror'].every(k => L.privacy.includes(k)));
+T.ok('privacy policy names every localStorage key the app uses', [MLA.course.storageKey, 'mla.pyMirror'].every(k => L.render(L.privacy).includes(k)));
 T.ok('copyright notice has year and owner', L.copyright().includes(L.year) && L.copyright().includes(L.owner));
 
 let compiled = 0;
@@ -105,50 +105,50 @@ T.ok('merge import', S.state.xp === 900 && S.state.problems[p0.id].solved === tr
 let threw = false; try { S.importJSON('{"hello":1}'); } catch (e) { threw = true; }
 T.ok('rejects foreign JSON', threw);
 
-// Section progress: stored by section id; positions saved by version 6badf8c and earlier are migrated through that
-// version's layout. transformer-block gained a diagram after its first section, so position 1 there used to mean
-// "The residual stream" (now the third section) and position 3 the first quick check.
+// Section progress: stored by section id. Data saved by position (version 1) is migrated through the lesson's legacy
+// layout (js/data/legacy-sections.js) or, for lessons not listed there, through its current sections.
 {
   const P = MLA.progress;
-  const tb = MLA.content.byId['transformer-block'];
-  const ids = tb.sections.map(s => s.id);
-  const legacy = P.legacyLayout('transformer-block');
+  const A = MLA.data.concepts.find(c => c.sections.length >= 4 && c.sections.some(s => s.type === 'check'));
+  const B = MLA.data.concepts.find(c => c !== A) || A;
+  const ids = A.sections.map(s => s.id), ci = A.sections.findIndex(s => s.type === 'check');
+  const legacy = P.legacyLayout(A.id);
   T.ok('sections have string ids', ids.every(x => typeof x === 'string' && x && !/^\d+$/.test(x)));
-  T.ok('legacy layout of transformer-block skips the inserted diagram', legacy[1] === 'the-residual-stream' && ids[1] !== 'the-residual-stream', legacy.slice(0, 3).join(','));
   const old = S.defaultState(); old.version = 1; old.xp = 10;
-  old.concepts['transformer-block'] = { read: [0, 1, 2], checks: { 3: true }, quizBest: 0, quizAttempts: 0, quizPassed: false };
-  old.concepts.attention = { read: [0], checks: {}, quizBest: 0, quizAttempts: 0, quizPassed: false };
+  old.concepts[A.id] = { read: [0, 1, 2], checks: { [ci]: true }, quizBest: 0, quizAttempts: 0, quizPassed: false };
+  old.concepts[B.id] = { read: [0], checks: {}, quizBest: 0, quizAttempts: 0, quizPassed: false };
   const migrated = JSON.parse(JSON.stringify(old)); P.migrateSections(migrated);
-  const m = migrated.concepts['transformer-block'];
-  T.ok('migration maps old positions through the old layout', JSON.stringify(m.read) === JSON.stringify([legacy[0], legacy[1], legacy[2]]) && legacy[1] === 'the-residual-stream', JSON.stringify(m.read));
-  T.ok('migration maps answered checks', m.checks[legacy[3]] === true && legacy[3].startsWith('check-') && Object.keys(m.checks).length === 1, JSON.stringify(m.checks));
-  T.ok('unchanged lessons map positions to the same sections', migrated.concepts.attention.read[0] === MLA.content.byId.attention.sections[0].id);
-  T.ok('migration is idempotent', P.migrateSections(migrated) === 0 && JSON.stringify(migrated.concepts['transformer-block'].read) === JSON.stringify(m.read));
+  const m = migrated.concepts[A.id];
+  T.ok('migration maps old positions through the layout', JSON.stringify(m.read) === JSON.stringify([legacy[0], legacy[1], legacy[2]]), JSON.stringify(m.read));
+  T.ok('migration maps answered checks', m.checks[legacy[ci]] === true && Object.keys(m.checks).length === 1, JSON.stringify(m.checks));
+  T.ok('unchanged lessons map positions to the same sections', migrated.concepts[B.id].read[0] === B.sections[0].id);
+  T.ok('migration is idempotent', P.migrateSections(migrated) === 0 && JSON.stringify(migrated.concepts[A.id].read) === JSON.stringify(m.read));
   T.ok('migration marks the data version', migrated.version === 2);
   // Importing an old export (positions) into new data (ids) merges cleanly, without numbers left behind.
   S.reset();
-  P.markRead('transformer-block', ids[1]);
+  P.markRead(A.id, ids[3]);
   S.importJSON(JSON.stringify(old), 'merge');
-  const r = S.state.concepts['transformer-block'].read;
-  T.ok('merge import of old data converts positions to ids', r.every(x => typeof x === 'string') && r.includes(ids[1]) && r.includes('the-residual-stream') && r.length === 4, JSON.stringify(r));
-  T.ok('progress counts migrated sections', P.conceptProgress('transformer-block').sectionsRead === 4);
-  P.recordCheck('attention', MLA.content.byId.attention.sections.find(s => s.type === 'check').id, true);
-  T.ok('checks are recorded by id', Object.keys(S.state.concepts.attention.checks).every(k => !/^\d+$/.test(k)));
+  const r = S.state.concepts[A.id].read;
+  T.ok('merge import of old data converts positions to ids', r.every(x => typeof x === 'string') && r.includes(ids[3]) && r.includes(legacy[1]) && r.length === 4, JSON.stringify(r));
+  T.ok('progress counts migrated sections', P.conceptProgress(A.id).sectionsRead === 4);
+  P.recordCheck(A.id, A.sections[ci].id, true);
+  T.ok('checks are recorded by id', Object.keys(S.state.concepts[A.id].checks).every(k => !/^\d+$/.test(k)));
   S.reset();
 }
 
 // Mistakes to revisit: missed questions and helped-with problems come back on a spaced schedule.
 {
+  const QID = MLA.data.concepts.find(c => c.sections.some(s => s.type === 'check') && c.quiz.some(q => q.type === 'mcq') && MLA.data.problems.some(p => p.concept === c.id)).id;
   const P = MLA.progress, M = MLA.mistakes, U = MLA.util;
   const realToday = U.todayKey;
   let day = '2026-03-01';
   U.todayKey = () => day;
   try {
     S.reset();
-    const c = MLA.content.byId.attention;
+    const c = MLA.content.byId[QID];
     const check = c.sections.find(s => s.type === 'check');
-    P.recordCheck('attention', check.id, false);
-    const id = 'check:attention:' + check.id;
+    P.recordCheck(QID, check.id, false);
+    const id = 'check:' + QID + ':' + check.id;
     T.ok('a wrong quick check is saved for review', !!S.state.mistakes[id] && S.state.mistakes[id].card.due === '2026-03-02');
     T.ok('it is not due the same day', M.dueItems().length === 0 && M.stats().waiting === 1);
     day = '2026-03-02';
@@ -163,15 +163,15 @@ T.ok('rejects foreign JSON', threw);
     // quiz questions, by the hash of their text (options may be shuffled)
     day = '2026-04-01';
     const q = c.quiz.find(x => x.type === 'mcq');
-    P.recordQuiz('attention', { score: 50, results: [{ question: MLA.quiz.shuffled(q, U.seededRng(1)), correct: false }] });
-    T.ok('a missed quiz question is saved', !!S.state.mistakes['quiz:attention:' + M.qkey(q)]);
+    P.recordQuiz(QID, { score: 50, results: [{ question: MLA.quiz.shuffled(q, U.seededRng(1)), correct: false }] });
+    T.ok('a missed quiz question is saved', !!S.state.mistakes['quiz:' + QID + ':' + M.qkey(q)]);
     day = '2026-04-02';
     T.ok('the review shows the original question', M.dueItems().some(x => x.item.kind === 'quiz' && x.question === q));
     // problems solved with the solution come back after 3 days and retire after one unaided re-solve
-    const pr = MLA.data.problems.find(p => p.concept === 'attention');
+    const pr = MLA.data.problems.find(p => p.concept === QID);
     P.viewSolution(pr.id);
     P.recordSubmit(pr.id, 'x', { tests: [{ passed: true }] });
-    const pid = 'problem:attention:' + pr.id;
+    const pid = 'problem:' + QID + ':' + pr.id;
     T.ok('a problem solved after viewing the solution is saved', !!S.state.mistakes[pid] && S.state.mistakes[pid].card.due === '2026-04-05' && S.state.mistakes[pid].why === 'solution');
     P.recordSubmit(pr.id, 'x', { tests: [{ passed: true }] });
     T.ok('re-solving before it is due does not count', !S.state.mistakes[pid].graduated);
@@ -179,10 +179,10 @@ T.ok('rejects foreign JSON', threw);
     P.recordSubmit(pr.id, 'x', { tests: [{ passed: true }] });
     T.ok('re-solving on the due date retires it', !!S.state.mistakes[pid].graduated);
     // merging two devices keeps the more-reviewed copy
-    const other = S.defaultState(); other.mistakes[id] = { kind: 'check', concept: 'attention', ref: check.id, card: { reps: 0, lapses: 0, due: '2026-03-02', interval: 0, ease: 2.5 }, graduated: null };
+    const other = S.defaultState(); other.mistakes[id] = { kind: 'check', concept: QID, ref: check.id, card: { reps: 0, lapses: 0, due: '2026-03-02', interval: 0, ease: 2.5 }, graduated: null };
     const mm = S.mergeStates(JSON.parse(S.exportJSON()), other);
     T.ok('merge keeps the retired, more-reviewed copy', !!mm.mistakes[id].graduated);
-    T.ok('items whose content is gone are ignored', (() => { S.state.mistakes['quiz:attention:nope'] = { kind: 'quiz', concept: 'attention', ref: 'nope', card: { due: '2026-01-01' } }; return !M.all().some(x => x.id === 'quiz:attention:nope'); })());
+    T.ok('items whose content is gone are ignored', (() => { S.state.mistakes['quiz:' + QID + ':nope'] = { kind: 'quiz', concept: QID, ref: 'nope', card: { due: '2026-01-01' } }; return !M.all().some(x => x.id === 'quiz:' + QID + ':nope'); })());
   } finally { U.todayKey = realToday; S.reset(); }
 }
 // Sample-project progress (steps ticked, notes) survives export and merges across devices
@@ -200,11 +200,12 @@ T.ok('rejects foreign JSON', threw);
 // Search: one box finds lessons, sections, terms, problems, projects and case studies
 {
   const res = q => MLA.search.query(q);
-  T.ok('search: a lesson title ranks first', (res('gradient descent')[0] || {}).route === '/concept/gradient-descent');
-  T.ok('search: finds case studies and projects', res('netflix').some(r => r.kind === 'Case study') && res('churn').some(r => r.kind === 'Project'));
-  T.ok('search: finds problems and glossary terms', res('causal mask').some(r => r.kind === 'Problem') && res('softmax').some(r => r.kind === 'Term'));
-  T.ok('search: sections link to their place in the lesson', res('causal mask').some(r => r.kind === 'Section' && /^[/]concept[/]attention[?]s=/.test(r.route)));
-  T.ok('search: searches inside lesson text', res('blending hundreds').length > 0 || res('wordpieces').some(r => r.kind === 'In the text'));
+  // These queries match the sample course (js/data/concepts-sample.js); change them along with the lessons.
+  T.ok('search: a lesson title ranks first', (res('collision detection')[0] || {}).route === '/concept/collisions');
+  T.ok('search: finds projects', res('coin-collecting').some(r => r.kind === 'Project'));
+  T.ok('search: finds problems and glossary terms', res('fixed time steps').some(r => r.kind === 'Problem') && res('tunneling').some(r => r.kind === 'Term'));
+  T.ok('search: sections link to their place in the lesson', res('tunneling').some(r => r.kind === 'Section' && /^[/]concept[/]collisions[?]s=/.test(r.route)));
+  T.ok('search: searches inside lesson text', res('still pictures').length > 0);
   T.ok('search: an empty query returns nothing', res('   ').length === 0);
 }
 

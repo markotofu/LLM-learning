@@ -1,4 +1,4 @@
-/* ML Atlas – static, theme-aware charts drawn from data stored in a lesson: { type: 'chart', title, chart: spec }.
+/* Static, theme-aware charts drawn from data stored in a lesson: { type: 'chart', title, chart: spec }.
  * spec = {
  *   kind: 'line' | 'scatter' | 'bar',
  *   x: [numbers] (line, bar labels as strings for bar),

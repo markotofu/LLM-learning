@@ -1,4 +1,4 @@
-/* ML Atlas – the concept map: mind map / prerequisite tree / outline, with pan, zoom, search and path highlighting.
+/* The concept map: mind map / prerequisite tree / outline, with pan, zoom, search and path highlighting.
  * Map at scale: every view can zoom to one branch (its lessons plus the lessons it builds on from other branches; kept
  * in the address as ?branch=<id>), hide finished branches, and colour lessons by progress (the heat map, with the
  * --heat-* theme tokens). Recommended prerequisites (`softPrereqs`) are drawn as dotted links, apart from the required
@@ -74,7 +74,7 @@
         if (!this.focusSets) return '';
         const c = this.ctxCounts;
         const own = ': its ' + plural(this.focusSets.inside.size, 'lesson');
-        if (!c.shown) return own + (c.hidden ? '. The ' + plural(c.hidden, 'lesson') + ' from other branches they build on are in finished branches, which are hidden.' : '.');
+        if (!c.shown) return own + (c.hidden ? '. The ' + plural(c.hidden, 'lesson') + ' from other branches they build on ' + (c.hidden === 1 ? 'is in a finished branch, which is' : 'are in finished branches, which are') + ' hidden.' : '.');
         return own + ' and the ' + plural(c.shown, 'lesson') + ' from other branches they build on.' + (c.hidden ? ' ' + c.hidden + ' more, from finished branches, ' + (c.hidden === 1 ? 'is' : 'are') + ' hidden.' : '');
       },
       L() {

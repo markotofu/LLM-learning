@@ -1,4 +1,4 @@
-/* ML Atlas – spaced repetition (SM-2 variant) for flashcards */
+/* Spaced repetition (SM-2 variant) for flashcards */
 (function (global) {
   const MLA = (global.MLA = global.MLA || {});
   const GRADES = { again: 1, hard: 3, good: 4, easy: 5 };

@@ -1,4 +1,4 @@
-/* ML Atlas – Progress & Sync (profile, settings, export / import / sync codes) and the developer self-test */
+/* Progress & Sync (profile, settings, export / import / sync codes) and the developer self-test */
 (function (global) {
   const MLA = global.MLA;
   MLA.components = MLA.components || {};
@@ -6,7 +6,7 @@
   function codeBundle() {
     const s = MLA.store.state; const P = MLA.progress; const L = [];
     const bar = '# ' + '='.repeat(72);
-    L.push('# ML Atlas: all my code (exported ' + new Date().toISOString().slice(0, 16).replace('T', ' ') + ')');
+    L.push('# ' + MLA.course.name + ': all my code (exported ' + new Date().toISOString().slice(0, 16).replace('T', ' ') + ')');
     L.push('# Practice problems (your latest draft, plus your last accepted solution if it differs), then playground files.');
     L.push('# This file is for reading/keeping. To move progress between devices use "Export progress" instead.');
     L.push('');
@@ -51,11 +51,11 @@
       trySpeech() { MLA.speech.sample(); },
       async exportFile() {                     // everything, including the contents of uploaded datasets
         this.state.stats.exports = (this.state.stats.exports || 0) + 1; MLA.gamification.checkAchievements();
-        const name = 'ml-atlas-progress-' + MLA.util.todayKey() + '.json';
+        const name = MLA.course.id + '-progress-' + MLA.util.todayKey() + '.json';
         const text = await MLA.store.exportFull();
         if (MLA.util.download(name, text)) MLA.ui.toast('Saved ' + name + ' (' + MLA.util.formatBytes(text.length) + '): import it on your other device.', 'success', 4500);
       },
-      exportCode() { MLA.util.download('ml-atlas-code-' + MLA.util.todayKey() + '.py', codeBundle(), 'text/x-python'); },
+      exportCode() { MLA.util.download(MLA.course.id + '-code-' + MLA.util.todayKey() + '.py', codeBundle(), 'text/x-python'); },
       pickFile() { this.$refs.file.click(); },
       async confirmReplace() { if (this.mode !== 'replace') return true; return MLA.ui.confirm('**Replace** erases the progress currently in this browser and uses the imported data instead. Use **Merge** to combine both. Continue?', { okLabel: 'Replace', danger: true }); },
       afterImport(label) { this.nameEdit = this.state.profile.name; MLA.ui.applyTheme(this.state.profile.theme, this.state.profile.style); MLA.ui.toast(label + (this.mode === 'merge' ? ' and merged with this device.' : '.'), 'success', 4500); MLA.gamification.checkAchievements(); },
@@ -154,7 +154,7 @@
 
       <div class="card danger-card">
         <div class="card-title"><h3 style="color:var(--red)">Danger zone</h3></div>
-        <div class="row between"><div><strong class="small">Erase all progress</strong><div class="small muted">Removes everything stored by ML Atlas in this browser.</div></div><button class="btn danger" @click="reset"><mla-icon name="trash" :size="16"/> Erase</button></div>
+        <div class="row between"><div><strong class="small">Erase all progress</strong><div class="small muted">Removes everything this course stored in this browser.</div></div><button class="btn danger" @click="reset"><mla-icon name="trash" :size="16"/> Erase</button></div>
       </div>
 
       <div class="tiny dim center">{{ MLA.data.legal.copyright() }} · <a href="#/terms">Terms of Use</a> · <a href="#/privacy">Privacy Policy</a> · your data never leaves this browser unless you export it</div>

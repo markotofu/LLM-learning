@@ -1,7 +1,7 @@
 {
-  "name": "ML Atlas — Machine Learning to LLMs",
-  "short_name": "ML Atlas",
-  "description": "An interactive mind map of machine learning, neural networks and LLMs with lessons, runnable Python, quizzes and coding problems.",
+  "name": "Course Atlas",
+  "short_name": "Course Atlas",
+  "description": "An interactive map of game development with lessons, runnable code, quizzes and coding problems.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

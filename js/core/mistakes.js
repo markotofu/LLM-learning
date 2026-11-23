@@ -1,4 +1,4 @@
-/* ML Atlas – "mistakes to revisit". Questions answered wrongly (mastery quizzes, quick checks, "predict first"
+/* "mistakes to revisit". Questions answered wrongly (mastery quizzes, quick checks, "predict first"
  * questions) and problems solved only with help come back on a spaced-repetition schedule (SM-2, the same rules as
  * the flashcards) until they stick. Stored in state.mistakes:
  *   id ("kind:concept:ref") -> { kind, concept, ref, why, added, misses, card: SM-2 state, graduated: date | null }

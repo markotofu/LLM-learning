@@ -1,4 +1,4 @@
-/* ML Atlas – concept graph engine (framework independent, unit tested in Node).
+/* Concept graph engine (framework independent, unit tested in Node).
  * Concepts form a DAG through their `prereqs` (required). `softPrereqs` (recommended: helpful, never required) are kept
  * apart in `softParents` / `softChildren`, so they never change locking, depth, learning order or tracks.
  * This module computes depth, learning order, prerequisite chains, sub-graphs (one branch and what it builds on, or

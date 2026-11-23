@@ -1,9 +1,9 @@
-/* ML Atlas – persistent reactive state (localStorage) + export / import / merge for multi-device sync */
+/* Persistent reactive state (localStorage) + export / import / merge for multi-device sync */
 (function (global) {
   const MLA = global.MLA;
-  const KEY = 'mla.state.v1';
+  const KEY = MLA.course.storageKey;                  // js/course.js: one key per course, so courses on one site stay apart
   const VERSION = 2; // 2: section progress is keyed by section id (see MLA.progress.migrateSections)
-  const APP_ID = 'ml-atlas';
+  const APP_ID = MLA.course.id;                       // progress files from another course are refused
 
   function defaultState() {
     return {
@@ -80,7 +80,7 @@
   function validate(data) {
     if (!data || typeof data !== 'object') throw new Error('The file is not valid JSON progress data.');
     if (data.app && data.app !== APP_ID) throw new Error('This file was made by a different app (' + data.app + ').');
-    if (typeof data.xp !== 'number' || !data.concepts || !data.problems) throw new Error('This does not look like an ML Atlas progress file.');
+    if (typeof data.xp !== 'number' || !data.concepts || !data.problems) throw new Error('This does not look like a progress file from ' + MLA.course.name + '.');
     return data;
   }
   const newer = (a, b) => (a || '') >= (b || '') ;
@@ -175,7 +175,7 @@
   // mode: 'merge' (default, safe) or 'replace'
   function importJSON(text, mode) {
     let data;
-    if (String(text).length > MAX_IMPORT_CHARS) throw new Error('That file is too large to be an ML Atlas progress file.');
+    if (String(text).length > MAX_IMPORT_CHARS) throw new Error('That file is too large to be a progress file from ' + MLA.course.name + '.');
     // keys that could tamper with object prototypes are dropped while parsing (imports can come from anywhere)
     try { data = JSON.parse(text, (k, v) => (k === '__proto__' || k === 'constructor' || k === 'prototype') ? undefined : v); } catch (e) { throw new Error('Could not read the file: it is not valid JSON.'); }
     validate(data);

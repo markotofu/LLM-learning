@@ -1,4 +1,4 @@
-/* ML Atlas – application root: navigation, routing, onboarding, mount */
+/* Application root: navigation, routing, onboarding, mount */
 (function (global) {
   const MLA = global.MLA;
   if (!global.Vue) return; // e.g. data-only test runs in Node
@@ -49,7 +49,7 @@
         if (this.route.name === 'concept') { const c = MLA.progress.concept(this.route.params.id); if (c) return c.title; }
         if (this.route.name === 'problem') { const p = MLA.progress.problem(this.route.params.id); if (p) return p.title; }
         if (this.route.name === 'track') { const t = MLA.progress.track(this.route.params.id); if (t) return t.title; }
-        return this.route.title || 'ML Atlas';
+        return this.route.title || MLA.course.name;
       },
       nav() { return NAV; },
       bottomNav() { return NAV.filter(n => BOTTOM.includes(n.name)); },
@@ -63,7 +63,7 @@
     },
     watch: {
       'route.path': { immediate: true, handler() { this.sidebarOpen = false; this.moreOpen = false; this.loadContent(); } },
-      title: { immediate: true, handler(t) { if (global.document) document.title = (t && t !== 'ML Atlas' ? t + ' · ' : '') + 'ML Atlas'; } }
+      title: { immediate: true, handler(t) { if (global.document) document.title = (t && t !== MLA.course.name ? t + ' · ' : '') + MLA.course.name; } }
     },
     methods: {
       go(path) { MLA.router.navigate(path); this.sidebarOpen = false; },
@@ -112,7 +112,7 @@
       <aside class="sidebar" :class="{open: sidebarOpen}">
         <div class="brand" @click="go('/home')">
           <span class="brand-logo" aria-hidden="true"><svg class="logo-classic" viewBox="0 0 32 32" width="34" height="34"><rect width="32" height="32" rx="9" fill="url(#bg-g)"/><defs><linearGradient id="bg-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0ea5e9"/><stop offset="1" stop-color="#14b8a6"/></linearGradient></defs><g stroke="#fff" stroke-width="1.6" stroke-opacity=".9" fill="none"><path d="M16 9 9 16M16 9l7 7M9 16l7 7M23 16l-7 7M9 16h14"/></g><g fill="#fff"><circle cx="16" cy="9" r="2.6"/><circle cx="9" cy="16" r="2.3"/><circle cx="23" cy="16" r="2.3"/><circle cx="16" cy="23" r="2.6"/></g></svg><svg class="logo-baroque" viewBox="0 0 32 32" width="36" height="36"><defs><radialGradient id="bm-sky" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="#fff4d6"/><stop offset=".42" stop-color="#a9cbe9"/><stop offset="1" stop-color="#3a669f"/></radialGradient><linearGradient id="bm-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6dc8c"/><stop offset=".5" stop-color="#c99a32"/><stop offset="1" stop-color="#8a6116"/></linearGradient></defs><circle cx="16" cy="16" r="15.3" fill="url(#bm-gold)"/><circle cx="16" cy="16" r="12.7" fill="url(#bm-sky)"/><g stroke="#fffaf0" stroke-width="1.35" stroke-opacity=".92" fill="none"><path d="M16 9.6 10.2 16M16 9.6l5.8 6.4M10.2 16l5.8 6.4M21.8 16 16 22.4M10.2 16h11.6"/></g><g fill="#fffaf0" stroke="#b8892b" stroke-width=".7"><circle cx="16" cy="9.6" r="2.3"/><circle cx="10.2" cy="16" r="2"/><circle cx="21.8" cy="16" r="2"/><circle cx="16" cy="22.4" r="2.3"/></g></svg></span>
-          <div><div class="brand-name">ML Atlas</div><div class="brand-sub">Machine learning → LLMs</div></div>
+          <div><div class="brand-name">{{ MLA.course.name }}</div><div class="brand-sub">{{ MLA.course.tagline }}</div></div>
           <button class="icon-btn sidebar-close" aria-label="Close menu" @click.stop="sidebarOpen=false">&times;</button>
         </div>
         <nav class="nav" aria-label="Main">
@@ -181,7 +181,7 @@
       app.mount('#app');
       MLA.app._app = app;
     },
-    onboard() { MLA.ui.openModal({ title: 'Welcome to ML Atlas', component: 'onboard-dialog', actions: [], dismissible: false }); }
+    onboard() { MLA.ui.openModal({ title: 'Welcome to ' + MLA.course.name, component: 'onboard-dialog', actions: [], dismissible: false }); }
   };
 
   MLA.components['onboard-dialog'] = {
@@ -200,14 +200,14 @@
     },
     template: `
     <div class="onboard">
-      <p>ML Atlas is an interactive <b>map</b> of machine learning: from the maths and Python you need, through classic ML and neural networks, to how large language models are built, fine-tuned and used. Every concept is a lesson with runnable code, demos, a quiz and coding problems that run right here in your browser.</p>
+      <p>{{ MLA.course.name }} is an interactive <b>map</b> of {{ MLA.course.subject }}. Every concept is a lesson with runnable code, demos, a quiz and coding problems that run right here in your browser.</p>
       <div class="field"><label>What should we call you?</label><input type="text" v-model="name" maxlength="24" placeholder="Your name" aria-label="What should we call you?" @keyup.enter="finish(true)" /></div>
       <div class="field"><label>Where do you want to go? (you can change this any time)</label>
         <div class="onboard-tracks"><button v-for="t in tracks" :key="t.id" :class="{active: goal===t.id}" @click="goal=t.id"><span class="ot-icon"><mla-icon :name="t.icon" :size="18"/></span><span><b>{{ t.title }}</b><span class="tiny dim">{{ t.short }}</span></span></button></div>
       </div>
       <div class="callout note"><div class="callout-title">Good to know</div>Progress is saved in this browser automatically. Use <b>Progress &amp; Sync</b> to move it to another device. The first time you run code, about 15 MB of Python downloads once and is then cached.</div>
       <div class="btn-row mt"><button class="btn primary" @click="finish(true)">Start learning</button><button class="btn ghost" @click="finish(false)">Explore the map first</button></div>
-      <p class="small muted mt-sm onboard-placement">Know some of this already? <button class="btn sm" @click="finish('placement')"><mla-icon name="target" :size="14"/> Take the placement test</button> About 12 to 15 questions; the lessons you know are marked, so your path starts at the first gap.</p>
+      <p class="small muted mt-sm onboard-placement">Know some of this already? <button class="btn sm" @click="finish('placement')"><mla-icon name="target" :size="14"/> Take the placement test</button> A few quick questions; the lessons you know are marked, so your path starts at the first gap.</p>
     </div>`
   };
 

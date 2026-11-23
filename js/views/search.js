@@ -1,4 +1,4 @@
-/* ML Atlas – search everything: pages, lessons, sections, glossary terms, problems, projects, case studies and tracks,
+/* Search everything: pages, lessons, sections, glossary terms, problems, projects, case studies and tracks,
  * from one box (Ctrl+K, Cmd+K or "/", or the search button in the top bar). Titles come from the lesson catalog, so
  * results appear at once; when the query is three letters or more, the lesson files load and their text is searched too.
  *   MLA.search.open() / close()     MLA.search.query(text) -> [{ kind, title, sub, route }]   (used by tests) */

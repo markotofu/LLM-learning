@@ -1,4 +1,4 @@
-/* ML Atlas – UI services: toasts, modals, icons */
+/* UI services: toasts, modals, icons */
 (function (global) {
   const MLA = global.MLA;
   const reactive = (global.Vue && global.Vue.reactive) ? global.Vue.reactive : (x => x);

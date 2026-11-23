@@ -1,4 +1,4 @@
-/* ML Atlas – terms of use and privacy policy pages */
+/* Terms of use and privacy policy pages */
 (function (global) {
   const MLA = global.MLA;
   const C = (MLA.components = MLA.components || {});

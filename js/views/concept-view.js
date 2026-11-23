@@ -1,4 +1,4 @@
-/* ML Atlas – concept page: lesson (sections, runnable code, demos, checks), practice list, mastery quiz, notes */
+/* Concept page: lesson (sections, runnable code, demos, checks), practice list, mastery quiz, notes */
 (function (global) {
   const MLA = global.MLA;
   MLA.components = MLA.components || {};
@@ -240,6 +240,11 @@
               <template v-else-if="s.type==='chart'">
                 <mla-md v-if="s.md" :src="s.md" />
                 <mla-chart :spec="s.chart" :title="s.title" />
+                <mla-md v-if="s.after" :src="s.after" />
+              </template>
+              <template v-else-if="s.type==='image'">
+                <mla-md v-if="s.md" :src="s.md" />
+                <figure class="lesson-figure"><a :href="s.src" target="_blank" rel="noopener" :aria-label="'Open full size: ' + s.alt"><img :src="s.src" :alt="s.alt" decoding="async" :style="s.width ? { maxWidth: s.width + 'px' } : null"></a></figure>
                 <mla-md v-if="s.after" :src="s.after" />
               </template>
               <template v-else-if="s.type==='check'">

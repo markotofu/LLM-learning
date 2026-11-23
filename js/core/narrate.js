@@ -1,4 +1,4 @@
-/* ML Atlas – narration: turns lessons into plain spoken sentences for the read-aloud player, so a lesson can be
+/* Narration: turns lessons into plain spoken sentences for the read-aloud player, so a lesson can be
  * followed by ear, without looking at the page. Pure functions, no DOM; tests/narrate.test.js checks every lesson.
  *   MLA.narrate.lesson(concept) -> [{ key, title, text }]  key: 'intro' | 'why' | 'objectives' | section id |
  *                                                          'when' | 'pitfalls' | 'takeaways' | 'end'
@@ -451,6 +451,7 @@
       parts.push(dg ? diagramText(s.demo) : walk ? 'Its steps are read one at a time, and the card on the page follows them.' : 'On the page, you can try it yourself.');
       parts.push(md(s.after));
     } else if (s.type === 'chart') parts.push(sentence('Chart: ' + text(title)), md(s.md), text(chart(s.chart)), md(s.after));
+    else if (s.type === 'image') parts.push(sentence('Picture: ' + text(title)), md(s.md), sentence(text(s.alt)), md(s.after));
     else if (s.type === 'check') parts.push(question(s.question, 'Quick check.'));
     return { key: s.id, title, text: parts.filter(Boolean).join(' ') };
   }

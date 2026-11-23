@@ -53,7 +53,7 @@ for (const c of MLA.data.concepts) {
   }
 }
 T.ok('speech chunks stay short (browsers cut off long utterances)', longest <= 260, String(longest));
-T.ok('narration covers the lessons', items > 2000 && chunks > items, items + ' items, ' + chunks + ' chunks');
+T.ok('narration covers the lessons', items >= 10 * MLA.data.concepts.length && chunks > items, items + ' items, ' + chunks + ' chunks');
 
 // 3. Chart descriptions: trends, peaks, crossings and reference lines
 const d = N.chart({ kind: 'line', x: [1, 2, 3, 4, 5, 6, 7], xLabel: 'k (neighbours)', yLabel: 'accuracy',
@@ -79,7 +79,7 @@ T.ok('bar values are listed', /a, 3; b, 5; c, 1/.test(bar), bar);
   require('../js/core/speech.js');
   const S = global.MLA.speech;
   T.ok('only on-device voices are offered', S.state.voices.length === 1 && S.state.voices[0].uri === 'local-en');
-  const c = MLA.content.byId['linear-regression'];
+  const c = MLA.data.concepts.find(x => x.sections.length >= 4);
   const list = N.lesson(c);
   S.play(list, 2, { single: true, source: c.id, lessonTitle: c.title });
   T.ok('playing one part starts at that part', S.state.playing && S.state.key === list[2].key);

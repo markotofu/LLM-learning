@@ -1,4 +1,4 @@
-/* ML Atlas – more interactive demos (linear algebra, optimization, probabilistic ML, PCA, schedules).
+/* More interactive demos (linear algebra, optimization, probabilistic ML, PCA, schedules).
  * Uses the canvas helpers that js/views/demos.js exports as MLA.demoKit. */
 (function (global) {
   const MLA = global.MLA;

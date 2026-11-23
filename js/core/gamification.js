@@ -1,4 +1,4 @@
-/* ML Atlas – XP, levels, streaks, achievements */
+/* XP, levels, streaks, achievements */
 (function (global) {
   const MLA = global.MLA;
   const st = () => MLA.store.state;

@@ -1,4 +1,4 @@
-/* ML Atlas – tiny hash router (works on GitHub Pages, any sub-path, and from file://) */
+/* Tiny hash router (works on GitHub Pages, any sub-path, and from file://) */
 (function (global) {
   const MLA = global.MLA;
   const reactive = (global.Vue && global.Vue.reactive) ? global.Vue.reactive : (x => x);

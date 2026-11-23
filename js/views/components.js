@@ -1,4 +1,4 @@
-/* ML Atlas – shared Vue components (registered globally) */
+/* Shared Vue components (registered globally) */
 (function (global) {
   const MLA = global.MLA;
   MLA.components = MLA.components || {};

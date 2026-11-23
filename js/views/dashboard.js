@@ -1,4 +1,4 @@
-/* ML Atlas – dashboard */
+/* Dashboard */
 (function (global) {
   const MLA = global.MLA;
   MLA.components = MLA.components || {};
@@ -41,8 +41,8 @@
 
       <div v-if="fresh" class="card hero-card">
         <div class="hero-text">
-          <h3 style="margin-top:0">Welcome to ML Atlas</h3>
-          <p>This is a <b>map</b> of machine learning: {{ P.concepts().length }} concepts, from “what is a vector?” all the way to building and fine-tuning a GPT-style language model. Each concept is a short lesson with runnable code, an interactive demo or two, a quiz, and coding problems you solve right here in the browser.</p>
+          <h3 style="margin-top:0">Welcome to {{ MLA.course.name }}</h3>
+          <p>This is a <b>map</b> of {{ MLA.course.subject }}: {{ P.concepts().length }} concepts. Each concept is a short lesson with runnable code, an interactive demo or two, a quiz, and coding problems you solve right here in the browser.</p>
           <ol class="small"><li>Open the <a @click.prevent="go('/map')" href="#/map">concept map</a> and start at the centre, or pick a <a @click.prevent="go('/tracks')" href="#/tracks">learning track</a>.</li><li>Read a lesson, run the examples, play with the demos.</li><li>Pass the quiz and solve a problem to complete the concept and unlock what builds on it.</li></ol>
           <div class="btn-row"><button class="btn primary" @click="cont"><mla-icon name="play" :size="16"/> Start with “{{ rec.concept ? rec.concept.title : 'the map' }}”</button><button class="btn" @click="go('/tracks')"><mla-icon name="route" :size="16"/> Choose a track</button></div>
           <p v-if="overall.known" class="small mt-sm placement-pitch">{{ overall.known }} {{ overall.known === 1 ? 'lesson is' : 'lessons are' }} marked as known, so your path skips {{ overall.known === 1 ? 'it' : 'them' }}. <a href="#/placement" @click.prevent="go('/placement')">Review or undo the marks</a></p>
@@ -103,7 +103,7 @@
             <div v-if="!fresh" class="tiny muted mt-sm"><a href="#/placement" @click.prevent="go('/placement')">{{ overall.known ? 'Placement test: review or undo the marks' : placementBusy ? 'Resume the placement test' : 'Take the placement test to skip what you know' }}</a></div>
           </template>
           <template v-else>
-            <p class="small muted">Pick a destination (like “Build an LLM from scratch”) and ML Atlas will line up exactly the concepts you need, in order.</p>
+            <p class="small muted">Pick a destination and {{ MLA.course.name }} will line up exactly the concepts you need, in order.</p>
             <button class="btn sm primary block" @click="go('/tracks')">Choose a learning track</button>
           </template>
           <hr>

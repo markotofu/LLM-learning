@@ -9,9 +9,9 @@
 const fs = require('fs');
 const path = require('path');
 const root = path.join(__dirname, '..');
-const SITE = (process.env.SITE_URL || 'https://markotofu.github.io/LLM-learning').replace(/\/+$/, '');
-
 const MLA = require('../tests/_load.js').load();
+const SITE = (process.env.SITE_URL || MLA.course.siteUrl).replace(/\/+$/, '');   // js/course.js
+const NAME = MLA.course.name, ABOUT = 'an interactive course on ' + MLA.course.subject + ', free in your browser';
 if (!MLA.content.ready) MLA.content.init();
 const esc = MLA.util.escapeHtml;
 const md = s => MLA.util.md(s || '');
@@ -44,7 +44,7 @@ function page(title, description, url, body, type) {
 <meta name="description" content="${esc(description)}">
 <link rel="canonical" href="${url}">
 <link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
-<meta property="og:site_name" content="ML Atlas">
+<meta property="og:site_name" content="${esc(NAME)}">
 <meta property="og:type" content="${type || 'article'}">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
@@ -55,7 +55,7 @@ function page(title, description, url, body, type) {
 </head>
 <body>
 ${body}
-<footer>${esc(MLA.data.legal && MLA.data.legal.copyright ? MLA.data.legal.copyright() : 'ML Atlas')} · <a href="${SITE}/">ML Atlas</a>, an interactive course from machine learning basics to LLMs, free in your browser.</footer>
+<footer>${esc(MLA.data.legal && MLA.data.legal.copyright ? MLA.data.legal.copyright() : NAME)} · <a href="${SITE}/">${esc(NAME)}</a>, ${esc(ABOUT)}.</footer>
 </body>
 </html>
 `;
@@ -66,6 +66,7 @@ function sectionHtml(c, s) {
   if (s.type === 'text') return h + md(s.md);
   if (s.type === 'code') return h + md(s.md) + `<pre><code>${esc(s.code || '')}</code></pre>\n` + (s.after ? md(s.after) : '');
   if (s.type === 'chart') return h + (s.md ? md(s.md) : '') + `<p class="note">Chart, described in words: ${esc(MLA.narrate.chart(s.chart))} The interactive chart is in the app.</p>\n` + (s.after ? md(s.after) : '');
+  if (s.type === 'image') return h + (s.md ? md(s.md) : '') + `<figure><img src="../${esc(s.src)}" alt="${esc(s.alt)}" loading="lazy" style="max-width:100%;height:auto"></figure>\n` + (s.after ? md(s.after) : '');
   if (s.type === 'demo') return h + `<p class="note">An interactive ${String(s.demo || '').startsWith('dg-') ? 'diagram' : 'demo'} goes here in the app.</p>\n`;
   return '';                                           // quick checks are interactive: they live in the app
 }
@@ -76,7 +77,7 @@ function lessonPage(c) {
   const link = id => { const x = MLA.content.byId[id]; return x ? `<a href="${x.id}.html">${esc(x.title)}</a>` : ''; };
   const next = (MLA.content.graph.children[c.id] || []).map(link).filter(Boolean);
   const parts = [
-    `<header><a href="index.html">ML Atlas lessons</a><a class="open" href="${app}">Open the interactive lesson</a></header>`,
+    `<header><a href="index.html">${esc(NAME)} lessons</a><a class="open" href="${app}">Open the interactive lesson</a></header>`,
     '<main>',
     `<p class="meta">${esc(branch ? branch.name : '')} · level ${c.level} · about ${c.minutes} minutes</p>`,
     `<h1>${esc(c.title)}</h1>`,
@@ -95,7 +96,7 @@ function lessonPage(c) {
     next.length ? `<p class="meta">Next: ${next.join(', ')}</p>` : '',
     '</main>'
   ];
-  return page(c.title + ' · ML Atlas', c.summary || c.title, url, parts.filter(Boolean).join('\n'));
+  return page(c.title + ' · ' + NAME, c.summary || c.title, url, parts.filter(Boolean).join('\n'));
 }
 
 function indexPage() {
@@ -103,10 +104,10 @@ function indexPage() {
     const list = MLA.data.concepts.filter(c => c.branch === b.id);
     return list.length ? `<h2>${esc(b.name)}</h2><ul>` + list.map(c => `<li><a href="${c.id}.html">${esc(c.title)}</a>: ${esc(c.summary || '')}</li>`).join('') + '</ul>' : '';
   }).join('\n');
-  const body = `<header><a href="${SITE}/">ML Atlas</a><a class="open" href="${SITE}/">Open the app</a></header><main><h1>All lessons</h1>
-<p class="lead">${MLA.data.concepts.length} lessons from machine learning basics to large language models. Each one has runnable Python, quick checks, a quiz and practice problems in the app.</p>
+  const body = `<header><a href="${SITE}/">${esc(NAME)}</a><a class="open" href="${SITE}/">Open the app</a></header><main><h1>All lessons</h1>
+<p class="lead">${MLA.data.concepts.length} lessons on ${esc(MLA.course.subject)}. Each one has runnable code, quick checks, a quiz and practice problems in the app.</p>
 ${groups}</main>`;
-  return page('All lessons · ML Atlas', 'Every lesson in ML Atlas, an interactive course from machine learning basics to LLMs.', `${SITE}/lessons/`, body, 'website');
+  return page('All lessons · ' + NAME, 'Every lesson in ' + NAME + ', ' + ABOUT + '.', `${SITE}/lessons/`, body, 'website');
 }
 
 function main() {
