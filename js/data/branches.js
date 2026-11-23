@@ -85,7 +85,7 @@
   // tools load the lesson files directly (tests/_load.js), so they never see stubs.
   const pending = [], loading = {};
   function stub(e) {
-    return { id: e.id, branch: e.branch, title: e.title, short: e.short, level: e.level, minutes: e.minutes, prereqs: e.prereqs, tags: e.tags,
+    return { id: e.id, branch: e.branch, title: e.title, short: e.short, level: e.level, minutes: e.minutes, prereqs: e.prereqs, softPrereqs: e.softPrereqs || [], tags: e.tags,
       summary: e.summary, file: e.file, _stub: true,
       sections: e.sections.map(([id, type, title]) => ({ id, type, title })),
       quiz: Array.from({ length: e.quiz }, () => ({ stub: true })),
@@ -104,18 +104,44 @@
     delete s._stub;
     Object.assign(s, full);
   }
-  function loadFile(file) {
-    if (loading[file]) return loading[file];
+  function loadScript(src, failure) {
+    if (loading[src]) return loading[src];
     const doc = global.document;
     if (!doc || !doc.head || !doc.createElement) return Promise.resolve();
-    loading[file] = new Promise((resolve, reject) => {
+    loading[src] = new Promise((resolve, reject) => {
       const el = doc.createElement('script');
-      el.src = 'js/data/' + file;
+      el.src = src;
       el.onload = () => resolve();
-      el.onerror = () => { delete loading[file]; el.remove(); reject(new Error('This lesson could not be loaded. Check your connection and try again.')); };
+      el.onerror = () => { delete loading[src]; el.remove(); reject(new Error(failure)); };
       doc.head.appendChild(el);
     });
-    return loading[file];
+    return loading[src];
+  }
+  const loadFile = file => loadScript('js/data/' + file, 'This lesson could not be loaded. Check your connection and try again.');
+
+  // Step-through walkthroughs (js/views/walks*.js) are needed only by the lessons that embed one, so they load with
+  // the first such lesson instead of with the page. Their components then get their precompiled templates, as the
+  // others do at start-up (MLA.app.mount), and join the running app.
+  const WALK_FILES = ['js/views/walks.js', 'js/views/walks-ml.js', 'js/views/walks-dl.js', 'js/views/walks-more.js'];
+  const usesWalk = c => !!c && (c.sections || []).some(s => s.type === 'demo' && /^walk-/.test(s.demo || ''));
+  let walksLoading = null;
+  function adoptComponents() {
+    const app = MLA.app && MLA.app._app, R = global.MLA_RENDER;
+    if (!app) return;
+    for (const name of Object.keys(MLA.components)) {
+      if (app.component(name)) continue;
+      const c = MLA.components[name];
+      if (R && R[name] && typeof c.template === 'string') { c.render = R[name]; delete c.template; }
+      app.component(name, c);
+    }
+  }
+  function loadWalks() {
+    if (MLA.walks) return Promise.resolve();
+    if (!walksLoading) {
+      walksLoading = WALK_FILES.reduce((p, f) => p.then(() => loadScript(f, 'The step-through walkthroughs could not be loaded. Check your connection and try again.')), Promise.resolve())
+        .then(adoptComponents, e => { walksLoading = null; throw e; });
+    }
+    return walksLoading;
   }
 
   MLA.content = {
@@ -123,18 +149,21 @@
       if (!MLA.data.catalog) { for (const c of list) MLA.data.concepts.push(c); return; }
       if (MLA.content.ready) list.forEach(merge); else pending.push(...list);
     },
-    loaded(id) { const c = MLA.content.byId && MLA.content.byId[id]; return !!c && !c._stub; },
+    // A lesson is ready to show once its file has run and, if it embeds a walkthrough, the walkthrough code too.
+    loaded(id) { const c = MLA.content.byId && MLA.content.byId[id]; return !!c && !c._stub && (!!MLA.walks || !usesWalk(c)); },
     ensure(ids) {
-      const files = new Set();
-      for (const id of [].concat(ids || [])) { const c = MLA.content.byId[id]; if (c && c._stub) files.add(c.file); }
-      return Promise.all([...files].map(loadFile));
+      const list = [].concat(ids || []), files = new Set();
+      for (const id of list) { const c = MLA.content.byId[id]; if (c && c._stub) files.add(c.file); }
+      return Promise.all([...files].map(loadFile)).then(() => (list.some(id => usesWalk(MLA.content.byId[id])) ? loadWalks() : undefined));
     },
+    WALK_FILES,
     ensureAll() { return MLA.content.ensure(MLA.data.concepts.filter(c => c._stub).map(c => c.id)); },
     // Fetch (without running) every lesson file in the background, so the service worker can serve them offline later.
     prefetchAll() {
       const cat = MLA.data.catalog, nav = global.navigator;
       if (!cat || !global.fetch || (nav && nav.connection && nav.connection.saveData)) return;
-      cat.files.forEach(f => { if (!loading[f]) global.fetch('js/data/' + f).catch(() => { /* offline: try again next visit */ }); });
+      cat.files.forEach(f => { if (!loading['js/data/' + f]) global.fetch('js/data/' + f).catch(() => { /* offline: try again next visit */ }); });
+      if (!MLA.walks) WALK_FILES.forEach(f => global.fetch(f).catch(() => { /* offline: try again next visit */ }));
     },
     sectionIds,
     ready: false,

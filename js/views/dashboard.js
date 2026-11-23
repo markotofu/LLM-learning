@@ -22,7 +22,8 @@
       due() { const cards = MLA.data.flashcards || []; return MLA.srs.stats(cards, this.state.flashcards); },
       mistakes() { return MLA.mistakes.stats(); },
       py() { return MLA.python.status; },
-      fresh() { return this.overall.conceptsDone === 0 && this.overall.solved === 0; }
+      fresh() { return this.overall.conceptsDone === 0 && this.overall.solved === 0; },
+      placementBusy() { const pl = this.state.placement; return !!(pl && pl.current && pl.current.answers.length); }
     },
     methods: {
       go(p) { MLA.router.navigate(p); },
@@ -44,13 +45,15 @@
           <p>This is a <b>map</b> of machine learning: {{ P.concepts().length }} concepts, from “what is a vector?” all the way to building and fine-tuning a GPT-style language model. Each concept is a short lesson with runnable code, an interactive demo or two, a quiz, and coding problems you solve right here in the browser.</p>
           <ol class="small"><li>Open the <a @click.prevent="go('/map')" href="#/map">concept map</a> and start at the centre, or pick a <a @click.prevent="go('/tracks')" href="#/tracks">learning track</a>.</li><li>Read a lesson, run the examples, play with the demos.</li><li>Pass the quiz and solve a problem to complete the concept and unlock what builds on it.</li></ol>
           <div class="btn-row"><button class="btn primary" @click="cont"><mla-icon name="play" :size="16"/> Start with “{{ rec.concept ? rec.concept.title : 'the map' }}”</button><button class="btn" @click="go('/tracks')"><mla-icon name="route" :size="16"/> Choose a track</button></div>
+          <p v-if="overall.known" class="small mt-sm placement-pitch">{{ overall.known }} {{ overall.known === 1 ? 'lesson is' : 'lessons are' }} marked as known, so your path skips {{ overall.known === 1 ? 'it' : 'them' }}. <a href="#/placement" @click.prevent="go('/placement')">Review or undo the marks</a></p>
+          <p v-else class="small muted mt-sm placement-pitch">Know some of this already? <button class="btn sm" @click="go('/placement')"><mla-icon name="target" :size="14"/> {{ placementBusy ? 'Resume the placement test' : 'Take the placement test' }}</button> In 5 to 10 minutes it marks the lessons you know, so your path starts at the first gap.</p>
         </div>
       </div>
 
       <div class="grid cols-4">
         <stat-card label="Experience" :value="state.xp.toLocaleString() + ' XP'" :sub="'Level ' + level.level" icon="star" color="var(--amber)" />
         <stat-card label="Streak" :value="streak.current + (streak.current===1?' day':' days')" :sub="'Best ' + streak.best" icon="flame" color="var(--red)" />
-        <stat-card label="Concepts" :value="overall.conceptsDone + ' / ' + overall.concepts" :sub="'completed'" icon="map" color="var(--accent)" />
+        <stat-card label="Concepts" :value="overall.conceptsDone + ' / ' + overall.concepts" :sub="'completed' + (overall.known ? ' · ' + overall.known + ' known' : '')" icon="map" color="var(--accent)" />
         <stat-card label="Problems" :value="overall.solved + ' / ' + overall.problems" :sub="'solved'" icon="code" color="var(--green)" />
       </div>
 
@@ -65,7 +68,7 @@
           <p v-else class="muted">{{ rec.reason }}</p>
           <div v-if="ready.length" class="mt" @click.stop>
             <div class="tiny dim upper">Also ready for you</div>
-            <div class="chips"><a v-for="c in ready" :key="c.id" class="chip clickable" @click="go('/concept/'+c.id)"><status-dot :status="P.status(c.id)" :size="15"/> {{ c.title }}</a></div>
+            <div class="chips"><a v-for="c in ready" :key="c.id" class="chip clickable" :href="'#/concept/'+c.id" @click.prevent="go('/concept/'+c.id)"><status-dot :status="P.status(c.id)" :size="15"/> {{ c.title }}</a></div>
           </div>
         </div>
         <div class="card">
@@ -95,8 +98,9 @@
           <div class="card-title"><h3><mla-icon name="route" :size="18"/> Your goal</h3></div>
           <template v-if="goal">
             <div style="font-weight:650">{{ goal.title }}</div>
-            <mla-progress :value="goalPr.pct" :label="goalPr.done + ' of ' + goalPr.total + ' concepts'" style="margin-top:8px" />
+            <mla-progress :value="goalPr.pct" :extra="goalPr.knownPct" :label="goalPr.done + ' of ' + goalPr.total + ' concepts' + (goalPr.known ? ' · ' + goalPr.known + ' known' : '')" style="margin-top:8px" />
             <button class="btn sm block mt" @click="go('/track/'+goal.id)">View the path</button>
+            <div v-if="!fresh" class="tiny muted mt-sm"><a href="#/placement" @click.prevent="go('/placement')">{{ overall.known ? 'Placement test: review or undo the marks' : placementBusy ? 'Resume the placement test' : 'Take the placement test to skip what you know' }}</a></div>
           </template>
           <template v-else>
             <p class="small muted">Pick a destination (like “Build an LLM from scratch”) and ML Atlas will line up exactly the concepts you need, in order.</p>

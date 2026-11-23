@@ -2021,7 +2021,7 @@ def max_batch(gpu_bytes, n_params, bits, n_layers, n_kv_heads, head_dim, seq_len
 
   // =====================================================================================
   {
-    id: 'mini-gpt', branch: 'llm', title: 'Capstone: A Tiny GPT in NumPy', short: 'Mini-GPT Capstone', level: 3, minutes: 60, prereqs: ['decoding', 'gpt'],
+    id: 'mini-gpt', branch: 'llm', title: 'Capstone: A Tiny GPT in NumPy', short: 'Mini-GPT Capstone', level: 3, minutes: 60, prereqs: ['decoding', 'gpt'], softPrereqs: ['pytorch'],
     tags: ['capstone', 'gpt from scratch', 'character-level', 'nanogpt', 'training', 'generation', 'project'],
     summary: 'Put everything together: a character-level tokenizer, a neural language model trained from scratch in your browser, the complete GPT forward pass and generation loop in NumPy, and a full PyTorch script for training a real (small) GPT on a GPU.',
     why: `Building a GPT yourself is the best way to make every previous concept concrete: tokenization, embeddings, attention, residual blocks, the next-token loss, backpropagation, optimizers and decoding all have to work together. Projects like Andrej Karpathy's nanoGPT showed that a few hundred lines are enough to train a GPT-2-class model. Here you'll train a small neural language model in the browser, implement the GPT forward pass and generation, and get a complete PyTorch script to scale it up.`,

@@ -17,6 +17,10 @@ Possible improvements, ranked by how much they help a learner per unit of effort
 
 **Impact** is the expected gain in learning, reach or safety.
 
+## Done in the tenth round (23 November 2026)
+
+- **Map at scale** (item 15): every view of the concept map can zoom to one branch (its lessons plus the lessons it builds on from other branches, with the branch's hub in the middle of the mind map), hide finished branches, and colour lessons by progress in a heat map. Lessons can name *recommended* prerequisites (`softPrereqs`, seven so far), which the map draws as dotted links and lists apart from the required ones; they never lock a lesson.
+
 ## Done in the ninth round (22 November 2026)
 
 - **Your own data in Python:** upload CSV, TSV, Excel, JSON, Parquet or text files, read them as `data/<name>`; they stay in the browser and travel in the export file.
@@ -219,10 +223,11 @@ Items 1–4, 6, 7, 8 and part of 10–11 below are done:
     - text-generation metrics (BLEU, ROUGE, BERTScore);
     - data visualization: done;
     - "open in Colab" links for the PyTorch examples that need a GPU.
-15. **Map at scale.** With 113 nodes:
-    - mark *recommended* prerequisites separately from *required* ones;
-    - add a "zoom to branch" view and a progress heat map;
-    - let a learner hide finished branches.
+15. *(Done in the tenth round.)* **Map at scale.** With 123 nodes:
+    - mark *recommended* prerequisites separately from *required* ones: `softPrereqs` on a lesson, drawn dotted and listed as "Recommended, not required";
+    - add a "zoom to branch" view and a progress heat map: "Zoom to" (kept in the address, `#/map?branch=<id>`) and "Heat map" in every view, with the `--heat-*` theme tokens;
+    - let a learner hide finished branches: "Hide finished branches", saved with the learner's settings.
+    - *Still open:* the lesson page and the static lesson pages list only the required prerequisites.
 16. *(Done in the eighth round.)* **Faster first load.** All content scripts (about 2 MB uncompressed) load up front.
     - *Fix:* lazy-load lessons per branch, or ship a JSON content bundle. GitHub Pages serves gzip, so the real transfer is much smaller and this matters mainly on slow mobile connections.
     - *Cons:* the tests and the no-build design rely on loading everything at once.

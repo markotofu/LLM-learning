@@ -16,6 +16,7 @@
     const add = (kind, weight, title, sub, route, extra) => out.push({ kind, weight, title, sub, route, tl: lower(title), hay: lower(title + ' ' + (sub || '') + ' ' + (extra || '')) });
     const branchName = id => { const b = MLA.content.branchById && MLA.content.branchById[id]; return b ? b.name : ''; };
     for (const n of MLA.nav || []) add('Page', 6, n.label, '', n.path);
+    add('Page', 6, 'Placement test', 'Skip the lessons you already know', '/placement', 'level test assessment skip known');
     for (const t of (MLA.data.tracks || []).filter(t => !t.hidden)) add('Track', 7, t.title, t.desc || t.description || '', '/track/' + t.id);
     for (const c of MLA.data.concepts) {
       add('Lesson', 22, c.title, c.summary, '/concept/' + c.id, (c.tags || []).join(' ') + ' ' + branchName(c.branch));

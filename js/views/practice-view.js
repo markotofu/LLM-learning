@@ -46,7 +46,7 @@
       </div>
       <div class="problem-table">
         <div class="pt-head"><span>#</span><span></span><span>Problem</span><span class="hide-sm">Concept</span><span>Difficulty</span></div>
-        <a v-for="r in rows" :key="r.p.id" class="pt-row" @click="go('/problem/'+r.p.id)" tabindex="0" @keydown.enter="go('/problem/'+r.p.id)">
+        <a v-for="r in rows" :key="r.p.id" class="pt-row" :href="'#/problem/'+r.p.id" @click.prevent="go('/problem/'+r.p.id)">
           <span class="tiny dim mono">{{ r.n }}</span>
           <status-dot :status="r.status" :size="18"/>
           <span class="pt-title">{{ r.p.title }}<span v-if="r.cstatus==='locked'" class="tiny dim"> · prerequisites recommended</span></span>

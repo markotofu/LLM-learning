@@ -66,7 +66,7 @@ if (!args.length) {
     if (!c) { console.log('no lesson with id ' + id + ' (list them: node tools/lesson-info.js)'); continue; }
     const loc = locate(id); const sl = sectionLines(c, loc);
     console.log('## ' + c.id + ' | ' + c.title + ' | branch ' + c.branch + ' | level ' + c.level + (loc ? ' | ' + loc.file + ':' + loc.line : ''));
-    console.log('prereqs: ' + (c.prereqs.join(', ') || 'none') + ' | quiz ' + (c.quiz || []).length + ' | problems: ' + (c.problems || []).map(p => p.id).join(', ') + ' | ' + words(c) + ' words');
+    console.log('prereqs: ' + (c.prereqs.join(', ') || 'none') + ((c.softPrereqs || []).length ? ' | recommended: ' + c.softPrereqs.join(', ') : '') + ' | quiz ' + (c.quiz || []).length + ' | problems: ' + (c.problems || []).map(p => p.id).join(', ') + ' | ' + words(c) + ' words');
     c.sections.forEach((s, i) => {
       const extra = s.type === 'code' ? (s.run === false ? ' norun' : '') + (s.predict ? ' predict' : '') + (s.timeoutSec ? ' timeout ' + s.timeoutSec : '') : s.type === 'demo' ? ' ' + s.demo : '';
       console.log(String(i).padStart(3) + '  ' + s.type.padEnd(5) + extra.padEnd(16) + (s.title || '(no title)') + (sl[i] ? '  :' + sl[i] : ''));

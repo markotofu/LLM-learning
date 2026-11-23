@@ -22,7 +22,7 @@
           <div class="card-title"><h3><mla-icon :name="it.t.icon" :size="18"/> {{ it.t.title }}</h3><span v-if="state.profile.goal===it.t.id" class="chip accent tiny">your goal</span></div>
           <p class="small muted">{{ it.t.desc }}</p>
           <div class="tiny dim mb">{{ it.pr.total }} concepts · about {{ Math.round(it.pr.ids.reduce((s,id)=>s+P.concept(id).minutes,0)/60) }} hours of lessons{{ it.t.level ? ' · ' + it.t.level : '' }}</div>
-          <mla-progress :value="it.pr.pct" :label="it.pr.done + '/' + it.pr.total + ' completed'" />
+          <mla-progress :value="it.pr.pct" :extra="it.pr.knownPct" :label="it.pr.done + '/' + it.pr.total + ' completed' + (it.pr.known ? ' · ' + it.pr.known + ' known' : '')" />
           <div class="btn-row mt"><button class="btn sm" @click="go('/track/'+it.t.id)">View path</button><button v-if="state.profile.goal!==it.t.id" class="btn sm primary" @click="setGoal(it.t)">Set as my goal</button></div>
         </div>
       </div>
@@ -37,7 +37,7 @@
       t() { return this.P.track(this.route.params.id); },
       pr() { return this.t ? this.P.trackProgress(this.t) : null; },
       steps() { return this.pr.ids.map((id, i) => ({ c: this.P.concept(id), n: i + 1, status: this.P.status(id), cp: this.P.conceptProgress(id) })); },
-      nextStep() { return this.steps.find(s => !['completed', 'mastered'].includes(s.status)); },
+      nextStep() { return this.steps.find(s => !['completed', 'mastered', 'known'].includes(s.status)); },
       isGoal() { return this.state.profile.goal === (this.t && this.t.id); }
     },
     methods: {
@@ -50,15 +50,16 @@
       <button class="btn ghost sm" style="align-self:flex-start" @click="go('/tracks')"><mla-icon name="arrowLeft" :size="16"/> All tracks</button>
       <section-head :title="t.title" :sub="t.desc">
         <button class="btn" :class="isGoal ? '' : 'primary'" @click="toggleGoal">{{ isGoal ? 'Clear goal' : 'Set as my goal' }}</button>
-        <button v-if="nextStep" class="btn primary" @click="go('/concept/'+nextStep.c.id)"><mla-icon name="play" :size="16"/> {{ pr.done ? 'Continue' : 'Start' }}</button>
+        <button v-if="nextStep" class="btn primary" @click="go('/concept/'+nextStep.c.id)"><mla-icon name="play" :size="16"/> {{ pr.done || pr.known ? 'Continue' : 'Start' }}</button>
       </section-head>
-      <mla-progress :value="pr.pct" :label="pr.done + ' of ' + pr.total + ' concepts completed'" />
+      <mla-progress :value="pr.pct" :extra="pr.knownPct" :label="pr.done + ' of ' + pr.total + ' concepts completed' + (pr.known ? ' · ' + pr.known + ' known' : '')" />
+      <p v-if="pr.known" class="small muted track-known">{{ pr.known }} {{ pr.known === 1 ? 'lesson is' : 'lessons are' }} marked as known, so the path skips {{ pr.known === 1 ? 'it' : 'them' }}{{ nextStep ? ' and continues at ' + nextStep.c.title : '' }}. <a href="#/placement" @click.prevent="go('/placement')">Review or undo the marks</a></p>
       <div class="track-steps">
-        <a v-for="s in steps" :key="s.c.id" class="track-step" :class="s.status" @click="go('/concept/'+s.c.id)" :style="{'--bc': P.branch(s.c.branch).color}">
+        <a v-for="s in steps" :key="s.c.id" class="track-step" :class="s.status" :href="'#/concept/'+s.c.id" @click.prevent="go('/concept/'+s.c.id)" :style="{'--bc': P.branch(s.c.branch).color}">
           <span class="ts-num">{{ s.n }}</span>
           <status-dot :status="s.status"/>
           <div class="ts-body"><div class="ts-title">{{ s.c.title }}</div><div class="tiny dim">{{ s.c.summary }}</div></div>
-          <div class="ts-right"><branch-chip :id="s.c.branch" small/><span class="tiny dim">{{ s.c.minutes }} min</span></div>
+          <div class="ts-right"><branch-chip :id="s.c.branch" small/><span class="tiny dim">{{ s.status === 'known' ? 'known' : s.c.minutes + ' min' }}</span></div>
         </a>
       </div>
     </div>`
@@ -87,7 +88,7 @@
         <div v-for="g in items" :key="g.term" class="gl-item" :style="{'--bc': P.branch(g.branch) ? P.branch(g.branch).color : 'var(--border)'}">
           <div class="gl-term">{{ g.term }}</div>
           <div class="gl-def"><mla-md :src="g.def" inline /></div>
-          <a v-if="g.concept && P.concept(g.concept)" class="tiny gl-link" @click="go('/concept/'+g.concept)">→ {{ cname(g.concept) }}</a>
+          <a v-if="g.concept && P.concept(g.concept)" class="tiny gl-link" :href="'#/concept/'+g.concept" @click.prevent="go('/concept/'+g.concept)">→ {{ cname(g.concept) }}</a>
         </div>
         <empty-state v-if="!items.length" icon="search" text="No terms match." />
       </div>
@@ -193,10 +194,10 @@
       </div>
       <template v-else>
         <div class="row between small muted"><span>Card {{ idx+1 }} of {{ queue.length }}</span><span>space = flip · 1–4 = grade</span></div>
-        <div class="flashcard" role="button" @click="flipped=!flipped" tabindex="0">
+        <div class="flashcard" role="button" @click="flipped=!flipped" tabindex="0" @keydown.enter.prevent="flipped=!flipped" @keydown.space.prevent="flipped=!flipped">
           <span class="fc-label">{{ flipped ? 'Definition' : 'Term' }} · {{ P.branch(card.deck) ? P.branch(card.deck).short : '' }}</span>
           <div v-if="!flipped" class="fc-front">{{ card.front }}</div>
-          <div v-else class="fc-back"><mla-md :src="card.back" /><a v-if="card.concept && P.concept(card.concept)" class="tiny" @click.stop="go('/concept/'+card.concept)">Open the lesson: {{ P.concept(card.concept).title }} →</a></div>
+          <div v-else class="fc-back"><mla-md :src="card.back" /><a v-if="card.concept && P.concept(card.concept)" class="tiny" :href="'#/concept/'+card.concept" @click.stop.prevent="go('/concept/'+card.concept)" @keydown.stop>Open the lesson: {{ P.concept(card.concept).title }} →</a></div>
           <span v-if="!flipped" class="tiny dim fc-hint">Recall it, then click to check</span>
         </div>
         <div v-if="flipped" class="grade-row">
@@ -259,7 +260,7 @@
         <p v-else class="muted small">Nothing here yet. When you miss a quiz question, a quick check or a "predict first" question, or need the solution to solve a problem, it is saved here and comes back a day or more later.</p>
       </div>
       <div v-else class="card">
-        <div class="row between small muted"><span>{{ label(cur) }} · <a @click="lesson(cur)">{{ cur.concept.title }}</a></span><span>{{ idx + 1 }} of {{ queue.length }}</span></div>
+        <div class="row between small muted"><span>{{ label(cur) }} · <a href="#" @click.prevent="lesson(cur)">{{ cur.concept.title }}</a></span><span>{{ idx + 1 }} of {{ queue.length }}</span></div>
         <template v-if="cur.problem">
           <h3 class="mt-sm">{{ cur.problem.title }}</h3>
           <p class="small muted">{{ cur.item.why === 'solution' ? 'You solved this one after viewing the solution.' : 'This one took several attempts.' }} Solve it again without help: open it, press <b>Reset to starter code</b>, and write the solution from memory. An accepted submission counts.</p>

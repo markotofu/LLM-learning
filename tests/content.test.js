@@ -83,6 +83,8 @@ for (const c of concepts) {
   const legendIssues = [].concat(...mdTexts.map(formulaLegendIssues));
   T.ok(where + ': every formula defines its symbols (:::where)', legendIssues.length === 0, legendIssues.join(' | '));
   for (const p of c.prereqs) T.ok(where + ': prereq ' + p + ' exists', !!MLA.content.byId[p]);
+  if (c.softPrereqs != null) T.ok(where + ': softPrereqs is a list of lesson ids', Array.isArray(c.softPrereqs) && c.softPrereqs.every(p => typeof p === 'string'));
+  for (const p of c.softPrereqs || []) T.ok(where + ': recommended prereq ' + p + ' exists, is not also required and is not the lesson itself', !!MLA.content.byId[p] && p !== c.id && !c.prereqs.includes(p));
   T.ok(where + ': no "undefined" leaked into text', !JSON.stringify([c.why, c.when, c.pitfalls, c.sections.map(s => s.md)]).includes('undefined'));
   const sids = c.sections.map(s => s.id);
   T.ok(where + ': section ids are unique, non-numeric strings', sids.every(x => typeof x === 'string' && /^[a-z0-9-]+$/.test(x) && !/^\d+$/.test(x)) && new Set(sids).size === sids.length, sids.join(','));
@@ -100,6 +102,19 @@ for (const c of concepts) {
 const g = MLA.content.graph;
 const cycle = MLA.graph.findCycle(g);
 T.ok('no prerequisite cycles', cycle === null, cycle && cycle.join(' → '));
+// Recommended prerequisites (softPrereqs) never lock a lesson, but they must still read as "learn this first":
+// no cycles once they count, nothing that is already required on the way, and earlier in the prerequisite tree.
+{
+  const softCycle = MLA.graph.findCycle(g, { soft: true });
+  T.ok('no cycles when recommended prerequisites count too', softCycle === null, softCycle && softCycle.join(' → '));
+  const dep = MLA.graph.depths(g);
+  for (const c of concepts) for (const p of c.softPrereqs || []) {
+    if (!g.nodes[p]) continue;
+    T.ok('concept ' + c.id + ': recommended prereq ' + p + ' is not already required on the way', !MLA.graph.ancestors(g, c.id).has(p));
+    T.ok('concept ' + c.id + ': recommended prereq ' + p + ' sits earlier in the prerequisite tree', dep[p] < dep[c.id], dep[p] + ' vs ' + dep[c.id]);
+  }
+  T.ok('some lessons recommend prerequisites', concepts.some(c => (c.softPrereqs || []).length > 0));
+}
 const roots = concepts.filter(c => c.prereqs.length === 0);
 T.ok('exactly one root concept', roots.length === 1, roots.map(r => r.id).join(', '));
 

@@ -8,9 +8,9 @@ const T = suite('views');
 const Vue = global.Vue;
 
 T.ok('scripts load without errors', MLA.__loadErrors.length === 0, MLA.__loadErrors.join('\n'));
-const required = ['view-home', 'view-map', 'view-concept', 'view-problem', 'view-problems', 'view-playground', 'view-tracks', 'view-track', 'view-review', 'view-glossary', 'view-projects', 'view-achievements', 'view-profile', 'view-selftest', 'view-terms', 'view-privacy', 'code-editor', 'run-output', 'code-sample', 'quiz-runner', 'check-q', 'mla-demo', 'mla-md', 'onboard-dialog'];
+const required = ['view-home', 'view-map', 'view-concept', 'view-problem', 'view-problems', 'view-playground', 'view-tracks', 'view-track', 'view-review', 'view-glossary', 'view-projects', 'view-achievements', 'view-profile', 'view-selftest', 'view-terms', 'view-privacy', 'code-editor', 'run-output', 'code-sample', 'quiz-runner', 'check-q', 'mla-demo', 'mla-md', 'onboard-dialog', 'view-placement', 'placement-q'];
 for (const n of required) T.ok('component ' + n + ' registered', !!MLA.components[n]);
-T.ok('every route has a view', MLA.router.routes.every(r => ['home', 'map', 'concept', 'problems', 'problem', 'playground', 'tracks', 'track', 'review', 'glossary', 'projects', 'achievements', 'profile', 'selftest', 'terms', 'privacy'].includes(r.name)));
+T.ok('every route has a view', MLA.router.routes.every(r => ['home', 'map', 'concept', 'problems', 'problem', 'playground', 'tracks', 'track', 'review', 'glossary', 'projects', 'achievements', 'profile', 'selftest', 'placement', 'terms', 'privacy'].includes(r.name)));
 
 // legal pages: placeholders filled in, key statements present, markdown renders
 const L = MLA.data.legal;

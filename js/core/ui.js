@@ -106,6 +106,7 @@
     pause: '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>',
     skipBack: '<path d="M6 5v14"/><path d="M19 5 9 12l10 7z"/>',
     skipForward: '<path d="M18 5v14"/><path d="M5 5l10 7-10 7z"/>',
+    skip: '<path d="m5 7 5 5-5 5M13 7l5 5-5 5"/>',
     dice: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h.01M15 9h.01M12 12h.01M9 15h.01M15 15h.01"/>'
   };
   function iconSvg(name, size) {

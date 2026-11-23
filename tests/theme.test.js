@@ -38,6 +38,12 @@ function rgb(c) {
 const over = (fg, bg) => { const a = fg[3]; return [0, 1, 2].map(i => fg[i] * a + bg[i] * (1 - a)).concat(1); };
 const lum = c => { const v = c.slice(0, 3).map(x => x / 255).map(x => x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4)); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
 const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+// Perceptual lightness (OKLab L, 0 to 1), for checking that the steps of a colour ramp are visibly apart.
+const oklabL = c => {
+  const [r, g, b] = c.slice(0, 3).map(x => x / 255).map(x => x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4));
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b), m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b), s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s;
+};
 
 const TEXT = ['text', 'muted', 'dim', 'accent2', 'green', 'red', 'amber', 'purple', 'cyan', 'pink'];
 const BACKGROUNDS = ['bg', 'bg2', 'panel', 'panel2', 'panel3'];
@@ -58,7 +64,7 @@ for (const [name, t] of Object.entries(themes)) {
   }
   // 3. Text drawn on solid accent and status fills (buttons, status dots, map markers).
   T.ok(name + ': --on-accent on --accent ≥ 4.5', ratio(rgb(t['on-accent']), rgb(t.accent)) >= 4.5, ratio(rgb(t['on-accent']), rgb(t.accent)).toFixed(2));
-  for (const fill of ['green', 'amber', 'accent']) {
+  for (const fill of ['green', 'amber', 'accent', 'cyan']) {          // cyan: lessons marked as known
     const r = ratio(rgb(t['on-status']), rgb(t[fill]));
     T.ok(name + ': --on-status on --' + fill + ' ≥ 4.5', r >= 4.5, r.toFixed(2));
   }
@@ -73,6 +79,20 @@ for (const [name, t] of Object.entries(themes)) {
     const hue = c => { const [r, g, bl] = c.slice(0, 3).map(x => x / 255); const mx = Math.max(r, g, bl), mn = Math.min(r, g, bl), d = mx - mn; if (!d) return 0; let h = mx === r ? ((g - bl) / d) % 6 : mx === g ? (bl - r) / d + 2 : (r - g) / d + 4; return (h * 60 + 360) % 360; };
     const dh = Math.abs(hue(a) - hue(b)); const gap = Math.min(dh, 360 - dh);
     T.ok(name + ': accent hue is ≥ 40° away from --' + st, gap >= 40, gap.toFixed(0) + '°');
+  }
+  // 6. The concept map's progress heat map: one hue, from --panel (not started) through --heat-1, --heat-2 and --heat-3
+  //    (started, completed, mastered). Text on a heat fill is --text, and every step is visibly darker (light themes) or
+  //    lighter (dark themes) than the one before: at least 0.06 apart in OKLab lightness.
+  const ramp = ['panel', 'heat-1', 'heat-2', 'heat-3'];
+  for (const h of ramp.slice(1)) {
+    T.ok(name + ': --' + h + ' is defined', !!t[h]);
+    const r = ratio(rgb(t.text), rgb(t[h]));
+    T.ok(name + ': --text on --' + h + ' ≥ 4.5', r >= 4.5, r.toFixed(2));
+  }
+  const Ls = ramp.map(k => oklabL(rgb(t[k]))), darkTheme = lum(rgb(t.panel)) < 0.2;
+  for (let i = 1; i < ramp.length; i++) {
+    const step = darkTheme ? Ls[i] - Ls[i - 1] : Ls[i - 1] - Ls[i];
+    T.ok(name + ': heat step --' + ramp[i - 1] + ' to --' + ramp[i] + ' is visible (ΔL ≥ 0.06)', step >= 0.06, step.toFixed(3));
   }
 }
 

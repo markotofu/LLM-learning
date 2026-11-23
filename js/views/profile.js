@@ -93,8 +93,8 @@
           <div class="row" style="gap:20px;align-items:flex-start">
             <div class="center"><score-ring :value="level.pct" :size="110" color="var(--accent)" /><div class="small muted mt-sm">Level {{ level.level }} · {{ G.title(level.level) }}</div></div>
             <div style="flex:1;min-width:220px">
-              <div class="field"><label>Display name</label><div class="inline-form"><input type="text" v-model="nameEdit" maxlength="24" @keyup.enter="saveName"/><button class="btn sm" @click="saveName">Save</button></div></div>
-              <div class="field"><label>Learning goal</label><select v-model="state.profile.goal"><option :value="null">No goal: follow the whole map</option><option v-for="t in tracks" :key="t.id" :value="t.id">{{ t.title }}</option><option v-if="state.profile.goal==='custom'" value="custom">{{ P.track('custom').title }}</option></select></div>
+              <div class="field"><label>Display name</label><div class="inline-form"><input type="text" v-model="nameEdit" maxlength="24" aria-label="Display name" @keyup.enter="saveName"/><button class="btn sm" @click="saveName">Save</button></div></div>
+              <div class="field"><label>Learning goal</label><select v-model="state.profile.goal" aria-label="Learning goal"><option :value="null">No goal: follow the whole map</option><option v-for="t in tracks" :key="t.id" :value="t.id">{{ t.title }}</option><option v-if="state.profile.goal==='custom'" value="custom">{{ P.track('custom').title }}</option></select></div>
               <div class="small"><div class="row between"><span class="muted">XP</span><b>{{ state.xp.toLocaleString() }}</b></div><div class="row between"><span class="muted">Concepts completed</span><b>{{ overall.conceptsDone }} / {{ overall.concepts }}</b></div><div class="row between"><span class="muted">Problems solved</span><b>{{ overall.solved }} / {{ overall.problems }}</b></div><div class="row between"><span class="muted">Best streak</span><b>{{ streak.best }} days</b></div></div>
             </div>
           </div>
@@ -117,8 +117,8 @@
             <h4>Option 2 · Sync code (copy &amp; paste)</h4>
             <p class="small muted">A compressed text version of everything except uploaded datasets (they would make it far too long to paste). Copy it here, paste it into this box on the other device, for example through a note to yourself.</p>
             <div class="btn-row"><button class="btn primary" :disabled="busy" @click="makeSync"><mla-icon name="copy" :size="16"/> Create &amp; copy sync code</button></div>
-            <textarea v-if="syncOut" class="sync-box mono" readonly :value="syncOut" @focus="$event.target.select()"></textarea>
-            <textarea v-model="syncIn" class="sync-box mono" placeholder="Paste a sync code from another device here…"></textarea>
+            <textarea v-if="syncOut" class="sync-box mono" readonly :value="syncOut" aria-label="Your sync code" @focus="$event.target.select()"></textarea>
+            <textarea v-model="syncIn" class="sync-box mono" aria-label="Sync code from another device" placeholder="Paste a sync code from another device here…"></textarea>
             <button class="btn" :disabled="busy || !syncIn.trim()" @click="useSync"><mla-icon name="upload" :size="16"/> Apply sync code</button>
           </div>
         </div>
@@ -141,8 +141,8 @@
           <label class="checkbox"><input type="checkbox" v-model="state.profile.speechContinue"> Go on to the next lesson automatically when one ends</label>
           <p class="tiny dim">Lessons remember where you stopped. In browsers that support media controls for web pages, the lock screen, notification area and headphone buttons can pause, resume and skip; phones may still stop speech when the screen locks.</p>
           <div class="btn-row mt-sm"><button class="btn sm" :disabled="!speech.supported" @click="trySpeech"><mla-icon name="volume" :size="15"/> Try the voice</button></div>
-          <div class="field"><label>Code editor font size: {{ state.profile.editorFontSize }}px</label><input type="range" min="11" max="22" step="1" v-model.number="state.profile.editorFontSize"></div>
-          <div class="field"><label>Time limit per run: {{ state.profile.timeoutSec }} s (stops infinite loops)</label><input type="range" min="5" max="120" step="5" v-model.number="state.profile.timeoutSec"></div>
+          <div class="field"><label>Code editor font size: {{ state.profile.editorFontSize }}px</label><input type="range" min="11" max="22" step="1" v-model.number="state.profile.editorFontSize" aria-label="Code editor font size"></div>
+          <div class="field"><label>Time limit per run: {{ state.profile.timeoutSec }} s (stops infinite loops)</label><input type="range" min="5" max="120" step="5" v-model.number="state.profile.timeoutSec" aria-label="Time limit per run, in seconds"></div>
           <label class="checkbox"><input type="checkbox" v-model="state.profile.preloadPython"> Load Python in the background when the app opens</label>
         </div>
         <div class="card">
@@ -211,7 +211,7 @@
         <div v-for="r in shown" :key="r.p.id" class="pt-row" style="grid-template-columns: 26px 1fr auto">
           <span>{{ r.solOk && r.starterFails ? '✓' : '✗' }}</span>
           <span><b>{{ r.p.id }}</b> <span class="tiny dim">{{ r.ms }} ms</span><div v-if="!r.solOk" class="tiny bad-text">solution: {{ r.detail }}</div><div v-if="!r.starterFails" class="tiny bad-text">starter passes every test (tests too weak)</div></span>
-          <a class="tiny" @click="MLA.router.navigate('/problem/'+r.p.id)">open</a>
+          <a class="tiny" :href="'#/problem/'+r.p.id" @click.prevent="MLA.router.navigate('/problem/'+r.p.id)">open</a>
         </div>
         <div v-for="s in shownSamples" :key="s.key" class="pt-row" style="grid-template-columns: 26px 1fr">
           <span>{{ s.ok ? '✓' : '✗' }}</span><span><b>{{ s.title }}</b><div v-if="!s.ok" class="tiny bad-text">{{ s.detail }}</div></span>

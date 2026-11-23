@@ -312,7 +312,7 @@ def parse_reply(reply, schema):
 
   // =====================================================================================
   {
-    id: 'rag', branch: 'apps', title: 'Retrieval-Augmented Generation (RAG)', short: 'RAG', level: 3, minutes: 50, prereqs: ['prompting', 'text-embeddings'],
+    id: 'rag', branch: 'apps', title: 'Retrieval-Augmented Generation (RAG)', short: 'RAG', level: 3, minutes: 50, prereqs: ['prompting', 'text-embeddings'], softPrereqs: ['vector-search'],
     tags: ['rag', 'retrieval', 'vector database', 'embeddings', 'chunking', 'semantic search', 'hybrid search', 'reranking', 'grounding', 'citations', 'recall@k'],
     summary: 'Letting an LLM answer from your own documents: chunking, embedding and indexing text, retrieving the most relevant chunks by cosine similarity (plus hybrid search and reranking), building a grounded prompt with citations, and evaluating retrieval.',
     why: `LLMs don't know your private documents, and their knowledge stops at a training cutoff. **Retrieval-augmented generation** fixes both without retraining anything: at question time, search your documents for relevant passages and put them in the prompt, so the model answers from evidence it can cite. It is the most common pattern behind company chatbots, documentation assistants and AI search, and grounding answers in retrieved text reduces hallucination.`,

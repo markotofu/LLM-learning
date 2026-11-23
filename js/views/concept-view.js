@@ -44,7 +44,9 @@
       reqText() { return this.P.requirementsText(this.c.id); },
       problems() { return this.c.problems.map(p => ({ p, status: this.P.problemStatus(p.id), preview: (p.prompt || '').split('\n').find(l => l.trim() && !/^[#|>`]/.test(l.trim())) || '' })); },
       note: { get() { return this.state.notes[this.c.id] || ''; }, set(v) { this.state.notes[this.c.id] = v; } },
-      statusText() { return { mastered: 'Mastered', completed: 'Completed', started: 'In progress', ready: 'Ready to learn', locked: 'Prerequisites recommended first' }[this.status]; },
+      statusText() { return { mastered: 'Mastered', completed: 'Completed', known: 'Already known', started: 'In progress', ready: 'Ready to learn', locked: 'Prerequisites recommended first' }[this.status]; },
+      known() { return this.c ? this.P.knownInfo(this.c.id) : null; },     // marked as known by the placement test
+      knownWhy() { return this.known && MLA.placementView ? MLA.placementView.markedWhy(this.known) : ''; },
       // Read aloud: the lesson as spoken parts (js/core/narrate.js), about 15 characters a second at normal speed.
       narration() { return this.c ? MLA.narrate.lesson(this.c) : []; },
       listenMinutes() { return Math.max(1, Math.round(this.narration.reduce((n, it) => n + it.text.length, 0) / 15 / 60)); },
@@ -55,8 +57,12 @@
       'speech.caption'(text) { this.highlight(text); },
       'route.query.s'() { this.toSection(); },
       'speech.key'(key) {                                   // follow along: scroll to the part being read
-        if (!key || !this.readingHere || this.tab !== 'learn' || this.state.profile.speechFollow === false || !this.$el || !this.$el.querySelector) return;
-        const el = this.$el.querySelector('[data-narr="' + key + '"]');
+        if (!key) { this._readBase = null; return; }
+        if (!this.readingHere || this.tab !== 'learn' || this.state.profile.speechFollow === false || !this.$el || !this.$el.querySelector) return;
+        const base = String(key).split('~')[0];               // a walkthrough's steps (<section>~<step>) stay in their section
+        if (base === this._readBase) return;
+        this._readBase = base;
+        const el = this.$el.querySelector('[data-narr="' + base + '"]');
         if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       },
       tab(v) { if (v === 'quiz' && !this.quizQs) this.startQuiz(); if (v === 'learn') this.$nextTick(this.observe); },
@@ -128,7 +134,7 @@
         if (!H || typeof Highlight === 'undefined') return;
         H.delete('mla-reading');
         if (!text || !this.readingHere || this.state.profile.speechCaptions === false || !this.$el || !this.$el.querySelector) return;
-        const box = this.$el.querySelector('[data-narr="' + this.speech.key + '"]');
+        const box = this.$el.querySelector('[data-narr="' + String(this.speech.key).split('~')[0] + '"]');
         const range = box && (findSentence(box, text) || findSentence(box, text.replace(/^[^.:?]*[.:?]\s+/, '')));   // without a leading heading
         if (range) H.set('mla-reading', new Highlight(range));
       },
@@ -138,7 +144,7 @@
         const i = this.narration.findIndex(it => it.key === key);
         if (i >= 0) MLA.speech.play(this.narration, i, { single: true, source: this.c.id, lessonTitle: this.c.title });
       },
-      speaking(key) { return this.readingHere && this.speech.key === key; }
+      speaking(key) { return this.readingHere && (this.speech.key === key || String(this.speech.key || '').startsWith(key + '~')); }
     },
     template: `
     <div v-if="!c"><empty-state text="Concept not found."><button class="btn primary mt" @click="go('/map')">Open the concept map</button></empty-state></div>
@@ -172,12 +178,17 @@
       <template v-if="tab==='learn'">
         <div class="lesson-layout">
           <div class="lesson-main">
+            <div v-if="known && !pr.completed" class="callout known-note">
+              <div class="callout-title">Already known</div>
+              <p style="margin-bottom:6px">{{ knownWhy }} It counts as done, so your path skips it. Read it as a refresher, or pass its quiz and solve a problem to complete it.</p>
+              <button class="btn sm" @click="P.setKnown(c.id, false)">Not known after all: unmark it</button>
+            </div>
             <div v-if="missing.length" class="callout warn">
               <div class="callout-title">Recommended first</div>
               <p style="margin-bottom:6px">This concept builds on ideas you have not completed yet. You can read on, but these will make it much easier:</p>
-              <div class="chips"><a v-for="m in missing" :key="m.id" class="chip clickable" @click="go('/concept/'+m.id)"><status-dot :status="P.status(m.id)" :size="15"/> {{ m.title }}</a></div>
+              <div class="chips"><a v-for="m in missing" :key="m.id" class="chip clickable" :href="'#/concept/'+m.id" @click.prevent="go('/concept/'+m.id)"><status-dot :status="P.status(m.id)" :size="15"/> {{ m.title }}</a></div>
             </div>
-            <div v-else-if="prereqs.length" class="builds-on small"><span class="muted">Builds on:</span> <a v-for="m in prereqs" :key="m.id" class="chip clickable" @click="go('/concept/'+m.id)"><status-dot :status="P.status(m.id)" :size="15"/> {{ m.title }}</a></div>
+            <div v-else-if="prereqs.length" class="builds-on small"><span class="muted">Builds on:</span> <a v-for="m in prereqs" :key="m.id" class="chip clickable" :href="'#/concept/'+m.id" @click.prevent="go('/concept/'+m.id)"><status-dot :status="P.status(m.id)" :size="15"/> {{ m.title }}</a></div>
 
             <div v-if="c.why" class="lesson-section why-card" data-narr="why" :class="{speaking: speaking('why')}">
               <div class="sec-head"><mla-icon name="sparkles" :size="18"/><h3>Why this matters</h3><span class="spacer"></span><listen-btn label="Why this matters" @play="listenOne('why')"/></div>
@@ -259,7 +270,7 @@
             </div>
             <div v-if="c.projects.length" class="lesson-section projects-card" data-narr="projects" :class="{speaking: speaking('projects')}">
               <div class="sec-head"><mla-icon name="flask" :size="18"/><h3>Build it: {{ c.projects.length > 1 ? 'sample projects' : 'a sample project' }}</h3><span class="spacer"></span><listen-btn label="Sample projects" @play="listenOne('projects')"/></div>
-              <p class="small muted">A project to do on your own machine with real data, from a first version to stretch goals. <a tabindex="0" @click="go('/projects')" @keydown.enter="go('/projects')">See all projects</a>.</p>
+              <p class="small muted">A project to do on your own machine with real data, from a first version to stretch goals. <a href="#/projects" @click.prevent="go('/projects')">See all projects</a>.</p>
               <project-card v-for="(p,i) in c.projects" :key="i" :p="p" :open="c.projects.length === 1" />
             </div>
             <div v-if="c.refs && c.refs.length" class="lesson-section">
@@ -276,7 +287,7 @@
               </div>
               <div v-if="next.length" class="mt">
                 <div class="tiny dim upper">This unlocks</div>
-                <div class="chips"><a v-for="n in next" :key="n.id" class="chip clickable" @click="go('/concept/'+n.id)"><status-dot :status="P.status(n.id)" :size="15"/> {{ n.title }}</a></div>
+                <div class="chips"><a v-for="n in next" :key="n.id" class="chip clickable" :href="'#/concept/'+n.id" @click.prevent="go('/concept/'+n.id)"><status-dot :status="P.status(n.id)" :size="15"/> {{ n.title }}</a></div>
               </div>
             </div>
           </div>
@@ -285,7 +296,7 @@
             <div class="card pad-sm">
               <div class="tiny dim upper" style="margin-bottom:6px">In this lesson</div>
               <div class="lesson-toc">
-                <a v-for="t in toc" :key="t.i" :class="{read:t.read, check: t.type==='check'}" @click="scrollTo(t.i)"><span class="toc-mark">{{ t.read ? '✓' : (t.type==='check' ? '?' : '•') }}</span>{{ t.title }}</a>
+                <a v-for="t in toc" :key="t.i" :class="{read:t.read, check: t.type==='check'}" href="#" @click.prevent="scrollTo(t.i)"><span class="toc-mark">{{ t.read ? '✓' : (t.type==='check' ? '?' : '•') }}</span>{{ t.title }}</a>
               </div>
               <hr>
               <div class="small">

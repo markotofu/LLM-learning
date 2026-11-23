@@ -72,7 +72,7 @@
           <div class="option" :class="optClass(i,false)" role="button" tabindex="0" @click="setMcq(i,false)" @keydown.enter.prevent="setMcq(i,false)" @keydown.space.prevent="setMcq(i,false)"><span class="opt-key">F</span>False</div>
         </div>
         <div v-else-if="q.type==='fill'">
-          <input type="text" placeholder="your answer…" @input="setFill(i,$event)" :value="answers[i]||''" spellcheck="false" :disabled="submitted" />
+          <input type="text" placeholder="your answer…" aria-label="Your answer" @input="setFill(i,$event)" :value="answers[i]||''" spellcheck="false" :disabled="submitted" />
           <div v-if="submitted" class="small mono mt">Expected: {{ res(i).expected }}</div>
         </div>
         <div v-else-if="q.type==='order'" class="list">
@@ -130,7 +130,7 @@
         <div class="option" :class="done ? {correct: q.answer===false, wrong: pickedVal===false && q.answer} : {}" role="button" tabindex="0" @click="pick(false)" @keydown.enter.prevent="pick(false)" @keydown.space.prevent="pick(false)"><span class="opt-key">F</span>False</div>
       </div>
       <div v-else-if="q.type==='fill'" class="inline-form">
-        <input v-model="fillVal" :disabled="!!done" spellcheck="false" placeholder="your answer…" @keyup.enter="$emit('answer', fillVal)" />
+        <input v-model="fillVal" :disabled="!!done" spellcheck="false" placeholder="your answer…" aria-label="Your answer" @keyup.enter="$emit('answer', fillVal)" />
         <button v-if="!done" class="btn sm primary" @click="$emit('answer', fillVal)">Check</button>
       </div>
       <div v-else-if="q.type==='order'">

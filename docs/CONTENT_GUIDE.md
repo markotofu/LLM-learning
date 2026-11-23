@@ -26,6 +26,7 @@ A **new content file** must be added to `index.html` with the other `concepts-*.
   level: 2,                        // 1 beginner, 2 intermediate, 3 advanced
   minutes: 50,                     // rough reading + practice time
   prereqs: ['embeddings', 'activation-functions'],   // concept ids; must exist; no cycles
+  softPrereqs: ['text-representation'],   // optional: recommended, not required (see section 7); never locks the lesson
   tags: ['attention', 'query', 'key', 'value'],      // used by search
   summary: 'One or two sentences shown on the map and in lists.',
   why: `Why this matters — markdown.`,
@@ -128,6 +129,7 @@ Add a component named `C['demo-<name>']` to `demos-more.js`:
 1. Include the `redrawOnChange` mixin and a `draw()` method that calls `setup(canvas, W, H)` and `palette()`, so the colours follow the theme.
 2. Put a short caption in `<p class="small muted mt">`. The lighter `dim` colour fails WCAG contrast on demo cards.
 3. Check it in the browser: in all three themes, and at a 375 px phone width with no sideways page scrolling.
+4. Give every control a name (`aria-label` when it shows only an icon), every link an `href`, and every input a label. The browser tests run a small accessibility check (`tests/e2e/a11y.js`) on every lesson and page.
 
 ### Adding a diagram
 
@@ -205,6 +207,8 @@ $$ θ ← θ − η · ∇L(θ) $$
 
 Every question needs an `explain`. Options and items are shuffled when shown. `fill` answers are compared after normalization (case, extra spaces, a trailing full stop), numbers are compared as numbers, and an accepted answer written as `'/pattern/i'` is treated as a regular expression; still, list the common spellings.
 
+**The placement test** (`#/placement`) reuses quiz questions. `POOL` in `js/engines/placement.js` lists, for every beginner and intermediate lesson in Start Here, Math Foundations, Python & Data and Classical ML, one or two of its questions by their opening words. They are asked outside the lesson, so they must stand alone (no "in this lesson" or "the code above"), test the lesson's core idea and be quick: multiple choice or a short number, never true or false. If you reword or remove one, update its opening; a new beginner or intermediate lesson in those branches needs an entry. `tests/placement.test.js` fails until both are done.
+
 ## 5. Practice problems
 
 ```js
@@ -279,6 +283,7 @@ They live in `js/data/projects.js`, keyed by lesson id, and appear after a lesso
 
 - Add 2–4 glossary terms for every new concept: `G('Term', 'One- or two-sentence definition.', 'branch', 'concept-id')`. Terms must be unique; each one becomes a flashcard. The tests require at least one glossary term per concept.
 - Tracks list goal concepts; the app adds all prerequisites automatically.
+- **Recommended prerequisites** (`softPrereqs`) are lessons that help but are not needed: the SVM lesson's dual problem reads better after Optimization Theory, but its hinge-loss view stands alone. They never lock a lesson, join a track's path or change the learning order; the concept map draws them as dotted links and lists them as "Recommended, not required". Use one only when the lesson actually draws on it, and keep it out of `prereqs`. `tests/content.test.js` requires that it exists, is not already required on the way (directly or through another lesson), creates no cycle with the required ones and sits earlier in the prerequisite tree. The catalog carries them, so run `node tools/build-catalog.js` after changing one.
 
 ## 8. Checklist before you commit
 

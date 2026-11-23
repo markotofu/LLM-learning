@@ -33,6 +33,7 @@
     achievements: { comp: 'view-achievements', nav: 'achievements' },
     profile: { comp: 'view-profile', nav: 'profile' },
     selftest: { comp: 'view-selftest', nav: 'profile' },
+    placement: { comp: 'view-placement', nav: 'home' },
     terms: { comp: 'view-terms', nav: '' },
     privacy: { comp: 'view-privacy', nav: '' }
   };
@@ -190,19 +191,21 @@
         p.name = (this.name || 'Learner').trim().slice(0, 24) || 'Learner';
         p.goal = this.goal; p.onboarded = true; MLA.store.saveNow(); MLA.ui.closeModal(true);
         MLA.ui.toast('Welcome, ' + p.name + '! Your progress saves automatically in this browser.', 'success', 4500);
-        if (start) { const r = MLA.progress.recommendNext(); MLA.router.navigate(r.concept ? '/concept/' + r.concept.id : '/map'); }
+        if (start === 'placement') MLA.router.navigate('/placement');
+        else if (start) { const r = MLA.progress.recommendNext(); MLA.router.navigate(r.concept ? '/concept/' + r.concept.id : '/map'); }
         else MLA.router.navigate('/map');
       }
     },
     template: `
     <div class="onboard">
       <p>ML Atlas is an interactive <b>map</b> of machine learning: from the maths and Python you need, through classic ML and neural networks, to how large language models are built, fine-tuned and used. Every concept is a lesson with runnable code, demos, a quiz and coding problems that run right here in your browser.</p>
-      <div class="field"><label>What should we call you?</label><input type="text" v-model="name" maxlength="24" placeholder="Your name" @keyup.enter="finish(true)" /></div>
+      <div class="field"><label>What should we call you?</label><input type="text" v-model="name" maxlength="24" placeholder="Your name" aria-label="What should we call you?" @keyup.enter="finish(true)" /></div>
       <div class="field"><label>Where do you want to go? (you can change this any time)</label>
         <div class="onboard-tracks"><button v-for="t in tracks" :key="t.id" :class="{active: goal===t.id}" @click="goal=t.id"><span class="ot-icon"><mla-icon :name="t.icon" :size="18"/></span><span><b>{{ t.title }}</b><span class="tiny dim">{{ t.short }}</span></span></button></div>
       </div>
       <div class="callout note"><div class="callout-title">Good to know</div>Progress is saved in this browser automatically. Use <b>Progress &amp; Sync</b> to move it to another device. The first time you run code, about 15 MB of Python downloads once and is then cached.</div>
       <div class="btn-row mt"><button class="btn primary" @click="finish(true)">Start learning</button><button class="btn ghost" @click="finish(false)">Explore the map first</button></div>
+      <p class="small muted mt-sm onboard-placement">Know some of this already? <button class="btn sm" @click="finish('placement')"><mla-icon name="target" :size="14"/> Take the placement test</button> About 12 to 15 questions; the lessons you know are marked, so your path starts at the first gap.</p>
     </div>`
   };
 

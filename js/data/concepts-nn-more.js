@@ -617,7 +617,7 @@ def xavier_init(fan_in, fan_out, seed=0):
 
   // =====================================================================================
   {
-    id: 'pytorch', branch: 'dl', title: 'PyTorch Fundamentals', short: 'PyTorch', level: 2, minutes: 45, prereqs: ['training-loop', 'optimizers'],
+    id: 'pytorch', branch: 'dl', title: 'PyTorch Fundamentals', short: 'PyTorch', level: 2, minutes: 45, prereqs: ['training-loop', 'optimizers'], softPrereqs: ['autograd'],
     tags: ['pytorch', 'tensor', 'nn.Module', 'autograd', 'dataloader', 'gpu'],
     summary: 'The framework most modern AI is built in: tensors, autograd, nn.Module, losses and optimizers, the PyTorch training loop, devices, and saving models (mapped onto what you already built in NumPy).',
     why: `Nearly every recent model you have heard of (Llama, Stable Diffusion, Whisper, and most research code) is written in **PyTorch**. Good news: you already understand everything it does. A tensor is a NumPy array that can live on a GPU and remember its computation; \`loss.backward()\` is the autograd engine you built; \`nn.Module\` is the class pattern from the Python lesson; \`optimizer.step()\` is the update rule. This lesson maps your knowledge onto PyTorch's vocabulary so you can read and write real model code.`,

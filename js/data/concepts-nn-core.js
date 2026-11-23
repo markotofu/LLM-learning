@@ -1096,7 +1096,7 @@ def grad_check(f, x, analytic, h=1e-5):
 
   // =====================================================================================
   {
-    id: 'autograd', branch: 'dl', title: 'Build a Tiny Autograd Engine', short: 'Autograd from Scratch', level: 3, minutes: 50, prereqs: ['backpropagation'],
+    id: 'autograd', branch: 'dl', title: 'Build a Tiny Autograd Engine', short: 'Autograd from Scratch', level: 3, minutes: 50, prereqs: ['backpropagation'], softPrereqs: ['discrete-math'],
     tags: ['autograd', 'micrograd', 'computational graph', 'topological sort', 'operator overloading'],
     summary: 'Recreate the heart of PyTorch in ~50 lines: Value objects that record how they were computed, local backward functions, and a topological sort that runs backprop automatically.',
     why: `When you call \`loss.backward()\` in PyTorch, an **autograd** engine walks backwards through every operation you performed and fills in \`.grad\` for every parameter. It feels like magic until you build one yourself, and then it is just bookkeeping plus the chain rule. This exercise (inspired by Andrej Karpathy's *micrograd*) removes the last bit of mystery from training neural networks and makes framework errors ("trying to backward through the graph a second time", leaf tensors, accumulated gradients) suddenly understandable.`,

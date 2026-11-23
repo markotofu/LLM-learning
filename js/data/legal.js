@@ -7,7 +7,7 @@
   const legal = {
     owner: 'markotofu',                          // copyright holder shown in the app and in the legal texts
     year: '2026',
-    updated: '22 November 2026',
+    updated: '23 November 2026',
     contact: 'https://github.com/markotofu',     // where people can reach the owner
     codeLicense: 'MIT License',
     terms: `
@@ -81,7 +81,7 @@ This policy explains what happens to your information when you use ML Atlas, a f
 
 ML Atlas saves the following in your browser so that it works across visits. It never leaves your device unless you export it yourself.
 
-- **Your learning data** (local storage key \`mla.state.v1\`): concepts read, quiz and problem results, the code you write in problems and the playground, notes, flashcard schedules, the review queue of questions and problems you answered incorrectly, a short log of recent activity (what you did and when), XP, streaks, achievements, settings (theme, editor size, learning goal) and an optional display name (default "Learner").
+- **Your learning data** (local storage key \`mla.state.v1\`): concepts read, quiz and problem results, your placement test answers and the lessons it marked as known, the code you write in problems and the playground, notes, flashcard schedules, the review queue of questions and problems you answered incorrectly, a short log of recent activity (what you did and when), XP, streaks, achievements, settings (theme, editor size, learning goal) and an optional display name (default "Learner").
 - **Datasets you upload** (the browser's IndexedDB storage, database \`ml-atlas-datasets\`): the files you add in the Playground so that your Python code can read them. Their names and sizes are listed with your learning data.
 - **A technical preference** (local storage key \`mla.pyMirror\`): which download server for the Python runtime responded fastest.
 - **Cached app files**: the app's own files are kept in your browser's cache storage so it works offline, and the Python runtime is kept in the browser's normal download cache.

@@ -24,10 +24,11 @@
     template: `<span v-if="inline" v-html="html"></span><div v-else class="md-body" v-html="html"></div>`
   };
 
-  C['mla-progress'] = { props: { value: Number, kind: String, thin: Boolean, label: String, color: String }, template: `
+  // extra: a second, striped segment after the first (lessons marked as known); the label then carries the counts.
+  C['mla-progress'] = { props: { value: Number, extra: Number, kind: String, thin: Boolean, label: String, color: String }, template: `
     <div class="progress-wrap">
-      <div v-if="label" class="progress-label"><span>{{ label }}</span><span>{{ Math.round(value) }}%</span></div>
-      <div class="progress" :class="[kind, {thin}]"><span :style="{width: Math.max(0,Math.min(100,value))+'%', background: color || null}"></span></div>
+      <div v-if="label" class="progress-label"><span>{{ label }}</span><span v-if="!extra">{{ Math.round(value) }}%</span></div>
+      <div class="progress" :class="[kind, {thin, split: extra > 0}]"><span :style="{width: Math.max(0,Math.min(100,value))+'%', background: color || null}"></span><span v-if="extra > 0" class="progress-extra" :style="{width: Math.max(0, Math.min(100 - Math.max(0, value), extra))+'%'}"></span></div>
     </div>` };
 
   C['stat-card'] = { props: { label: String, value: [String, Number], sub: String, icon: String, color: String }, template: `
@@ -51,8 +52,8 @@
   C['diff-chip'] = { props: { d: String }, template: `<span class="diff" :class="d">{{ d==='easy'?'Easy':d==='medium'?'Medium':'Hard' }}</span>` };
 
   C['status-dot'] = { props: { status: String, size: { default: 18 } }, computed: {
-    icon() { return { mastered: 'star', completed: 'check', started: 'play', ready: 'target', locked: 'lock', solved: 'check', attempted: 'play', new: 'code' }[this.status] || 'info'; },
-    label() { return { mastered: 'Mastered', completed: 'Completed', started: 'In progress', ready: 'Ready to learn', locked: 'Prerequisites first', solved: 'Solved', attempted: 'Attempted', new: 'Not started' }[this.status] || ''; }
+    icon() { return { mastered: 'star', completed: 'check', known: 'skip', started: 'play', ready: 'target', locked: 'lock', solved: 'check', attempted: 'play', new: 'code' }[this.status] || 'info'; },
+    label() { return { mastered: 'Mastered', completed: 'Completed', known: 'Already known', started: 'In progress', ready: 'Ready to learn', locked: 'Prerequisites first', solved: 'Solved', attempted: 'Attempted', new: 'Not started' }[this.status] || ''; }
   }, template: `<span class="status-dot" :class="status" :title="label"><mla-icon :name="icon" :size="Math.round(size*0.62)" /></span>` };
 
   C['mla-toasts'] = { computed: { toasts() { return MLA.ui.toasts; } }, template: `
@@ -177,7 +178,7 @@
       <mla-md :src="k.story" />
       <div class="case-lesson"><strong>What to take from it.</strong> <mla-md :src="k.lesson" inline /></div>
       <div class="tiny dim case-source">Source: <a v-if="k.source && k.source.url" :href="k.source.url" target="_blank" rel="noopener">{{ k.source.title }}</a><span v-else-if="k.source">{{ k.source.title }}</span></div>
-      <a v-if="lesson" class="tiny case-link" tabindex="0" @click="go('/concept/' + lesson.id)" @keydown.enter="go('/concept/' + lesson.id)">From the lesson: {{ lesson.title }}</a>
+      <a v-if="lesson" class="tiny case-link" :href="'#/concept/' + lesson.id" @click.prevent="go('/concept/' + lesson.id)">From the lesson: {{ lesson.title }}</a>
     </article>` };
 
   // A sample project: goal, data, steps, how to know it is done, and stretch goals. A <details> that shows its summary
@@ -240,7 +241,7 @@
         <div class="chips" aria-label="Skills you practise"><span v-for="s in p.skills" :key="s" class="chip tiny accent">{{ s }}</span></div>
         <div class="project-row"><strong>Your notes</strong></div>
         <textarea class="project-notes" v-model="notes" rows="3" placeholder="What you tried, what you found, where your code lives. Saved in this browser and included when you export your progress." aria-label="Your notes on this project"></textarea>
-        <a v-if="lesson" class="tiny case-link" tabindex="0" @click="go('/concept/' + lesson.id)" @keydown.enter="go('/concept/' + lesson.id)">From the lesson: {{ lesson.title }}</a>
+        <a v-if="lesson" class="tiny case-link" :href="'#/concept/' + lesson.id" @click.prevent="go('/concept/' + lesson.id)">From the lesson: {{ lesson.title }}</a>
       </div>
     </details>` };
 

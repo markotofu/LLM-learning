@@ -96,9 +96,9 @@
         </div>
         <div class="pv-scroll">
           <template v-if="left==='desc'">
-            <div v-if="checkpoint" class="checkpoint-banner small"><mla-icon name="flag" :size="14"/> Checkpoint {{ checkpoint.n }} of {{ checkpoint.of }}: {{ checkpoint.step }}, in <a @click="go('/concept/' + c.id)">{{ c.title }}</a><button v-if="checkpoint.next && P.isSolved(p.id)" class="btn sm" @click="go('/problem/' + checkpoint.next)">Next checkpoint</button></div>
+            <div v-if="checkpoint" class="checkpoint-banner small"><mla-icon name="flag" :size="14"/> Checkpoint {{ checkpoint.n }} of {{ checkpoint.of }}: {{ checkpoint.step }}, in <a :href="'#/concept/' + c.id" @click.prevent="go('/concept/' + c.id)">{{ c.title }}</a><button v-if="checkpoint.next && P.isSolved(p.id)" class="btn sm" @click="go('/problem/' + checkpoint.next)">Next checkpoint</button></div>
             <div class="row between" style="flex-wrap:nowrap;align-items:flex-start"><h2 class="pv-title">{{ p.title }}</h2><status-dot :status="status" :size="24"/></div>
-            <div class="row" style="gap:6px;margin-bottom:10px"><diff-chip :d="p.difficulty"/><a class="chip clickable" @click="go('/concept/'+c.id)"><mla-icon name="book" :size="12"/> {{ c.title }}</a><span v-if="ps.solved" class="chip green tiny">Solved{{ ps.assisted ? ' (with solution)' : '' }}</span></div>
+            <div class="row" style="gap:6px;margin-bottom:10px"><diff-chip :d="p.difficulty"/><a class="chip clickable" :href="'#/concept/'+c.id" @click.prevent="go('/concept/'+c.id)"><mla-icon name="book" :size="12"/> {{ c.title }}</a><span v-if="ps.solved" class="chip green tiny">Solved{{ ps.assisted ? ' (with solution)' : '' }}</span></div>
             <mla-md :src="p.prompt" />
             <div class="pv-examples">
               <div class="tiny dim upper">Examples checked by Run</div>

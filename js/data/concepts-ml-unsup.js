@@ -5,7 +5,7 @@
   MLA.content.add([
   // =====================================================================================
   {
-    id: 'svm', branch: 'ml', title: 'Support Vector Machines', short: 'Support Vector Machines', level: 2, minutes: 35, prereqs: ['logistic-regression', 'regularization'],
+    id: 'svm', branch: 'ml', title: 'Support Vector Machines', short: 'Support Vector Machines', level: 2, minutes: 35, prereqs: ['logistic-regression', 'regularization'], softPrereqs: ['optimization-theory'],
     tags: ['svm', 'margin', 'hinge loss', 'kernel trick', 'rbf'],
     summary: 'Classify with the widest possible margin: support vectors, the hinge loss, the C trade-off, and the kernel trick for curved boundaries.',
     why: `Before deep learning took over, support vector machines were the go-to classifier for text, images and bioinformatics, and they are still excellent for small-to-medium datasets with many features. SVMs introduce two ideas you will meet again and again: **maximising a margin** (robustness through confidence) and the **kernel trick** (working implicitly in a richer feature space via similarities). The hinge loss is also a close cousin of the losses used to train ranking and embedding models.`,

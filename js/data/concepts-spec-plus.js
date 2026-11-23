@@ -1077,7 +1077,7 @@ def dice(pred, gt):
 
   // =====================================================================================
   {
-    id: 'gnn', branch: 'spec', title: 'Graph Neural Networks', short: 'Graph Neural Networks', level: 3, minutes: 40, prereqs: ['mlp', 'embeddings'],
+    id: 'gnn', branch: 'spec', title: 'Graph Neural Networks', short: 'Graph Neural Networks', level: 3, minutes: 40, prereqs: ['mlp', 'embeddings'], softPrereqs: ['discrete-math'],
     tags: ['graph neural network', 'gnn', 'message passing', 'adjacency matrix', 'gcn', 'graph attention', 'node classification', 'link prediction', 'graph classification', 'over-smoothing'],
     summary: 'Learning on networks, molecules, social graphs, road maps, citation graphs: graphs as adjacency matrices, message passing where every node aggregates its neighbours, graph convolutional networks, node-, edge- and graph-level tasks, and pitfalls such as over-smoothing.',
     why: `Much data is relational: atoms bonded in a molecule, users following users, papers citing papers, roads connecting junctions. Flattening such data into a table throws the structure away. **Graph neural networks** learn directly on graphs and power drug and materials discovery, traffic and arrival-time prediction, fraud-ring detection and recommendations.`,

@@ -9,7 +9,7 @@
     return {
       app: APP_ID,
       version: VERSION,
-      profile: { name: 'Learner', createdAt: new Date().toISOString(), onboarded: false, goal: null, customGoal: null, theme: 'light', style: 'baroque', editorFontSize: 14, timeoutSec: 20, preloadPython: false, mapLayout: 'mindmap', experience: null, voice: '', speechRate: 1, speechFollow: true, speechCaptions: true, speechContinue: false, listenAt: {}, walkSpeed: 'normal' },
+      profile: { name: 'Learner', createdAt: new Date().toISOString(), onboarded: false, goal: null, customGoal: null, theme: 'light', style: 'baroque', editorFontSize: 14, timeoutSec: 20, preloadPython: false, mapLayout: 'mindmap', mapHideDone: false, mapHeat: false, experience: null, voice: '', speechRate: 1, speechFollow: true, speechCaptions: true, speechContinue: false, listenAt: {}, walkSpeed: 'normal' },
       xp: 0,
       streak: { current: 0, best: 0, lastActive: null, days: {} },
       concepts: {},   // id -> { read:[], checks:{}, quizBest, quizAttempts, quizPassed, completedAt, masteredAt, visitedAt }
@@ -20,6 +20,8 @@
       playground: { files: [], active: null },
       flashcards: {}, // cardId -> SRS state
       mistakes: {},   // 'kind:concept:ref' -> { kind, concept, ref, why, added, misses, card, graduated } (see js/core/mistakes.js)
+      known: {},      // conceptId -> { on, at, by, why, via }: lessons marked as known by the placement test (js/core/progress.js)
+      placement: { current: null, last: null },   // the placement test in progress and the last one finished: { seed, startedAt, finishedAt, answers: [{ id, k, r, v }], marked } (js/views/placement-view.js)
       achievements: {},
       daily: {},      // dateKey -> { problemId, done }
       activity: [],
@@ -33,9 +35,12 @@
     if (!saved || typeof saved !== 'object') return base;
     const merged = Object.assign({}, base, saved);
     for (const k of ['profile', 'streak', 'stats', 'playground']) merged[k] = Object.assign({}, base[k], saved[k] || {});
-    for (const k of ['concepts', 'problems', 'notes', 'projects', 'datasets', 'flashcards', 'mistakes', 'achievements', 'daily']) if (!merged[k] || typeof merged[k] !== 'object' || Array.isArray(merged[k])) merged[k] = {};
+    for (const k of ['concepts', 'problems', 'notes', 'projects', 'datasets', 'flashcards', 'mistakes', 'known', 'achievements', 'daily']) if (!merged[k] || typeof merged[k] !== 'object' || Array.isArray(merged[k])) merged[k] = {};
     for (const k of ['activity', 'quizHistory']) if (!Array.isArray(merged[k])) merged[k] = [];
     if (!Array.isArray(merged.playground.files)) merged.playground.files = [];
+    const pl = saved.placement && typeof saved.placement === 'object' && !Array.isArray(saved.placement) ? saved.placement : {};
+    const attempt = a => (a && typeof a === 'object' && Array.isArray(a.answers) ? a : null);
+    merged.placement = { current: attempt(pl.current), last: attempt(pl.last) };
     merged.app = APP_ID; merged.version = VERSION;
     return merged;
   }
@@ -146,6 +151,13 @@
     // mistakes to revisit: keep the copy that has been reviewed more (a retired item stays retired)
     const reviews = x => (x && x.card ? (x.card.reps || 0) + (x.card.lapses || 0) : 0) + (x && x.graduated ? 1000 : 0);
     for (const id of Object.keys(inc.mistakes)) { const a = out.mistakes[id], b = inc.mistakes[id]; if (!a || reviews(b) > reviews(a)) out.mistakes[id] = b; }
+    // lessons marked as known: the newest change wins, so an undo on one device is not brought back by the other
+    for (const id of Object.keys(inc.known)) { const a = out.known[id], b = inc.known[id]; if (b && typeof b === 'object' && typeof b.at === 'string' && (!a || b.at > (a.at || ''))) out.known[id] = b; }
+    // placement test: the last finished test is the newer one; a test in progress survives only if it started after that
+    const pa = out.placement, pb = inc.placement;
+    if (pb.last && (!pa.last || (pb.last.finishedAt || '') > (pa.last.finishedAt || ''))) pa.last = pb.last;
+    if (pb.current && (!pa.current || (pb.current.startedAt || '') > (pa.current.startedAt || ''))) pa.current = pb.current;
+    if (pa.current && pa.last && (pa.current.startedAt || '') <= (pa.last.finishedAt || '')) pa.current = null;
     for (const id of Object.keys(inc.achievements)) out.achievements[id] = minDate(out.achievements[id], inc.achievements[id]);
     for (const k of Object.keys(inc.daily)) { const a = out.daily[k], b = inc.daily[k]; if (!a || (b && b.done && !a.done)) out.daily[k] = b; }
     for (const k of Object.keys(inc.stats)) if (typeof inc.stats[k] === 'number') out.stats[k] = Math.max(out.stats[k] || 0, inc.stats[k]);

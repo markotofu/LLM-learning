@@ -3,8 +3,9 @@
 'use strict';
 const { test, expect } = require('@playwright/test');
 const { boot, go, lessons } = require('./helpers');
+const { audit } = require('./a11y');                       // a small built-in accessibility check, run in the page
 
-test('every lesson renders, without errors, and fits a phone screen', async ({ page }) => {
+test('every lesson renders, without errors, fits a phone screen and passes the accessibility check', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   const errors = await boot(page, '/home');
   const list = await lessons(page);
@@ -18,12 +19,14 @@ test('every lesson renders, without errors, and fits a phone screen', async ({ p
       sections: document.querySelectorAll('.lesson-section').length,
     }));
     if (r.overflow > 1 || r.unknownDemo || r.sections < 3) bad.push(c.id + ' ' + JSON.stringify(r));
+    const a11y = await page.evaluate(audit);
+    if (a11y.length) bad.push(c.id + ' accessibility: ' + a11y.join('; '));
   }
   expect(bad).toEqual([]);
   expect(errors).toEqual([]);
 });
 
-test('the other pages render and fit a phone screen', async ({ page }) => {
+test('the other pages render, fit a phone screen and pass the accessibility check', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   const errors = await boot(page, '/home');
   const routes = [['/home', 'Dashboard'], ['/map', 'Concept Map'], ['/problems', 'Practice Problems'], ['/problem/dot-product', 'Dot Product'], ['/playground', 'Python Playground'], ['/tracks', 'Learning Tracks'], ['/track/build-llm', ''], ['/review', 'Review'], ['/glossary', 'Glossary'], ['/projects', 'Projects'], ['/achievements', 'Achievements'], ['/profile', 'Progress'], ['/selftest', 'Self-test'], ['/terms', 'Terms'], ['/privacy', 'Privacy']];
@@ -32,6 +35,8 @@ test('the other pages render and fit a phone screen', async ({ page }) => {
     await go(page, r, t || undefined);
     const o = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     if (o > 1) bad.push(r + ' overflows by ' + o + 'px');
+    const a11y = await page.evaluate(audit);
+    if (a11y.length) bad.push(r + ' accessibility: ' + a11y.join('; '));
   }
   expect(bad).toEqual([]);
   expect(errors).toEqual([]);
@@ -268,4 +273,178 @@ test.describe('in-browser Python (downloads Pyodide from the CDN)', () => {
     await page.getByRole('button', { name: 'Submit', exact: true }).click();
     await expect(page.getByText('Accepted').first()).toBeVisible({ timeout: 60 * 1000 });
   });
+});
+
+// Map at scale: zoom to a branch, hide finished branches and the progress heat map, in all three views.
+test('the concept map zooms to a branch, hides finished branches and shows a heat map, in all three views', async ({ page }) => {
+  const errors = await boot(page, '/home');
+  // progress: Start and the whole Python & Data branch finished, one Math lesson mastered, one in progress
+  await page.evaluate(() => {
+    const at = '2026-01-01T00:00:00Z', S = MLA.store.state.concepts;
+    const done = extra => Object.assign({ read: [], checks: {}, quizBest: 90, quizAttempts: 1, quizPassed: true, completedAt: at, masteredAt: null, visitedAt: at }, extra);
+    for (const c of MLA.data.concepts) if (c.branch === 'start' || c.branch === 'code') S[c.id] = done();
+    S['vectors-matrices'] = done({ masteredAt: at });
+    S.probability = { read: [], checks: {}, quizBest: 0, quizAttempts: 0, quizPassed: false, completedAt: null, masteredAt: null, visitedAt: at };
+  });
+  await go(page, '/map', 'Concept Map');
+  // what the engine says a zoom to Math shows: everything, and without the finished branches
+  const math = await page.evaluate(() => {
+    const f = MLA.graph.branchFocus(MLA.content.graph, 'math'), finished = ['start', 'code'];
+    return { all: f.ids.size, unfinished: [...f.ids].filter(id => f.inside.has(id) || !finished.includes(MLA.content.byId[id].branch)).length };
+  });
+
+  // Mind map: the zoomed branch's hub in the middle, the lessons it builds on from other branches on the left
+  await page.getByLabel('Zoom to a branch').selectOption('math');
+  await page.waitForFunction(() => location.hash === '#/map?branch=math');
+  await expect(page.locator('.focus-banner')).toContainText('Zoomed to Math Foundations');
+  await expect(page.locator('.hub.hcenter')).toHaveAttribute('aria-label', /^Math, /);
+  await expect(page.locator('.mnode')).toHaveCount(math.all);
+  await expect(page.locator('.mnode.ctx').first()).toContainText('needed for');
+
+  // Heat map: one level per status, filled from the theme's --heat tokens
+  await page.getByLabel('Heat map').check();
+  await expect(page.locator('.mnode.h3')).toHaveCount(1);       // mastered
+  await expect(page.locator('.mnode.h1')).toHaveCount(1);       // in progress
+  const fill = await page.evaluate(() => {
+    const probe = document.createElement('div'); probe.style.background = 'var(--heat-3)'; document.body.appendChild(probe);
+    const want = getComputedStyle(probe).backgroundColor; probe.remove();
+    return { want, got: getComputedStyle(document.querySelector('.mnode.h3 .mnode-bg')).fill };
+  });
+  expect(fill.got).toBe(fill.want);
+
+  // Hide finished branches: Start and Python & Data leave the map; the zoomed branch always stays
+  await page.getByLabel('Hide finished branches').check();
+  await expect(page.locator('.mnode')).toHaveCount(math.unfinished);
+  await expect(page.locator('.focus-banner')).toContainText('from finished branches');
+
+  // Prerequisite tree: the zoomed lane stands out, and a lane name zooms to its branch from the keyboard
+  await page.getByRole('button', { name: 'Prerequisite tree' }).click();
+  await expect(page.locator('.lane.focus .lane-label')).toContainText('Math Foundations');
+  await expect(page.locator('.mnode')).toHaveCount(math.unfinished);
+  await page.getByRole('button', { name: 'Zoom to Classical Machine Learning' }).focus();
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => location.hash === '#/map?branch=ml');
+  await expect(page.locator('.focus-banner')).toContainText('Zoomed to Classical Machine Learning');
+  // a recommended prerequisite (Optimization Theory, for support vector machines) is dotted; required links are solid
+  expect(await page.locator('path.edge.soft').count()).toBeGreaterThan(0);
+  expect(await page.locator('path.edge.soft').first().evaluate(e => getComputedStyle(e).strokeDasharray)).not.toBe('none');
+  expect(await page.locator('path.edge.tree').first().evaluate(e => getComputedStyle(e).strokeDasharray)).toBe('none');
+
+  // Outline: the zoomed branch first, then what it builds on (finished branches hidden), rows coloured by progress
+  await page.getByRole('button', { name: 'Outline' }).click();
+  await expect(page.locator('.outline-branch h3').first()).toHaveText('Classical Machine Learning');
+  await expect(page.locator('.outline-branch.ctx h3')).toHaveText(['Math Foundations']);
+  await expect(page.locator('.outline-item.h3')).toHaveCount(1);
+  await page.locator('.focus-banner').getByRole('button', { name: 'Show every branch' }).click();
+  await page.waitForFunction(() => location.hash === '#/map');
+  const open = await page.evaluate(() => MLA.progress.branchStats().filter(x => x.done < x.concepts).length);
+  await expect(page.locator('.outline-branch')).toHaveCount(open);
+  expect(await page.evaluate(() => [MLA.store.state.profile.mapHideDone, MLA.store.state.profile.mapHeat])).toEqual([true, true]);
+
+  // a phone: every view, zoomed and with the options on, fits without scrolling sideways
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.getByLabel('Zoom to a branch').selectOption('llm');
+  await page.waitForFunction(() => location.hash === '#/map?branch=llm');
+  for (const view of ['Mind map', 'Prerequisite tree', 'Outline']) {
+    await page.getByRole('button', { name: view }).click();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  }
+  expect(errors).toEqual([]);
+});
+
+test('the map lists recommended prerequisites apart from required ones, and its side panel works from the keyboard', async ({ page }) => {
+  const errors = await boot(page, '/home');
+  await go(page, '/map?focus=svm', 'Concept Map');
+  const panel = page.locator('.map-drawer');
+  await expect(panel.locator('h3')).toHaveText('Support Vector Machines');
+  const soft = panel.locator('.drawer-sec', { hasText: 'Recommended, not required' });
+  await expect(soft.locator('.chip')).toHaveCount(1);
+  await expect(soft.locator('.chip')).toContainText('Optimization Theory');
+  await expect(panel.locator('.drawer-sec', { hasText: 'Prerequisites' }).locator('.chip', { hasText: 'Optimization Theory' })).toHaveCount(0);
+  await expect(page.locator('path.edge.soft.hl-soft')).toHaveCount(1);     // the dotted link into the selected lesson
+  // a chip opens its lesson's panel from the keyboard, which links back the other way
+  await soft.locator('.chip').focus();
+  await page.keyboard.press('Enter');
+  await expect(panel.locator('h3')).toContainText('Optimization Theory');
+  await expect(panel.locator('.drawer-sec', { hasText: 'Also helps with' })).toContainText('Support Vector Machines');
+  // a lesson on the map opens with Space, and its panel zooms to its branch, keeping the selection
+  await page.locator('.mnode[aria-label="Support Vector Machines"]').focus();
+  await page.keyboard.press('Space');
+  await expect(panel.locator('h3')).toHaveText('Support Vector Machines');
+  await panel.getByRole('button', { name: 'Zoom to Classical ML' }).click();
+  await page.waitForFunction(() => location.hash === '#/map?branch=ml');
+  await expect(panel.locator('h3')).toHaveText('Support Vector Machines');
+  expect(errors).toEqual([]);
+});
+
+// Placement test: started from the onboarding dialog and answered right throughout; then each mark's reason, undo of
+// one mark, the marks on the map, a track, the dashboard and a lesson page, and undo of all of them.
+test('the placement test marks the lessons a learner knows, explains each mark, and every mark can be undone', async ({ page }) => {
+  const errors = await boot(page, '/home', { profile: { onboarded: false } });
+  await page.getByRole('dialog').getByRole('button', { name: 'Take the placement test' }).click();
+  await page.waitForFunction(() => location.hash === '#/placement');
+  await page.getByRole('button', { name: 'Start the test' }).click();
+  const card = page.locator('.placement-card');
+  await expect(card).toHaveAttribute('data-n', '1');
+  expect(await page.evaluate(audit)).toEqual([]);
+  // the right answer to the question on screen, found through the lesson's own quiz (the options are shuffled)
+  const rightAnswer = () => page.evaluate(() => {
+    const c = document.querySelector('.placement-card'), q = MLA.placement.questions(c.dataset.lesson)[+c.dataset.k];
+    if (q.type === 'fill') return { fill: String([].concat(q.answer).find(a => !/^\/.*\/[a-z]*$/.test(String(a)))) };
+    const text = s => { const d = document.createElement('div'); d.innerHTML = MLA.util.inline(s); return d.textContent.trim(); };
+    const want = (q.type === 'mcq' ? [q.answer] : q.answer).map(i => text(q.options[i]));
+    return { pick: [...c.querySelectorAll('.pq .option')].map((b, i) => want.includes(b.textContent.trim().slice(1).trim()) ? i : -1).filter(i => i >= 0) };
+  });
+  let asked = 0;
+  while (asked < 16 && await card.count()) {
+    const a = await rightAnswer();
+    if (a.fill) await card.getByRole('textbox', { name: 'Your answer' }).fill(a.fill);
+    else for (const i of a.pick) await card.locator('.pq .option').nth(i).click();
+    await card.getByRole('button', { name: 'Answer', exact: true }).click();
+    asked++;
+    await page.waitForFunction(n => { const c = document.querySelector('.placement-card'); return !c || +c.dataset.n === n; }, asked + 1);
+  }
+  expect(asked).toBeGreaterThanOrEqual(10);
+  expect(asked).toBeLessThanOrEqual(15);
+  await expect(page.getByRole('heading', { name: 'Your results' })).toBeVisible();
+  await expect(page.locator('main')).toContainText('You answered ' + asked + ' questions, ' + asked + ' of them right.');
+  const known = await page.evaluate(() => MLA.progress.knownList().map(k => k.id));
+  expect(known.length).toBeGreaterThanOrEqual(20);
+  expect(await page.evaluate(() => MLA.store.state.xp)).toBe(0);                // known is not completed: no XP
+  const rows = page.locator('.placement-list').first().locator('li');
+  await expect(rows).toHaveCount(known.length);
+  await expect(rows.first()).toContainText('You answered');
+  await expect(page.locator('.placement-next')).toContainText('Suggested next');
+  expect(await page.evaluate(audit)).toEqual([]);
+  // undo one lesson, then mark it again
+  const first = await rows.first().locator('a').textContent();
+  await rows.first().getByRole('button', { name: 'Undo the mark on ' + first }).click();
+  await expect(rows.first()).toContainText('Not marked any more.');
+  expect(await page.evaluate(id => MLA.progress.isKnown(id), known[0])).toBe(false);
+  await rows.first().getByRole('button', { name: 'Mark again: ' + first }).click();
+  expect(await page.evaluate(id => MLA.progress.isKnown(id), known[0])).toBe(true);
+  // the map, a track and the dashboard show the marks
+  await go(page, '/map', 'Concept Map');
+  await expect(page.locator('.mnode.known')).toHaveCount(known.length);
+  await expect(page.locator('.map-legend')).toContainText('known');
+  await go(page, '/track/foundations', 'Machine Learning Foundations');
+  expect(await page.locator('.track-step.known').count()).toBeGreaterThan(5);
+  await expect(page.locator('main')).toContainText('known, so the path skips');
+  await go(page, '/home', 'Dashboard');
+  await expect(page.locator('main')).toContainText('marked as known');
+  // a lesson page says why it is marked, and unmarks it
+  const lesson = known.includes('numpy') ? 'numpy' : known[known.length - 1];
+  await go(page, '/concept/' + lesson, await page.evaluate(id => MLA.progress.concept(id).title, lesson));
+  await expect(page.locator('.callout.known-note')).toContainText('It counts as done');
+  await page.getByRole('button', { name: 'Not known after all: unmark it' }).click();
+  await expect(page.locator('.callout.known-note')).toHaveCount(0);
+  expect(await page.evaluate(id => MLA.progress.status(id), lesson)).not.toBe('known');
+  // undo all, from the results page
+  await go(page, '/placement', 'Placement test');
+  await page.getByRole('button', { name: 'Undo all' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Unmark all' }).click();
+  expect(await page.evaluate(() => MLA.progress.knownList().length)).toBe(0);
+  await go(page, '/map', 'Concept Map');
+  await expect(page.locator('.mnode.known')).toHaveCount(0);
+  expect(errors).toEqual([]);
 });

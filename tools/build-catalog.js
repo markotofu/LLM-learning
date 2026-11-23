@@ -15,7 +15,9 @@ function generate(MLA) {
   const rows = MLA.data.concepts.map(c => {
     const e = { id: c.id, branch: c.branch, title: c.title };
     if (c.short) e.short = c.short;
-    Object.assign(e, { level: c.level, minutes: c.minutes, prereqs: c.prereqs, tags: c.tags || [], summary: c.summary || '', file: c.file,
+    Object.assign(e, { level: c.level, minutes: c.minutes, prereqs: c.prereqs });
+    if (c.softPrereqs && c.softPrereqs.length) e.softPrereqs = c.softPrereqs;      // recommended, not required (optional)
+    Object.assign(e, { tags: c.tags || [], summary: c.summary || '', file: c.file,
       sections: c.sections.map(s => [s.id, s.type, s.title || '']), quiz: c.quiz.length, problems: c.problems.map(p => [p.id, p.title, p.difficulty]) });
     return '    ' + JSON.stringify(e);
   });

@@ -1,23 +1,48 @@
 /* ML Atlas – concept graph engine (framework independent, unit tested in Node).
- * Concepts form a DAG through their `prereqs`. This module computes depth, learning order,
- * prerequisite chains and two layouts: a layered "prerequisite tree" and a two-sided "mind map". */
+ * Concepts form a DAG through their `prereqs` (required). `softPrereqs` (recommended: helpful, never required) are kept
+ * apart in `softParents` / `softChildren`, so they never change locking, depth, learning order or tracks.
+ * This module computes depth, learning order, prerequisite chains, sub-graphs (one branch and what it builds on, or
+ * the map without some branches) and two layouts: a layered "prerequisite tree" and a two-sided "mind map". */
 (function (global) {
   const MLA = (global.MLA = global.MLA || {});
 
   function build(concepts, branches) {
-    const nodes = {}, children = {}, parents = {}, branchOrder = {};
+    const nodes = {}, children = {}, parents = {}, softChildren = {}, softParents = {}, branchOrder = {};
     (branches || []).forEach((b, i) => { branchOrder[b.id] = i; });
-    concepts.forEach((c, i) => { nodes[c.id] = c; children[c.id] = []; parents[c.id] = (c.prereqs || []).slice(); if (c._order == null) c._order = i; });
+    concepts.forEach((c, i) => { nodes[c.id] = c; children[c.id] = []; softChildren[c.id] = []; parents[c.id] = (c.prereqs || []).slice(); softParents[c.id] = (c.softPrereqs || []).slice(); if (c._order == null) c._order = i; });
     const missing = [];
-    for (const c of concepts) for (const p of c.prereqs || []) { if (!nodes[p]) missing.push([c.id, p]); else children[p].push(c.id); }
-    return { nodes, children, parents, order: concepts.map(c => c.id), branchOrder, branches: branches || [], missing };
+    for (const c of concepts) {
+      for (const p of c.prereqs || []) { if (!nodes[p]) missing.push([c.id, p]); else children[p].push(c.id); }
+      for (const p of c.softPrereqs || []) { if (!nodes[p]) missing.push([c.id, p]); else softChildren[p].push(c.id); }
+    }
+    return { nodes, children, parents, softChildren, softParents, order: concepts.map(c => c.id), branchOrder, branches: branches || [], missing };
   }
 
-  function findCycle(g) {
+  // The graph limited to some concepts (a Set or a list of ids), with the same shape as build(); edges to concepts
+  // outside the set are dropped, so depths and layouts are computed for what is shown.
+  function subgraph(g, keep) {
+    const set = keep instanceof Set ? keep : new Set(keep);
+    const sg = build(g.order.filter(id => set.has(id)).map(id => g.nodes[id]), g.branches);
+    for (const id of sg.order) { sg.parents[id] = sg.parents[id].filter(p => sg.nodes[p]); sg.softParents[id] = sg.softParents[id].filter(p => sg.nodes[p]); }
+    sg.missing = [];
+    return sg;
+  }
+
+  // "Zoom to a branch": the branch's own concepts (inside) plus the concepts from other branches that they build on
+  // directly, required or recommended (outside).
+  function branchFocus(g, branch) {
+    const inside = new Set(g.order.filter(id => g.nodes[id].branch === branch)), outside = new Set();
+    for (const id of inside) for (const p of g.parents[id].concat(g.softParents[id] || [])) if (g.nodes[p] && !inside.has(p)) outside.add(p);
+    return { inside, outside, ids: new Set(g.order.filter(id => inside.has(id) || outside.has(id))) };
+  }
+
+  // A cycle through the prerequisites (with { soft: true }, the recommended ones count too), or null.
+  function findCycle(g, opts) {
+    const soft = !!(opts && opts.soft);
     const color = {}; const stack = []; let cycle = null;
     function dfs(id) {
       color[id] = 1; stack.push(id);
-      for (const p of g.parents[id] || []) {
+      for (const p of soft ? (g.parents[id] || []).concat(g.softParents[id] || []) : (g.parents[id] || [])) {
         if (!g.nodes[p]) continue;
         if (color[p] === 1) { cycle = stack.slice(stack.indexOf(p)).concat(p); return true; }
         if (!color[p] && dfs(p)) return true;
@@ -125,37 +150,47 @@
   // ---------- Layout 2: two-sided mind map: root in the centre, one hub per branch ----------
   // Each concept hangs under its deepest prerequisite *in the same branch* (or `parent` if given);
   // concepts with no same-branch prerequisite hang off their branch hub.
+  // Options: `center`, the concept to put in the middle (default: the first one with no prerequisites, so a sub-graph
+  // can keep the usual root); `focus`, a branch id for "zoom to a branch": that branch's hub sits in the middle with its
+  // concepts on the right, and the concepts it builds on from other branches hang under their own hubs on the left.
   function layoutMindmap(g, opts) {
     const o = Object.assign({ colW: 222, rowH: 78, hubGap: 30 }, opts || {});
     const dep = depths(g);
-    const roots = g.order.filter(id => g.parents[id].filter(p => g.nodes[p]).length === 0);
-    const center = roots[0];
+    const ups = id => g.parents[id].filter(p => g.nodes[p]);
+    const focus = o.focus || null;
+    const center = focus ? 'hub:' + focus : (o.center && g.nodes[o.center] ? o.center : g.order.find(id => !ups(id).length));
     const prim = {};
     for (const id of g.order) {
       if (id === center) { prim[id] = null; continue; }
       const n = g.nodes[id];
-      const ps = g.parents[id].filter(p => g.nodes[p]);
+      if (focus && n.branch !== focus) { prim[id] = 'hub:' + n.branch; continue; }   // context: one column under its branch hub
+      const ps = ups(id);
       if (n.parent && ps.includes(n.parent) && g.nodes[n.parent].branch === n.branch) { prim[id] = n.parent; continue; }
       const same = ps.filter(p => g.nodes[p].branch === n.branch);
       if (same.length) { same.sort((a, b) => dep[b] - dep[a] || g.nodes[a]._order - g.nodes[b]._order); prim[id] = same[0]; }
-      else prim[id] = 'hub:' + n.branch;
+      else prim[id] = focus ? center : 'hub:' + n.branch;
     }
     const kids = {};
-    const hubs = g.branches.filter(b => g.order.some(id => id !== center && g.nodes[id].branch === b.id)).map(b => 'hub:' + b.id);
+    const hubs = g.branches.filter(b => b.id !== focus && g.order.some(id => id !== center && g.nodes[id].branch === b.id)).map(b => 'hub:' + b.id);
     hubs.forEach(h => { kids[h] = []; });
+    kids[center] = [];
     g.order.forEach(id => { kids[id] = []; });
     g.order.forEach(id => { const p = prim[id]; if (p) (kids[p] = kids[p] || []).push(id); });
     Object.keys(kids).forEach(k => kids[k].sort((a, b) => dep[a] - dep[b] || g.nodes[a]._order - g.nodes[b]._order));
     const leaves = {};
     const cnt = id => { if (leaves[id] != null) return leaves[id]; const k = kids[id] || []; leaves[id] = k.length ? k.reduce((s, c) => s + cnt(c), 0) : 1; return leaves[id]; };
-    hubs.forEach(cnt);
-    // split hubs into right / left keeping branch order clockwise
-    const total = hubs.reduce((s, h) => s + leaves[h], 0);
-    const right = [], left = []; let acc = 0;
-    for (const h of hubs) { if (acc + leaves[h] / 2 <= total / 2 || !right.length) { right.push(h); acc += leaves[h]; } else left.push(h); }
-    left.reverse();
+    hubs.forEach(cnt); kids[center].forEach(cnt);
+    let right = [], left = [];
+    if (focus) { right = kids[center].slice(); left = hubs.slice(); }
+    else {
+      // split hubs into right / left keeping branch order clockwise
+      const total = hubs.reduce((s, h) => s + leaves[h], 0);
+      let acc = 0;
+      for (const h of hubs) { if (acc + leaves[h] / 2 <= total / 2 || !right.length) { right.push(h); acc += leaves[h]; } else left.push(h); }
+      left.reverse();
+    }
     const pos = {};
-    pos[center] = { x: 0, y: 0, depth: 0, side: 0 };
+    pos[center] = { x: 0, y: 0, depth: 0, side: 0, hub: !!focus };
     function place(id, depth, side, yTop) {
       const k = kids[id] || [];
       let y;
@@ -170,15 +205,15 @@
       for (const h of list) { place(h, 1, side, cur); cur += leaves[h] * o.rowH + o.hubGap; }
     }
     placeSide(right, 1); placeSide(left, -1);
-    // any other roots (should not exist) go below the centre
-    roots.slice(1).forEach((id, i) => { pos[id] = { x: 0, y: 140 + i * o.rowH, depth: 0, side: 0 }; });
+    // anything not placed yet (should not happen) goes below the centre
+    g.order.filter(id => !pos[id]).forEach((id, i) => { pos[id] = { x: 0, y: 140 + i * o.rowH, depth: 0, side: 0 }; });
     let minX = 0, maxX = 0, minY = 0, maxY = 0;
     for (const p of Object.values(pos)) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); }
     const treeEdges = [];
     for (const id of Object.keys(prim)) if (prim[id]) treeEdges.push([prim[id], id]);
     hubs.forEach(h => treeEdges.push([center, h]));
-    return { kind: 'mindmap', pos, prim, kids, hubs, center, treeEdges, bounds: { minX, maxX, minY, maxY } };
+    return { kind: 'mindmap', pos, prim, kids, hubs, center, focus, treeEdges, bounds: { minX, maxX, minY, maxY } };
   }
 
-  MLA.graph = { build, findCycle, depths, topoOrder, ancestors, descendants, pathTo, edgesWithin, layoutLanes, layoutMindmap };
+  MLA.graph = { build, subgraph, branchFocus, findCycle, depths, topoOrder, ancestors, descendants, pathTo, edgesWithin, layoutLanes, layoutMindmap };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

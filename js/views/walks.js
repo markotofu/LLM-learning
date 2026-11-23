@@ -344,15 +344,25 @@
     watch: {
       i() { this.$nextTick(this.animate); },
       params: { deep: true, handler() { this.stop(); this.i = 0; } },
-      'speech.key'(key) {                          // the voice moved to another step: follow it
-        if (!this.voiceOn || !key) return;
-        if (key.indexOf(this.prefix) !== 0) { this.voiceOn = false; this.playing = false; return; }   // other narration took over
-        const k = Number(key.slice(this.prefix.length));
-        if (k >= 0 && k < this.steps.length && k !== this.i) this.i = k;
+      'speech.key'(key) {                          // the voice moved on: follow it
+        if (!key) return;
+        if (this.voiceOn) {
+          if (key.indexOf(this.prefix) !== 0) { this.voiceOn = false; this.playing = false; return; }   // other narration took over
+          const k = Number(key.slice(this.prefix.length));
+          if (k >= 0 && k < this.steps.length && k !== this.i) this.i = k;
+          return;
+        }
+        // The whole lesson is being read aloud: its parts for this walkthrough are the section, then <section>~<step>.
+        const sec = this.sectionKey;
+        if (sec && (key === sec || key.indexOf(sec + '~') === 0)) this.follow(key === sec ? 0 : Number(key.slice(sec.length + 1)));
       },
       'speech.playing'(on) { if (!on && this.voiceOn) { this.voiceOn = false; this.playing = false; } }
     },
-    mounted() { cards[this.name] = this; },
+    mounted() {
+      cards[this.name] = this;
+      const sec = this.$el && this.$el.closest ? this.$el.closest('[data-narr]') : null;    // the lesson section this card sits in
+      this.sectionKey = sec ? sec.getAttribute('data-narr') : null;
+    },
     beforeUnmount() { this.stop(); cancelAnimationFrame(this._raf); if (cards[this.name] === this) delete cards[this.name]; },
     methods: {
       go(k, manual) {
@@ -386,6 +396,15 @@
       stop() {
         this.playing = false; clearTimeout(this._timer);
         if (this.voiceOn) { this.voiceOn = false; MLA.speech.stop(); }
+      },
+      follow(k) {                                  // the lesson's reading is at step k: show it, with the default settings and data
+        this.playing = false; clearTimeout(this._timer);
+        const show = () => { this.i = Math.max(0, Math.min(this.steps.length - 1, k)); };
+        const custom = this.dataset || this.source !== 'builtin' || (this.def.params || []).some(p => this.params[p.key] !== p.value);
+        if (!custom) return show();
+        this.source = 'builtin'; this.table = null; this.dataset = null; this.dataErr = '';
+        (this.def.params || []).forEach(p => { this.params[p.key] = p.value; });
+        this.$nextTick(show);                      // after the settings watcher has restarted the steps
       },
       listen() {                                   // the lesson's "Listen to this part": read every step, from the first
         this.stop();

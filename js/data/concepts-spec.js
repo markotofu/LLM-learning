@@ -378,7 +378,7 @@ def greedy_policy(Q):
 
   // =====================================================================================
   {
-    id: 'generative-models', branch: 'spec', title: 'Generative Models: Autoencoders, VAEs, GANs & Diffusion', short: 'Generative Models', level: 3, minutes: 50, prereqs: ['mlp', 'probability'],
+    id: 'generative-models', branch: 'spec', title: 'Generative Models: Autoencoders, VAEs, GANs & Diffusion', short: 'Generative Models', level: 3, minutes: 50, prereqs: ['mlp', 'probability'], softPrereqs: ['information-theory'],
     tags: ['generative models', 'autoencoder', 'vae', 'latent space', 'reparameterization', 'gan', 'diffusion', 'denoising', 'stable diffusion'],
     summary: 'Models that create new data: autoencoders and latent spaces, variational autoencoders and the reparameterization trick, GANs (a generator against a discriminator), and diffusion models that learn to remove noise step by step (the technology behind modern image, audio and video generation).',
     why: `A classifier answers "what is this?"; a **generative model** learns what the data looks like well enough to produce new examples. Diffusion models power today's image and video generators; autoencoders compress data and learn useful representations; GANs produced the first photorealistic synthetic faces. LLMs are generative models too: autoregressive ones. Seeing the main families side by side shows the different ways to model a probability distribution over complex data.`,

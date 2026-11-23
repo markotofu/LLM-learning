@@ -26,6 +26,13 @@
   const isSolved = pid => { const p = peekP(pid); return !!(p && p.solved); };
   const isCompleted = id => { const p = peekC(id); return !!(p && p.completedAt); };
   const isMastered = id => { const p = peekC(id); return !!(p && p.masteredAt); };
+  // "Known": lessons the placement test (js/engines/placement.js) found the learner already knows. Distinct from
+  // completed: no XP and no achievements, but they count as done for prerequisites, recommendations and tracks.
+  // state.known[id] = { on, at, by: 'placement' | 'you', why: 'right' | 'implied' | 'you', via: [lesson ids] }; undoing
+  // keeps the record with on: false, so the newest change wins when two devices are merged (MLA.store.mergeStates).
+  const knownInfo = id => { const k = (st().known || {})[id]; return k && k.on ? k : null; };
+  const isKnown = id => !!knownInfo(id);
+  const isDone = id => isCompleted(id) || isKnown(id);
 
   // Checklist-based progress: each readable section = 1, quiz = 2, each problem = 2
   function conceptProgress(id) {
@@ -43,18 +50,19 @@
       sectionsRead: read, sections: secs.length,
       solved, problems: c.problems.length, needSolved,
       quizPassed: !!p.quizPassed, quizBest: p.quizBest || 0, quizAttempts: p.quizAttempts || 0, hasQuiz,
-      completed: !!p.completedAt, mastered: !!p.masteredAt,
+      completed: !!p.completedAt, mastered: !!p.masteredAt, known: isKnown(id),
       started: !!(p.visitedAt || read || p.quizAttempts || solved),
       visitedAt: p.visitedAt || null
     };
   }
-  function prereqsMet(id) { const c = concept(id); return !!c && c.prereqs.every(isCompleted); }
-  function missingPrereqs(id) { const c = concept(id); return c ? c.prereqs.filter(p => !isCompleted(p)).map(concept).filter(Boolean) : []; }
-  // mastered | completed | started | ready | locked
+  function prereqsMet(id) { const c = concept(id); return !!c && c.prereqs.every(isDone); }
+  function missingPrereqs(id) { const c = concept(id); return c ? c.prereqs.filter(p => !isDone(p)).map(concept).filter(Boolean) : []; }
+  // mastered | completed | known | started | ready | locked
   function status(id) {
     const pr = conceptProgress(id); if (!pr) return 'locked';
     if (pr.mastered) return 'mastered';
     if (pr.completed) return 'completed';
+    if (pr.known) return 'known';
     if (pr.started) return 'started';
     return prereqsMet(id) ? 'ready' : 'locked';
   }
@@ -101,7 +109,7 @@
     if (!p.completedAt && (!pr.hasQuiz || pr.quizPassed) && pr.solved >= pr.needSolved) {
       p.completedAt = new Date().toISOString();
       G().addXP(XP.conceptComplete, 'Concept complete: ' + c.title, 'concept');
-      const unlocked = graph().children[id].filter(k => !isCompleted(k) && prereqsMet(k)).map(concept);
+      const unlocked = graph().children[id].filter(k => !isDone(k) && prereqsMet(k)).map(concept);
       if (unlocked.length && MLA.ui) setTimeout(() => MLA.ui.toast('Ready next: ' + unlocked.map(u => u.title).slice(0, 3).join(', '), 'success', 5500), 700);
     }
     if (p.completedAt && !p.masteredAt && pr.solved === pr.problems && (!pr.hasQuiz || pr.quizBest >= 90)) {
@@ -184,23 +192,66 @@
   const tracks = () => MLA.data.tracks || [];
   const track = id => tracks().find(t => t.id === id) || null;
   function trackConcepts(t) { if (!t) return []; return t.all ? MLA.graph.topoOrder(graph()) : MLA.graph.pathTo(graph(), t.goals); }
-  function trackProgress(t) { const ids = trackConcepts(t); const done = ids.filter(isCompleted).length; return { ids, done, total: ids.length, pct: MLA.util.pct(done, ids.length) }; }
+  // done: completed; known: marked as known and not completed (they share the bar as a second, lighter segment)
+  function trackProgress(t) {
+    const ids = trackConcepts(t), done = ids.filter(isCompleted).length, known = ids.filter(id => !isCompleted(id) && isKnown(id)).length;
+    return { ids, done, known, total: ids.length, pct: MLA.util.pct(done, ids.length), knownPct: MLA.util.pct(known, ids.length) };
+  }
   function recommendNext() {
     const s = st();
     const goal = s.profile.goal ? track(s.profile.goal) : null;
     const scope = goal ? trackConcepts(goal) : MLA.graph.topoOrder(graph());
-    const started = scope.filter(id => { const p = conceptProgress(id); return p.started && !p.completed; })
+    const started = scope.filter(id => { const p = conceptProgress(id); return p.started && !p.completed && !p.known; })
       .sort((a, b) => (conceptProgress(b).visitedAt || '').localeCompare(conceptProgress(a).visitedAt || ''));
     if (started.length) return { concept: concept(started[0]), reason: 'Continue where you left off' };
-    const next = scope.find(id => !isCompleted(id) && prereqsMet(id));
+    const next = scope.find(id => !isDone(id) && prereqsMet(id));
     if (next) return { concept: concept(next), reason: goal ? 'Next step on “' + goal.title + '”' : 'Next in the learning order' };
-    const any = scope.find(id => !isCompleted(id));
+    const any = scope.find(id => !isDone(id));
     if (any) return { concept: concept(any), reason: 'Next concept' };
-    if (goal) return { concept: null, reason: 'Track complete. Pick a new goal.' };
+    if (goal) {                       // the goal is covered (completed, or known after the placement test): the next track
+      const sug = suggestTrack();
+      if (sug && sug.gap && sug.track.id !== goal.id) return { concept: sug.gap, reason: 'Goal covered. Next: “' + sug.track.title + '”' };
+      return { concept: null, reason: 'Track complete. Pick a new goal.' };
+    }
     return { concept: null, reason: 'Everything is complete. Well done.' };
   }
   function readyList(limit) {
-    return MLA.graph.topoOrder(graph()).filter(id => !isCompleted(id) && prereqsMet(id)).slice(0, limit || 6).map(concept);
+    return MLA.graph.topoOrder(graph()).filter(id => !isDone(id) && prereqsMet(id)).slice(0, limit || 6).map(concept);
+  }
+
+  // ---- lessons marked as known (placement test) ----
+  function setKnown(id, on, info) {
+    if (!concept(id)) return false;
+    const s = st(), now = new Date().toISOString(), prev = (s.known || {})[id];
+    if (!s.known) s.known = {};
+    if (on) {
+      info = info || {};
+      s.known[id] = { on: true, at: now, by: info.by || 'you', why: info.why || 'you', via: (info.via || []).slice(0, 3) };
+      if (info.asked) Object.assign(s.known[id], { asked: info.asked, right: info.right || 0 });   // how many of its own questions were asked, and right
+    }
+    else if (prev && prev.on) s.known[id] = Object.assign({}, prev, { on: false, at: now });
+    return true;
+  }
+  function knownList() { return MLA.graph.topoOrder(graph()).filter(isKnown).map(id => Object.assign({ id, concept: concept(id) }, knownInfo(id))); }
+  function unmarkAll() { const ids = knownList().map(k => k.id); ids.forEach(id => setKnown(id, false)); return ids.length; }
+  // A finished placement test replaces the marks of the previous one; marks the learner set themselves stay.
+  function applyPlacement(marked) {
+    const keep = new Set((marked || []).map(m => m.id));
+    for (const k of knownList()) if (k.by === 'placement' && !keep.has(k.id)) setKnown(k.id, false);
+    for (const m of marked || []) setKnown(m.id, true, { by: 'placement', why: m.why, via: m.via, asked: m.asked, right: m.right });
+    return keep.size;
+  }
+  // The track to follow after the placement test, starting at its first lesson that is neither completed nor known:
+  // the learner's goal while it has such a lesson, otherwise the first track, in the listed order from beginner to
+  // advanced, that still has one (reason 'next' when the goal is covered, 'first' when there is no goal).
+  function suggestTrack() {
+    const info = (t, reason) => { const ids = trackConcepts(t), gap = ids.find(id => !isDone(id)); return { track: t, gap: gap ? concept(gap) : null, done: ids.filter(isDone).length, total: ids.length, reason }; };
+    const goal = st().profile.goal ? track(st().profile.goal) : null;
+    if (goal) { const g = info(goal, 'goal'); if (g.gap) return g; }
+    const open = tracks().filter(t => !t.hidden && !t.all && !t.custom).map(t => info(t, goal ? 'next' : 'first')).filter(x => x.gap);
+    if (open.length) return Object.assign(open[0], { goal });
+    const all = tracks().find(t => t.all), a = all ? info(all, 'all') : null;
+    return a && a.gap ? a : null;
   }
   function branchStats() {
     return MLA.data.branches.map(b => {
@@ -214,8 +265,9 @@
   function overall() {
     const cs = concepts(), ps = problems();
     const done = cs.filter(c => isCompleted(c.id)).length, solved = ps.filter(p => isSolved(p.id)).length;
-    return { conceptsDone: done, concepts: cs.length, solved, problems: ps.length, pct: MLA.util.pct(done + solved, cs.length + ps.length) };
+    const known = cs.filter(c => !isCompleted(c.id) && isKnown(c.id)).length;
+    return { conceptsDone: done, concepts: cs.length, known, solved, problems: ps.length, pct: MLA.util.pct(done + solved, cs.length + ps.length) };
   }
 
-  MLA.progress = { LEVELS, XP, PASS, concepts, problems, concept, problem, branch, graph, cstate, pstate, peekC, peekP, conceptProgress, prereqsMet, missingPrereqs, status, requirementsText, isCompleted, isMastered, isSolved, visit, markRead, markAllRead, recordCheck, migrateSections, legacyLayout, recordQuiz, finalize, saveDraft, recordRun, viewSolution, showHint, recordSubmit, problemStatus, problemOfTheDay, tracks, track, trackConcepts, trackProgress, recommendNext, readyList, branchStats, overall };
+  MLA.progress = { LEVELS, XP, PASS, concepts, problems, concept, problem, branch, graph, cstate, pstate, peekC, peekP, conceptProgress, prereqsMet, missingPrereqs, status, requirementsText, isCompleted, isMastered, isSolved, isKnown, isDone, knownInfo, setKnown, knownList, unmarkAll, applyPlacement, suggestTrack, visit, markRead, markAllRead, recordCheck, migrateSections, legacyLayout, recordQuiz, finalize, saveDraft, recordRun, viewSolution, showHint, recordSubmit, problemStatus, problemOfTheDay, tracks, track, trackConcepts, trackProgress, recommendNext, readyList, branchStats, overall };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

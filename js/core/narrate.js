@@ -447,8 +447,8 @@
     } else if (s.type === 'demo') {
       const dg = String(s.demo || '').startsWith('dg-');
       const walk = String(s.demo || '').startsWith('walk-') && MLA.walks && MLA.walks[s.demo.slice(5)];
-      parts.push(sentence((dg ? 'Diagram: ' : walk ? 'Step-by-step walkthrough: ' : 'Interactive demo: ') + text(title)), md(s.md));
-      parts.push(dg ? diagramText(s.demo) : walk ? text(walk.describe()) + ' On the page, you can step through it with the numbers of every step, and its speaker button reads each step aloud as the card moves along.' : 'On the page, you can try it yourself.');
+      parts.push(sentence((dg ? 'Diagram: ' : walk ? (/^step through/i.test(title) ? '' : 'Step-by-step walkthrough: ') : 'Interactive demo: ') + text(title)), md(s.md));
+      parts.push(dg ? diagramText(s.demo) : walk ? 'Its steps are read one at a time, and the card on the page follows them.' : 'On the page, you can try it yourself.');
       parts.push(md(s.after));
     } else if (s.type === 'chart') parts.push(sentence('Chart: ' + text(title)), md(s.md), text(chart(s.chart)), md(s.after));
     else if (s.type === 'check') parts.push(question(s.question, 'Quick check.'));
@@ -460,11 +460,22 @@
       ' To go further: ' + p.stretch.map(s => md(s)).join(' ');
   }
 
+  // A walkthrough's steps, one part each, with its default settings and built-in example. They are keyed
+  // <section id>~<step>, and the card on the page follows them (js/views/walks.js).
+  function walkParts(s) {
+    const walk = String(s.demo || '').startsWith('walk-') && MLA.walks && MLA.walks[s.demo.slice(5)];
+    if (!walk) return [];
+    const p = {};
+    (walk.params || []).forEach(x => { p[x.key] = x.value; });
+    const steps = walk.run(p, null), title = s.title || 'Walkthrough';
+    return steps.map((st, k) => ({ key: s.id + '~' + k, title: title + ', step ' + (k + 1) + ' of ' + steps.length, text: walk.narrateStep(steps, k) }));
+  }
+
   function lesson(c) {
     const items = [{ key: 'intro', title: c.title, text: sentence('Lesson: ' + text(c.title)) + ' ' + sentence(text(c.summary || '')) }];
     if (c.why) items.push({ key: 'why', title: 'Why this matters', text: 'Why this matters. ' + md(c.why) });
     if (c.objectives && c.objectives.length) items.push({ key: 'objectives', title: 'By the end you will be able to', text: 'By the end of this lesson you will be able to: ' + c.objectives.map(o => text(o).replace(/[.;]$/, '')).join('; ') + '.' });
-    c.sections.forEach((s, i) => items.push(section(c, s, i)));
+    c.sections.forEach((s, i) => { items.push(section(c, s, i)); items.push(...walkParts(s)); });
     if (c.when) items.push({ key: 'when', title: 'When to use it', text: 'When to use it, and when not to. ' + md(c.when) });
     if (c.pitfalls) items.push({ key: 'pitfalls', title: 'Common pitfalls', text: 'Common pitfalls. ' + md(c.pitfalls) });
     if (c.takeaways && c.takeaways.length) items.push({ key: 'takeaways', title: 'Key takeaways', text: 'Key takeaways. ' + c.takeaways.map(t => sentence(text(t))).join(' ') });
